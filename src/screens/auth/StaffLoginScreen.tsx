@@ -25,13 +25,9 @@ import {
   useBiometricAuth 
 } from '../../components/forms';
 import { useTheme } from '../../hooks/useTheme';
+import { useStaffAuthForm, useAuthStatus } from '@/hooks/auth';
 import { spacing } from '../../design-system/theme/spacing';
 import { typography } from '../../design-system/theme/typography';
-
-interface StaffLoginForm {
-  employeeId: string;
-  password: string;
-}
 
 interface StaffLoginScreenProps {
   // Navigation will be typed properly in navigation setup
@@ -43,14 +39,20 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
   const { width: screenWidth } = Dimensions.get('window');
   const isTablet = screenWidth >= 768;
   
-  // Form state
-  const [form, setForm] = useState<StaffLoginForm>({
-    employeeId: '',
-    password: '',
+  // Auth hooks
+  const authStatus = useAuthStatus();
+  const staffAuthForm = useStaffAuthForm({
+    onSuccess: () => {
+      success('Welcome back! Logging you in...');
+      setTimeout(() => {
+        // navigation.navigate('Dashboard');
+        console.log('Navigate to Dashboard');
+      }, 1000);
+    },
+    onError: (errorMessage) => {
+      error(errorMessage);
+    }
   });
-  const [errors, setErrors] = useState<Partial<StaffLoginForm>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   
   // Biometric authentication
   const { isAvailable: biometricAvailable, authenticate: authenticateBiometric } = useBiometricAuth();
@@ -63,58 +65,9 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
     // Check biometric availability on mount
   }, []);
 
-  // Handle form field changes
-  const handleFieldChange = (field: keyof StaffLoginForm, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  // Validate form
-  const validateForm = (): boolean => {
-    const newErrors: Partial<StaffLoginForm> = {};
-
-    if (!form.employeeId.trim()) {
-      newErrors.employeeId = 'Employee ID is required';
-    } else if (form.employeeId.length < 3) {
-      newErrors.employeeId = 'Employee ID must be at least 3 characters';
-    }
-
-    if (!form.password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (form.password.length < 4) {
-      newErrors.password = 'Password must be at least 4 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   // Handle staff login
   const handleStaffLogin = async () => {
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    try {
-      // TODO: Integrate with actual authentication service
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      
-      // Mock successful login
-      success('Welcome back! Logging you in...');
-      
-      // Navigate to dashboard after short delay
-      setTimeout(() => {
-        // navigation.navigate('Dashboard');
-        console.log('Navigate to Dashboard');
-      }, 1000);
-      
-    } catch (err) {
-      error('Invalid credentials. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    await staffAuthForm.handleLogin();
   };
 
   // Handle biometric authentication
@@ -161,12 +114,12 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
   const getContentStyles = () => ({
     flexGrow: 1,
     padding: isTablet ? spacing['2xl'] : spacing.lg,
-    justifyContent: 'center',
+    justifyContent: 'center' as const,
   });
 
   // Get header styles
   const getHeaderStyles = () => ({
-    alignItems: 'center',
+    alignItems: 'center' as const,
     marginBottom: spacing['2xl'],
   });
 
@@ -192,7 +145,7 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
 
   // Get footer styles
   const getFooterStyles = () => ({
-    alignItems: 'center',
+    alignItems: 'center' as const,
     marginTop: spacing['2xl'],
     gap: spacing.lg,
   });
@@ -233,18 +186,18 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
             <FormField
               label="Employee ID"
               required
-              error={errors.employeeId}
+              error={staffAuthForm.error}
               helpText="Your unique employee identifier"
             >
               <AuthInput
                 placeholder="Enter your employee ID"
-                value={form.employeeId}
-                onChangeText={(text) => handleFieldChange('employeeId', text)}
+                value={staffAuthForm.employeeId}
+                onChangeText={staffAuthForm.setEmployeeId}
                 leftIcon="badge"
                 autoCapitalize="none"
                 autoComplete="username"
                 returnKeyType="next"
-                error={errors.employeeId}
+                error={staffAuthForm.error}
                 testID="employee-id-input"
               />
             </FormField>
@@ -253,17 +206,17 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
             <FormField
               label="Password"
               required
-              error={errors.password}
+              error={staffAuthForm.error}
             >
               <PasswordInput
                 placeholder="Enter your password"
-                value={form.password}
-                onChangeText={(text) => handleFieldChange('password', text)}
+                value={staffAuthForm.password}
+                onChangeText={staffAuthForm.setPassword}
                 showStrength={false}
                 showRequirements={false}
                 returnKeyType="done"
                 onSubmitEditing={handleStaffLogin}
-                error={errors.password}
+                error={staffAuthForm.error}
                 testID="password-input"
               />
             </FormField>
@@ -273,8 +226,8 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
               variant="primary"
               size={isTablet ? 'large' : 'medium'}
               onPress={handleStaffLogin}
-              loading={isLoading}
-              disabled={isLoading}
+              loading={staffAuthForm.isLoading}
+              disabled={staffAuthForm.isLoading || !staffAuthForm.isValid}
               icon="login"
               accessibilityLabel="Login to staff account"
               testID="login-button"
@@ -285,7 +238,7 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
 
             {/* Biometric Login */}
             {biometricAvailable && (
-              <View style={{ alignItems: 'center', marginTop: spacing.lg }}>
+              <View style={{ alignItems: 'center' as const, marginTop: spacing.lg }}>
                 <Text style={{
                   ...typography.authHelper,
                   color: theme.colors.onSurfaceVariant,
@@ -335,7 +288,7 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
 
       {/* Loading Overlay */}
       <LoadingOverlay
-        visible={isLoading}
+        visible={staffAuthForm.isLoading}
         message="Authenticating..."
         testID="loading-overlay"
       />

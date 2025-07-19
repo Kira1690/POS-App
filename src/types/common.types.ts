@@ -1,10 +1,4 @@
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-  errors?: Record<string, string[]>;
-}
+import { ApiResponse } from './api.types';
 
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   pagination: {

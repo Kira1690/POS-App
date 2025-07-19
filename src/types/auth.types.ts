@@ -1,3 +1,8 @@
+/**
+ * Authentication Types
+ * Clean, simple type definitions for auth domain
+ */
+
 export enum UserRole {
   RESTAURANT_STAFF = 'restaurant_staff',
   KITCHEN_STAFF = 'kitchen_staff',
@@ -39,24 +44,16 @@ export interface AuthTokens {
   expiresAt: number;
 }
 
-export interface AuthState {
-  user: User | null;
-  restaurant: Restaurant | null;
-  tokens: AuthTokens | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-}
-
 export interface LoginRequest {
-  email: string;
+  email?: string;
+  employee_id?: string;
   password: string;
   restaurantId?: string;
 }
 
 export interface LoginResponse {
   user: User;
-  restaurant: Restaurant;
+  restaurant?: Restaurant;
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
@@ -71,3 +68,30 @@ export interface RefreshTokenResponse {
   refreshToken: string;
   expiresAt: number;
 }
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  isInitializing: boolean;
+  user: User | null;
+  restaurant: Restaurant | null;
+  error: string | null;
+  lastLoginAt: string | null;
+  sessionExpiresAt: string | null;
+}
+
+export type AuthAction =
+  | { type: 'AUTH_INITIALIZE_START' }
+  | { type: 'AUTH_INITIALIZE_SUCCESS'; payload: { user: User; restaurant?: Restaurant } }
+  | { type: 'AUTH_INITIALIZE_FAILURE' }
+  | { type: 'AUTH_LOGIN_START' }
+  | { type: 'AUTH_LOGIN_SUCCESS'; payload: { user: User; restaurant?: Restaurant } }
+  | { type: 'AUTH_LOGIN_FAILURE'; payload: string }
+  | { type: 'AUTH_LOGOUT_START' }
+  | { type: 'AUTH_LOGOUT_SUCCESS' }
+  | { type: 'AUTH_LOGOUT_FAILURE'; payload: string }
+  | { type: 'AUTH_UPDATE_USER'; payload: User }
+  | { type: 'AUTH_UPDATE_RESTAURANT'; payload: Restaurant }
+  | { type: 'AUTH_CLEAR_ERROR' }
+  | { type: 'AUTH_SET_ERROR'; payload: string }
+  | { type: 'AUTH_SESSION_EXPIRED' };

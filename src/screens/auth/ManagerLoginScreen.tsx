@@ -28,13 +28,9 @@ import {
   useBiometricAuth 
 } from '../../components/forms';
 import { useTheme } from '../../hooks/useTheme';
+import { useAuthForm, useAuthStatus } from '@/hooks/auth';
 import { spacing } from '../../design-system/theme/spacing';
 import { typography } from '../../design-system/theme/typography';
-
-interface ManagerLoginForm {
-  email: string;
-  password: string;
-}
 
 interface ManagerLoginScreenProps {
   // Navigation will be typed properly in navigation setup
@@ -46,13 +42,21 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
   const { width: screenWidth } = Dimensions.get('window');
   const isTablet = screenWidth >= 768;
   
-  // Form state
-  const [form, setForm] = useState<ManagerLoginForm>({
-    email: '',
-    password: '',
+  // Auth hooks
+  const authStatus = useAuthStatus();
+  const authForm = useAuthForm({
+    onSuccess: () => {
+      success('Welcome back, Manager!');
+      setTimeout(() => {
+        // navigation.navigate('ManagerDashboard');
+        console.log('Navigate to Manager Dashboard');
+      }, 1000);
+    },
+    onError: (errorMessage) => {
+      error(errorMessage);
+    }
   });
-  const [errors, setErrors] = useState<Partial<ManagerLoginForm>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  
   const [rememberMe, setRememberMe] = useState(false);
   const [requireMFA, setRequireMFA] = useState(false);
   
@@ -73,70 +77,16 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
   // Toast notifications
   const { toastProps, success, error, ToastComponent } = useToast();
 
-  // Handle form field changes
-  const handleFieldChange = (field: keyof ManagerLoginForm, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  // Validate form
-  const validateForm = (): boolean => {
-    const newErrors: Partial<ManagerLoginForm> = {};
-
-    if (!form.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!form.password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (form.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   // Handle initial login (credentials validation)
   const handleInitialLogin = async () => {
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    try {
-      // TODO: Integrate with actual authentication service
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      
-      // Mock: Check if MFA is required for this manager
-      const mockRequiresMFA = form.email.includes('admin') || form.email.includes('manager');
-      
-      if (mockRequiresMFA) {
-        setRequireMFA(true);
-        success('Credentials verified. Please enter the 6-digit code sent to your device.');
-      } else {
-        success('Welcome back, Manager!');
-        setTimeout(() => {
-          // navigation.navigate('ManagerDashboard');
-          console.log('Navigate to Manager Dashboard');
-        }, 1000);
-      }
-      
-    } catch (err) {
-      error('Invalid credentials. Please check your email and password.');
-    } finally {
-      setIsLoading(false);
-    }
+    await authForm.handleLogin();
   };
 
   // Handle MFA verification
   const handleMFAVerification = async () => {
     if (!validateOTP()) return;
 
-    setIsLoading(true);
+    // TODO: Implement MFA verification with real API
     try {
       // TODO: Integrate with actual MFA verification service
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
@@ -154,8 +104,6 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
       
     } catch (err) {
       setOTPError('Verification failed. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -214,12 +162,12 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
   const getContentStyles = () => ({
     flexGrow: 1,
     padding: isTablet ? spacing['2xl'] : spacing.lg,
-    justifyContent: 'center',
+    justifyContent: 'center' as const,
   });
 
   // Get header styles
   const getHeaderStyles = () => ({
-    alignItems: 'center',
+    alignItems: 'center' as const,
     marginBottom: spacing['2xl'],
   });
 
@@ -246,14 +194,14 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
   // Get remember me styles
   const getRememberMeStyles = () => ({
     flexDirection: 'row' as const,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
     paddingVertical: spacing.sm,
   });
 
   // Get footer styles
   const getFooterStyles = () => ({
-    alignItems: 'center',
+    alignItems: 'center' as const,
     marginTop: spacing['2xl'],
     gap: spacing.lg,
   });
@@ -301,19 +249,19 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
               <FormField
                 label="Email Address"
                 required
-                error={errors.email}
+                error={authForm.error}
                 helpText="Your manager account email"
               >
                 <AuthInput
                   variant="email"
                   placeholder="manager@restaurant.com"
-                  value={form.email}
-                  onChangeText={(text) => handleFieldChange('email', text)}
+                  value={authForm.email}
+                  onChangeText={authForm.setEmail}
                   leftIcon="email"
                   autoCapitalize="none"
                   autoComplete="email"
                   returnKeyType="next"
-                  error={errors.email}
+                  error={authForm.error}
                   testID="email-input"
                 />
               </FormField>
@@ -322,17 +270,17 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
               <FormField
                 label="Password"
                 required
-                error={errors.password}
+                error={authForm.error}
               >
                 <PasswordInput
                   placeholder="Enter your password"
-                  value={form.password}
-                  onChangeText={(text) => handleFieldChange('password', text)}
+                  value={authForm.password}
+                  onChangeText={authForm.setPassword}
                   showStrength={false}
                   showRequirements={false}
                   returnKeyType="done"
                   onSubmitEditing={handleInitialLogin}
-                  error={errors.password}
+                  error={authForm.error}
                   testID="password-input"
                 />
               </FormField>
@@ -362,8 +310,8 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
                 variant="primary"
                 size={isTablet ? 'large' : 'medium'}
                 onPress={handleInitialLogin}
-                loading={isLoading}
-                disabled={isLoading}
+                loading={authForm.isLoading}
+                disabled={authForm.isLoading || !authForm.isValid}
                 icon="login"
                 accessibilityLabel="Login to manager account"
                 testID="login-button"
@@ -374,7 +322,7 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
 
               {/* Biometric Login */}
               {biometricAvailable && (
-                <View style={{ alignItems: 'center', marginTop: spacing.lg }}>
+                <View style={{ alignItems: 'center' as const, marginTop: spacing.lg }}>
                   <Text style={{
                     ...typography.authHelper,
                     color: theme.colors.onSurfaceVariant,
@@ -431,8 +379,8 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
                 variant="primary"
                 size={isTablet ? 'large' : 'medium'}
                 onPress={handleMFAVerification}
-                loading={isLoading}
-                disabled={isLoading || !otpComplete}
+                loading={authForm.isLoading}
+                disabled={authForm.isLoading || !otpComplete}
                 icon="verified"
                 accessibilityLabel="Verify authentication code"
                 testID="verify-button"
@@ -474,7 +422,7 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
 
       {/* Loading Overlay */}
       <LoadingOverlay
-        visible={isLoading}
+        visible={authForm.isLoading}
         message={requireMFA ? 'Verifying code...' : 'Authenticating...'}
         testID="loading-overlay"
       />
