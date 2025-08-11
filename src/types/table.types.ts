@@ -28,3 +28,31 @@ export interface UpdateTableStatusRequest {
   status: TableStatus;
   notes?: string;
 }
+
+// Table management UI specific types
+export interface TableGridConfig {
+  rows: number;
+  cols: number;
+  total: number;
+}
+
+export interface TablePosition {
+  row: number;
+  col: number;
+}
+
+export interface CreateTableRequest {
+  restaurant_id: string;
+  table_number: string;
+  capacity: number;
+  location?: string;
+  section?: string;
+  position?: TablePosition;
+}
+
+export interface TableStatusUpdate {
+  table_id: string;
+  status: TableStatus;
+  timestamp: string;
+  user_id?: string;
+}

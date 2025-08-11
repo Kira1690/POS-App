@@ -215,7 +215,7 @@ export const ResponsiveAuthCard: React.FC<AuthCardProps> = (props) => {
     <AuthCard
       {...props}
       padding={responsivePadding}
-      style={[responsiveStyle, props.style]}
+      style={StyleSheet.flatten([responsiveStyle, props.style])}
     />
   );
 };

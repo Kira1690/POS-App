@@ -12,6 +12,9 @@ export * from './api/base.interface';
 // Service interfaces (excluding base interfaces to avoid duplicates)
 export type { IAuthService, ITokenRefreshProvider } from './services/auth.interface';
 export type { IAdminService, IAdminAuthApiClient } from './services/admin.interface';
+export type { ITableService, ITableWebSocketService } from './services/table.interface';
+export type { IMenuService } from './services/menu.interface';
 
 // Context interfaces
 export * from './context/auth.interface';
+export * from './context/table.interface';

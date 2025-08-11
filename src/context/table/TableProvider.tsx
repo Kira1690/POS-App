@@ -1,0 +1,143 @@
+/**
+ * Table Provider - Simple provider component
+ * Under 200 lines, focused on providing table context
+ */
+
+import React, { useReducer, useCallback, useEffect } from 'react';
+import { ITableService, ITableWebSocketService, ITableContext } from '@/interfaces';
+import { Table, UpdateTableStatusRequest, CreateTableRequest } from '@/types/table.types';
+import { MenuItem } from '@/types/menu.types';
+import { TableStatus } from '@/types/common.types';
+import { tableService } from '@/services/tables';
+import { tableWebSocketService } from '@/services/api/table';
+import { orderService } from '@/services/orders/orderService';
+import TableContext from './TableContext';
+import { tableReducer, initialTableState } from './TableReducer';
+import { createTableActions } from './TableActions';
+
+interface TableProviderProps {
+  children: React.ReactNode;
+  tableService?: ITableService;
+  tableWebSocketService?: ITableWebSocketService;
+}
+
+export const TableProvider: React.FC<TableProviderProps> = ({ 
+  children, 
+  tableService: injectedTableService = tableService,
+  tableWebSocketService: injectedTableWebSocketService = tableWebSocketService 
+}) => {
+  const [state, dispatch] = useReducer(tableReducer, initialTableState);
+  
+  // Memoize actions to prevent recreating on every render
+  const actions = React.useMemo(
+    () => createTableActions(injectedTableService, injectedTableWebSocketService, orderService, dispatch),
+    [injectedTableService, injectedTableWebSocketService]
+  );
+
+  // Table operations
+  const selectTable = useCallback((table: Table) => {
+    actions.selectTable(table);
+  }, [actions]);
+
+  const updateTableStatus = useCallback(async (tableId: string, updateData: UpdateTableStatusRequest) => {
+    return actions.updateTableStatus(tableId, updateData);
+  }, [actions]);
+
+  const createTable = useCallback(async (tableData: CreateTableRequest) => {
+    return actions.createTable(tableData);
+  }, [actions]);
+
+  const deleteTable = useCallback(async (tableId: string) => {
+    return actions.deleteTable(tableId);
+  }, [actions]);
+
+  const refreshTables = useCallback(async () => {
+    // Use mock restaurant ID for UI development
+    const restaurantId = 'rest_001'; // Mock restaurant ID that matches mock data
+    return actions.loadTables(restaurantId);
+  }, [actions]);
+
+  // Order operations
+  const createOrderForTable = useCallback(async (tableId: string) => {
+    return actions.createOrderForTable(tableId);
+  }, [actions]);
+
+  const addItemToOrder = useCallback(async (item: MenuItem) => {
+    return actions.addItemToOrder(item);
+  }, [actions]);
+
+  const removeItemFromOrder = useCallback(async (itemId: string) => {
+    return actions.removeItemFromOrder(itemId);
+  }, [actions]);
+
+  const updateOrderItemQuantity = useCallback(async (itemId: string, quantity: number) => {
+    // This will be implemented when orderService is enhanced
+    console.log('updateOrderItemQuantity:', itemId, quantity);
+  }, []);
+
+  const clearActiveOrder = useCallback(() => {
+    actions.clearActiveOrder();
+  }, [actions]);
+
+  // Real-time updates
+  const connectToUpdates = useCallback((restaurantId: string = 'rest_001') => {
+    actions.connectToUpdates(restaurantId);
+  }, [actions]);
+
+  const disconnectFromUpdates = useCallback(() => {
+    actions.disconnectFromUpdates();
+  }, [actions]);
+
+  // Utility functions
+  const clearError = useCallback(() => {
+    actions.clearError();
+  }, [actions]);
+
+  const getTableById = useCallback((tableId: string): Table | undefined => {
+    return state.tables.find(table => table.id === tableId);
+  }, [state.tables]);
+
+  const getAvailableTables = useCallback((): Table[] => {
+    return state.tables.filter(table => table.status === TableStatus.AVAILABLE);
+  }, [state.tables]);
+
+  const getOccupiedTables = useCallback((): Table[] => {
+    return state.tables.filter(table => table.status === TableStatus.OCCUPIED);
+  }, [state.tables]);
+
+  // Remove automatic loading - let the screen handle it
+  // This prevents duplicate loads and race conditions
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      disconnectFromUpdates();
+    };
+  }, [disconnectFromUpdates]);
+
+  const contextValue: ITableContext = {
+    state,
+    selectTable,
+    updateTableStatus,
+    createTable,
+    deleteTable,
+    refreshTables,
+    createOrderForTable,
+    addItemToOrder,
+    removeItemFromOrder,
+    updateOrderItemQuantity,
+    clearActiveOrder,
+    connectToUpdates,
+    disconnectFromUpdates,
+    clearError,
+    getTableById,
+    getAvailableTables,
+    getOccupiedTables,
+  };
+
+  return (
+    <TableContext.Provider value={contextValue}>
+      {children}
+    </TableContext.Provider>
+  );
+};

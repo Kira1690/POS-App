@@ -144,13 +144,13 @@ export const AuthInput: React.FC<AuthInputProps> = ({
     onChangeText(text);
     
     // Animate label if text changes
-    if (text && labelAnimation._value === 0) {
+    if (text) {
       Animated.timing(labelAnimation, {
         toValue: 1,
         duration: 200,
         useNativeDriver: false,
       }).start();
-    } else if (!text && !isFocused && labelAnimation._value === 1) {
+    } else if (!text && !isFocused) {
       Animated.timing(labelAnimation, {
         toValue: 0,
         duration: 200,

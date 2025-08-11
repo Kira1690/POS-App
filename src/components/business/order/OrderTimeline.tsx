@@ -1,0 +1,260 @@
+/**
+ * OrderTimeline - Professional order progress display component
+ * Shows visual timeline of order progress with timestamps
+ */
+
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Order } from '@/types/order.types';
+import { OrderStatus } from '@/types/common.types';
+import { useTheme } from '@/hooks/useTheme';
+import { typography } from '@/design-system/theme/typography';
+import { spacing, borderRadius } from '@/design-system/theme/spacing';
+import { formatTime } from '@/utils/date';
+
+interface OrderTimelineProps {
+  order: Order;
+  style?: any;
+}
+
+interface TimelineStep {
+  status: OrderStatus;
+  label: string;
+  icon: 'receipt' | 'check-circle' | 'restaurant' | 'notifications' | 'done-all';
+  timestamp?: string;
+  completed: boolean;
+  active: boolean;
+}
+
+const getTimelineSteps = (order: Order): TimelineStep[] => {
+  const currentStatusIndex = getStatusIndex(order.status);
+  
+  return [
+    {
+      status: OrderStatus.PENDING,
+      label: 'Order Placed',
+      icon: 'receipt',
+      timestamp: order.created_at,
+      completed: true,
+      active: currentStatusIndex === 0,
+    },
+    {
+      status: OrderStatus.CONFIRMED,
+      label: 'Confirmed',
+      icon: 'check-circle',
+      timestamp: order.submitted_at,
+      completed: currentStatusIndex >= 1,
+      active: currentStatusIndex === 1,
+    },
+    {
+      status: OrderStatus.PREPARING,
+      label: 'Preparing',
+      icon: 'restaurant',
+      timestamp: order.preparing_at,
+      completed: currentStatusIndex >= 2,
+      active: currentStatusIndex === 2,
+    },
+    {
+      status: OrderStatus.READY,
+      label: 'Ready',
+      icon: 'notifications',
+      timestamp: order.ready_at,
+      completed: currentStatusIndex >= 3,
+      active: currentStatusIndex === 3,
+    },
+    {
+      status: OrderStatus.SERVED,
+      label: 'Served',
+      icon: 'done-all',
+      timestamp: order.served_at,
+      completed: currentStatusIndex >= 4,
+      active: currentStatusIndex === 4,
+    },
+  ].filter(step => order.status !== OrderStatus.CANCELLED || step.completed);
+};
+
+const getStatusIndex = (status: OrderStatus): number => {
+  switch (status) {
+    case OrderStatus.PENDING: return 0;
+    case OrderStatus.CONFIRMED: return 1;
+    case OrderStatus.PREPARING: return 2;
+    case OrderStatus.READY: return 3;
+    case OrderStatus.SERVED: return 4;
+    default: return 0;
+  }
+};
+
+const OrderTimeline: React.FC<OrderTimelineProps> = ({ order, style }) => {
+  const { theme } = useTheme();
+  const steps = getTimelineSteps(order);
+
+  // Special handling for cancelled orders
+  if (order.status === OrderStatus.CANCELLED) {
+    return (
+      <View style={[styles.container, style]}>
+        <View style={styles.cancelledContainer}>
+          <MaterialIcons 
+            name="cancel" 
+            size={24} 
+            color={theme.colors.error} 
+          />
+          <Text style={[styles.cancelledText, { color: theme.colors.error }]}>
+            Order Cancelled
+          </Text>
+          <Text style={[styles.cancelledTime, { color: theme.colors.onSurfaceVariant }]}>
+            {formatTime(order.updated_at)}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, style]}>
+      {steps.map((step, index) => (
+        <View key={step.status} style={styles.stepContainer}>
+          <View style={styles.stepIndicator}>
+            {/* Connection line to previous step */}
+            {index > 0 && (
+              <View 
+                style={[
+                  styles.connectionLine,
+                  {
+                    backgroundColor: step.completed 
+                      ? theme.colors.primary 
+                      : theme.colors.outline,
+                  },
+                ]} 
+              />
+            )}
+            
+            {/* Step circle */}
+            <View 
+              style={[
+                styles.stepCircle,
+                {
+                  backgroundColor: step.completed
+                    ? theme.colors.primary
+                    : step.active
+                    ? theme.colors.primaryContainer
+                    : theme.colors.surface,
+                  borderColor: step.completed || step.active
+                    ? theme.colors.primary
+                    : theme.colors.outline,
+                },
+              ]}
+            >
+              <MaterialIcons
+                name={step.icon}
+                size={16}
+                color={
+                  step.completed
+                    ? theme.colors.onPrimary
+                    : step.active
+                    ? theme.colors.onPrimaryContainer
+                    : theme.colors.onSurfaceVariant
+                }
+              />
+            </View>
+            
+            {/* Connection line to next step */}
+            {index < steps.length - 1 && (
+              <View 
+                style={[
+                  styles.connectionLine,
+                  {
+                    backgroundColor: step.completed 
+                      ? theme.colors.primary 
+                      : theme.colors.outline,
+                  },
+                ]} 
+              />
+            )}
+          </View>
+          
+          {/* Step content */}
+          <View style={styles.stepContent}>
+            <Text 
+              style={[
+                styles.stepLabel,
+                {
+                  color: step.completed || step.active
+                    ? theme.colors.onSurface
+                    : theme.colors.onSurfaceVariant,
+                  fontWeight: step.active ? '700' : '500',
+                },
+              ]}
+            >
+              {step.label}
+            </Text>
+            {step.timestamp && (
+              <Text style={[styles.stepTime, { color: theme.colors.onSurfaceVariant }]}>
+                {formatTime(step.timestamp)}
+              </Text>
+            )}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: spacing.sm,
+  },
+  stepContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    minHeight: 60,
+  },
+  stepIndicator: {
+    alignItems: 'center',
+    width: 40,
+  },
+  connectionLine: {
+    width: 2,
+    height: 20,
+  },
+  stepCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepContent: {
+    flex: 1,
+    marginLeft: spacing.md,
+    paddingTop: spacing.xs,
+  },
+  stepLabel: {
+    ...typography.bodyMedium,
+    marginBottom: spacing.xs / 2,
+  },
+  stepTime: {
+    ...typography.bodySmall,
+  },
+  cancelledContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: '#FFEBEE',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: '#EF5350',
+  },
+  cancelledText: {
+    ...typography.titleMedium,
+    fontWeight: '600',
+    marginLeft: spacing.sm,
+    flex: 1,
+  },
+  cancelledTime: {
+    ...typography.bodySmall,
+  },
+});
+
+export default OrderTimeline;

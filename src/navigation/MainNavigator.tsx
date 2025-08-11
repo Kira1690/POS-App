@@ -1,24 +1,112 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MainTabParamList } from './types';
+import { 
+  MainTabParamList, 
+  TablesStackParamList, 
+  OrdersStackParamList,
+  KitchenStackParamList 
+} from './types';
 import { DashboardScreen } from '@/screens/dashboard';
+import { TableManagementScreen } from '@/screens/tables';
+import { 
+  POSOrderScreen, 
+  OrderManagementScreen, 
+  OrderDetailsScreen,
+  KitchenDisplayScreen 
+} from '@/screens/orders';
+import {
+  PaymentProcessingScreen,
+  PaymentConfirmationScreen,
+} from '@/screens/payment';
+import { TableProvider } from '@/context/table';
+import { OrderProvider } from '@/context/order';
+import { PaymentProvider } from '@/context/payment';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const TablesStack = createStackNavigator<TablesStackParamList>();
+const OrdersStack = createStackNavigator<OrdersStackParamList>();
+const KitchenStack = createStackNavigator<KitchenStackParamList>();
 
-// Placeholder screens
-const OrdersScreen = () => (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Orders Screen</Text>
-  </View>
+// Tables Stack Navigator - includes TableManagement and POSOrder
+const TablesStackNavigator = () => (
+  <TableProvider>
+    <OrderProvider>
+      <TablesStack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <TablesStack.Screen 
+          name="TableManagement" 
+          component={TableManagementScreen} 
+        />
+        <TablesStack.Screen 
+          name="POSOrder" 
+          component={POSOrderScreen}
+        />
+      </TablesStack.Navigator>
+    </OrderProvider>
+  </TableProvider>
 );
 
-const TablesScreen = () => (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Tables Screen</Text>
-  </View>
+// Orders Stack Navigator - Professional order management
+const OrdersStackNavigator = () => (
+  <PaymentProvider>
+    <OrderProvider>
+      <OrdersStack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <OrdersStack.Screen 
+          name="OrderManagement" 
+          component={OrderManagementScreen} 
+        />
+        <OrdersStack.Screen 
+          name="OrderDetails" 
+          component={OrderDetailsScreen}
+        />
+        <OrdersStack.Screen 
+          name="POSOrder" 
+          component={POSOrderScreen}
+        />
+        <OrdersStack.Screen 
+          name="PaymentProcessing" 
+          component={PaymentProcessingScreen}
+        />
+        <OrdersStack.Screen 
+          name="PaymentConfirmation" 
+          component={PaymentConfirmationScreen}
+        />
+      </OrdersStack.Navigator>
+    </OrderProvider>
+  </PaymentProvider>
 );
+
+// Kitchen Stack Navigator - Kitchen operations
+const KitchenStackNavigator = () => (
+  <OrderProvider>
+    <KitchenStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <KitchenStack.Screen 
+        name="KitchenDisplay" 
+        component={KitchenDisplayScreen} 
+      />
+      <KitchenStack.Screen 
+        name="OrderDetails" 
+        component={OrderDetailsScreen}
+      />
+    </KitchenStack.Navigator>
+  </OrderProvider>
+);
+
+// Remove old OrdersScreen as we now use OrdersStackNavigator
 
 const MenuScreen = () => (
   <View style={styles.placeholderContainer}>
@@ -48,7 +136,7 @@ const styles = StyleSheet.create({
 export const MainNavigator: React.FC = () => {
   return (
     <Tab.Navigator
-      initialRouteName="Dashboard"
+      initialRouteName="Orders"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof MaterialIcons.glyphMap;
@@ -62,6 +150,9 @@ export const MainNavigator: React.FC = () => {
               break;
             case 'Tables':
               iconName = 'table-restaurant';
+              break;
+            case 'Kitchen':
+              iconName = 'restaurant';
               break;
             case 'Menu':
               iconName = 'menu-book';
@@ -80,11 +171,36 @@ export const MainNavigator: React.FC = () => {
         headerShown: true,
       })}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Orders" component={OrdersScreen} />
-      <Tab.Screen name="Tables" component={TablesScreen} />
-      <Tab.Screen name="Menu" component={MenuScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen 
+        name="Dashboard" 
+        component={DashboardScreen}
+        options={{ title: 'Dashboard' }}
+      />
+      <Tab.Screen 
+        name="Orders" 
+        component={OrdersStackNavigator}
+        options={{ title: 'Order Management', headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Tables" 
+        component={TablesStackNavigator}
+        options={{ title: 'Table Management', headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Kitchen" 
+        component={KitchenStackNavigator}
+        options={{ title: 'Kitchen Operations', headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Menu" 
+        component={MenuScreen}
+        options={{ title: 'Menu Management' }}
+      />
+      <Tab.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
+      />
     </Tab.Navigator>
   );
 };

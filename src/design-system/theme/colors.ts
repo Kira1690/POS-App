@@ -1,72 +1,72 @@
 export const colors = {
-  // Primary Brand Colors
+  // Professional Primary Colors (Charcoal Theme)
   primary: {
-    50: '#E3F2FD',
-    100: '#BBDEFB',
-    200: '#90CAF9',
-    300: '#64B5F6',
-    400: '#42A5F5',
-    500: '#2196F3', // Main primary
-    600: '#1E88E5',
-    700: '#1976D2',
-    800: '#1565C0',
-    900: '#0D47A1',
+    50: '#F8F9FA',
+    100: '#E9ECEF',
+    200: '#DEE2E6',
+    300: '#CED4DA',
+    400: '#6C757D',
+    500: '#1A1D21', // Professional Charcoal
+    600: '#161A1D',
+    700: '#121619',
+    800: '#0E1214',
+    900: '#0A0C0F',
   },
 
-  // Secondary Colors
+  // Professional Secondary Colors (Gray Accent)
   secondary: {
-    50: '#F3E5F5',
-    100: '#E1BEE7',
-    200: '#CE93D8',
-    300: '#BA68C8',
-    400: '#AB47BC',
-    500: '#9C27B0', // Main secondary
-    600: '#8E24AA',
-    700: '#7B1FA2',
-    800: '#6A1B9A',
-    900: '#4A148C',
+    50: '#F8F9FA',
+    100: '#E9ECEF',
+    200: '#DEE2E6',
+    300: '#CED4DA',
+    400: '#ADB5BD',
+    500: '#4A4A4A', // Professional Gray
+    600: '#404040',
+    700: '#363636',
+    800: '#2C2C2C',
+    900: '#222222',
   },
 
-  // Success Colors
+  // Professional Success Colors
   success: {
-    50: '#E8F5E8',
+    50: '#F0F9F0',
     100: '#C8E6C9',
     200: '#A5D6A7',
     300: '#81C784',
-    400: '#66BB6A',
-    500: '#4CAF50', // Main success
-    600: '#43A047',
-    700: '#388E3C',
-    800: '#2E7D32',
-    900: '#1B5E20',
+    400: '#4CAF50',
+    500: '#1E7E34', // Professional Green
+    600: '#1B5E20',
+    700: '#2E7D32',
+    800: '#388E3C',
+    900: '#43A047',
   },
 
-  // Error Colors
+  // Professional Error Colors
   error: {
-    50: '#FFEBEE',
-    100: '#FFCDD2',
-    200: '#EF9A9A',
-    300: '#E57373',
-    400: '#EF5350',
-    500: '#F44336', // Main error
-    600: '#E53935',
-    700: '#D32F2F',
-    800: '#C62828',
-    900: '#B71C1C',
+    50: '#FFF5F5',
+    100: '#FED7D7',
+    200: '#FEB2B2',
+    300: '#FC8181',
+    400: '#F56565',
+    500: '#B71C1C', // Professional Dark Red
+    600: '#C53030',
+    700: '#9B2C2C',
+    800: '#822727',
+    900: '#63171B',
   },
 
-  // Warning Colors
+  // Professional Warning Colors
   warning: {
-    50: '#FFF8E1',
-    100: '#FFECB3',
-    200: '#FFE082',
-    300: '#FFD54F',
-    400: '#FFCA28',
-    500: '#FFC107', // Main warning
-    600: '#FFB300',
-    700: '#FFA000',
-    800: '#FF8F00',
-    900: '#FF6F00',
+    50: '#FFFBF0',
+    100: '#FEF5E7',
+    200: '#FAE5B7',
+    300: '#F6D55C',
+    400: '#ECC94B',
+    500: '#B8860B', // Professional Gold
+    600: '#D69E2E',
+    700: '#B7791F',
+    800: '#975A16',
+    900: '#744210',
   },
 
   // Neutral/Gray Colors
@@ -95,46 +95,60 @@ export const colors = {
     secondary: 'rgba(156, 39, 176, 0.25)',
   },
 
-  // Gradient Colors
+  // Professional Gradient Colors
   gradients: {
-    primary: ['#2196F3', '#1976D2'],
-    secondary: ['#9C27B0', '#7B1FA2'],
-    success: ['#4CAF50', '#388E3C'],
-    error: ['#F44336', '#D32F2F'],
-    warning: ['#FFC107', '#FFA000'],
+    primary: ['#1A1D21', '#161A1D'],
+    secondary: ['#4A4A4A', '#363636'],
+    success: ['#1E7E34', '#2E7D32'],
+    error: ['#B71C1C', '#9B2C2C'],
+    warning: ['#B8860B', '#B7791F'],
     neutral: ['#E0E0E0', '#BDBDBD'],
     glass: ['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.05)'],
   },
+
+  // Professional Accent Colors
+  accent: {
+    50: '#F0F7FF',
+    100: '#DBEAFE',
+    200: '#BFDBFE',
+    300: '#93C5FD',
+    400: '#60A5FA',
+    500: '#2C5AA0', // Professional Blue Accent
+    600: '#2563EB',
+    700: '#1D4ED8',
+    800: '#1E40AF',
+    900: '#1E3A8A',
+  },
 } as const;
 
-// Light Theme Colors
+// Professional Light Theme Colors
 export const lightTheme = {
-  primary: colors.primary[500],
-  primaryContainer: colors.primary[100],
-  onPrimary: colors.neutral[0],
-  onPrimaryContainer: colors.primary[900],
+  primary: colors.primary[500], // Professional Charcoal
+  primaryContainer: colors.primary[50], // Light Gray Container
+  onPrimary: colors.neutral[0], // White on charcoal
+  onPrimaryContainer: colors.primary[500], // Charcoal on light
 
-  secondary: colors.secondary[500],
-  secondaryContainer: colors.secondary[100],
-  onSecondary: colors.neutral[0],
-  onSecondaryContainer: colors.secondary[900],
+  secondary: colors.secondary[500], // Professional Gray
+  secondaryContainer: colors.secondary[100], // Light gray container
+  onSecondary: colors.neutral[0], // White on gray
+  onSecondaryContainer: colors.secondary[900], // Dark on light
 
-  tertiary: colors.warning[500],
-  tertiaryContainer: colors.warning[100],
-  onTertiary: colors.neutral[0],
-  onTertiaryContainer: colors.warning[900],
+  tertiary: colors.accent[500], // Professional Blue Accent
+  tertiaryContainer: colors.accent[100], // Light blue container
+  onTertiary: colors.neutral[0], // White on blue
+  onTertiaryContainer: colors.accent[900], // Dark blue on light
 
-  error: colors.error[500],
-  errorContainer: colors.error[100],
-  onError: colors.neutral[0],
-  onErrorContainer: colors.error[900],
+  error: colors.error[500], // Professional Dark Red
+  errorContainer: colors.error[50], // Light error container
+  onError: colors.neutral[0], // White on error
+  onErrorContainer: colors.error[900], // Dark red on light
 
-  background: colors.neutral[50],
-  onBackground: colors.neutral[900],
-  surface: colors.neutral[0],
-  onSurface: colors.neutral[900],
-  surfaceVariant: colors.neutral[100],
-  onSurfaceVariant: colors.neutral[700],
+  background: '#F5F6F7', // Off-white professional background
+  onBackground: colors.primary[500], // Professional charcoal text
+  surface: colors.neutral[0], // Clean white surface
+  onSurface: colors.primary[500], // Professional charcoal text
+  surfaceVariant: '#F8F9FA', // Light gray variant
+  onSurfaceVariant: colors.secondary[700], // Professional gray text
   surfaceDisabled: colors.neutral[200],
   onSurfaceDisabled: colors.neutral[400],
 
@@ -143,89 +157,89 @@ export const lightTheme = {
   shadow: colors.neutral[1000],
   scrim: colors.neutral[1000],
 
-  // Custom colors for payment app
-  success: colors.success[500],
-  successContainer: colors.success[100],
-  onSuccess: colors.neutral[0],
-  onSuccessContainer: colors.success[900],
+  // Professional Status Colors
+  success: colors.success[500], // Professional Green
+  successContainer: colors.success[50], // Light green container
+  onSuccess: colors.neutral[0], // White on green
+  onSuccessContainer: colors.success[900], // Dark green on light
 
-  warning: colors.warning[500],
-  warningContainer: colors.warning[100],
-  onWarning: colors.neutral[0],
-  onWarningContainer: colors.warning[900],
+  warning: colors.warning[500], // Professional Gold
+  warningContainer: colors.warning[50], // Light gold container
+  onWarning: colors.neutral[0], // White on gold
+  onWarningContainer: colors.warning[900], // Dark gold on light
 
-  // Glass/Frosted elements
+  // Professional Glass/Frosted elements
   glass: colors.glass.white,
   glassStrong: colors.glass.whiteDark,
   glassBorder: 'rgba(255, 255, 255, 0.3)',
 
-  // Payment specific colors
-  amount: colors.primary[700],
-  currencySymbol: colors.primary[600],
+  // Professional Payment colors
+  amount: colors.primary[500], // Professional charcoal
+  currencySymbol: colors.secondary[600], // Professional gray
   dialButton: colors.neutral[0],
   dialButtonActive: colors.primary[50],
-  payButton: colors.success[500],
-  clearButton: colors.error[500],
+  payButton: colors.success[500], // Professional green
+  clearButton: colors.error[500], // Professional red
 
-  // POS Authentication specific colors
-  authPrimary: colors.primary[500],
-  authSecondary: colors.secondary[500],
-  authSuccess: colors.success[500],
-  authError: colors.error[500],
-  authWarning: colors.warning[500],
+  // Professional POS Authentication colors
+  authPrimary: colors.primary[500], // Professional charcoal
+  authSecondary: colors.secondary[500], // Professional gray
+  authSuccess: colors.success[500], // Professional green
+  authError: colors.error[500], // Professional red
+  authWarning: colors.warning[500], // Professional gold
   
-  // Staff role colors
-  staffRole: colors.primary[500],
-  managerRole: colors.warning[600],
-  adminRole: colors.error[600],
+  // Professional Staff role colors
+  staffRole: colors.secondary[600], // Professional gray for staff
+  managerRole: colors.accent[600], // Professional blue for managers
+  adminRole: colors.primary[600], // Professional charcoal for admin
   
-  // Authentication states
+  // Professional Authentication states
   authCardBackground: colors.neutral[0],
-  authInputBackground: colors.neutral[50],
+  authInputBackground: colors.primary[50], // Light professional background
   authInputBorder: colors.neutral[300],
-  authInputFocused: colors.primary[500],
-  authInputError: colors.error[500],
+  authInputFocused: colors.primary[500], // Professional charcoal focus
+  authInputError: colors.error[500], // Professional red error
   
-  // Biometric colors
-  biometricAvailable: colors.success[500],
+  // Professional Biometric colors
+  biometricAvailable: colors.success[500], // Professional green
   biometricUnavailable: colors.neutral[400],
-  biometricError: colors.error[500],
+  biometricError: colors.error[500], // Professional red
 
-  // Pressed states
+  // Professional Pressed states
   successPressed: colors.success[600],
-  primaryPressed: colors.primary[600],
-  secondaryPressed: colors.secondary[600],
-  errorPressed: colors.error[600],
+  primaryPressed: colors.primary[600], // Professional charcoal pressed
+  secondaryPressed: colors.secondary[600], // Professional gray pressed
+  errorPressed: colors.error[600], // Professional red pressed
 } as const;
 
-// Dark Theme Colors (for future implementation)
+// Professional Dark Theme Colors (for future implementation)
 export const darkTheme = {
-  primary: colors.primary[400],
-  primaryContainer: colors.primary[800],
-  onPrimary: colors.neutral[900],
-  onPrimaryContainer: colors.primary[100],
+  primary: colors.primary[300], // Lighter charcoal for dark theme
+  primaryContainer: colors.primary[800], // Dark charcoal container
+  onPrimary: colors.neutral[0], // White on charcoal
+  onPrimaryContainer: colors.primary[100], // Light on dark
 
-  secondary: colors.secondary[400],
-  secondaryContainer: colors.secondary[800],
-  onSecondary: colors.neutral[900],
-  onSecondaryContainer: colors.secondary[100],
+  secondary: colors.secondary[300], // Lighter gray for dark theme
+  secondaryContainer: colors.secondary[800], // Dark gray container
+  onSecondary: colors.neutral[0], // White on gray
+  onSecondaryContainer: colors.secondary[100], // Light on dark
 
-  tertiary: colors.warning[400],
-  tertiaryContainer: colors.warning[800],
-  onTertiary: colors.neutral[900],
-  onTertiaryContainer: colors.warning[100],
+  tertiary: colors.accent[300], // Lighter professional blue
+  tertiaryContainer: colors.accent[800], // Dark blue container
+  onTertiary: colors.neutral[0], // White on blue
+  onTertiaryContainer: colors.accent[100], // Light on dark
 
-  error: colors.error[400],
-  errorContainer: colors.error[800],
-  onError: colors.neutral[900],
-  onErrorContainer: colors.error[100],
+  error: colors.error[300], // Lighter professional red
+  errorContainer: colors.error[800], // Dark red container
+  onError: colors.neutral[0], // White on red
+  onErrorContainer: colors.error[100], // Light on dark
 
-  background: colors.neutral[900],
-  onBackground: colors.neutral[100],
-  surface: colors.neutral[800],
-  onSurface: colors.neutral[100],
-  surfaceVariant: colors.neutral[700],
-  onSurfaceVariant: colors.neutral[300],
+  background: colors.primary[900], // Deep professional charcoal
+  onBackground: colors.neutral[100], // Light text on dark
+  surface: colors.primary[800], // Professional dark surface
+  onSurface: colors.neutral[100], // Light text
+  surfaceVariant: colors.neutral[700], // Professional dark variant
+  onSurfaceVariant: colors.neutral[300], // Medium text
   surfaceDisabled: colors.neutral[700],
   onSurfaceDisabled: colors.neutral[600],
 
@@ -234,59 +248,59 @@ export const darkTheme = {
   shadow: colors.neutral[1000],
   scrim: colors.neutral[1000],
 
-  // Custom colors for payment app
-  success: colors.success[400],
-  successContainer: colors.success[800],
-  onSuccess: colors.neutral[900],
-  onSuccessContainer: colors.success[100],
+  // Professional Dark Status Colors
+  success: colors.success[300], // Professional green for dark
+  successContainer: colors.success[800], // Dark green container
+  onSuccess: colors.neutral[0], // White on green
+  onSuccessContainer: colors.success[100], // Light on dark
 
-  warning: colors.warning[400],
-  warningContainer: colors.warning[800],
-  onWarning: colors.neutral[900],
-  onWarningContainer: colors.warning[100],
+  warning: colors.warning[300], // Professional gold for dark
+  warningContainer: colors.warning[800], // Dark gold container
+  onWarning: colors.neutral[0], // White on gold
+  onWarningContainer: colors.warning[100], // Light on dark
 
-  // Glass/Frosted elements
+  // Professional Dark Glass/Frosted elements
   glass: colors.glass.black,
   glassStrong: colors.glass.blackDark,
   glassBorder: 'rgba(255, 255, 255, 0.1)',
 
-  // Payment specific colors
-  amount: colors.primary[300],
-  currencySymbol: colors.primary[400],
+  // Professional Dark Payment colors
+  amount: colors.primary[300], // Light charcoal for dark theme
+  currencySymbol: colors.secondary[400], // Light gray for dark
   dialButton: colors.neutral[800],
   dialButtonActive: colors.primary[900],
-  payButton: colors.success[400],
-  clearButton: colors.error[400],
+  payButton: colors.success[300], // Professional green for dark
+  clearButton: colors.error[300], // Professional red for dark
 
-  // POS Authentication specific colors
-  authPrimary: colors.primary[400],
-  authSecondary: colors.secondary[400],
-  authSuccess: colors.success[400],
-  authError: colors.error[400],
-  authWarning: colors.warning[400],
+  // Professional Dark POS Authentication colors
+  authPrimary: colors.primary[300], // Light charcoal for dark
+  authSecondary: colors.secondary[300], // Light gray for dark
+  authSuccess: colors.success[300], // Professional green for dark
+  authError: colors.error[300], // Professional red for dark
+  authWarning: colors.warning[300], // Professional gold for dark
   
-  // Staff role colors
-  staffRole: colors.primary[400],
-  managerRole: colors.warning[400],
-  adminRole: colors.error[400],
+  // Professional Dark Staff role colors
+  staffRole: colors.secondary[400], // Professional gray for staff
+  managerRole: colors.accent[400], // Professional blue for managers
+  adminRole: colors.primary[300], // Light charcoal for admin
   
-  // Authentication states
-  authCardBackground: colors.neutral[800],
-  authInputBackground: colors.neutral[700],
+  // Professional Dark Authentication states
+  authCardBackground: colors.primary[800], // Professional dark card
+  authInputBackground: colors.primary[700], // Professional dark input
   authInputBorder: colors.neutral[600],
-  authInputFocused: colors.primary[400],
-  authInputError: colors.error[400],
+  authInputFocused: colors.primary[300], // Light charcoal focus
+  authInputError: colors.error[300], // Professional red error
   
-  // Biometric colors
-  biometricAvailable: colors.success[400],
+  // Professional Dark Biometric colors
+  biometricAvailable: colors.success[300], // Professional green
   biometricUnavailable: colors.neutral[600],
-  biometricError: colors.error[400],
+  biometricError: colors.error[300], // Professional red
 
-  // Pressed states
-  successPressed: colors.success[500],
-  primaryPressed: colors.primary[500],
-  secondaryPressed: colors.secondary[500],
-  errorPressed: colors.error[500],
+  // Professional Dark Pressed states
+  successPressed: colors.success[400],
+  primaryPressed: colors.primary[400], // Professional charcoal pressed
+  secondaryPressed: colors.secondary[400], // Professional gray pressed
+  errorPressed: colors.error[400], // Professional red pressed
 } as const;
 
 export type ColorTheme = typeof lightTheme | typeof darkTheme; 

@@ -4,7 +4,7 @@
  */
 
 import React, { useReducer, useEffect, useCallback } from 'react';
-import { authService } from '@/services/auth/AuthService';
+import { authService } from '@/services/auth';
 import { IAuthService, IAuthContext, UpdateProfileRequest } from '@/interfaces';
 import { User, UserRole, Restaurant, LoginRequest } from '@/types';
 import { showToast } from '@/utils/toast';

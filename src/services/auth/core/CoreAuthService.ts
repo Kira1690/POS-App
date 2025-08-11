@@ -4,13 +4,65 @@
  */
 
 import { authApiClient } from '@/services/api/authApiClient';
-import { LoginRequest, LoginResponse, RefreshTokenResponse } from '@/types';
+import { LoginRequest, LoginResponse, RefreshTokenResponse, User, Restaurant } from '@/types';
 import { RegisterUserRequest } from '@/interfaces';
+import { findUserByCredentials, generateDummyTokens, DUMMY_RESTAURANTS } from '@/constants/dummyData';
 
 export class CoreAuthService {
   
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
+      // Check for dummy credentials first
+      const dummyUser = findUserByCredentials(
+        credentials.identifier || credentials.email || '',
+        credentials.password,
+        !!credentials.identifier // true if staff login (has identifier)
+      );
+
+      if (dummyUser) {
+        // Return dummy response
+        const userData: User = {
+          id: dummyUser.id,
+          first_name: dummyUser.name.split(' ')[0] || dummyUser.name,
+          last_name: dummyUser.name.split(' ')[1] || '',
+          email: dummyUser.email || '',
+          phone_number: '+1234567890',
+          role: dummyUser.role,
+          employee_id: dummyUser.employeeId,
+          default_restaurant_id: dummyUser.restaurantId,
+          is_active: dummyUser.isActive,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        const restaurant = DUMMY_RESTAURANTS.find(r => r.id === dummyUser.restaurantId);
+        const restaurantData: Restaurant = {
+          id: dummyUser.restaurantId,
+          name: dummyUser.restaurantName,
+          address: restaurant?.address || '123 Main Street',
+          phone: restaurant?.phone || '+1 (555) 123-4567',
+          timezone: 'America/New_York',
+          is_active: true,
+        };
+
+        const tokens = generateDummyTokens(dummyUser);
+        
+        console.log('[DUMMY AUTH] Login successful:', {
+          userId: userData.id,
+          role: userData.role,
+          restaurant: restaurantData.name,
+        });
+
+        return {
+          user: userData,
+          restaurant: restaurantData,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresIn: tokens.expiresIn,
+        };
+      }
+
+      // If not dummy credentials, proceed with real API call
       const response = await authApiClient.login(credentials);
       
       if (__DEV__) {

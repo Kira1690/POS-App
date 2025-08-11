@@ -7,6 +7,13 @@ import {
   UserRole 
 } from '@/types';
 import { 
+  IAuthService,
+  RegisterUserRequest,
+  UpdateProfileRequest, 
+  UpdatePasswordRequest
+} from '@/interfaces';
+import { SessionInfo } from '@/types/api.types';
+import { 
   DUMMY_CREDENTIALS, 
   DUMMY_RESTAURANTS, 
   findUserByCredentials,
@@ -16,7 +23,7 @@ import {
 } from '@/constants/dummyData';
 
 // TODO: Remove this dummy service when backend is integrated
-export class DummyAuthService {
+export class DummyAuthService implements IAuthService {
   private currentUser: DummyUser | null = null;
 
   async login(credentials: LoginRequest): Promise<LoginResponse> {
@@ -37,22 +44,25 @@ export class DummyAuthService {
     // Convert DummyUser to User type
     const userData: User = {
       id: user.id,
+      first_name: user.name.split(' ')[0] || user.name,
+      last_name: user.name.split(' ')[1] || '',
       email: user.email || '',
-      name: user.name,
+      phone_number: '+1234567890', // Mock phone number
       role: user.role,
-      restaurantId: user.restaurantId,
-      isActive: user.isActive,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      employeeId: user.employeeId,
+      employee_id: user.employeeId,
+      default_restaurant_id: user.restaurantId,
+      is_active: user.isActive,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const restaurant: Restaurant = {
       id: user.restaurantId,
       name: user.restaurantName,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      address: '123 Main Street, City, State 12345',
+      phone: '+1 (555) 123-4567',
+      timezone: 'America/New_York',
+      is_active: true,
     };
 
     return {
@@ -97,14 +107,16 @@ export class DummyAuthService {
 
     return {
       id: this.currentUser.id,
+      first_name: this.currentUser.name.split(' ')[0] || this.currentUser.name,
+      last_name: this.currentUser.name.split(' ')[1] || '',
       email: this.currentUser.email || '',
-      name: this.currentUser.name,
+      phone_number: '+1234567890', // Mock phone number
       role: this.currentUser.role,
-      restaurantId: this.currentUser.restaurantId,
-      isActive: this.currentUser.isActive,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      employeeId: this.currentUser.employeeId,
+      employee_id: this.currentUser.employeeId,
+      default_restaurant_id: this.currentUser.restaurantId,
+      is_active: this.currentUser.isActive,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
   }
 
@@ -168,6 +180,111 @@ export class DummyAuthService {
     } catch (error) {
       return false;
     }
+  }
+
+  async isAuthenticated(): Promise<boolean> {
+    return this.currentUser !== null;
+  }
+
+  async register(userData: RegisterUserRequest): Promise<User> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Mock registration - in real implementation would create user
+    const newUser: User = {
+      id: `user_${Date.now()}`,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      email: userData.email,
+      phone_number: userData.phone_number,
+      role: userData.role || UserRole.RESTAURANT_STAFF,
+      default_restaurant_id: 'rest_001', // Default restaurant for demo
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    return newUser;
+  }
+
+  async updateProfile(userData: UpdateProfileRequest): Promise<User> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    if (!this.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    // Mock profile update
+    return this.getProfile();
+  }
+
+  async updatePassword(passwordData: UpdatePasswordRequest): Promise<void> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    if (!this.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    if (this.currentUser.password !== passwordData.currentPassword) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Mock password update
+    console.log('Password would be updated in real implementation');
+  }
+
+  async getSessions(): Promise<SessionInfo[]> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (!this.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    // Mock session data
+    return [{
+      id: 'session_1',
+      deviceInfo: 'Mobile App',
+      ipAddress: '192.168.1.100',
+      lastActive: new Date().toISOString(),
+      isCurrentSession: true,
+    }];
+  }
+
+  async revokeSession(sessionId: string): Promise<void> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (!this.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    console.log('Session would be revoked:', sessionId);
+  }
+
+  async revokeOtherSessions(): Promise<void> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (!this.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    console.log('Other sessions would be revoked');
+  }
+
+  async revokeAllSessions(): Promise<void> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (!this.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    this.currentUser = null;
+    console.log('All sessions would be revoked');
   }
 
   // Helper method to get current user for development/testing
