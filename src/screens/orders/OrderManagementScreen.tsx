@@ -16,7 +16,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useOrderManagement } from '@/context/order';
+import { useOrderManagement } from '@/context/orderManagement';
 import { useTheme } from '@/hooks/useTheme';
 import { Order } from '@/types/order.types';
 import { OrderStatus } from '@/types/common.types';

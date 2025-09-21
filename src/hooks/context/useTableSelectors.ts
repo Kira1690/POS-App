@@ -1,0 +1,184 @@
+/**
+ * Table Context Selectors - Performance-optimized table state subscriptions
+ * Prevents unnecessary re-renders by allowing components to subscribe only to
+ * specific parts of table state they actually need
+ */
+
+import { useMemo } from 'react';
+import { useContextSelector, deepEqual, shallowEqual } from './useContextSelector';
+import { TableContext } from '@/context/table/TableContext';
+import { Table } from '@/types/table.types';
+import { TableStatus } from '@/types/common.types';
+
+/**
+ * Select only the currently selected table
+ * Components using this won't re-render when other tables change
+ */
+export const useSelectedTable = () => {
+  return useContextSelector(
+    TableContext,
+    state => state.selectedTable,
+    (a, b) => a?.id === b?.id && a?.status === b?.status
+  );
+};
+
+/**
+ * Select all tables - use sparingly, prefer more specific selectors
+ */
+export const useAllTables = () => {
+  return useContextSelector(
+    TableContext,
+    state => state.tables,
+    deepEqual
+  );
+};
+
+/**
+ * Select tables by specific status
+ * Only re-renders when tables with the specified status change
+ */
+export const useTablesByStatus = (status: TableStatus) => {
+  return useContextSelector(
+    TableContext,
+    state => state.tables.filter(table => table.status === status),
+    (a, b) => a.length === b.length && a.every((table, i) => 
+      table.id === b[i]?.id && table.status === b[i]?.status
+    )
+  );
+};
+
+/**
+ * Select tables by service area
+ * Only re-renders when tables in the specified area change
+ */
+export const useTablesByServiceArea = (serviceArea: string) => {
+  return useContextSelector(
+    TableContext,
+    state => state.tables.filter(table => table.service_area === serviceArea),
+    (a, b) => a.length === b.length && a.every((table, i) => table.id === b[i]?.id)
+  );
+};
+
+/**
+ * Select table statistics only
+ * Won't re-render on individual table changes, only when counts change
+ */
+export const useTableStats = () => {
+  return useContextSelector(
+    TableContext,
+    state => {
+      const tables = state.tables;
+      const total = tables.length;
+      const available = tables.filter(t => t.status === TableStatus.AVAILABLE).length;
+      const occupied = tables.filter(t => t.status === TableStatus.OCCUPIED).length;
+      const reserved = tables.filter(t => t.status === TableStatus.RESERVED).length;
+      const cleaning = tables.filter(t => t.status === TableStatus.CLEANING).length;
+      const outOfOrder = tables.filter(t => t.status === TableStatus.OUT_OF_ORDER).length;
+      
+      return {
+        total,
+        available,
+        occupied,
+        reserved,
+        cleaning,
+        outOfOrder,
+        occupancyRate: total > 0 ? Math.round((occupied / total) * 100) : 0,
+      };
+    },
+    shallowEqual
+  );
+};
+
+/**
+ * Select specific table by ID
+ * Only re-renders when that specific table changes
+ */
+export const useTableById = (tableId: string | null) => {
+  return useContextSelector(
+    TableContext,
+    state => tableId ? state.tables.find(table => table.id === tableId) : null,
+    (a, b) => a?.id === b?.id && a?.status === b?.status && a?.current_order_id === b?.current_order_id
+  );
+};
+
+/**
+ * Select available tables only
+ * Optimized for table selection workflows
+ */
+export const useAvailableTables = () => {
+  return useTablesByStatus(TableStatus.AVAILABLE);
+};
+
+/**
+ * Select occupied tables only  
+ * Useful for active order monitoring
+ */
+export const useOccupiedTables = () => {
+  return useTablesByStatus(TableStatus.OCCUPIED);
+};
+
+/**
+ * Select loading and error states only
+ * Won't re-render when table data changes, only on loading/error changes
+ */
+export const useTableLoadingState = () => {
+  return useContextSelector(
+    TableContext,
+    state => ({
+      isLoading: state.isLoading,
+      error: state.error,
+      lastUpdated: state.lastUpdated,
+    }),
+    shallowEqual
+  );
+};
+
+/**
+ * Select table actions only
+ * Actions don't change, so this won't cause re-renders
+ */
+export const useTableActions = () => {
+  return useContextSelector(
+    TableContext,
+    state => ({
+      selectTable: state.selectTable,
+      updateTableStatus: state.updateTableStatus,
+      refreshTables: state.refreshTables,
+      clearError: state.clearError,
+    }),
+    () => true // Actions never change, so always equal
+  );
+};
+
+/**
+ * Select tables with active orders
+ * Useful for order management workflows
+ */
+export const useTablesWithOrders = () => {
+  return useContextSelector(
+    TableContext,
+    state => state.tables.filter(table => table.current_order_id),
+    (a, b) => a.length === b.length && a.every((table, i) => 
+      table.id === b[i]?.id && table.current_order_id === b[i]?.current_order_id
+    )
+  );
+};
+
+/**
+ * Custom hook for table-related computations
+ * Combines multiple selectors efficiently
+ */
+export const useTableSummary = () => {
+  const stats = useTableStats();
+  const selectedTable = useSelectedTable();
+  const loadingState = useTableLoadingState();
+  
+  return useMemo(() => ({
+    stats,
+    selectedTable,
+    isLoading: loadingState.isLoading,
+    error: loadingState.error,
+    hasSelection: !!selectedTable,
+    selectionStatus: selectedTable?.status || null,
+  }), [stats, selectedTable, loadingState]);
+};

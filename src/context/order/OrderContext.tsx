@@ -470,6 +470,8 @@ interface OrderProviderProps {
 
 export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(orderReducer, initialState);
+  // Use exported service instance to avoid DI registration issues
+  const orderServiceInstance = orderService;
   
   const createOrder = useCallback((table: Table) => {
     dispatch({ type: 'CREATE_ORDER', payload: { table } });
@@ -532,12 +534,12 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
   const loadOrders = useCallback(async (filters?: OrderFilterOptions) => {
     try {
       dispatch({ type: 'LOAD_ORDERS_START' });
-      const orders = await orderService.getOrders(filters);
+      const orders = await orderServiceInstance.getOrders(filters);
       dispatch({ type: 'LOAD_ORDERS_SUCCESS', payload: { orders: orders.data || [] } });
     } catch (error) {
       dispatch({ type: 'LOAD_ORDERS_ERROR', payload: { error: String(error) } });
     }
-  }, []);
+  }, [orderServiceInstance]);
   
   const selectOrderForManagement = useCallback((order: Order | null) => {
     dispatch({ type: 'SELECT_ORDER_FOR_MANAGEMENT', payload: { order } });
@@ -545,26 +547,26 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
   
   const updateOrderStatusManagement = useCallback(async (orderId: string, status: OrderStatus, notes?: string) => {
     try {
-      const updatedOrder = await orderService.updateOrderStatus(orderId, { status, kitchen_notes: notes });
+      const updatedOrder = await orderServiceInstance.updateOrderStatus(orderId, { status, kitchen_notes: notes });
       dispatch({ type: 'UPDATE_ORDER_IN_LIST', payload: { order: updatedOrder } });
     } catch (error) {
       setError(`Failed to update order status: ${error}`);
     }
-  }, [setError]);
+  }, [orderServiceInstance, setError]);
   
   const cancelOrder = useCallback(async (orderId: string, reason: string) => {
     try {
-      const updatedOrder = await orderService.cancelOrder(orderId, reason);
+      const updatedOrder = await orderServiceInstance.cancelOrder(orderId, reason);
       dispatch({ type: 'UPDATE_ORDER_IN_LIST', payload: { order: updatedOrder } });
     } catch (error) {
       setError(`Failed to cancel order: ${error}`);
     }
-  }, [setError]);
+  }, [orderServiceInstance, setError]);
   
   const updateOrderItemStatus = useCallback(async (orderId: string, itemId: string, status: OrderItemStatus) => {
     try {
       // This would need to be implemented in OrderService
-      // const updatedOrder = await orderService.updateOrderItemStatus(orderId, itemId, { status });
+      // const updatedOrder = await orderServiceInstance.updateOrderItemStatus(orderId, itemId, { status });
       // dispatch({ type: 'UPDATE_ORDER_IN_LIST', payload: { order: updatedOrder } });
       console.log('Update order item status:', { orderId, itemId, status });
     } catch (error) {
@@ -574,7 +576,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
   
   const loadKitchenOrders = useCallback(async () => {
     try {
-      const orders = await orderService.getCurrentOrders();
+      const orders = await orderServiceInstance.getCurrentOrders();
       // Convert orders to kitchen orders format
       const kitchenOrders: KitchenOrder[] = orders.map(order => ({
         id: order.id,
@@ -592,7 +594,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     } catch (error) {
       setError(`Failed to load kitchen orders: ${error}`);
     }
-  }, [setError]);
+  }, [orderServiceInstance, setError]);
   
   const updateKitchenOrderStatus = useCallback(async (orderId: string, status: OrderStatus) => {
     try {
@@ -623,10 +625,10 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
         special_instructions: state.currentOrder.special_instructions,
       };
       
-      const createdOrder = await orderService.createOrder(orderData);
+      const createdOrder = await orderServiceInstance.createOrder(orderData);
       
       // Update status to submitted (sent to kitchen)
-      await orderService.updateOrderStatus(createdOrder.id, { 
+      await orderServiceInstance.updateOrderStatus(createdOrder.id, { 
         status: OrderStatus.CONFIRMED,
         estimated_completion_time: new Date(Date.now() + 20 * 60 * 1000).toISOString(), // 20 minutes
       });
@@ -642,7 +644,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     } finally {
       dispatch({ type: 'SET_SUBMITTING_ORDER', payload: { submitting: false } });
     }
-  }, [state.currentOrder, state.cart, setError, loadOrders]);
+  }, [orderServiceInstance, state.currentOrder, state.cart, setError, loadOrders]);
   
   const setSearchQuery = useCallback((query: string) => {
     dispatch({ type: 'SET_SEARCH_QUERY', payload: { query } });

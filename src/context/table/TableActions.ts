@@ -248,13 +248,18 @@ export const createTableActions = (
         unsubscribe = null;
       }
       
-      tableWebSocketService.connect(restaurantId);
-      dispatch({ type: 'REALTIME_CONNECT' });
-      
-      // Subscribe to updates and store unsubscribe function
-      unsubscribe = tableWebSocketService.subscribe((update) => {
-        dispatch({ type: 'REALTIME_UPDATE', payload: update });
-      });
+      // Only connect if WebSocket service is available
+      if (tableWebSocketService) {
+        tableWebSocketService.connect(restaurantId);
+        dispatch({ type: 'REALTIME_CONNECT' });
+        
+        // Subscribe to updates and store unsubscribe function
+        unsubscribe = tableWebSocketService.subscribe((update) => {
+          dispatch({ type: 'REALTIME_UPDATE', payload: update });
+        });
+      } else {
+        console.warn('WebSocket service not available, skipping real-time updates');
+      }
     } catch (error: any) {
       console.error('Failed to connect to real-time updates:', error.message);
     }
@@ -267,7 +272,10 @@ export const createTableActions = (
       unsubscribe = null;
     }
     
-    tableWebSocketService.disconnect();
+    // Only disconnect if WebSocket service is available
+    if (tableWebSocketService) {
+      tableWebSocketService.disconnect();
+    }
     dispatch({ type: 'REALTIME_DISCONNECT' });
   };
 

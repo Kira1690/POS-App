@@ -3,7 +3,7 @@
  * Under 200 lines, single responsibility for table display
  */
 
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -27,7 +27,7 @@ interface TableCardProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-const TableCard: React.FC<TableCardProps> = memo(({
+const TableCardComponent: React.FC<TableCardProps> = ({
   table,
   isSelected = false,
   onPress,
@@ -44,8 +44,9 @@ const TableCard: React.FC<TableCardProps> = memo(({
     onLongPress();
   }, [onLongPress]);
 
-  const getStatusColor = useCallback((status: TableStatus): string => {
-    switch (status) {
+  // Memoize status color calculation for performance
+  const statusColor = useMemo(() => {
+    switch (table.status) {
       case TableStatus.AVAILABLE:
         return theme.colors.success;
       case TableStatus.OCCUPIED:
@@ -59,10 +60,11 @@ const TableCard: React.FC<TableCardProps> = memo(({
       default:
         return theme.colors.outlineVariant;
     }
-  }, [theme]);
+  }, [table.status, theme]);
 
-  const getStatusText = useCallback((status: TableStatus): string => {
-    switch (status) {
+  // Memoize status text calculation for performance
+  const statusText = useMemo(() => {
+    switch (table.status) {
       case TableStatus.AVAILABLE:
         return 'Available';
       case TableStatus.OCCUPIED:
@@ -76,9 +78,10 @@ const TableCard: React.FC<TableCardProps> = memo(({
       default:
         return 'Unknown';
     }
-  }, []);
+  }, [table.status]);
 
-  const getSizeStyles = useCallback(() => {
+  // Memoize size styles calculation for performance
+  const sizeStyles = useMemo(() => {
     switch (size) {
       case 'small':
         return {
@@ -98,9 +101,6 @@ const TableCard: React.FC<TableCardProps> = memo(({
     }
   }, [size]);
 
-  const statusColor = getStatusColor(table.status);
-  const statusText = getStatusText(table.status);
-  const sizeStyles = getSizeStyles();
 
   const baseContainerStyle: ViewStyle = {
     ...styles.container,
@@ -204,6 +204,20 @@ const TableCard: React.FC<TableCardProps> = memo(({
         </View>
       )}
     </TouchableOpacity>
+  );
+};
+
+// Memoized TableCard with intelligent comparison for performance
+const TableCard = memo(TableCardComponent, (prevProps, nextProps) => {
+  // Intelligent comparison to prevent unnecessary re-renders
+  return (
+    prevProps.table.id === nextProps.table.id &&
+    prevProps.table.status === nextProps.table.status &&
+    prevProps.table.table_number === nextProps.table.table_number &&
+    prevProps.table.capacity === nextProps.table.capacity &&
+    prevProps.table.current_order_id === nextProps.table.current_order_id &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.size === nextProps.size
   );
 });
 

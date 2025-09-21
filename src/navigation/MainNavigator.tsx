@@ -23,6 +23,7 @@ import {
 } from '@/screens/payment';
 import { TableProvider } from '@/context/table';
 import { OrderProvider } from '@/context/order';
+import { OrderManagementProvider } from '@/context/orderManagement';
 import { PaymentProvider } from '@/context/payment';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -56,32 +57,34 @@ const TablesStackNavigator = () => (
 const OrdersStackNavigator = () => (
   <PaymentProvider>
     <OrderProvider>
-      <OrdersStack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <OrdersStack.Screen 
-          name="OrderManagement" 
-          component={OrderManagementScreen} 
-        />
-        <OrdersStack.Screen 
-          name="OrderDetails" 
-          component={OrderDetailsScreen}
-        />
-        <OrdersStack.Screen 
-          name="POSOrder" 
-          component={POSOrderScreen}
-        />
-        <OrdersStack.Screen 
-          name="PaymentProcessing" 
-          component={PaymentProcessingScreen}
-        />
-        <OrdersStack.Screen 
-          name="PaymentConfirmation" 
-          component={PaymentConfirmationScreen}
-        />
-      </OrdersStack.Navigator>
+      <OrderManagementProvider>
+        <OrdersStack.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <OrdersStack.Screen 
+            name="OrderManagement" 
+            component={OrderManagementScreen} 
+          />
+          <OrdersStack.Screen 
+            name="OrderDetails" 
+            component={OrderDetailsScreen}
+          />
+          <OrdersStack.Screen 
+            name="POSOrder" 
+            component={POSOrderScreen}
+          />
+          <OrdersStack.Screen 
+            name="PaymentProcessing" 
+            component={PaymentProcessingScreen}
+          />
+          <OrdersStack.Screen 
+            name="PaymentConfirmation" 
+            component={PaymentConfirmationScreen}
+          />
+        </OrdersStack.Navigator>
+      </OrderManagementProvider>
     </OrderProvider>
   </PaymentProvider>
 );
@@ -89,20 +92,22 @@ const OrdersStackNavigator = () => (
 // Kitchen Stack Navigator - Kitchen operations
 const KitchenStackNavigator = () => (
   <OrderProvider>
-    <KitchenStack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <KitchenStack.Screen 
-        name="KitchenDisplay" 
-        component={KitchenDisplayScreen} 
-      />
-      <KitchenStack.Screen 
-        name="OrderDetails" 
-        component={OrderDetailsScreen}
-      />
-    </KitchenStack.Navigator>
+    <OrderManagementProvider>
+      <KitchenStack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <KitchenStack.Screen 
+          name="KitchenDisplay" 
+          component={KitchenDisplayScreen} 
+        />
+        <KitchenStack.Screen 
+          name="OrderDetails" 
+          component={OrderDetailsScreen}
+        />
+      </KitchenStack.Navigator>
+    </OrderManagementProvider>
   </OrderProvider>
 );
 

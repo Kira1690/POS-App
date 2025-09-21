@@ -8,8 +8,7 @@ import { ITableService, ITableWebSocketService, ITableContext } from '@/interfac
 import { Table, UpdateTableStatusRequest, CreateTableRequest } from '@/types/table.types';
 import { MenuItem } from '@/types/menu.types';
 import { TableStatus } from '@/types/common.types';
-import { tableService } from '@/services/tables';
-import { tableWebSocketService } from '@/services/api/table';
+import { TableServiceClass } from '@/services/tables';
 import { orderService } from '@/services/orders/orderService';
 import TableContext from './TableContext';
 import { tableReducer, initialTableState } from './TableReducer';
@@ -23,15 +22,24 @@ interface TableProviderProps {
 
 export const TableProvider: React.FC<TableProviderProps> = ({ 
   children, 
-  tableService: injectedTableService = tableService,
-  tableWebSocketService: injectedTableWebSocketService = tableWebSocketService 
+  tableService: injectedTableService,
+  tableWebSocketService: injectedTableWebSocketService 
 }) => {
   const [state, dispatch] = useReducer(tableReducer, initialTableState);
   
+  // Memoize services to prevent infinite re-renders
+  const defaultTableService = React.useMemo(() => new TableServiceClass(), []);
+  const defaultOrderService = React.useMemo(() => orderService, []);
+  
+  // Use injected services or fall back to default services
+  const tableServiceToUse = injectedTableService || defaultTableService;
+  const orderServiceToUse = defaultOrderService;
+  // Note: WebSocket service will need to be added to DI system later
+  
   // Memoize actions to prevent recreating on every render
   const actions = React.useMemo(
-    () => createTableActions(injectedTableService, injectedTableWebSocketService, orderService, dispatch),
-    [injectedTableService, injectedTableWebSocketService]
+    () => createTableActions(tableServiceToUse, injectedTableWebSocketService, orderServiceToUse, dispatch),
+    [tableServiceToUse, injectedTableWebSocketService, orderServiceToUse]
   );
 
   // Table operations

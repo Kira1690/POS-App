@@ -26,6 +26,8 @@ interface PaymentProviderProps {
 
 export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(paymentReducer, initialPaymentState);
+  // Use direct service instance to avoid DI registration issues
+  const paymentServiceInstance = paymentService;
 
   // Payment Processing Methods
   const processCardPayment = useCallback(async (request: ProcessPaymentRequest): Promise<ProfessionalPayment> => {
@@ -34,7 +36,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.PROCESSING));
       dispatch(PaymentActions.clearError());
 
-      const payment = await paymentService.processCardPayment(request);
+      const payment = await paymentServiceInstance.processCardPayment(request);
       
       dispatch(PaymentActions.addPayment(payment));
       dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.COMPLETED));
@@ -56,7 +58,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.PROCESSING));
       dispatch(PaymentActions.clearError());
 
-      const payment = await paymentService.processCashPayment(request);
+      const payment = await paymentServiceInstance.processCashPayment(request);
       
       dispatch(PaymentActions.addPayment(payment));
       dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.COMPLETED));
@@ -78,7 +80,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.PROCESSING));
       dispatch(PaymentActions.clearError());
 
-      const payment = await paymentService.processSplitPayment(request);
+      const payment = await paymentServiceInstance.processSplitPayment(request);
       
       dispatch(PaymentActions.addPayment(payment));
       dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.COMPLETED));
@@ -101,7 +103,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setVP3350Status(VP3350DeviceStatus.CONNECTING));
       dispatch(PaymentActions.clearError());
 
-      await paymentService.connectVP3350(config);
+      await paymentServiceInstance.connectVP3350(config);
       
       dispatch(PaymentActions.setVP3350Config(config));
       dispatch(PaymentActions.setVP3350Status(VP3350DeviceStatus.CONNECTED));
@@ -122,7 +124,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setLoading(true));
       dispatch(PaymentActions.clearError());
 
-      await paymentService.disconnectVP3350();
+      await paymentServiceInstance.disconnectVP3350();
       
       const currentDeviceName = state.vp3350Config?.deviceName;
       if (currentDeviceName) {
@@ -147,7 +149,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setVP3350Status(VP3350DeviceStatus.PROCESSING));
       dispatch(PaymentActions.clearError());
 
-      const result = await paymentService.processVP3350Payment(amount);
+      const result = await paymentServiceInstance.processVP3350Payment(amount);
       
       // Create payment record from VP3350 result
       const payment: ProfessionalPayment = {
@@ -190,7 +192,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
 
   const getVP3350DeviceStatus = useCallback(async (): Promise<VP3350DeviceStatus> => {
     try {
-      const status = await paymentService.getVP3350Status();
+      const status = await paymentServiceInstance.getVP3350Status();
       dispatch(PaymentActions.setVP3350Status(status));
       return status;
     } catch (error) {
@@ -205,7 +207,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setLoading(true));
       dispatch(PaymentActions.clearError());
 
-      const receipt = await paymentService.generateReceipt(paymentId, type as ReceiptType);
+      const receipt = await paymentServiceInstance.generateReceipt(paymentId, type as ReceiptType);
       
       dispatch(PaymentActions.addReceipt(receipt));
       
@@ -224,7 +226,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setLoading(true));
       dispatch(PaymentActions.clearError());
 
-      await paymentService.printReceipt(receiptId);
+      await paymentServiceInstance.printReceipt(receiptId);
       
       dispatch(PaymentActions.updateReceipt(receiptId, {
         printedAt: new Date().toISOString(),
@@ -244,7 +246,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setLoading(true));
       dispatch(PaymentActions.clearError());
 
-      await paymentService.emailReceipt(receiptId, email);
+      await paymentServiceInstance.emailReceipt(receiptId, email);
       
       dispatch(PaymentActions.updateReceipt(receiptId, {
         emailedAt: new Date().toISOString(),
@@ -264,7 +266,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setLoading(true));
       dispatch(PaymentActions.clearError());
 
-      await paymentService.smsReceipt(receiptId, phone);
+      await paymentServiceInstance.smsReceipt(receiptId, phone);
       
       dispatch(PaymentActions.updateReceipt(receiptId, {
         smsedAt: new Date().toISOString(),
@@ -285,7 +287,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setLoading(true));
       dispatch(PaymentActions.clearError());
 
-      const payments = await paymentService.getPaymentHistory(orderId);
+      const payments = await paymentServiceInstance.getPaymentHistory(orderId);
       
       return payments;
     } catch (error) {
@@ -302,7 +304,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setLoading(true));
       dispatch(PaymentActions.clearError());
 
-      const refund = await paymentService.refundPayment(request);
+      const refund = await paymentServiceInstance.refundPayment(request);
       
       dispatch(PaymentActions.addPayment(refund));
       
@@ -321,7 +323,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.setLoading(true));
       dispatch(PaymentActions.clearError());
 
-      await paymentService.voidPayment(paymentId, reason);
+      await paymentServiceInstance.voidPayment(paymentId, reason);
       
       dispatch(PaymentActions.updatePayment(paymentId, {
         status: PaymentProcessingStatus.CANCELLED,

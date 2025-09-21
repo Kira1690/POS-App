@@ -407,6 +407,47 @@ async serviceMethod(): Promise<Result<T, Error>> {
 
 **⚠️ VIOLATION CONSEQUENCES**: Critical rule violations result in automatic code rejection. All rules are non-negotiable.
 
+## 🚨 CRITICAL ARCHITECTURAL ISSUES - IMMEDIATE REFACTORING REQUIRED
+
+### Current Status: ARCHITECTURE VIOLATIONS IDENTIFIED
+**Analysis Date**: 2025-08-19  
+**Status**: 🔴 CRITICAL - 21 files violate CLAUDE.md mandates  
+**Priority**: EMERGENCY refactoring required before production deployment
+
+### Violation Summary
+- **21 files exceed size limits** (300 lines components, 200 lines services)
+- **SOLID principle violations** across major components and services
+- **Unmaintainable architecture** with 776-line components and 601-line services
+
+### Critical Files Requiring Immediate Attention
+| File | Lines | Type | Violation | Impact |
+|------|-------|------|-----------|--------|
+| OrderDetailsScreen.tsx | 776 | Component | 159% OVER | CRITICAL |
+| OrderContext.tsx | 737 | Context | 146% OVER | CRITICAL |
+| PaymentService.ts | 601 | Service | 200% OVER | CRITICAL |
+
+### 📋 REFACTORING ANALYSIS LOCATION
+**Complete Analysis**: `/prep/refactoring-analysis/`
+
+```bash
+# View comprehensive architectural analysis
+cat prep/refactoring-analysis/README.md
+
+# View detailed implementation plan
+cat prep/refactoring-analysis/refactoring-implementation-plan.md
+
+# View component decomposition strategy
+cat prep/refactoring-analysis/component-decomposition-strategy.md
+
+# View service restructuring plan
+cat prep/refactoring-analysis/service-layer-restructuring.md
+
+# View risk assessment
+cat prep/refactoring-analysis/risk-assessment-mitigation.md
+```
+
+**MANDATORY ACTION**: Review refactoring analysis and implement emergency decomposition before any new feature development.
+
 ## 📋 Implementation Progress Tracking
 
 ### How to Check Latest Updates

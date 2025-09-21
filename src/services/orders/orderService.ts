@@ -12,8 +12,9 @@ import {
   PaginatedResponse 
 } from '@/types/order.types';
 import { OrderStatus } from '@/types/common.types';
+import { IOrderService } from '@/interfaces/services/order.interface';
 
-export class OrderService {
+export class OrderService implements IOrderService {
   async createOrder(orderData: CreateOrderRequest): Promise<Order> {
     const response = await apiClient.post<Order>(
       API_ENDPOINTS.ORDERS.BASE,
@@ -74,7 +75,7 @@ export class OrderService {
     return response.data.data;
   }
 
-  async cancelOrder(orderId: string, reason?: string): Promise<Order> {
+  async cancelOrder(orderId: string, reason: string): Promise<Order> {
     const response = await apiClient.patch<Order>(
       `${API_ENDPOINTS.ORDERS.BASE}/${orderId}/cancel`,
       { reason }
@@ -407,7 +408,103 @@ class MockOrderService extends OrderService {
   }
 }
 
+// Add missing interface methods to base OrderService
+export class EnhancedOrderService extends OrderService {
+  // Implementation of missing interface methods
+  async updateOrder(orderId: string, updates: Partial<Order>): Promise<Order> {
+    const response = await apiClient.patch<Order>(
+      `${API_ENDPOINTS.ORDERS.BASE}/${orderId}`,
+      updates
+    );
+    
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || 'Failed to update order');
+    }
+    
+    return response.data.data;
+  }
+
+  async deleteOrder(orderId: string): Promise<void> {
+    const response = await apiClient.delete(
+      `${API_ENDPOINTS.ORDERS.BASE}/${orderId}`
+    );
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to delete order');
+    }
+  }
+
+  async updateOrderItemStatus(orderId: string, itemId: string, statusData: UpdateOrderItemStatusRequest): Promise<Order> {
+    const response = await apiClient.patch<Order>(
+      `${API_ENDPOINTS.ORDERS.BASE}/${orderId}/items/${itemId}/status`,
+      statusData
+    );
+    
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || 'Failed to update order item status');
+    }
+    
+    return response.data.data;
+  }
+
+  async markOrderReady(orderId: string): Promise<Order> {
+    return this.updateOrderStatus(orderId, { status: OrderStatus.READY });
+  }
+
+  async getOrdersByTable(tableId: string): Promise<Order[]> {
+    const response = await this.getOrders({ tableId });
+    return response.data || [];
+  }
+
+  async getOrdersByStatus(status: OrderStatus): Promise<Order[]> {
+    const response = await this.getOrders({ status });
+    return response.data || [];
+  }
+
+  async getOrdersByDateRange(startDate: string, endDate: string): Promise<Order[]> {
+    const response = await apiClient.get<Order[]>(
+      API_ENDPOINTS.ORDERS.BASE,
+      { 
+        params: { 
+          date_from: startDate, 
+          date_to: endDate 
+        } 
+      }
+    );
+    
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || 'Failed to get orders by date range');
+    }
+    
+    return response.data.data;
+  }
+
+  async getOrderStats(restaurantId: string, dateRange?: { start: string; end: string }): Promise<{
+    totalOrders: number;
+    totalRevenue: number;
+    averageOrderValue: number;
+    popularItems: Array<{ itemId: string; name: string; count: number }>;
+  }> {
+    const params: any = { restaurantId };
+    if (dateRange) {
+      params.date_from = dateRange.start;
+      params.date_to = dateRange.end;
+    }
+
+    const response = await apiClient.get(
+      `${API_ENDPOINTS.ORDERS.BASE}/stats`,
+      { params }
+    );
+    
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || 'Failed to get order stats');
+    }
+    
+    return response.data.data;
+  }
+}
+
 // Export appropriate service based on environment
 export const orderService = process.env.NODE_ENV === 'development' 
   ? new MockOrderService()
-  : new OrderService();
+  : new EnhancedOrderService();

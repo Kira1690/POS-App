@@ -4,7 +4,7 @@
  */
 
 import React, { useReducer, useEffect, useCallback } from 'react';
-import { authService } from '@/services/auth';
+import { AuthServiceClass } from '@/services/auth';
 import { IAuthService, IAuthContext, UpdateProfileRequest } from '@/interfaces';
 import { User, UserRole, Restaurant, LoginRequest } from '@/types';
 import { showToast } from '@/utils/toast';
@@ -19,20 +19,26 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ 
   children, 
-  authService: injectedAuthService = authService 
+  authService: injectedAuthService 
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
-  const actions = createAuthActions(injectedAuthService, dispatch);
+  
+  // Memoize the default service to prevent infinite re-renders
+  const defaultAuthService = React.useMemo(() => new AuthServiceClass(), []);
+  
+  // Use injected service or fall back to default service
+  const authServiceToUse = injectedAuthService || defaultAuthService;
+  const actions = createAuthActions(authServiceToUse, dispatch);
 
   // Initialize auth on app start
   const initializeAuth = useCallback(async () => {
     dispatch({ type: 'AUTH_INITIALIZE_START' });
     
     try {
-      const isAuthenticated = await injectedAuthService.isAuthenticated();
+      const isAuthenticated = await authServiceToUse.isAuthenticated();
       
       if (isAuthenticated) {
-        const user = await injectedAuthService.getProfile();
+        const user = await authServiceToUse.getProfile();
         dispatch({ 
           type: 'AUTH_INITIALIZE_SUCCESS', 
           payload: { user } 
@@ -44,12 +50,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       console.error('Auth initialization failed:', error.message);
       dispatch({ type: 'AUTH_INITIALIZE_FAILURE' });
     }
-  }, [injectedAuthService]);
+  }, [authServiceToUse]);
 
   // Profile management
   const updateProfile = useCallback(async (userData: UpdateProfileRequest) => {
     try {
-      const updatedUser = await injectedAuthService.updateProfile(userData);
+      const updatedUser = await authServiceToUse.updateProfile(userData);
       dispatch({ type: 'AUTH_UPDATE_USER', payload: updatedUser });
       
       showToast({
@@ -70,11 +76,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       
       throw error;
     }
-  }, [injectedAuthService]);
+  }, [authServiceToUse]);
 
   const updatePassword = useCallback(async (currentPassword: string, newPassword: string) => {
     try {
-      await injectedAuthService.updatePassword({ currentPassword, newPassword });
+      await authServiceToUse.updatePassword({ currentPassword, newPassword });
       
       showToast({
         type: 'success',
@@ -94,12 +100,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       
       throw error;
     }
-  }, [injectedAuthService]);
+  }, [authServiceToUse]);
 
   // Utility functions
   const refreshUserData = useCallback(async () => {
     try {
-      const user = await injectedAuthService.getProfile();
+      const user = await authServiceToUse.getProfile();
       dispatch({ type: 'AUTH_UPDATE_USER', payload: user });
     } catch (error: any) {
       console.error('Failed to refresh user data:', error.message);
@@ -107,7 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         dispatch({ type: 'AUTH_SESSION_EXPIRED' });
       }
     }
-  }, [injectedAuthService]);
+  }, [authServiceToUse]);
 
   const switchRestaurant = useCallback((restaurant: Restaurant) => {
     dispatch({ type: 'AUTH_UPDATE_RESTAURANT', payload: restaurant });
@@ -121,7 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
 
   const checkAuthStatus = useCallback(async () => {
     try {
-      const isAuthenticated = await injectedAuthService.isAuthenticated();
+      const isAuthenticated = await authServiceToUse.isAuthenticated();
       
       if (!isAuthenticated && state.isAuthenticated) {
         dispatch({ type: 'AUTH_SESSION_EXPIRED' });
@@ -131,7 +137,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     } catch (error: any) {
       console.error('Auth status check failed:', error.message);
     }
-  }, [injectedAuthService, state.isAuthenticated, initializeAuth]);
+  }, [authServiceToUse, state.isAuthenticated, initializeAuth]);
 
   // Role-based utilities
   const hasRole = useCallback((role: UserRole): boolean => {
