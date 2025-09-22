@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="5.0" version="24.7.17">
+  <diagram name="1.1 Welcome-Splash" id="welcome-splash">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Welcome Screen -->
+        <mxCell id="welcome-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="360" y="140" width="1200" height="800" as="geometry" />
+        </mxCell>
+        <!-- Header -->
+        <mxCell id="welcome-header" value="FoodPOS Restaurant Management System" style="rounded=0;whiteSpace=wrap;html=1;fontSize=28;fontStyle=1;fillColor=#1A1D21;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="360" y="140" width="1200" height="80" as="geometry" />
+        </mxCell>
+        <!-- Logo Area -->
+        <mxCell id="logo-area" value="🍽️ LOGO" style="rounded=1;whiteSpace=wrap;html=1;fontSize=48;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="840" y="280" width="240" height="240" as="geometry" />
+        </mxCell>
+        <!-- Welcome Text -->
+        <mxCell id="welcome-text" value="Welcome to Professional Restaurant POS System" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="690" y="560" width="540" height="40" as="geometry" />
+        </mxCell>
+        <!-- Subtitle -->
+        <mxCell id="subtitle" value="Complete restaurant operations management solution" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="755" y="610" width="410" height="30" as="geometry" />
+        </mxCell>
+        <!-- Get Started Button -->
+        <mxCell id="get-started-btn" value="Get Started" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=1;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="860" y="680" width="200" height="60" as="geometry" />
+        </mxCell>
+        <!-- Version Info -->
+        <mxCell id="version-info" value="Version 2.0.0" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#999999;" parent="1" vertex="1">
+          <mxGeometry x="925" y="780" width="90" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  
+  <diagram name="1.2 Initial Setup-Registration" id="initial-setup">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Setup Container -->
+        <mxCell id="setup-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="360" y="40" width="1200" height="1000" as="geometry" />
+        </mxCell>
+        <!-- Header -->
+        <mxCell id="setup-header" value="Restaurant Setup &amp; Registration" style="rounded=0;whiteSpace=wrap;html=1;fontSize=24;fontStyle=1;fillColor=#1A1D21;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="360" y="40" width="1200" height="60" as="geometry" />
+        </mxCell>
+        <!-- Progress Indicator -->
+        <mxCell id="progress-bar" value="Step 1 of 3: Restaurant Information" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="400" y="140" width="1120" height="40" as="geometry" />
+        </mxCell>
+        <!-- Form Container -->
+        <mxCell id="form-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="500" y="220" width="920" height="720" as="geometry" />
+        </mxCell>
+        <!-- Restaurant Name -->
+        <mxCell id="restaurant-name-label" value="Restaurant Name*" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="260" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-name-input" value="Enter restaurant name" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="300" width="840" height="50" as="geometry" />
+        </mxCell>
+        <!-- Mobile Number -->
+        <mxCell id="mobile-label" value="Mobile Number*" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="380" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="mobile-input" value="+1 (555) 000-0000" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="420" width="400" height="50" as="geometry" />
+        </mxCell>
+        <!-- Email Address -->
+        <mxCell id="email-label" value="Email Address*" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="980" y="380" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="email-input" value="restaurant@example.com" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="980" y="420" width="400" height="50" as="geometry" />
+        </mxCell>
+        <!-- Address -->
+        <mxCell id="address-label" value="Restaurant Address*" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="500" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="address-input" value="Enter complete address" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="540" width="840" height="80" as="geometry" />
+        </mxCell>
+        <!-- Business Type -->
+        <mxCell id="business-type-label" value="Business Type" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="650" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="business-type-dropdown" value="Select Restaurant Type ▼" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="690" width="400" height="50" as="geometry" />
+        </mxCell>
+        <!-- Cuisine Type -->
+        <mxCell id="cuisine-type-label" value="Primary Cuisine" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="980" y="650" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cuisine-type-dropdown" value="Select Cuisine Type ▼" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="980" y="690" width="400" height="50" as="geometry" />
+        </mxCell>
+        <!-- Terms and Conditions -->
+        <mxCell id="terms-checkbox" value="☐ I agree to Terms &amp; Conditions and Privacy Policy" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="540" y="780" width="350" height="30" as="geometry" />
+        </mxCell>
+        <!-- Action Buttons -->
+        <mxCell id="back-btn" value="Back" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="540" y="860" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="continue-btn" value="Continue" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1260" y="860" width="120" height="50" as="geometry" />
+        </mxCell>
+        <!-- Skip Option -->
+        <mxCell id="skip-setup" value="Skip Setup (Complete Later)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#007bff;textDecoration=underline;" parent="1" vertex="1">
+          <mxGeometry x="845" y="960" width="190" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="1.3 Role Selection" id="role-selection">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Role Selection Container -->
+        <mxCell id="role-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="360" y="140" width="1200" height="800" as="geometry" />
+        </mxCell>
+        <!-- Header -->
+        <mxCell id="role-header" value="Select Your Role" style="rounded=0;whiteSpace=wrap;html=1;fontSize=28;fontStyle=1;fillColor=#1A1D21;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="360" y="140" width="1200" height="80" as="geometry" />
+        </mxCell>
+        <!-- Subtitle -->
+        <mxCell id="role-subtitle" value="Choose your role to access the appropriate interface" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="755" y="260" width="410" height="30" as="geometry" />
+        </mxCell>
+        <!-- Staff Card -->
+        <mxCell id="staff-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="480" y="340" width="280" height="320" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-icon" value="👥" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=64;" parent="1" vertex="1">
+          <mxGeometry x="590" y="380" width="60" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-title" value="Restaurant Staff" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="480" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-desc" value="• Order Management&#xa;• Table Operations&#xa;• Basic POS Functions&#xa;• Customer Service" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="500" y="520" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-login-btn" value="Staff Login" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="540" y="610" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Manager Card -->
+        <mxCell id="manager-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="820" y="340" width="280" height="320" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-icon" value="👨‍💼" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=64;" parent="1" vertex="1">
+          <mxGeometry x="920" y="380" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-title" value="Manager / Admin" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="860" y="480" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-desc" value="• Full System Access&#xa;• Menu Management&#xa;• Reports &amp; Analytics&#xa;• Staff Management&#xa;• System Configuration" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="840" y="510" width="140" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-login-btn" value="Manager Login" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="870" y="610" width="140" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Kitchen Staff Card -->
+        <mxCell id="kitchen-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1160" y="340" width="280" height="320" as="geometry" />
+        </mxCell>
+        <mxCell id="kitchen-icon" value="👨‍🍳" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=64;" parent="1" vertex="1">
+          <mxGeometry x="1260" y="380" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="kitchen-title" value="Kitchen Staff" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1210" y="480" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="kitchen-desc" value="• Kitchen Display&#xa;• Order Preparation&#xa;• Status Updates&#xa;• Kitchen Analytics" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="1180" y="520" width="120" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="kitchen-login-btn" value="Kitchen Login" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1210" y="610" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Footer -->
+        <mxCell id="role-footer" value="Need help? Contact support: support@foodpos.com" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#999999;" parent="1" vertex="1">
+          <mxGeometry x="810" y="720" width="300" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="1.4 Staff Login Screen" id="staff-login">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Staff Login Container -->
+        <mxCell id="staff-login-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="560" y="140" width="800" height="800" as="geometry" />
+        </mxCell>
+        <!-- Header -->
+        <mxCell id="staff-login-header" value="Staff Login" style="rounded=0;whiteSpace=wrap;html=1;fontSize=28;fontStyle=1;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="560" y="140" width="800" height="80" as="geometry" />
+        </mxCell>
+        <!-- Back Button -->
+        <mxCell id="back-to-role" value="← Back to Role Selection" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#007bff;textDecoration=underline;" parent="1" vertex="1">
+          <mxGeometry x="600" y="260" width="170" height="30" as="geometry" />
+        </mxCell>
+        <!-- Login Form -->
+        <mxCell id="staff-form-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="640" y="320" width="640" height="500" as="geometry" />
+        </mxCell>
+        <!-- Staff Icon -->
+        <mxCell id="staff-login-icon" value="👥" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=72;" parent="1" vertex="1">
+          <mxGeometry x="920" y="360" width="80" height="100" as="geometry" />
+        </mxCell>
+        <!-- Employee ID -->
+        <mxCell id="employee-id-label" value="Employee ID*" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="500" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="employee-id-input" value="Enter Employee ID (e.g., EMP001)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="680" y="540" width="560" height="60" as="geometry" />
+        </mxCell>
+        <!-- Password -->
+        <mxCell id="staff-password-label" value="Password*" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="630" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-password-input" value="••••••••" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="680" y="670" width="560" height="60" as="geometry" />
+        </mxCell>
+        <!-- Remember Me -->
+        <mxCell id="remember-staff" value="☐ Remember this device" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="680" y="750" width="180" height="30" as="geometry" />
+        </mxCell>
+        <!-- Login Button -->
+        <mxCell id="staff-login-button" value="Login to POS System" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=1;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="880" y="750" width="200" height="60" as="geometry" />
+        </mxCell>
+        <!-- Forgot Password -->
+        <mxCell id="forgot-password-staff" value="Forgot Password?" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#007bff;textDecoration=underline;" parent="1" vertex="1">
+          <mxGeometry x="905" y="840" width="130" height="30" as="geometry" />
+        </mxCell>
+        <!-- Help Text -->
+        <mxCell id="staff-help-text" value="For new employees, contact your manager to get login credentials" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="785" y="880" width="390" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="1.5 Manager Login Screen" id="manager-login">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Manager Login Container -->
+        <mxCell id="manager-login-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="560" y="140" width="800" height="800" as="geometry" />
+        </mxCell>
+        <!-- Header -->
+        <mxCell id="manager-login-header" value="Manager Login" style="rounded=0;whiteSpace=wrap;html=1;fontSize=28;fontStyle=1;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="560" y="140" width="800" height="80" as="geometry" />
+        </mxCell>
+        <!-- Back Button -->
+        <mxCell id="back-to-role-mgr" value="← Back to Role Selection" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#007bff;textDecoration=underline;" parent="1" vertex="1">
+          <mxGeometry x="600" y="260" width="170" height="30" as="geometry" />
+        </mxCell>
+        <!-- Login Form -->
+        <mxCell id="manager-form-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="640" y="320" width="640" height="500" as="geometry" />
+        </mxCell>
+        <!-- Manager Icon -->
+        <mxCell id="manager-login-icon" value="👨‍💼" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=72;" parent="1" vertex="1">
+          <mxGeometry x="920" y="360" width="80" height="100" as="geometry" />
+        </mxCell>
+        <!-- Email Address -->
+        <mxCell id="manager-email-label" value="Email Address*" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="500" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-email-input" value="manager@restaurant.com" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="680" y="540" width="560" height="60" as="geometry" />
+        </mxCell>
+        <!-- Password -->
+        <mxCell id="manager-password-label" value="Password*" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="630" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-password-input" value="••••••••" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="680" y="670" width="560" height="60" as="geometry" />
+        </mxCell>
+        <!-- Remember Me -->
+        <mxCell id="remember-manager" value="☐ Remember this device" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="680" y="750" width="180" height="30" as="geometry" />
+        </mxCell>
+        <!-- Login Button -->
+        <mxCell id="manager-login-button" value="Login to Management" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=1;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="880" y="750" width="200" height="60" as="geometry" />
+        </mxCell>
+        <!-- Forgot Password -->
+        <mxCell id="forgot-password-manager" value="Forgot Password?" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#007bff;textDecoration=underline;" parent="1" vertex="1">
+          <mxGeometry x="905" y="840" width="130" height="30" as="geometry" />
+        </mxCell>
+        <!-- Help Text -->
+        <mxCell id="manager-help-text" value="Contact system administrator for account setup or password reset" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="785" y="880" width="390" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="1.6 Restaurant Selection" id="restaurant-selection">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Restaurant Selection Container -->
+        <mxCell id="restaurant-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="360" y="140" width="1200" height="800" as="geometry" />
+        </mxCell>
+        <!-- Header -->
+        <mxCell id="restaurant-header" value="Select Restaurant Location" style="rounded=0;whiteSpace=wrap;html=1;fontSize=24;fontStyle=1;fillColor=#1A1D21;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="360" y="140" width="1200" height="60" as="geometry" />
+        </mxCell>
+        <!-- User Info -->
+        <mxCell id="user-info" value="Welcome, Alice Johnson (Manager)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="400" y="240" width="280" height="30" as="geometry" />
+        </mxCell>
+        <!-- Restaurant Cards -->
+        <!-- Restaurant 1 -->
+        <mxCell id="restaurant-1-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="480" y="320" width="320" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-1-name" value="The Food Corner" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="570" y="340" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-1-address" value="123 Main Street&#xa;City, State 12345" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="565" y="380" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-1-phone" value="📞 +1 (555) 123-4567" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="560" y="430" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-1-status" value="🟢 Open" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#28a745;" parent="1" vertex="1">
+          <mxGeometry x="615" y="460" width="70" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-1-select" value="Select Location" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="560" y="510" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Restaurant 2 -->
+        <mxCell id="restaurant-2-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="840" y="320" width="320" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-2-name" value="Pizza Palace" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="935" y="340" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-2-address" value="456 Oak Avenue&#xa;City, State 12345" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="925" y="380" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-2-phone" value="📞 +1 (555) 987-6543" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="920" y="430" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-2-status" value="🔴 Closed" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#dc3545;" parent="1" vertex="1">
+          <mxGeometry x="970" y="460" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="restaurant-2-select" value="Select Location" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="920" y="510" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Add New Restaurant -->
+        <mxCell id="add-restaurant-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#007bff;strokeWidth=2;strokeStyle=dashed;" parent="1" vertex="1">
+          <mxGeometry x="480" y="600" width="320" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="add-restaurant-icon" value="+" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=48;fontColor=#007bff;" parent="1" vertex="1">
+          <mxGeometry x="625" y="680" width="30" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="add-restaurant-text" value="Add New Restaurant" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=#007bff;" parent="1" vertex="1">
+          <mxGeometry x="555" y="760" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Continue Button -->
+        <mxCell id="continue-to-app" value="Continue to Application" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=1;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="840" y="780" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Logout Option -->
+        <mxCell id="logout-option" value="Logout" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#dc3545;textDecoration=underline;" parent="1" vertex="1">
+          <mxGeometry x="1480" y="240" width="60" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="5.0" version="24.7.17">
+  <diagram name="2.1 Visual Dashboard Overview" id="dashboard-overview">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Dashboard Container -->
+        <mxCell id="dashboard-container" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="1080" as="geometry" />
+        </mxCell>
+        
+        <!-- Top Header Bar -->
+        <mxCell id="header-bar" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Logo and Restaurant Name -->
+        <mxCell id="logo-restaurant" value="🍽️ The Food Corner - Dashboard" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="40" y="25" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Date and Time -->
+        <mxCell id="date-time" value="📅 Monday, September 21, 2025 | 🕐 2:30 PM" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="760" y="25" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- User Profile -->
+        <mxCell id="user-profile" value="👨‍💼 Alice Johnson (Manager) | Logout" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="1550" y="25" width="330" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Left Sidebar Navigation -->
+        <mxCell id="sidebar" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="0" y="80" width="250" height="1000" as="geometry" />
+        </mxCell>
+
+        <!-- Navigation Menu Items -->
+        <mxCell id="nav-dashboard" value="📊 Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="20" y="120" width="210" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="nav-orders" value="📋 Orders" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="20" y="190" width="210" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="nav-tables" value="🪑 Tables" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="20" y="260" width="210" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="nav-kitchen" value="👨‍🍳 Kitchen" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="20" y="330" width="210" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="nav-menu" value="📖 Menu" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="20" y="400" width="210" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="nav-reports" value="📈 Reports" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="20" y="470" width="210" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="nav-settings" value="⚙️ Settings" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="20" y="540" width="210" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Main Content Area -->
+        <mxCell id="main-content" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="250" y="80" width="1670" height="1000" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Stats Row -->
+        <!-- Today's Sales Card -->
+        <mxCell id="sales-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="290" y="120" width="300" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="sales-icon" value="💰" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="310" y="140" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sales-title" value="Today's Sales" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="360" y="145" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sales-amount" value="$2,847.50" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=28;fontStyle=1;fontColor=#28a745;" parent="1" vertex="1">
+          <mxGeometry x="310" y="185" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sales-change" value="↗️ +12.5% from yesterday" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#28a745;" parent="1" vertex="1">
+          <mxGeometry x="310" y="235" width="160" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Active Orders Card -->
+        <mxCell id="orders-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="120" width="300" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="orders-icon" value="📋" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="640" y="140" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="orders-title" value="Active Orders" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="145" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="orders-count" value="23" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=28;fontStyle=1;fontColor=#007bff;" parent="1" vertex="1">
+          <mxGeometry x="640" y="185" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="orders-breakdown" value="12 Dine-in | 8 Takeaway | 3 Delivery" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="640" y="235" width="220" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Table Occupancy Card -->
+        <mxCell id="tables-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="950" y="120" width="300" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="tables-icon" value="🪑" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="970" y="140" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tables-title" value="Table Occupancy" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1010" y="145" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="tables-occupancy" value="16/25" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=28;fontStyle=1;fontColor=#fd7e14;" parent="1" vertex="1">
+          <mxGeometry x="970" y="185" width="70" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tables-percentage" value="64% occupancy rate" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="970" y="235" width="130" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Staff On Duty Card -->
+        <mxCell id="staff-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="120" width="300" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-icon" value="👥" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="1300" y="140" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-title" value="Staff On Duty" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1340" y="145" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-count" value="8" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=28;fontStyle=1;fontColor=#6610f2;" parent="1" vertex="1">
+          <mxGeometry x="1300" y="185" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-breakdown" value="5 Servers | 2 Kitchen | 1 Manager" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="1300" y="235" width="190" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Sales Chart Area -->
+        <mxCell id="sales-chart-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="290" y="310" width="800" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="chart-title" value="Sales Trend (Last 7 Days)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="310" y="330" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="chart-placeholder" value="📊 Sales Chart Visualization&#xa;&#xa;Interactive chart showing:&#xa;• Daily sales comparison&#xa;• Revenue trends&#xa;• Peak hours analysis&#xa;• Order volume patterns" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="560" y="430" width="180" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Recent Orders Panel -->
+        <mxCell id="recent-orders-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1120" y="310" width="460" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="recent-orders-title" value="Recent Orders" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="330" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="view-all-orders" value="View All →" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#007bff;textDecoration=underline;" parent="1" vertex="1">
+          <mxGeometry x="1490" y="335" width="80" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Order List Items -->
+        <mxCell id="order-1" value="Table 12 | $45.50 | 🟡 Preparing" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fff3cd;strokeColor=#ffeaa7;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="380" width="420" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="order-2" value="Takeaway | $28.75 | 🟢 Ready" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#d4edda;strokeColor=#c3e6cb;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="425" width="420" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="order-3" value="Table 8 | $67.25 | 🔴 Pending" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#f8d7da;strokeColor=#f5c6cb;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="470" width="420" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="order-4" value="Delivery | $52.00 | 🟡 Preparing" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fff3cd;strokeColor=#ffeaa7;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="515" width="420" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="order-5" value="Table 15 | $89.50 | 🟢 Ready" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#d4edda;strokeColor=#c3e6cb;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="560" width="420" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Actions Panel -->
+        <mxCell id="quick-actions-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="290" y="700" width="1290" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="quick-actions-title" value="Quick Actions" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="310" y="720" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Action Buttons -->
+        <mxCell id="new-order-btn" value="➕ New Order" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="310" y="770" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="view-tables-btn" value="🪑 View Tables" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="470" y="770" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="kitchen-display-btn" value="👨‍🍳 Kitchen Display" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="630" y="770" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="daily-report-btn" value="📊 Daily Report" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#6610f2;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="790" y="770" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="menu-management-btn" value="📖 Menu Management" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#20c997;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="950" y="770" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="settings-btn" value="⚙️ Settings" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1110" y="770" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Notification Center -->
+        <mxCell id="notification-icon" value="🔔" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="1610" y="120" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="notification-badge" value="5" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fontStyle=1;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1635" y="120" width="20" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="2.2 Staff Dashboard" id="staff-dashboard">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Staff Dashboard Container -->
+        <mxCell id="staff-dashboard-container" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="1080" as="geometry" />
+        </mxCell>
+        
+        <!-- Top Header Bar -->
+        <mxCell id="staff-header-bar" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#28a745;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Staff Logo and Name -->
+        <mxCell id="staff-logo-restaurant" value="🍽️ The Food Corner - Staff Dashboard" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="40" y="25" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Staff Info -->
+        <mxCell id="staff-user-info" value="👥 John Doe (EMP001) | Restaurant Staff" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="1520" y="25" width="350" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Bottom Tab Navigation -->
+        <mxCell id="bottom-nav" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="0" y="1000" width="1920" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Tab Items -->
+        <mxCell id="tab-dashboard" value="📊&#xa;Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="100" y="1010" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tab-orders" value="📋&#xa;Orders" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="260" y="1010" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tab-tables" value="🪑&#xa;Tables" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="420" y="1010" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tab-pos" value="💳&#xa;POS" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="580" y="1010" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Main Content Area for Staff -->
+        <mxCell id="staff-main-content" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="80" width="1920" height="920" as="geometry" />
+        </mxCell>
+
+        <!-- Staff Quick Stats -->
+        <!-- My Shift Card -->
+        <mxCell id="shift-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="140" width="350" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="shift-title" value="My Shift" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="160" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="shift-time" value="Started: 9:00 AM | Duration: 5h 30m" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="100" y="190" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="shift-end" value="Scheduled End: 6:00 PM" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="100" y="220" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- My Orders Card -->
+        <mxCell id="my-orders-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="480" y="140" width="350" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="my-orders-title" value="My Orders Today" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="500" y="160" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="my-orders-count" value="18 Orders | $456.75 Total" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=#28a745;" parent="1" vertex="1">
+          <mxGeometry x="500" y="190" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="my-orders-avg" value="Average Order: $25.38" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="500" y="220" width="150" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- My Tables Card -->
+        <mxCell id="my-tables-card" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="880" y="140" width="350" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="my-tables-title" value="Assigned Tables" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="900" y="160" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="my-tables-list" value="Tables: 1, 3, 5, 7, 9, 11, 13, 15" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="900" y="190" width="220" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="my-tables-status" value="5 Occupied | 3 Available" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="900" y="220" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Current Tasks Section -->
+        <mxCell id="tasks-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="300" width="1150" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="tasks-title" value="Current Tasks &amp; Notifications" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="320" width="250" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Task List -->
+        <mxCell id="task-1" value="🔴 URGENT: Table 7 - Order #1234 ready for pickup from kitchen" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#f8d7da;strokeColor=#f5c6cb;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="370" width="1110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="task-2" value="🟡 Table 3 - Customer requesting extra napkins and condiments" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fff3cd;strokeColor=#ffeaa7;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="420" width="1110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="task-3" value="🟢 Table 11 - Ready to take dessert order" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#d4edda;strokeColor=#c3e6cb;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="470" width="1110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="task-4" value="🔵 Table 15 - Check if customer needs drink refills" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#cce5ff;strokeColor=#99d6ff;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="520" width="1110" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Actions for Staff -->
+        <mxCell id="staff-actions-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="640" width="1150" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-actions-title" value="Quick Actions" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="660" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Staff Action Buttons -->
+        <mxCell id="take-order-btn" value="📝 Take Order" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="100" y="720" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="check-tables-btn" value="🪑 Check My Tables" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="300" y="720" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="send-kitchen-btn" value="👨‍🍳 Send to Kitchen" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="500" y="720" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="process-payment-btn" value="💳 Process Payment" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#6610f2;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="700" y="720" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="call-manager-btn" value="📞 Call Manager" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="900" y="720" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Performance Indicator -->
+        <mxCell id="performance-indicator" value="⭐ Today's Performance: Excellent (4.8/5.0)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=#28a745;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1290" y="180" width="330" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="2.3 Kitchen Dashboard" id="kitchen-dashboard">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Kitchen Dashboard Container -->
+        <mxCell id="kitchen-dashboard-container" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="1080" as="geometry" />
+        </mxCell>
+        
+        <!-- Kitchen Header Bar -->
+        <mxCell id="kitchen-header-bar" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fd7e14;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- Kitchen Title -->
+        <mxCell id="kitchen-title" value="🍽️ KITCHEN DISPLAY SYSTEM" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=32;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="760" y="35" width="400" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Time and Staff -->
+        <mxCell id="kitchen-time" value="🕐 2:30 PM" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="40" y="40" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="kitchen-staff" value="👨‍🍳 Chef Mike Wilson (CHEF001)" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="1580" y="40" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Station Status Bar -->
+        <mxCell id="station-status-bar" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="0" y="100" width="1920" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Station Status Indicators -->
+        <mxCell id="appetizer-station" value="🥗 APPETIZERS (3)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="40" y="115" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="main-station" value="🍖 MAIN COURSE (7)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="260" y="115" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sushi-station" value="🍣 SUSHI (2)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="480" y="115" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dessert-station" value="🍰 DESSERTS (1)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#6610f2;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="700" y="115" width="200" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Priority Queue Display -->
+        <mxCell id="priority-queue" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="40" y="200" width="1840" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="priority-title" value="🚨 PRIORITY ORDERS - IMMEDIATE ATTENTION" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;fontStyle=1;fontColor=#dc3545;" parent="1" vertex="1">
+          <mxGeometry x="660" y="220" width="480" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Priority Order Cards -->
+        <mxCell id="priority-order-1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8d7da;strokeColor=#dc3545;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="80" y="280" width="250" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="priority-1-header" value="TABLE 7 - URGENT" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;fontColor=#dc3545;" parent="1" vertex="1">
+          <mxGeometry x="145" y="295" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="priority-1-time" value="⏰ 45 min overdue" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#dc3545;" parent="1" vertex="1">
+          <mxGeometry x="145" y="315" width="110" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="priority-1-items" value="• Grilled Salmon&#xa;• Caesar Salad" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="145" y="340" width="90" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="priority-order-2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="360" y="280" width="250" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="priority-2-header" value="TAKEAWAY #T001" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;fontColor=#ffc107;" parent="1" vertex="1">
+          <mxGeometry x="415" y="295" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="priority-2-time" value="⏰ 30 min prep time" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#ffc107;" parent="1" vertex="1">
+          <mxGeometry x="415" y="315" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="priority-2-items" value="• Chicken Teriyaki&#xa;• Miso Soup" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="425" y="340" width="100" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Main Kitchen Queue -->
+        <mxCell id="main-queue" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="440" width="1840" height="580" as="geometry" />
+        </mxCell>
+        <mxCell id="main-queue-title" value="ACTIVE ORDERS QUEUE" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="845" y="460" width="200" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Order Cards Grid -->
+        <!-- Row 1 -->
+        <mxCell id="order-card-1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="80" y="520" width="280" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="order-1-header" value="TABLE 12" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="185" y="535" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-1-time" value="⏱️ 8 min" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#28a745;" parent="1" vertex="1">
+          <mxGeometry x="195" y="555" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-1-items" value="• Mushroom Risotto (Ready)&#xa;• Garlic Bread (Ready)&#xa;• House Salad (Ready)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="90" y="585" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="order-card-2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="400" y="520" width="280" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="order-2-header" value="TABLE 5" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="510" y="535" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-2-time" value="⏱️ 15 min" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#ffc107;" parent="1" vertex="1">
+          <mxGeometry x="510" y="555" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-2-items" value="• Beef Steak (Cooking)&#xa;• Roasted Vegetables&#xa;• Red Wine Sauce" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="410" y="585" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="order-card-3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#007bff;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="720" y="520" width="280" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="order-3-header" value="DELIVERY #D003" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="805" y="535" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-3-time" value="⏱️ 22 min" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#007bff;" parent="1" vertex="1">
+          <mxGeometry x="825" y="555" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-3-items" value="• Sushi Platter (Prep)&#xa;• Miso Soup (Ready)&#xa;• Edamame (Ready)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="730" y="585" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Row 2 -->
+        <mxCell id="order-card-4" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e2e3e5;strokeColor=#6c757d;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="80" y="680" width="280" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="order-4-header" value="TABLE 18" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="185" y="695" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-4-time" value="⏱️ Just received" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#6c757d;" parent="1" vertex="1">
+          <mxGeometry x="175" y="715" width="110" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-4-items" value="• Fish &amp; Chips (Queue)&#xa;• Coleslaw (Queue)&#xa;• Tartar Sauce" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="90" y="745" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Kitchen Controls -->
+        <mxCell id="kitchen-controls" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=#ffffff;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="520" width="800" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="controls-title" value="KITCHEN CONTROLS" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="1380" y="540" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Control Buttons -->
+        <mxCell id="mark-ready-btn" value="✅ Mark as Ready" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1080" y="580" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="delay-order-btn" value="⏰ Report Delay" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffc107;fontColor=black;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="580" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="need-help-btn" value="🆘 Need Help" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1480" y="580" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="station-status-btn" value="📊 Station Status" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1080" y="660" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="inventory-check-btn" value="📦 Check Inventory" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#6610f2;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="660" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-call-btn" value="📞 Call Manager" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1480" y="660" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Timer Display -->
+        <mxCell id="timer-display" value="🕐 Average Prep Time: 18 minutes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="740" width="280" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

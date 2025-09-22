@@ -1,0 +1,710 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram name="Menu Categories Overview" id="menu-categories-overview">
+    <mxGraphModel dx="1422" dy="734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Section -->
+        <mxCell id="header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="header-title" value="Menu Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="25" width="200" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="add-category-btn" value="+ Add Category" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="900" y="25" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="settings-btn" value="⚙️" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="25" width="40" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="back-btn" value="← Back" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="25" width="70" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Search and Filter Section -->
+        <mxCell id="search-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="80" width="1200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="search-field" value="🔍 Search categories..." style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=14;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="30" y="95" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="filter-active" value="✓ Active Only" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="350" y="95" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="sort-dropdown" value="Sort: Name ▼" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="470" y="95" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Categories Grid -->
+        <mxCell id="categories-title" value="Menu Categories (8)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="160" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Category Card 1 - Beverages -->
+        <mxCell id="cat1-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="200" width="270" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat1-status" value="ACTIVE" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=none;fontSize=10;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="215" width="45" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat1-name" value="Beverages" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="45" y="215" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat1-items" value="12 Items" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="45" y="240" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat1-revenue" value="$1,250 Today" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="45" y="260" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat1-actions" value="Edit | Items | Disable" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="45" y="350" width="200" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Category Card 2 - Chinese -->
+        <mxCell id="cat2-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="200" width="270" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat2-status" value="ACTIVE" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=none;fontSize=10;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="215" width="45" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat2-name" value="Chinese" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="335" y="215" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat2-items" value="18 Items" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="335" y="240" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat2-revenue" value="$2,890 Today" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="335" y="260" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat2-actions" value="Edit | Items | Disable" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="335" y="350" width="200" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Category Card 3 - Non Veg -->
+        <mxCell id="cat3-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="610" y="200" width="270" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat3-status" value="INACTIVE" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=none;fontSize=10;fontColor=#C62828;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="215" width="55" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat3-name" value="Non Veg" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="625" y="215" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat3-items" value="22 Items" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="625" y="240" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat3-revenue" value="$0 Today" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="625" y="260" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cat3-actions" value="Edit | Items | Enable" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="625" y="350" width="200" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- More categories indicator -->
+        <mxCell id="more-categories" value="+ 5 more categories below..." style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="30" y="400" width="850" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Stats Section -->
+        <mxCell id="stats-bg" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="900" y="160" width="270" height="260" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="stats-title" value="Quick Stats" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="920" y="180" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="total-categories" value="Total Categories: 8" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="210" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="active-categories" value="Active: 7" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="920" y="230" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="inactive-categories" value="Inactive: 1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="920" y="250" width="70" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="total-items" value="Total Items: 142" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="280" width="100" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="revenue-today" value="Today's Revenue: $4,890" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="920" y="300" width="150" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="top-category" value="Top Performer: Chinese" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="920" y="320" width="150" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Action Buttons -->
+        <mxCell id="bulk-actions" value="Bulk Actions ▼" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="920" y="360" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="import-menu" value="Import Menu" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="360" width="100" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Navigation Breadcrumb -->
+        <mxCell id="breadcrumb" value="Dashboard > Menu Management > Categories" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="450" width="300" height="15" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="Menu Item Management" id="menu-item-management">
+    <mxGraphModel dx="1422" dy="734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Section -->
+        <mxCell id="header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="header-title" value="Beverages Menu Items" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="25" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="add-item-btn" value="+ Add Item" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="900" y="25" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="category-btn" value="Categories" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="25" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="back-btn" value="← Back" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="25" width="60" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Search and Filter Section -->
+        <mxCell id="search-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="80" width="1200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="search-field" value="🔍 Search menu items..." style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=14;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="30" y="95" width="250" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="filter-available" value="✓ Available Only" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="300" y="95" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="sort-dropdown" value="Sort: Price ▼" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="440" y="95" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view-toggle" value="Grid View" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="560" y="95" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Items List Section -->
+        <mxCell id="items-title" value="Menu Items (12)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="160" width="150" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Table Header -->
+        <mxCell id="table-header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#CCCCCC;" vertex="1" parent="1">
+          <mxGeometry x="30" y="200" width="850" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="col-item" value="Item" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="45" y="212" width="200" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="col-price" value="Price" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="212" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="col-cost" value="Cost" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="335" y="212" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="col-margin" value="Margin" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="212" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="col-status" value="Status" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="505" y="212" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="col-actions" value="Actions" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="212" width="80" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Menu Item 1 -->
+        <mxCell id="item1-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="240" width="850" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item1-name" value="Fresh Orange Juice" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="45" y="250" width="150" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item1-desc" value="Freshly squeezed orange juice" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="45" y="268" width="200" height="14" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item1-price" value="$4.50" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="257" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item1-cost" value="$1.20" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="335" y="257" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item1-margin" value="73%" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="257" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item1-status" value="ACTIVE" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=none;fontSize=10;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="255" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item1-actions" value="Edit | Copy | Delete" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="590" y="257" width="120" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Menu Item 2 -->
+        <mxCell id="item2-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F9F9F9;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="290" width="850" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item2-name" value="Cappuccino" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="45" y="300" width="150" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item2-desc" value="Espresso with steamed milk foam" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="45" y="318" width="200" height="14" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item2-price" value="$3.75" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="307" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item2-cost" value="$0.85" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="335" y="307" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item2-margin" value="77%" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="307" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item2-status" value="ACTIVE" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=none;fontSize=10;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="305" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item2-actions" value="Edit | Copy | Delete" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="590" y="307" width="120" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Menu Item 3 - Inactive -->
+        <mxCell id="item3-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="340" width="850" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item3-name" value="Green Tea" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="45" y="350" width="150" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item3-desc" value="Organic green tea leaves" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="45" y="368" width="200" height="14" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item3-price" value="$2.25" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="250" y="357" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item3-cost" value="$0.45" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="335" y="357" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item3-margin" value="80%" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="420" y="357" width="80" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item3-status" value="INACTIVE" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=none;fontSize=10;fontColor=#C62828;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="515" y="355" width="60" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="item3-actions" value="Edit | Copy | Enable" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="590" y="357" width="120" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- More items indicator -->
+        <mxCell id="more-items" value="+ 9 more items below..." style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="30" y="410" width="850" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Right Panel - Item Details -->
+        <mxCell id="details-bg" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="900" y="160" width="270" height="400" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="details-title" value="Item Quick Edit" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="920" y="180" width="120" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="selected-item" value="Selected: Fresh Orange Juice" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="920" y="210" width="200" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Edit Form -->
+        <mxCell id="form-name-label" value="Name:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="240" width="40" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-name-field" value="Fresh Orange Juice" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="920" y="260" width="220" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-price-label" value="Price:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="295" width="40" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-price-field" value="$4.50" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="920" y="315" width="100" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-cost-label" value="Cost:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="295" width="40" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-cost-field" value="$1.20" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="315" width="100" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-desc-label" value="Description:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="350" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-desc-field" value="Freshly squeezed orange juice" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="920" y="370" width="220" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-status-toggle" value="🔄 Active" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="920" y="420" width="70" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-save-btn" value="Save Changes" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="420" width="100" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-delete-btn" value="🗑️ Delete Item" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="920" y="455" width="100" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-duplicate-btn" value="📋 Duplicate" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="455" width="100" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Pagination -->
+        <mxCell id="pagination" value="← Prev | Page 1 of 3 | Next →" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="450" width="850" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Navigation Breadcrumb -->
+        <mxCell id="breadcrumb" value="Dashboard > Menu Management > Categories > Beverages" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="490" width="400" height="15" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="Menu Configuration Settings" id="menu-configuration-settings">
+    <mxGraphModel dx="1422" dy="734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Section -->
+        <mxCell id="header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="header-title" value="Menu Configuration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="25" width="250" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="save-config-btn" value="💾 Save Configuration" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="950" y="25" width="150" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="back-btn" value="← Back" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="25" width="60" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Main Content Area -->
+        <mxCell id="content-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="80" width="1200" height="520" as="geometry" />
+        </mxCell>
+
+        <!-- Left Panel - Settings Categories -->
+        <mxCell id="left-panel-bg" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="110" width="250" height="460" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="settings-title" value="Configuration Areas" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="130" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Settings Menu Items -->
+        <mxCell id="general-settings" value="📋 General Settings" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=14;fontColor=#FFFFFF;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="170" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pricing-settings" value="💰 Pricing &amp; Taxes" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#E0E0E0;fontSize=14;fontColor=#666666;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="215" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="modifiers-settings" value="🔧 Modifiers &amp; Options" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#E0E0E0;fontSize=14;fontColor=#666666;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="260" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-settings" value="👨‍🍳 Kitchen Integration" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#E0E0E0;fontSize=14;fontColor=#666666;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="305" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="display-settings" value="🖥️ Display &amp; Layout" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#E0E0E0;fontSize=14;fontColor=#666666;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="350" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="inventory-settings" value="📦 Inventory Integration" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#E0E0E0;fontSize=14;fontColor=#666666;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="395" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="import-export" value="📁 Import/Export" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#E0E0E0;fontSize=14;fontColor=#666666;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="440" width="210" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Right Panel - General Settings Content -->
+        <mxCell id="right-panel-bg" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="300" y="110" width="870" height="460" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="content-title" value="General Settings" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="130" width="150" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Menu Display Settings -->
+        <mxCell id="display-section" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="330" y="170" width="400" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="display-section-title" value="Menu Display" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="185" width="120" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="show-images-label" value="Show Item Images" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="215" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="show-images-toggle" value="🔘 Enabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="500" y="212" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="show-descriptions-label" value="Show Item Descriptions" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="245" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="show-descriptions-toggle" value="🔘 Enabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="500" y="242" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="grid-columns-label" value="Grid Columns (Mobile)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="275" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="grid-columns-select" value="2 Columns ▼" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="500" y="272" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tablet-columns-label" value="Grid Columns (Tablet)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="305" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tablet-columns-select" value="3 Columns ▼" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="500" y="302" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="currency-label" value="Currency Symbol" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="330" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="currency-field" value="$" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="500" y="327" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Order Settings -->
+        <mxCell id="order-section" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="750" y="170" width="400" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="order-section-title" value="Order Settings" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="770" y="185" width="120" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="allow-modifications-label" value="Allow Item Modifications" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="770" y="215" width="150" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="allow-modifications-toggle" value="🔘 Enabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="950" y="212" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="require-notes-label" value="Require Special Instructions" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="770" y="245" width="170" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="require-notes-toggle" value="⚪ Disabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#F44336;fontSize=12;fontColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="950" y="242" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="auto-print-label" value="Auto-Print to Kitchen" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="770" y="275" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="auto-print-toggle" value="🔘 Enabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="950" y="272" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="preparation-time-label" value="Default Prep Time (mins)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="770" y="305" width="160" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="preparation-time-field" value="15" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="950" y="302" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Availability Settings -->
+        <mxCell id="availability-section" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="330" y="370" width="400" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="availability-section-title" value="Availability Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="385" width="180" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="auto-disable-label" value="Auto-disable sold out items" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="415" width="170" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="auto-disable-toggle" value="🔘 Enabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="530" y="412" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="low-stock-warning-label" value="Low stock warning threshold" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="445" width="170" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="low-stock-field" value="5" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="530" y="442" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="schedule-availability-label" value="Schedule availability by time" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="475" width="170" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="schedule-availability-toggle" value="⚪ Disabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#F44336;fontSize=12;fontColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="530" y="472" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="weekend-menu-label" value="Different weekend menu" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="505" width="150" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="weekend-menu-toggle" value="⚪ Disabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#F44336;fontSize=12;fontColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="530" y="502" width="80" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Performance & Analytics -->
+        <mxCell id="analytics-section" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="750" y="370" width="400" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="analytics-section-title" value="Performance &amp; Analytics" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="770" y="385" width="180" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="track-popularity-label" value="Track item popularity" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="770" y="415" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="track-popularity-toggle" value="🔘 Enabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="930" y="412" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="profit-margins-label" value="Calculate profit margins" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="770" y="445" width="150" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="profit-margins-toggle" value="🔘 Enabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="930" y="442" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="real-time-updates-label" value="Real-time menu updates" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="770" y="475" width="150" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="real-time-updates-toggle" value="🔘 Enabled" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="930" y="472" width="80" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="backup-frequency-label" value="Auto-backup frequency" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="770" y="505" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="backup-frequency-select" value="Daily ▼" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="930" y="502" width="80" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Action Buttons -->
+        <mxCell id="reset-defaults-btn" value="🔄 Reset to Defaults" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="330" y="580" width="130" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="export-config-btn" value="📤 Export Config" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="480" y="580" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="import-config-btn" value="📥 Import Config" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="620" y="580" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Navigation Breadcrumb -->
+        <mxCell id="breadcrumb" value="Dashboard > Menu Management > Configuration > General Settings" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="620" width="500" height="15" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

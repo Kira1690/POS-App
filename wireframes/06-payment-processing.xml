@@ -1,0 +1,900 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="5.0" version="24.7.17">
+  <diagram name="6.1 Payment Processing Screen" id="payment-processing">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Payment Processing Container -->
+        <mxCell id="payment-container" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="1080" as="geometry" />
+        </mxCell>
+        
+        <!-- Header -->
+        <mxCell id="payment-header" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Title -->
+        <mxCell id="payment-title" value="💳 Payment Processing - Order #1234" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="40" y="25" width="420" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Order Info -->
+        <mxCell id="payment-order-info" value="🪑 Table 7 | 👤 Mike Johnson | 👥 Party of 4 | 💰 Total: $102.50" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="760" y="25" width="500" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Left Panel - Order Summary -->
+        <mxCell id="order-summary-panel" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="40" y="120" width="500" height="800" as="geometry" />
+        </mxCell>
+        <mxCell id="summary-title" value="📋 Order Summary &amp; Bill Details" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="215" y="140" width="270" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Order Items List -->
+        <mxCell id="items-list" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="180" width="460" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="items-header" value="Items Ordered" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="200" width="110" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Item Details -->
+        <mxCell id="item-1-detail" value="1x Grilled Steak (Medium rare, no sauce)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="240" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-1-price" value="$28.50" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="470" y="240" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="item-2-detail" value="2x Caesar Salad (Extra croutons)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="270" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-2-price" value="$25.00" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="470" y="270" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="item-3-detail" value="4x House Wine Red (Chilled)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="300" width="170" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-3-price" value="$32.00" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="470" y="300" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="service-charge-detail" value="Service Charge (10%)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="330" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="service-charge-price" value="$8.55" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="475" y="330" width="45" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Bill Totals -->
+        <mxCell id="bill-totals" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="370" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="subtotal-label" value="Subtotal:" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="100" y="385" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="subtotal-amount" value="$85.50" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="440" y="385" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tax-label" value="Tax (8.5%):" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="100" y="410" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="tax-amount" value="$7.27" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="450" y="410" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="service-label" value="Service (10%):" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="100" y="435" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="service-amount" value="$8.55" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="450" y="435" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Total Amount -->
+        <mxCell id="total-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#28a745;strokeColor=#28a745;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="60" y="500" width="460" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="total-label" value="TOTAL AMOUNT:" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="80" y="520" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="total-amount" value="$101.32" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="420" y="515" width="90" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Tax Adjustment Options -->
+        <mxCell id="tax-adjustments" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="580" width="460" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="tax-adj-title" value="Tax &amp; Charge Adjustments" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="600" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="remove-tax-btn" value="Remove Tax" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="80" y="630" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="remove-service-btn" value="Remove Service" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="200" y="630" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-override-btn" value="Manager Override" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#6610f2;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="330" y="630" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="discount-input" value="Discount %: [ 0 ]" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#ffffff;strokeColor=#007bff;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="670" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="apply-discount-btn" value="Apply" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="300" y="665" width="60" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Special Notes -->
+        <mxCell id="special-notes" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="720" width="460" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="notes-title" value="Special Notes &amp; Instructions" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="740" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="notes-content" value="Anniversary celebration - complimentary dessert provided" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="765" width="350" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Customer Info -->
+        <mxCell id="customer-info-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="820" width="460" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="customer-info-title" value="Customer Information" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="840" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="customer-details" value="Mike Johnson | +1 (555) 123-4567 | mike.johnson@email.com" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="865" width="350" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Middle Panel - Payment Methods -->
+        <mxCell id="payment-methods-panel" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="580" y="120" width="700" height="800" as="geometry" />
+        </mxCell>
+        <mxCell id="payment-methods-title" value="💳 Payment Methods &amp; Processing" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="830" y="140" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Payment Method Selection -->
+        <mxCell id="payment-method-grid" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="600" y="180" width="660" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="method-selection-title" value="Select Payment Method" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="885" y="200" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Payment Method Buttons -->
+        <mxCell id="card-payment-btn" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#007bff;strokeColor=#007bff;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="620" y="240" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="card-icon" value="💳" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="675" y="260" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="card-label" value="Card Payment" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=white;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="650" y="300" width="90" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cash-payment-btn" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#28a745;strokeColor=#28a745;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="780" y="240" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cash-icon" value="💵" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="835" y="260" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cash-label" value="Cash Payment" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=white;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="810" y="300" width="90" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="split-payment-btn" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fd7e14;strokeColor=#fd7e14;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="940" y="240" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="split-icon" value="🔀" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="995" y="260" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="split-label" value="Split Payment" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=white;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="970" y="300" width="90" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gift-card-btn" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6610f2;strokeColor=#6610f2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1100" y="240" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="gift-icon" value="🎁" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;" parent="1" vertex="1">
+          <mxGeometry x="1155" y="260" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gift-label" value="Gift Card" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=white;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="300" width="70" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- VP3350 Device Integration -->
+        <mxCell id="device-integration" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="600" y="400" width="660" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="device-title" value="🔌 VP3350 Payment Device Status" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="870" y="420" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="device-status" value="🟢 Device Connected | 📶 Signal Strong | 🔋 Battery: 85%" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="820" y="460" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="device-actions" value="🔄 Sync Device | 🧪 Test Connection | ⚙️ Device Settings" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="835" y="485" width="330" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Card Payment Processing -->
+        <mxCell id="card-processing" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#007bff;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="600" y="540" width="660" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="card-processing-title" value="💳 Card Payment Processing" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="890" y="560" width="200" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Amount Display -->
+        <mxCell id="amount-display" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="600" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="amount-label" value="Amount to Charge:" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="640" y="620" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="amount-value" value="$101.32" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;fontColor=#007bff;" parent="1" vertex="1">
+          <mxGeometry x="840" y="620" width="70" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Card Type Selection -->
+        <mxCell id="card-types" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="940" y="600" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="card-types-label" value="Card Type:" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="960" y="620" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="card-visa" value="💳 Visa" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1050" y="615" width="50" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="card-mastercard" value="💳 MC" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1110" y="615" width="40" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="card-amex" value="💳 Amex" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1160" y="615" width="50" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Processing Actions -->
+        <mxCell id="processing-actions" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="680" width="620" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="process-card-btn" value="💳 Process Card Payment" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="640" y="690" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="manual-entry-btn" value="⌨️ Manual Entry" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="860" y="690" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="card-cancel-btn" value="❌ Cancel" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1000" y="690" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Tip Management -->
+        <mxCell id="tip-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="600" y="760" width="660" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="tip-title" value="💰 Tip Management" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="890" y="780" width="140" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Tip Options -->
+        <mxCell id="tip-options" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="820" width="620" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="tip-15-btn" value="15%&#xa;$15.20" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="640" y="840" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tip-18-btn" value="18%&#xa;$18.24" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="720" y="840" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tip-20-btn" value="20%&#xa;$20.26" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="800" y="840" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tip-custom-input" value="Custom: $" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#ffffff;strokeColor=#007bff;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="880" y="840" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tip-no-tip-btn" value="No Tip" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1000" y="840" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tip-add-btn" value="Add Tip" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#ffc107;fontColor=black;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1100" y="840" width="80" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Right Panel - Bill Split & Receipt -->
+        <mxCell id="split-receipt-panel" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1320" y="120" width="560" height="800" as="geometry" />
+        </mxCell>
+        <mxCell id="split-receipt-title" value="🧾 Bill Split &amp; Receipt Options" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1535" y="140" width="280" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Bill Split Options -->
+        <mxCell id="split-options" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1340" y="180" width="520" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="split-options-title" value="Bill Split Options" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1565" y="200" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="split-equal-btn" value="➗ Equal Split (4 people)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1360" y="240" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="split-items-btn" value="📋 Split by Items" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1580" y="240" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="split-custom-btn" value="💰 Custom Amounts" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1360" y="300" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="split-percentage-btn" value="📊 Percentage Split" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#6610f2;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1540" y="300" width="160" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Split Preview -->
+        <mxCell id="split-preview" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1340" y="380" width="520" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="split-preview-title" value="Split Preview (Equal - 4 people)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1535" y="400" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="split-preview-details" value="Person 1: $25.33 | Person 2: $25.33&#xa;Person 3: $25.33 | Person 4: $25.33&#xa;Total: $101.32 ✓" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1485" y="430" width="240" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Receipt Options -->
+        <mxCell id="receipt-options" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1340" y="520" width="520" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="receipt-options-title" value="Receipt &amp; Printing Options" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1530" y="540" width="200" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="print-receipt-btn" value="🖨️ Print Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1360" y="580" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="email-receipt-btn" value="📧 Email Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1520" y="580" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sms-receipt-btn" value="📱 SMS Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#20c997;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1360" y="640" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="no-receipt-btn" value="🚫 No Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1510" y="640" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- QR Code Payment -->
+        <mxCell id="qr-payment" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#20c997;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1340" y="720" width="520" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="qr-title" value="📱 QR Code Payment" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1570" y="740" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- QR Code Display -->
+        <mxCell id="qr-code-display" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1360" y="780" width="120" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="qr-code-placeholder" value="📱&#xa;QR CODE&#xa;$101.32" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1395" y="820" width="50" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- QR Instructions -->
+        <mxCell id="qr-instructions" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1500" y="780" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="qr-instructions-text" value="Customer can scan QR code to pay via:&#xa;• Apple Pay / Google Pay&#xa;• PayPal / Venmo&#xa;• Bank transfer apps&#xa;Payment will auto-complete when received" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1520" y="800" width="250" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="6.2 Bill Split Interface" id="bill-split">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Bill Split Container -->
+        <mxCell id="split-container" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="1080" as="geometry" />
+        </mxCell>
+        
+        <!-- Header -->
+        <mxCell id="split-header" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Title -->
+        <mxCell id="split-title" value="🔀 Advanced Bill Splitting - Order #1234" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=24;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="40" y="25" width="480" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Split Type Selector -->
+        <mxCell id="split-type-selector" value="Split by: Items | People | Custom | Percentage" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="1520" y="25" width="360" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Split Method Tabs -->
+        <mxCell id="split-tabs" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="0" y="80" width="1920" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Tab Buttons -->
+        <mxCell id="tab-by-items" value="📋 Split by Items" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="40" y="90" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tab-by-people" value="👥 Split by People" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="200" y="90" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tab-custom" value="💰 Custom Amounts" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="360" y="90" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tab-percentage" value="📊 Percentage Split" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="520" y="90" width="140" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Original Bill Summary -->
+        <mxCell id="original-bill-summary" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="40" y="180" width="400" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="original-bill-title" value="📋 Original Bill Summary" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="195" y="200" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="original-items" value="• 1x Grilled Steak - $28.50&#xa;• 2x Caesar Salad - $25.00&#xa;• 4x House Wine - $32.00&#xa;• Service Charge - $8.55&#xa;• Tax (8.5%) - $7.27" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="240" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="original-total" value="Total: $101.32" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;fontColor=#1976d2;" parent="1" vertex="1">
+          <mxGeometry x="260" y="350" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Split by Items Interface -->
+        <mxCell id="split-by-items-panel" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="480" y="180" width="1400" height="800" as="geometry" />
+        </mxCell>
+        <mxCell id="split-by-items-title" value="📋 Split Bill by Specific Items" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1130" y="200" width="240" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- People Assignment -->
+        <mxCell id="people-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="500" y="240" width="1360" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="people-title" value="👥 Assign People (4 total)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="520" y="260" width="170" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Person Cards -->
+        <mxCell id="person-1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="520" y="285" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="person-1-label" value="👤 Person 1: Mike" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="565" y="293" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="person-2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#007bff;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="690" y="285" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="person-2-label" value="👤 Person 2: Sarah" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="730" y="293" width="110" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="person-3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="860" y="285" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="person-3-label" value="👤 Person 3: John" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="905" y="293" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="person-4" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8d7da;strokeColor=#dc3545;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1030" y="285" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="person-4-label" value="👤 Person 4: Lisa" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1080" y="293" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Item Assignment Grid -->
+        <mxCell id="item-assignment-grid" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="500" y="340" width="1360" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="assignment-title" value="🍽️ Assign Items to People" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1125" y="360" width="190" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Item Assignment Rows -->
+        <!-- Item 1: Grilled Steak -->
+        <mxCell id="item-1-row" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="520" y="400" width="1320" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="item-1-name" value="🥩 Grilled Steak - $28.50" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="425" width="180" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Assignment checkboxes for Item 1 -->
+        <mxCell id="item-1-person-1" value="☑️ Mike" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="750" y="420" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-1-person-2" value="☐ Sarah" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="840" y="420" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-1-person-3" value="☐ John" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="930" y="420" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-1-person-4" value="☐ Lisa" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1020" y="420" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-1-split-cost" value="Cost: $28.50 → Mike (100%)" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;fontColor=#28a745;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="425" width="160" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Item 2: Caesar Salads -->
+        <mxCell id="item-2-row" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="520" y="480" width="1320" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="item-2-name" value="🥗 2x Caesar Salad - $25.00" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="505" width="200" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Assignment checkboxes for Item 2 -->
+        <mxCell id="item-2-person-1" value="☐ Mike" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="750" y="500" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-2-person-2" value="☑️ Sarah" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#cce5ff;strokeColor=#007bff;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="840" y="500" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-2-person-3" value="☑️ John" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="930" y="500" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-2-person-4" value="☐ Lisa" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1020" y="500" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-2-split-cost" value="Cost: $12.50 each → Sarah, John" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;fontColor=#007bff;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="505" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Item 3: House Wine -->
+        <mxCell id="item-3-row" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="520" y="560" width="1320" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="item-3-name" value="🍷 4x House Wine - $32.00" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="585" width="180" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Assignment checkboxes for Item 3 -->
+        <mxCell id="item-3-person-1" value="☑️ Mike" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="750" y="580" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-3-person-2" value="☑️ Sarah" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#cce5ff;strokeColor=#007bff;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="840" y="580" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-3-person-3" value="☑️ John" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="930" y="580" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-3-person-4" value="☑️ Lisa" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f8d7da;strokeColor=#dc3545;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1020" y="580" width="70" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="item-3-split-cost" value="Cost: $8.00 each → All 4 people" style="text;html=1;align=right;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;fontColor=#6610f2;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="585" width="170" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Shared Costs Section -->
+        <mxCell id="shared-costs-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="520" y="640" width="1320" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="shared-costs-title" value="💰 Shared Costs (Tax &amp; Service)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1110" y="660" width="220" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="shared-costs-details" value="Tax (8.5%): $7.27 | Service Charge (10%): $8.55 | Total Shared: $15.82" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="685" width="400" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Split Calculation Results -->
+        <mxCell id="split-results" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="500" y="760" width="1360" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="split-results-title" value="🧾 Split Calculation Results" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1115" y="780" width="250" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Individual Bills -->
+        <mxCell id="person-1-bill" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="520" y="820" width="300" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="person-1-bill-title" value="👤 Mike's Bill" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="650" y="840" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="person-1-bill-details" value="Grilled Steak: $28.50&#xa;House Wine: $8.00&#xa;Shared costs: $3.96&#xa;TOTAL: $40.46" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="630" y="865" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="person-2-bill" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#007bff;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="840" y="820" width="300" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="person-2-bill-title" value="👤 Sarah's Bill" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="965" y="840" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="person-2-bill-details" value="Caesar Salad: $12.50&#xa;House Wine: $8.00&#xa;Shared costs: $3.96&#xa;TOTAL: $24.46" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="950" y="865" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="person-3-bill" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1160" y="820" width="300" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="person-3-bill-title" value="👤 John's Bill" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1285" y="840" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="person-3-bill-details" value="Caesar Salad: $12.50&#xa;House Wine: $8.00&#xa;Shared costs: $3.96&#xa;TOTAL: $24.46" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1270" y="865" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="person-4-bill" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8d7da;strokeColor=#dc3545;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1480" y="820" width="300" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="person-4-bill-title" value="👤 Lisa's Bill" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1610" y="840" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="person-4-bill-details" value="House Wine: $8.00&#xa;Shared costs: $3.96&#xa;TOTAL: $11.96" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1595" y="875" width="120" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Bottom Action Panel -->
+        <mxCell id="bottom-actions" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="40" y="400" width="400" height="580" as="geometry" />
+        </mxCell>
+        <mxCell id="actions-title" value="💳 Payment Actions" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="205" y="420" width="150" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Validation Status -->
+        <mxCell id="validation-status" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="460" width="360" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="validation-message" value="✅ Split Validation: PASSED&#xa;Total assigned: $101.32 ✓&#xa;All items assigned ✓" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="190" y="480" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Payment Options for Each Person -->
+        <mxCell id="payment-options" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="540" width="360" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="payment-options-title" value="Individual Payment Processing" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="185" y="560" width="190" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Payment Buttons -->
+        <mxCell id="pay-mike-btn" value="💳 Pay Mike's Bill ($40.46)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="80" y="590" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pay-sarah-btn" value="💳 Pay Sarah's Bill ($24.46)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="260" y="590" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pay-john-btn" value="💳 Pay John's Bill ($24.46)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#ffc107;fontColor=black;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="80" y="630" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pay-lisa-btn" value="💳 Pay Lisa's Bill ($11.96)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="260" y="630" width="140" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Bulk Actions -->
+        <mxCell id="bulk-payment-actions" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="680" width="320" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="pay-all-btn" value="💳 Process All Payments" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#1976d2;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="100" y="690" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="generate-receipts-btn" value="🧾 Generate Receipts" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#20c997;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="280" y="690" width="140" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Alternative Split Methods -->
+        <mxCell id="alternative-methods" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="760" width="360" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="alternative-title" value="🔄 Quick Split Alternatives" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="190" y="780" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="equal-split-btn" value="➗ Equal Split (4 ways)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="80" y="810" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="couples-split-btn" value="👫 Couples Split (2 ways)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="240" y="810" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="reset-split-btn" value="🔄 Reset &amp; Start Over" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="160" y="850" width="140" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="6.3 Payment Confirmation" id="payment-confirmation">
+    <mxGraphModel dx="1422" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Payment Confirmation Container -->
+        <mxCell id="confirmation-container" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="1080" as="geometry" />
+        </mxCell>
+        
+        <!-- Header -->
+        <mxCell id="confirmation-header" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#28a745;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="0" width="1920" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- Success Title -->
+        <mxCell id="confirmation-title" value="✅ Payment Successful!" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=32;fontStyle=1;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="840" y="35" width="320" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Main Success Panel -->
+        <mxCell id="success-panel" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#28a745;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="560" y="140" width="800" height="300" as="geometry" />
+        </mxCell>
+
+        <!-- Success Icon -->
+        <mxCell id="success-icon" value="✅" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=64;" parent="1" vertex="1">
+          <mxGeometry x="935" y="180" width="90" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Payment Details -->
+        <mxCell id="payment-details" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="580" y="290" width="760" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="payment-info" value="Order #1234 - Table 7&#xa;Customer: Mike Johnson&#xa;Payment Method: Visa ending in 4532&#xa;Amount Charged: $101.32&#xa;Transaction ID: TXN-2025-092101-4532&#xa;Date: September 21, 2025 - 3:45 PM" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="830" y="330" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Left Panel - Transaction Summary -->
+        <mxCell id="transaction-summary" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="80" y="140" width="440" height="600" as="geometry" />
+        </mxCell>
+        <mxCell id="transaction-title" value="📋 Transaction Summary" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="245" y="160" width="190" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Order Details -->
+        <mxCell id="order-details-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="200" width="400" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="order-items-title" value="Order Items:" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="120" y="220" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="order-items-list" value="• 1x Grilled Steak - $28.50&#xa;• 2x Caesar Salad - $25.00&#xa;• 4x House Wine - $32.00&#xa;• Service Charge (10%) - $8.55&#xa;• Tax (8.5%) - $7.27" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="120" y="250" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="total-paid" value="TOTAL PAID: $101.32" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;fontColor=#28a745;" parent="1" vertex="1">
+          <mxGeometry x="260" y="370" width="170" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Payment Method Details -->
+        <mxCell id="payment-method-details" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="420" width="400" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="payment-method-title" value="Payment Method Details:" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="120" y="440" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="payment-method-info" value="💳 Visa Credit Card&#xa;Card Number: **** **** **** 4532&#xa;Cardholder: MIKE JOHNSON&#xa;Authorization: APPROVED&#xa;Reference: AUTH-789456123" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="120" y="470" width="190" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Receipt Generation -->
+        <mxCell id="receipt-generation" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="560" width="400" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="receipt-title" value="🧾 Receipt Options" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="265" y="580" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Receipt Action Buttons -->
+        <mxCell id="print-receipt" value="🖨️ Print Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="120" y="620" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="email-receipt" value="📧 Email Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="270" y="620" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sms-receipt" value="📱 SMS Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#20c997;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="120" y="670" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="download-receipt" value="💾 Download PDF" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="270" y="670" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Right Panel - Receipt Preview -->
+        <mxCell id="receipt-preview-panel" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1400" y="140" width="440" height="600" as="geometry" />
+        </mxCell>
+        <mxCell id="receipt-preview-title" value="🧾 Receipt Preview" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1575" y="160" width="150" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Receipt Content -->
+        <mxCell id="receipt-content" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1420" y="200" width="400" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="receipt-header" value="THE FOOD CORNER&#xa;123 Main Street, City, State 12345&#xa;Phone: +1 (555) 123-4567&#xa;================================" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1535" y="220" width="230" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="receipt-order-info" value="Order #1234 | Table 7&#xa;Server: John Doe&#xa;Date: 09/21/2025 3:45 PM&#xa;Customer: Mike Johnson&#xa;Party Size: 4" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1575" y="300" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="receipt-items" value="================================&#xa;1  Grilled Steak          $28.50&#xa;   Medium rare, no sauce&#xa;2  Caesar Salad @ $12.50  $25.00&#xa;   Extra croutons&#xa;4  House Wine @ $8.00     $32.00&#xa;   Chilled&#xa;================================&#xa;Subtotal                  $85.50&#xa;Service Charge (10%)       $8.55&#xa;Tax (8.5%)                $7.27&#xa;================================&#xa;TOTAL                    $101.32&#xa;================================" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;fontSize=10;fontFamily=Courier New;" parent="1" vertex="1">
+          <mxGeometry x="1450" y="390" width="220" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="receipt-payment" value="Payment Method: Visa ****4532&#xa;Transaction: TXN-2025-092101-4532&#xa;Authorization: AUTH-789456123&#xa;Status: APPROVED" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="1540" y="650" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Center Panel - Next Actions -->
+        <mxCell id="next-actions-panel" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="560" y="480" width="800" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="next-actions-title" value="🎯 What's Next?" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="920" y="500" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Action Buttons Grid -->
+        <mxCell id="action-new-order" value="➕ New Order" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="580" y="550" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="action-table-management" value="🪑 Table Management" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="760" y="550" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="action-order-history" value="📋 Order History" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#6610f2;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="940" y="550" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="action-dashboard" value="📊 Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fd7e14;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1120" y="550" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Customer Service Actions -->
+        <mxCell id="customer-actions" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="580" y="630" width="700" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="customer-actions-title" value="Customer Service" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="900" y="650" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="feedback-btn" value="📝 Request Feedback" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#20c997;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="600" y="680" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="loyalty-btn" value="⭐ Add Loyalty Points" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#ffc107;fontColor=black;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="760" y="680" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="survey-btn" value="📊 Send Survey" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="920" y="680" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="promo-btn" value="🎁 Send Promo Code" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="680" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Bottom Status Bar -->
+        <mxCell id="status-bar" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#28a745;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="0" y="780" width="1920" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="status-message" value="✅ Order #1234 Complete | Table 7 is now available | Kitchen notified | Receipt generated" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=16;fontColor=white;" parent="1" vertex="1">
+          <mxGeometry x="630" y="805" width="660" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Final Actions -->
+        <mxCell id="final-actions" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#dee2e6;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="400" y="880" width="1120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="final-actions-title" value="🏁 Complete Transaction" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="905" y="900" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="close-order-btn" value="✅ Close Order &amp; Free Table" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#28a745;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="520" y="940" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="print-final-receipt-btn" value="🖨️ Print Final Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#007bff;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="760" y="940" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="void-payment-btn" value="❌ Void Payment (Manager)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dc3545;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="960" y="940" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="duplicate-receipt-btn" value="📄 Duplicate Receipt" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#6c757d;fontColor=white;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1180" y="940" width="160" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -2,3 +2,4 @@
 export * from './api';
 export * from './permissions';
 export * from './config';
+export * from './theme';

@@ -1,0 +1,1025 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram name="Manager Dashboard Controls" id="manager-dashboard-controls">
+    <mxGraphModel dx="1422" dy="734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Section -->
+        <mxCell id="header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="header-title" value="Manager Dashboard" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="25" width="200" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="shift-info" value="Current Shift: Evening (3:00 PM - 11:00 PM)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#CCCCCC;" vertex="1" parent="1">
+          <mxGeometry x="250" y="30" width="300" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="end-shift-btn" value="🔚 End Shift" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="900" y="25" width="90" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="emergency-btn" value="🚨 Emergency Override" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="25" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Stats Section -->
+        <mxCell id="stats-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="80" width="1200" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Real-time Performance Cards -->
+        <mxCell id="perf1-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="100" width="220" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf1-icon" value="💰" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="45" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf1-number" value="$8,247" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="85" y="110" width="70" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf1-trend" value="↗️ +12%" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="180" y="110" width="50" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf1-label" value="Today's Revenue" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="85" y="135" width="100" height="15" as="geometry" />
+        </mxCell>
+
+        <mxCell id="perf2-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="270" y="100" width="220" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf2-icon" value="📊" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="285" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf2-number" value="247" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1976D2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="325" y="110" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf2-trend" value="↗️ +8%" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="420" y="110" width="50" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf2-label" value="Orders Processed" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="325" y="135" width="100" height="15" as="geometry" />
+        </mxCell>
+
+        <mxCell id="perf3-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="510" y="100" width="220" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf3-icon" value="⏱️" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="525" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf3-number" value="12:45" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#FF9800;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="565" y="110" width="60" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf3-trend" value="↘️ -5%" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="660" y="110" width="50" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf3-label" value="Avg Service Time" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="565" y="135" width="100" height="15" as="geometry" />
+        </mxCell>
+
+        <mxCell id="perf4-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="100" width="220" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf4-icon" value="👥" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="765" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf4-number" value="8" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#9C27B0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="805" y="110" width="30" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf4-staff" value="/ 12 Staff" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="835" y="115" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="perf4-label" value="Currently On-Duty" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="805" y="135" width="100" height="15" as="geometry" />
+        </mxCell>
+
+        <mxCell id="alerts-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="990" y="100" width="180" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="alerts-icon" value="⚠️" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1005" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="alerts-number" value="3" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#FF9800;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1045" y="110" width="20" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="alerts-label" value="Active Alerts" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="1045" y="135" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view-alerts" value="View" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="125" width="30" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Main Control Panels -->
+        <mxCell id="control-title" value="Manager Controls" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="200" width="180" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Staff Management Panel -->
+        <mxCell id="staff-panel" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="240" width="360" height="300" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff-title" value="Staff Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="260" width="140" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Current Staff List -->
+        <mxCell id="staff-on-duty" value="Currently On Duty (8)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="290" width="150" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Staff Member 1 -->
+        <mxCell id="staff1-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="315" width="320" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff1-avatar" value="👨" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="322" width="26" height="26" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff1-name" value="John Doe (Server)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="325" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff1-shift" value="Since 2:00 PM" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="100" y="340" width="80" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff1-sales" value="$1,247" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="280" y="325" width="50" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff1-break" value="🕐 Break" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="340" y="325" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Staff Member 2 -->
+        <mxCell id="staff2-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="365" width="320" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff2-avatar" value="👩" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="372" width="26" height="26" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff2-name" value="Sarah Kim (Cashier)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="375" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff2-shift" value="Since 3:00 PM" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="100" y="390" width="80" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff2-sales" value="$892" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="280" y="375" width="50" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff2-status" value="🟢 Active" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="340" y="378" width="50" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- Staff Actions -->
+        <mxCell id="clock-in-btn" value="⏰ Clock In Staff" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="50" y="430" width="100" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="schedule-btn" value="📅 View Schedule" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="160" y="430" width="100" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="performance-btn" value="📊 Performance" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="100" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="staff-alerts" value="📢 Staff Alerts &amp; Announcements" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="50" y="465" width="200" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="emergency-contact" value="🚨 Emergency Contact" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="260" y="465" width="130" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- System Override Panel -->
+        <mxCell id="override-panel" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="410" y="240" width="360" height="300" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="override-title" value="System Overrides" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="260" width="140" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="override-warning" value="⚠️ Requires Manager PIN" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="640" y="262" width="120" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Override Options -->
+        <mxCell id="price-override" value="💰 Price Override" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;fontSize=12;fontColor=#E65100;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="295" width="320" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="discount-override" value="🎫 Apply Custom Discount" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;fontSize=12;fontColor=#0D47A1;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="335" width="320" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="void-transaction" value="❌ Void Transaction" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;fontSize=12;fontColor=#B71C1C;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="375" width="320" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="comp-item" value="🆓 Comp Item/Order" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="415" width="320" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cash-drawer" value="💵 Force Open Cash Drawer" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;fontSize=12;fontColor=#6A1B9A;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="455" width="320" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- System Status Panel -->
+        <mxCell id="status-panel" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="790" y="240" width="380" height="300" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="status-title" value="System Status &amp; Controls" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="810" y="260" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- System Health -->
+        <mxCell id="health-section" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="810" y="290" width="340" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="health-title" value="System Health" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="830" y="305" width="100" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pos-status" value="🟢 POS System: Online" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="830" y="325" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="payment-status" value="🟢 Payment Gateway: Connected" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="830" y="345" width="200" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="network-status" value="🟢 Network: Stable (98ms)" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="325" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="printer-status" value="🟡 Kitchen Printer: Low Paper" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="345" width="140" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Actions -->
+        <mxCell id="backup-now" value="💾 Backup Now" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="810" y="385" width="100" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="sync-data" value="🔄 Sync Data" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="920" y="385" width="90" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="system-logs" value="📋 System Logs" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="385" width="100" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- End of Day Operations -->
+        <mxCell id="eod-section" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="810" y="425" width="340" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="eod-title" value="End of Day Operations" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#E65100;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="830" y="440" width="160" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="close-day" value="🌅 Close Business Day" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="830" y="465" width="140" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="daily-report" value="📊 Generate Daily Report" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF7043;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="980" y="465" width="150" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cash-count" value="💰 Cash Count &amp; Reconciliation" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#795548;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="830" y="500" width="180" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Navigation Breadcrumb -->
+        <mxCell id="breadcrumb" value="Dashboard > Manager Controls" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="560" width="200" height="15" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="Happy Hour Pricing Management" id="happy-hour-pricing-management">
+    <mxGraphModel dx="1422" dy="734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Section -->
+        <mxCell id="header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="header-title" value="Happy Hour &amp; Pricing Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="25" width="400" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="current-status" value="🍹 Happy Hour: ACTIVE (3:00-6:00 PM)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="450" y="30" width="300" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="override-btn" value="⚡ Override Pricing" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="950" y="25" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="back-btn" value="← Manager Dashboard" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="25" width="90" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Active Promotions Banner -->
+        <mxCell id="promo-banner" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="30" y="100" width="1140" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="promo-icon" value="🎉" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="50" y="115" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="promo-text" value="Active: Happy Hour - 25% off all beverages | Lunch Special - Buy 1 Get 1 Free appetizers | Weekend Brunch - 15% off total bill" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="90" y="125" width="800" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="manage-promos" value="⚙️ Manage" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="920" y="120" width="70" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pause-promos" value="⏸️ Pause All" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="120" width="70" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Pricing Schedules Section -->
+        <mxCell id="schedules-title" value="Pricing Schedules" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="180" width="180" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="new-schedule-btn" value="+ Create New Schedule" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="180" width="150" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Happy Hour Schedule -->
+        <mxCell id="happy-hour-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4CAF50;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="220" width="360" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-status-badge" value="ACTIVE" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=10;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="235" width="50" height="18" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-title" value="🍹 Happy Hour Special" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="235" width="180" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-time" value="⏰ Daily: 3:00 PM - 6:00 PM" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="50" y="260" width="170" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-discount" value="🎫 25% off all beverages" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="50" y="280" width="150" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-conditions" value="📋 Min order: $10 | Dine-in only" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="50" y="300" width="200" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-revenue" value="💰 Today's Revenue: $347.50" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="50" y="325" width="180" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-usage" value="📊 Used 23 times today" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="50" y="345" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-edit" value="✏️ Edit" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="50" y="370" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-pause" value="⏸️ Pause" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="110" y="370" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hh-extend" value="⏱️ Extend" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="170" y="370" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Lunch Special Schedule -->
+        <mxCell id="lunch-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4CAF50;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="220" width="360" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-status-badge" value="ACTIVE" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=10;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="710" y="235" width="50" height="18" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-title" value="🍽️ Lunch Special" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="235" width="140" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-time" value="⏰ Mon-Fri: 11:30 AM - 2:30 PM" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="430" y="260" width="190" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-discount" value="🎫 Buy 1 Get 1 Free appetizers" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="430" y="280" width="200" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-conditions" value="📋 With entree purchase | Max 1 per table" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="430" y="300" width="220" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-revenue" value="💰 Today's Revenue: $192.25" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="430" y="325" width="180" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-usage" value="📊 Used 14 times today" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="430" y="345" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-edit" value="✏️ Edit" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="430" y="370" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lunch-pause" value="⏸️ Pause" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="490" y="370" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Weekend Brunch Schedule -->
+        <mxCell id="brunch-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF9800;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="790" y="220" width="360" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-status-badge" value="SCHEDULED" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=10;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1090" y="235" width="70" height="18" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-title" value="🥞 Weekend Brunch Special" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="810" y="235" width="200" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-time" value="⏰ Sat-Sun: 9:00 AM - 2:00 PM" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="810" y="260" width="180" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-discount" value="🎫 15% off total bill" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="810" y="280" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-conditions" value="📋 Brunch menu items only | Min 2 people" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="810" y="300" width="220" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-next" value="📅 Next: Saturday 9:00 AM" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="810" y="325" width="160" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-performance" value="📊 Last weekend: 18 uses, $234" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="810" y="345" width="180" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-edit" value="✏️ Edit" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="810" y="370" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="brunch-activate" value="▶️ Activate Now" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="870" y="370" width="90" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Quick Price Override Panel -->
+        <mxCell id="override-panel" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="420" width="560" height="150" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="override-title" value="Quick Price Override" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="440" width="160" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="override-warning" value="⚠️ Temporary price changes - automatically reset at end of day" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="50" y="465" width="350" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Override Options -->
+        <mxCell id="discount-all" value="🎫 Apply Discount to All Items" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;fontSize=12;fontColor=#0D47A1;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="490" width="170" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="discount-category" value="🗂️ Category-wide Discount" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;fontSize=12;fontColor=#6A1B9A;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="240" y="490" width="170" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="price-increase" value="📈 Emergency Price Increase" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;fontSize=12;fontColor=#B71C1C;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="490" width="170" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="free-items" value="🆓 Mark Items as Free" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;fontSize=12;fontColor=#2E7D32;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="530" width="170" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reset-prices" value="🔄 Reset All Prices" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;fontSize=12;fontColor=#E65100;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="240" y="530" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Analytics &amp; Performance Panel -->
+        <mxCell id="analytics-panel" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="610" y="420" width="560" height="150" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="analytics-title" value="Promotion Performance Analytics" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="440" width="240" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Performance Metrics -->
+        <mxCell id="today-performance" value="Today's Performance" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="470" width="140" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="total-promo-revenue" value="Total Promo Revenue: $539.75" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="630" y="490" width="180" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="promo-orders" value="Promotional Orders: 37" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="630" y="510" width="140" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="avg-discount" value="Avg Discount Applied: 18.5%" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="630" y="530" width="170" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Comparison Metrics -->
+        <mxCell id="comparison-metrics" value="vs. Last Week" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="830" y="470" width="100" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="revenue-change" value="Revenue: +12.3% ↗️" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="830" y="490" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="customer-count" value="Customers: +8.7% ↗️" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="830" y="510" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="profit-margin" value="Profit Margin: -2.1% ↘️" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="830" y="530" width="130" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Action Buttons -->
+        <mxCell id="detailed-report" value="📊 Detailed Report" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="980" y="490" width="120" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="export-data" value="📤 Export Data" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="980" y="525" width="100" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Navigation Breadcrumb -->
+        <mxCell id="breadcrumb" value="Dashboard > Manager Controls > Happy Hour &amp; Pricing Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="590" width="400" height="15" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="Loyalty Customer Analytics" id="loyalty-customer-analytics">
+    <mxGraphModel dx="1422" dy="734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Section -->
+        <mxCell id="header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="header-title" value="Loyalty Program &amp; Customer Analytics" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="25" width="450" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="loyalty-status" value="🏆 Loyalty Program: ACTIVE | 847 Members" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="500" y="30" width="300" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="send-promo-btn" value="📧 Send Promotion" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="950" y="25" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="settings-btn" value="⚙️ Settings" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1090" y="25" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Program Overview Cards -->
+        <mxCell id="overview-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="80" width="1200" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Members Stats -->
+        <mxCell id="members-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="100" width="200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="members-icon" value="👥" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="45" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="members-number" value="847" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#9C27B0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="85" y="110" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="members-trend" value="↗️ +23 today" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="140" y="110" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="members-label" value="Total Members" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="85" y="135" width="90" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Points Earned -->
+        <mxCell id="points-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="points-icon" value="⭐" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="265" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="points-number" value="12,847" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#FF9800;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="305" y="110" width="70" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="points-trend" value="↗️ +342 today" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="380" y="110" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="points-label" value="Points Earned Today" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="305" y="135" width="120" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Rewards Redeemed -->
+        <mxCell id="rewards-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="470" y="100" width="200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="rewards-icon" value="🎁" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="485" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="rewards-number" value="47" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#4CAF50;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="525" y="110" width="40" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="rewards-trend" value="↗️ +7 today" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="580" y="110" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="rewards-label" value="Rewards Redeemed" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="525" y="135" width="120" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Revenue Impact -->
+        <mxCell id="revenue-impact-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="690" y="100" width="200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="revenue-impact-icon" value="💰" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="705" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="revenue-impact-number" value="$1,247" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="745" y="110" width="70" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="revenue-impact-trend" value="↗️ +15%" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="820" y="110" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="revenue-impact-label" value="Loyalty Revenue Today" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="745" y="135" width="130" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Program Health -->
+        <mxCell id="health-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="910" y="100" width="260" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="health-icon" value="📈" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="925" y="110" width="30" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="health-score" value="92%" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1976D2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="965" y="110" width="50" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="health-grade" value="Grade: A" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1976D2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="110" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="health-label" value="Program Health Score" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="965" y="135" width="130" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Customer Tiers Section -->
+        <mxCell id="tiers-title" value="Customer Loyalty Tiers" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="200" width="220" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tier-management-btn" value="⚙️ Manage Tiers" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="200" width="100" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Bronze Tier -->
+        <mxCell id="bronze-tier-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#795548;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="240" width="280" height="140" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bronze-icon" value="🥉" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#795548;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="50" y="260" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bronze-title" value="Bronze Members" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#795548;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="95" y="265" width="130" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bronze-count" value="534 members (63%)" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="200" y="268" width="100" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bronze-requirements" value="Requirements: $0 - $499 spent" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="50" y="305" width="180" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bronze-benefits" value="Benefits: 1 point per $1 spent" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#795548;" vertex="1" parent="1">
+          <mxGeometry x="50" y="325" width="180" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bronze-avg-spend" value="Avg Spend: $34.50" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="50" y="345" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bronze-visits" value="Avg Visits/Month: 3.2" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="180" y="345" width="120" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Silver Tier -->
+        <mxCell id="silver-tier-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9E9E9E;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="240" width="280" height="140" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="silver-icon" value="🥈" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#9E9E9E;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="350" y="260" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="silver-title" value="Silver Members" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#9E9E9E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="395" y="265" width="130" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="silver-count" value="247 members (29%)" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="500" y="268" width="100" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="silver-requirements" value="Requirements: $500 - $1,499 spent" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="305" width="200" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="silver-benefits" value="Benefits: 1.5 points per $1 + 5% discount" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#9E9E9E;" vertex="1" parent="1">
+          <mxGeometry x="350" y="325" width="220" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="silver-avg-spend" value="Avg Spend: $67.25" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="345" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="silver-visits" value="Avg Visits/Month: 5.8" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="480" y="345" width="120" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Gold Tier -->
+        <mxCell id="gold-tier-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFD700;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="240" width="280" height="140" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="gold-icon" value="🥇" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FFD700;strokeColor=none;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="650" y="260" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="gold-title" value="Gold Members" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#FFD700;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="695" y="265" width="130" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="gold-count" value="57 members (7%)" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="810" y="268" width="90" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="gold-requirements" value="Requirements: $1,500 - $4,999 spent" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="650" y="305" width="200" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="gold-benefits" value="Benefits: 2 points per $1 + 10% discount + perks" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#FFD700;" vertex="1" parent="1">
+          <mxGeometry x="650" y="325" width="240" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="gold-avg-spend" value="Avg Spend: $145.75" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="650" y="345" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="gold-visits" value="Avg Visits/Month: 8.4" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="780" y="345" width="120" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- VIP Tier -->
+        <mxCell id="vip-tier-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9C27B0;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="930" y="240" width="240" height="140" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vip-icon" value="👑" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="950" y="260" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vip-title" value="VIP Members" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#9C27B0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="995" y="265" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vip-count" value="9 members (1%)" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="268" width="90" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vip-requirements" value="Requirements: $5,000+ spent" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="950" y="305" width="160" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vip-benefits" value="Benefits: 3 points + 15% + VIP perks" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#9C27B0;" vertex="1" parent="1">
+          <mxGeometry x="950" y="325" width="200" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vip-avg-spend" value="Avg Spend: $287.50" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="950" y="345" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vip-visits" value="Visits/Month: 12.1" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="345" width="110" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Recent Activity Section -->
+        <mxCell id="activity-title" value="Recent Loyalty Activity" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="400" width="220" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Activity Feed -->
+        <mxCell id="activity-panel" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="440" width="560" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- Activity 1 -->
+        <mxCell id="activity1-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="460" width="520" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity1-icon" value="⭐" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="470" width="20" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity1-text" value="Sarah Johnson earned 25 points for order #2847 (Silver tier)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;" vertex="1" parent="1">
+          <mxGeometry x="95" y="470" width="350" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity1-time" value="2 mins ago" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="470" y="472" width="90" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- Activity 2 -->
+        <mxCell id="activity2-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="505" width="520" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity2-icon" value="🎁" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="515" width="20" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity2-text" value="Mike Chen redeemed 500 points for 'Free Appetizer' reward (Gold tier)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;" vertex="1" parent="1">
+          <mxGeometry x="95" y="515" width="380" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity2-time" value="8 mins ago" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="470" y="517" width="90" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- Activity 3 -->
+        <mxCell id="activity3-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="550" width="520" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity3-icon" value="👑" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="560" width="20" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity3-text" value="Lisa Martinez was upgraded to VIP tier! Total spent: $5,247.50" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#9C27B0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="95" y="560" width="350" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="activity3-time" value="15 mins ago" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="470" y="562" width="90" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- Rewards Management Panel -->
+        <mxCell id="rewards-panel" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="610" y="440" width="560" height="140" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="rewards-mgmt-title" value="Active Rewards" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="460" width="120" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="add-reward-btn" value="+ Add Reward" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="457" width="100" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Reward 1 -->
+        <mxCell id="reward1-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="630" y="490" width="160" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reward1-title" value="Free Appetizer" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="645" y="495" width="90" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reward1-cost" value="500 points" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="645" y="510" width="70" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- Reward 2 -->
+        <mxCell id="reward2-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;" vertex="1" parent="1">
+          <mxGeometry x="800" y="490" width="160" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reward2-title" value="10% Off Next Order" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#0D47A1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="815" y="495" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reward2-cost" value="300 points" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="815" y="510" width="70" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- Reward 3 -->
+        <mxCell id="reward3-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;" vertex="1" parent="1">
+          <mxGeometry x="970" y="490" width="180" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reward3-title" value="VIP Birthday Special" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#6A1B9A;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="985" y="495" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reward3-cost" value="1000 points" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="985" y="510" width="80" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- Analytics Actions -->
+        <mxCell id="campaign-btn" value="📧 Launch Campaign" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="630" y="545" width="120" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="segment-btn" value="🎯 Customer Segments" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="760" y="545" width="130" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="export-btn" value="📊 Export Data" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="900" y="545" width="100" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Navigation Breadcrumb -->
+        <mxCell id="breadcrumb" value="Dashboard > Advanced Features > Loyalty Program &amp; Customer Analytics" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="600" width="450" height="15" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
