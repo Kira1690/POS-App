@@ -932,4 +932,734 @@
       </root>
     </mxGraphModel>
   </diagram>
+
+  <diagram name="Staff Management Configuration" id="staff-management-configuration">
+    <mxGraphModel dx="1422" dy="734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Section -->
+        <mxCell id="header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="header-title" value="Staff Management Configuration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="25" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="save-config-btn" value="💾 Save Configuration" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="920" y="25" width="150" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="back-settings-btn" value="← Settings" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1090" y="25" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Main Content Area -->
+        <mxCell id="content-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="80" width="1200" height="1500" as="geometry" />
+        </mxCell>
+
+        <!-- Role Hierarchy Management Section -->
+        <mxCell id="roles-section" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="110" width="560" height="320" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="roles-title" value="👥 Staff Role Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="130" width="220" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Role Hierarchy Visual -->
+        <mxCell id="hierarchy-visual-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="170" width="520" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hierarchy-title" value="Role Hierarchy (Click to Configure)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="180" width="520" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Owner Level -->
+        <mxCell id="owner-role" value="OWNER" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#8E24AA;strokeColor=none;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="210" width="80" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow1" value="→" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="170" y="215" width="20" height="15" as="geometry" />
+        </mxCell>
+        
+        <!-- SuperAdmin Level -->
+        <mxCell id="superadmin-role" value="SUPERADMIN" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#673AB7;strokeColor=none;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="210" width="100" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow2" value="→" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="310" y="215" width="20" height="15" as="geometry" />
+        </mxCell>
+        
+        <!-- Admin Level -->
+        <mxCell id="admin-role" value="ADMIN" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#3F51B5;strokeColor=none;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="210" width="70" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow3" value="→" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="420" y="215" width="20" height="15" as="geometry" />
+        </mxCell>
+        
+        <!-- Manager Level -->
+        <mxCell id="manager-role" value="MANAGER" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="210" width="90" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Staff Levels (Second Row) -->
+        <mxCell id="staff-line" value="↓" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="490" y="235" width="20" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-staff-role" value="KITCHEN STAFF" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=11;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="255" width="110" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="server-role" value="SERVER" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=11;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="210" y="255" width="70" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cashier-role" value="CASHIER" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="255" width="80" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="host-role" value="HOST" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#795548;strokeColor=none;fontSize=11;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="255" width="60" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cleaner-role" value="CLEANER" style="rounded=15;whiteSpace=wrap;html=1;fillColor=#607D8B;strokeColor=none;fontSize=11;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="255" width="80" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Role Configuration Options -->
+        <mxCell id="role-config-title" value="Role Configuration:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="310" width="140" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="add-role-btn" value="+ Add New Role" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="50" y="340" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edit-permissions-btn" value="✏️ Edit Permissions" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="170" y="340" width="130" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="role-reports-btn" value="📊 Role Reports" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="320" y="340" width="110" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bulk-assign-btn" value="👥 Bulk Role Assignment" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="340" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Payroll Configuration Section -->
+        <mxCell id="payroll-section" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="610" y="110" width="560" height="320" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="payroll-title" value="💰 Payroll Configuration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="130" width="220" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Base Pay Rates -->
+        <mxCell id="pay-rates-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="630" y="170" width="250" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pay-rates-title" value="Base Pay Rates (per hour)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="650" y="185" width="180" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="manager-pay-label" value="Manager:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="650" y="215" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="manager-pay-field" value="$25.00" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="720" y="210" width="60" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-pay-label" value="Kitchen Staff:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="650" y="245" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-pay-field" value="$18.00" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="730" y="240" width="60" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="server-pay-label" value="Server:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="650" y="275" width="50" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="server-pay-field" value="$15.00" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="710" y="270" width="60" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cashier-pay-label" value="Cashier:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="650" y="305" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cashier-pay-field" value="$16.00" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="720" y="300" width="60" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tips-toggle" value="☑️ Include Tips in Calculation" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="650" y="335" width="180" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Payroll Rules -->
+        <mxCell id="payroll-rules-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="900" y="170" width="250" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="payroll-rules-title" value="Payroll Rules" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="920" y="185" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="overtime-label" value="Overtime (>40hrs):" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="215" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="overtime-field" value="1.5x" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="210" width="50" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="double-time-label" value="Double Time (>60hrs):" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="245" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="double-time-field" value="2.0x" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="240" width="50" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="break-pay-label" value="Break Pay (>6hrs):" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="275" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="break-pay-toggle" value="☑️ Paid" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="270" width="60" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="holiday-pay-label" value="Holiday Pay:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="920" y="305" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="holiday-pay-field" value="2.0x" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="300" width="50" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tax-config-btn" value="⚙️ Tax Configuration" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF5722;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="920" y="330" width="130" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Payroll Actions -->
+        <mxCell id="update-payroll-btn" value="💾 Update Payroll Settings" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="370" width="170" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="export-payroll-btn" value="📊 Export Payroll Template" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="820" y="370" width="180" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="payroll-preview-btn" value="👁️ Preview Payroll" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="370" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Scheduling Configuration Section -->
+        <mxCell id="scheduling-section" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="450" width="560" height="350" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="scheduling-title" value="📅 Scheduling Configuration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="470" width="250" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Shift Templates -->
+        <mxCell id="shift-templates-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="510" width="250" height="200" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="shift-templates-title" value="Shift Templates" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="525" width="120" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Morning Shift -->
+        <mxCell id="morning-shift-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFC107;" vertex="1" parent="1">
+          <mxGeometry x="70" y="550" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="morning-icon" value="🌅" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="80" y="555" width="20" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="morning-name" value="Morning Shift" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="105" y="555" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="morning-time" value="06:00 - 14:00" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="105" y="570" width="80" height="10" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="morning-edit" value="Edit" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFC107;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="230" y="557" width="35" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Afternoon Shift -->
+        <mxCell id="afternoon-shift-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="70" y="595" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="afternoon-icon" value="☀️" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="80" y="600" width="20" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="afternoon-name" value="Afternoon Shift" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="105" y="600" width="90" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="afternoon-time" value="14:00 - 22:00" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="105" y="615" width="80" height="10" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="afternoon-edit" value="Edit" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="230" y="602" width="35" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Night Shift -->
+        <mxCell id="night-shift-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#673AB7;" vertex="1" parent="1">
+          <mxGeometry x="70" y="640" width="210" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="night-icon" value="🌙" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="80" y="645" width="20" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="night-name" value="Night Shift" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="105" y="645" width="70" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="night-time" value="22:00 - 06:00" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="105" y="660" width="80" height="10" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="night-edit" value="Edit" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#673AB7;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="230" y="647" width="35" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="add-shift-btn" value="+ Add New Shift Template" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="70" y="685" width="160" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Schedule Rules -->
+        <mxCell id="schedule-rules-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="320" y="510" width="250" height="200" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="schedule-rules-title" value="Scheduling Rules" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="525" width="130" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="min-hours-label" value="Min Hours/Week:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="555" width="100" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="min-hours-field" value="20" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="450" y="550" width="50" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="max-hours-label" value="Max Hours/Week:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="585" width="105" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="max-hours-field" value="40" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="450" y="580" width="50" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="min-break-label" value="Min Break (hrs):" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="615" width="100" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="min-break-field" value="8" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="450" y="610" width="50" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="advance-notice-label" value="Advance Notice:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="645" width="105" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="advance-notice-field" value="7 days" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="450" y="640" width="80" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="auto-schedule-toggle" value="☑️ Auto-Schedule Based on Availability" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="340" y="675" width="220" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conflict-alert-toggle" value="☑️ Alert on Schedule Conflicts" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="340" y="695" width="200" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Scheduling Actions -->
+        <mxCell id="update-schedule-btn" value="💾 Update Schedule Rules" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="740" width="160" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="schedule-template-btn" value="📋 Create Schedule Template" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="230" y="740" width="180" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="schedule-preview-btn" value="👁️ Preview Schedule" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="430" y="740" width="140" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Weekly Forms Configuration Section -->
+        <mxCell id="forms-section" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="610" y="450" width="560" height="350" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="forms-title" value="📝 Weekly Forms Configuration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="470" width="280" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Form Templates -->
+        <mxCell id="form-templates-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="630" y="510" width="270" height="220" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-templates-title" value="Form Templates" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="650" y="525" width="120" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Time Commitment Form -->
+        <mxCell id="time-form-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="650" y="555" width="230" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="time-form-icon" value="⏰" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="660" y="562" width="20" height="26" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="time-form-name" value="Time Commitment Form" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="685" y="562" width="140" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="time-form-desc" value="Weekly availability &amp; hours commitment" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="685" y="578" width="180" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="time-form-edit" value="Edit" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="840" y="565" width="35" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Pay Estimate Form -->
+        <mxCell id="pay-form-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="650" y="605" width="230" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pay-form-icon" value="💵" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="660" y="612" width="20" height="26" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pay-form-name" value="Pay Estimate Form" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="685" y="612" width="120" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pay-form-desc" value="Expected earnings &amp; financial planning" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="685" y="628" width="170" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pay-form-edit" value="Edit" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="840" y="615" width="35" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Performance Goals Form -->
+        <mxCell id="goals-form-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9C27B0;" vertex="1" parent="1">
+          <mxGeometry x="650" y="655" width="230" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="goals-form-icon" value="🎯" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="660" y="662" width="20" height="26" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="goals-form-name" value="Performance Goals Form" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="685" y="662" width="140" height="16" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="goals-form-desc" value="Weekly targets &amp; skill development" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="685" y="678" width="160" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="goals-form-edit" value="Edit" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="840" y="665" width="35" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="add-form-btn" value="+ Create New Form Template" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="650" y="705" width="180" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Form Workflow Settings -->
+        <mxCell id="workflow-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="920" y="510" width="230" height="220" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="workflow-title" value="Form Workflow" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="525" width="110" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="submission-day-label" value="Submission Day:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="940" y="555" width="110" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="submission-day-select" value="Friday ▼" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="940" y="575" width="80" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="deadline-label" value="Deadline Time:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="940" y="610" width="100" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="deadline-select" value="17:00 ▼" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="940" y="630" width="80" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reminder-label" value="Reminders:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="940" y="665" width="80" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reminder-48h" value="☑️ 48 hours before" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="940" y="685" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reminder-24h" value="☑️ 24 hours before" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="940" y="705" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="auto-approval-toggle" value="☐ Auto-approve submissions" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="940" y="725" width="160" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Form Actions -->
+        <mxCell id="update-forms-btn" value="💾 Update Form Settings" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="750" width="160" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-builder-btn" value="🔧 Form Builder" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="810" y="750" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="form-analytics-btn" value="📊 Form Analytics" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="950" y="750" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- System Integration Section -->
+        <mxCell id="integration-section" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="830" width="1140" height="280" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="integration-title" value="🔗 Staff Management System Integration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="850" width="350" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Dashboard Integration -->
+        <mxCell id="dashboard-integration-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="890" width="220" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="dashboard-icon" value="📊" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="70" y="905" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="dashboard-name" value="Dashboard Integration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="115" y="908" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="dashboard-desc" value="Staff widgets, real-time metrics" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="115" y="925" width="150" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="dashboard-status" value="🔘 Active" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="70" y="950" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="dashboard-config" value="Configure" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="180" y="947" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Notifications Integration -->
+        <mxCell id="notifications-integration-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="290" y="890" width="220" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="notifications-icon" value="🔔" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="310" y="905" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="notifications-name" value="Notifications System" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="355" y="908" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="notifications-desc" value="Form reminders, schedule alerts" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="355" y="925" width="150" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="notifications-status" value="🔘 Active" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="310" y="950" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="notifications-config" value="Configure" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="420" y="947" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Reports Integration -->
+        <mxCell id="reports-integration-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="530" y="890" width="220" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reports-icon" value="📈" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="905" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reports-name" value="Reports Integration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="595" y="908" width="130" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reports-desc" value="Payroll reports, staff analytics" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="595" y="925" width="150" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reports-status" value="🔘 Active" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="550" y="950" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reports-config" value="Configure" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="660" y="947" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Kitchen Integration -->
+        <mxCell id="kitchen-integration-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="770" y="890" width="220" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-integration-icon" value="👨‍🍳" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#E91E63;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="790" y="905" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-integration-name" value="Kitchen Integration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="835" y="908" width="120" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-integration-desc" value="Chef assignments, performance" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="835" y="925" width="140" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-integration-status" value="🔘 Active" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="790" y="950" width="60" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kitchen-integration-config" value="Configure" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#E91E63;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="900" y="947" width="60" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- External HR Integration -->
+        <mxCell id="hr-integration-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="890" width="140" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hr-integration-icon" value="🏢" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#795548;strokeColor=none;fontSize=20;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1025" y="905" width="35" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hr-integration-name" value="External HR" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="908" width="70" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hr-integration-desc" value="QuickBooks, ADP" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="925" width="80" height="12" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hr-integration-status" value="⚪ Setup Required" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="1025" y="950" width="110" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Integration Settings -->
+        <mxCell id="integration-settings-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1000" width="1100" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="integration-settings-title" value="Integration Settings:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1015" width="140" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="sync-frequency-label" value="Data Sync:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1045" width="70" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="sync-frequency-select" value="Real-time ▼" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="150" y="1040" width="90" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="backup-label" value="Backup:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="280" y="1045" width="50" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="backup-select" value="Daily ▼" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="340" y="1040" width="70" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="audit-log-toggle" value="☑️ Enable Audit Logging" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="450" y="1045" width="150" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="data-retention-label" value="Data Retention:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="640" y="1045" width="100" height="15" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="data-retention-select" value="2 years ▼" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="750" y="1040" width="80" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="export-integration-btn" value="📊 Export Settings" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="870" y="1040" width="120" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="test-integration-btn" value="🧪 Test All Integrations" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="1040" width="140" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Global Actions -->
+        <mxCell id="save-all-config-btn" value="💾 Save All Configuration Changes" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1140" width="250" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reset-config-btn" value="🔄 Reset to Default Settings" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF5722;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="320" y="1140" width="180" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="export-config-btn" value="📤 Export Configuration" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="520" y="1140" width="160" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="import-config-btn" value="📥 Import Configuration" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="700" y="1140" width="160" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="help-config-btn" value="❓ Configuration Help" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#607D8B;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="880" y="1140" width="150" height="35" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="preview-changes-btn" value="👁️ Preview Changes" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="1140" width="140" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Navigation Breadcrumb -->
+        <mxCell id="breadcrumb" value="Dashboard > Settings > Staff Management Configuration" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1200" width="400" height="15" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>

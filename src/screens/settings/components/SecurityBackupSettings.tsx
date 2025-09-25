@@ -1,0 +1,362 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Switch,
+} from 'react-native';
+import { theme } from '@/constants/theme';
+
+interface SecurityBackupSettingsProps {
+  onChangesDetected: (hasChanges: boolean) => void;
+}
+
+export default function SecurityBackupSettings({ onChangesDetected }: SecurityBackupSettingsProps) {
+  const [securitySettings, setSecuritySettings] = useState({
+    two_factor_auth: false,
+    session_timeout: 30,
+    password_complexity: true,
+    failed_login_limit: 5,
+    audit_logging: true,
+  });
+
+  const [backupSettings, setBackupSettings] = useState({
+    auto_backup: true,
+    backup_frequency: 'daily',
+    cloud_backup: true,
+    local_backup: false,
+    retention_days: 30,
+  });
+
+  const handleSecurityChange = (setting: string, value: any) => {
+    setSecuritySettings(prev => ({ ...prev, [setting]: value }));
+    onChangesDetected(true);
+  };
+
+  const handleBackupChange = (setting: string, value: any) => {
+    setBackupSettings(prev => ({ ...prev, [setting]: value }));
+    onChangesDetected(true);
+  };
+
+  const handleBackupNow = () => {
+    Alert.alert('Manual Backup', 'Starting manual backup process...');
+  };
+
+  const handleRestoreData = () => {
+    Alert.alert(
+      'Restore Data',
+      'Are you sure you want to restore data from backup? This will overwrite current data.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Restore', style: 'destructive' },
+      ]
+    );
+  };
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <Text style={styles.title}>Security & Backup</Text>
+
+      {/* Security Settings */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Security Settings</Text>
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingLabel}>Two-Factor Authentication</Text>
+            <Text style={styles.settingDesc}>Require SMS or app verification for login</Text>
+          </View>
+          <Switch
+            value={securitySettings.two_factor_auth}
+            onValueChange={(value) => handleSecurityChange('two_factor_auth', value)}
+            trackColor={{ false: theme.colors.border, true: theme.colors.success }}
+            thumbColor={theme.colors.white}
+          />
+        </View>
+        
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingLabel}>Password Complexity</Text>
+            <Text style={styles.settingDesc}>Enforce strong password requirements</Text>
+          </View>
+          <Switch
+            value={securitySettings.password_complexity}
+            onValueChange={(value) => handleSecurityChange('password_complexity', value)}
+            trackColor={{ false: theme.colors.border, true: theme.colors.success }}
+            thumbColor={theme.colors.white}
+          />
+        </View>
+
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingLabel}>Audit Logging</Text>
+            <Text style={styles.settingDesc}>Log all user actions and system events</Text>
+          </View>
+          <Switch
+            value={securitySettings.audit_logging}
+            onValueChange={(value) => handleSecurityChange('audit_logging', value)}
+            trackColor={{ false: theme.colors.border, true: theme.colors.success }}
+            thumbColor={theme.colors.white}
+          />
+        </View>
+
+        <View style={styles.valueRow}>
+          <Text style={styles.valueLabel}>Session Timeout (minutes)</Text>
+          <Text style={styles.valueText}>{securitySettings.session_timeout}</Text>
+        </View>
+
+        <View style={styles.valueRow}>
+          <Text style={styles.valueLabel}>Failed Login Limit</Text>
+          <Text style={styles.valueText}>{securitySettings.failed_login_limit}</Text>
+        </View>
+      </View>
+
+      {/* Backup Settings */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Backup Configuration</Text>
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingLabel}>Automatic Backup</Text>
+            <Text style={styles.settingDesc}>Enable scheduled automatic backups</Text>
+          </View>
+          <Switch
+            value={backupSettings.auto_backup}
+            onValueChange={(value) => handleBackupChange('auto_backup', value)}
+            trackColor={{ false: theme.colors.border, true: theme.colors.success }}
+            thumbColor={theme.colors.white}
+          />
+        </View>
+
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingLabel}>Cloud Backup</Text>
+            <Text style={styles.settingDesc}>Store backups in secure cloud storage</Text>
+          </View>
+          <Switch
+            value={backupSettings.cloud_backup}
+            onValueChange={(value) => handleBackupChange('cloud_backup', value)}
+            trackColor={{ false: theme.colors.border, true: theme.colors.success }}
+            thumbColor={theme.colors.white}
+          />
+        </View>
+
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingLabel}>Local Backup</Text>
+            <Text style={styles.settingDesc}>Store backups on local device storage</Text>
+          </View>
+          <Switch
+            value={backupSettings.local_backup}
+            onValueChange={(value) => handleBackupChange('local_backup', value)}
+            trackColor={{ false: theme.colors.border, true: theme.colors.success }}
+            thumbColor={theme.colors.white}
+          />
+        </View>
+
+        <View style={styles.valueRow}>
+          <Text style={styles.valueLabel}>Backup Frequency</Text>
+          <Text style={styles.valueText}>{backupSettings.backup_frequency}</Text>
+        </View>
+
+        <View style={styles.valueRow}>
+          <Text style={styles.valueLabel}>Retention Period (days)</Text>
+          <Text style={styles.valueText}>{backupSettings.retention_days}</Text>
+        </View>
+      </View>
+
+      {/* Recent Backups */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Recent Backups</Text>
+        {[
+          { date: '2024-01-20 02:30', type: 'Automatic', size: '45.2 MB', status: 'Success' },
+          { date: '2024-01-19 02:30', type: 'Automatic', size: '44.8 MB', status: 'Success' },
+          { date: '2024-01-18 14:15', type: 'Manual', size: '43.9 MB', status: 'Success' },
+        ].map((backup, index) => (
+          <View key={index} style={styles.backupRow}>
+            <View style={styles.backupInfo}>
+              <Text style={styles.backupDate}>{backup.date}</Text>
+              <Text style={styles.backupDetails}>{backup.type} • {backup.size}</Text>
+            </View>
+            <View style={[styles.backupStatus, styles[`status${backup.status}`]]}>
+              <Text style={styles.backupStatusText}>{backup.status}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      {/* Data Encryption */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Data Encryption</Text>
+        <View style={styles.encryptionInfo}>
+          <Text style={styles.encryptionLabel}>🔒 Database Encryption</Text>
+          <Text style={styles.encryptionStatus}>Enabled (AES-256)</Text>
+        </View>
+        <View style={styles.encryptionInfo}>
+          <Text style={styles.encryptionLabel}>🔐 Backup Encryption</Text>
+          <Text style={styles.encryptionStatus}>Enabled (AES-256)</Text>
+        </View>
+        <View style={styles.encryptionInfo}>
+          <Text style={styles.encryptionLabel}>📡 Data Transmission</Text>
+          <Text style={styles.encryptionStatus}>TLS 1.3</Text>
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actions}>
+        <TouchableOpacity style={styles.backupButton} onPress={handleBackupNow}>
+          <Text style={styles.backupButtonText}>💾 Backup Now</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.restoreButton} onPress={handleRestoreData}>
+          <Text style={styles.restoreButtonText}>🔄 Restore Data</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: 25,
+  },
+  section: {
+    backgroundColor: theme.colors.lightGray,
+    borderRadius: 8,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: 15,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  settingInfo: {
+    flex: 1,
+  },
+  settingLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 2,
+  },
+  settingDesc: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  valueRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  valueLabel: {
+    fontSize: 14,
+    color: theme.colors.text,
+  },
+  valueText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontWeight: '600',
+  },
+  backupRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  backupInfo: {
+    flex: 1,
+  },
+  backupDate: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 2,
+  },
+  backupDetails: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  backupStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusSuccess: {
+    backgroundColor: '#E8F5E8',
+  },
+  backupStatusText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+  },
+  encryptionInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  encryptionLabel: {
+    fontSize: 14,
+    color: theme.colors.text,
+  },
+  encryptionStatus: {
+    fontSize: 12,
+    color: theme.colors.success,
+    fontWeight: '600',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 15,
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  backupButton: {
+    flex: 1,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  backupButtonText: {
+    color: theme.colors.white,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  restoreButton: {
+    flex: 1,
+    backgroundColor: theme.colors.warning,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  restoreButtonText: {
+    color: theme.colors.white,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+});

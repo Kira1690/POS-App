@@ -1,0 +1,8 @@
+export { default as RestaurantProfileSettings } from './RestaurantProfileSettings';
+export { default as UserManagementSettings } from './UserManagementSettings';
+export { default as DeviceHardwareSettings } from './DeviceHardwareSettings';
+export { default as PaymentConfigurationSettings } from './PaymentConfigurationSettings';
+export { default as IntegrationsSettings } from './IntegrationsSettings';
+export { default as SecurityBackupSettings } from './SecurityBackupSettings';
+export { default as SystemLogsSettings } from './SystemLogsSettings';
+export { default as HelpSupportSettings } from './HelpSupportSettings';

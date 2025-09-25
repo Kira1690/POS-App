@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram name="Staff Management Overview" id="staff-management-overview">
+    <mxGraphModel dx="1422" dy="734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header Section -->
+        <mxCell id="header-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="header-title" value="👥 Staff Management System" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="25" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="current-week" value="Week of Sep 23-29, 2025" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#CCCCCC;" vertex="1" parent="1">
+          <mxGeometry x="350" y="30" width="200" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="payroll-btn" value="💰 Process Payroll" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="900" y="25" width="130" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="back-btn" value="← Dashboard" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="25" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Role Hierarchy Section -->
+        <mxCell id="hierarchy-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="80" width="1200" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="hierarchy-title" value="Role Management Hierarchy" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="95" width="250" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Owner Level -->
+        <mxCell id="owner-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#8E24AA;strokeColor=none;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="130" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="owner-text" value="👑 OWNER" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="145" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- SuperAdmin Level -->
+        <mxCell id="superadmin-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=none;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="130" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="superadmin-text" value="⚡ SUPERADMIN" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="145" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Admin Level -->
+        <mxCell id="admin-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="130" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="admin-text" value="🔧 ADMIN" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="145" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Manager Level -->
+        <mxCell id="manager-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="130" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-text" value="👨‍💼 MANAGER" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="145" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Staff Level -->
+        <mxCell id="staff-card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="650" y="130" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-text" value="👤 STAFF" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="650" y="145" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Restaurant Specific Note -->
+        <mxCell id="restaurant-note" value="(Restaurant Can Decide)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="800" y="152" width="150" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Main Content Area -->
+        <mxCell id="content-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="200" width="1200" height="1400" as="geometry" />
+        </mxCell>
+
+        <!-- Left Panel - Staff Dashboard -->
+        <mxCell id="left-panel-bg" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="220" width="380" height="600" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="staff-dashboard-title" value="Staff Dashboard" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="240" width="150" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Active Staff Cards -->
+        <mxCell id="active-staff-1" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="280" width="340" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-1-avatar" value="👨‍🍳" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="295" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-1-name" value="John Smith - Chef" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="105" y="295" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-1-status" value="🟢 On Duty" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="105" y="315" width="80" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-1-hours" value="6.5h Today" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="300" y="295" width="80" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-1-pay" value="$156.00" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="315" width="80" height="15" as="geometry" />
+        </mxCell>
+
+        <mxCell id="active-staff-2" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="350" width="340" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-2-avatar" value="👩‍🍳" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="365" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-2-name" value="Sarah Johnson - Server" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="105" y="365" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-2-status" value="⏸️ Break" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="105" y="385" width="80" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-2-hours" value="4.2h Today" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="300" y="365" width="80" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-2-pay" value="$84.00" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="385" width="80" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Weekly Form Section -->
+        <mxCell id="weekly-form-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="440" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="form-icon" value="📋" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="455" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="form-title" value="Weekly Commitment Form" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#E65100;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="105" y="455" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="form-subtitle" value="Sunday Morning Required" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="105" y="475" width="150" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="form-status" value="12/15 Staff Completed" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="105" y="495" width="150" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="view-forms-btn" value="View Forms" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="300" y="465" width="80" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Scheduling Tracking -->
+        <mxCell id="schedule-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="560" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="schedule-icon" value="📅" style="rounded=20;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=16;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="65" y="575" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="schedule-title" value="Schedule Tracking" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="105" y="575" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="schedule-availability" value="Availability Prediction" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#4CAF50;" vertex="1" parent="1">
+          <mxGeometry x="105" y="595" width="150" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="schedule-cost" value="Cost Prediction: $2,340/week" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="105" y="615" width="180" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="manage-schedule-btn" value="Manage" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="320" y="585" width="60" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Center Panel - Scheduling System -->
+        <mxCell id="center-panel-bg" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="440" y="220" width="480" height="600" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="scheduling-title" value="Staff Scheduling System" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="240" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Week Navigation -->
+        <mxCell id="week-nav-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="460" y="270" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="prev-week-btn" value="← Previous" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#6C757D;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="480" y="280" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="current-week-display" value="September 23-29, 2025" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="580" y="280" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="next-week-btn" value="Next →" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#6C757D;strokeColor=none;fontSize=12;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="780" y="280" width="80" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Schedule Grid Headers -->
+        <mxCell id="schedule-headers-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="460" y="330" width="440" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="header-staff" value="Staff" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="335" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="header-mon" value="Mon" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="335" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="header-tue" value="Tue" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="335" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="header-wed" value="Wed" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="335" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="header-thu" value="Thu" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="690" y="335" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="header-fri" value="Fri" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="740" y="335" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="header-sat" value="Sat" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="790" y="335" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="header-sun" value="Sun" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="335" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Schedule Grid Row 1 -->
+        <mxCell id="schedule-row1-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="460" y="360" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="staff1-name" value="John Smith" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#1A1D21;" vertex="1" parent="1">
+          <mxGeometry x="460" y="370" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="john-mon" value="9-5" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="545" y="365" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="john-tue" value="9-5" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="595" y="365" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="john-wed" value="OFF" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#9E9E9E;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="645" y="365" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="john-thu" value="9-5" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="695" y="365" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="john-fri" value="9-5" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="745" y="365" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="john-sat" value="12-8" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="795" y="365" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="john-sun" value="OFF" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#9E9E9E;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="845" y="365" width="40" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Schedule Grid Row 2 -->
+        <mxCell id="schedule-row2-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="460" y="400" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="staff2-name" value="Sarah Johnson" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#1A1D21;" vertex="1" parent="1">
+          <mxGeometry x="460" y="410" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sarah-mon" value="2-10" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#2196F3;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="545" y="405" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sarah-tue" value="OFF" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#9E9E9E;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="595" y="405" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sarah-wed" value="2-10" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#2196F3;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="645" y="405" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sarah-thu" value="2-10" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#2196F3;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="695" y="405" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sarah-fri" value="2-10" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#2196F3;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="745" y="405" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sarah-sat" value="2-10" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#2196F3;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="795" y="405" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sarah-sun" value="12-6" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="845" y="405" width="40" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Time Tracking Section -->
+        <mxCell id="time-tracking-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="460" y="460" width="440" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="time-tracking-title" value="⏱️ Time Tracking &amp; Clock Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#1976D2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="480" width="280" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Clock In/Out Cards -->
+        <mxCell id="clock-in-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="510" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="clock-in-text" value="🟢 Clock In" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="525" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="clock-out-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#F44336;strokeColor=none;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="510" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="clock-out-text" value="🔴 Clock Out" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="525" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="break-card" value="" style="rounded=6;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=none;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="510" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="break-text" value="⏸️ Break Time" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="525" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Cost Prediction Dashboard -->
+        <mxCell id="cost-prediction-bg" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="460" y="600" width="440" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="cost-prediction-title" value="💰 Cost Prediction &amp; Budget Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#7B1FA2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="620" width="320" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="weekly-cost" value="This Week: $2,340" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#7B1FA2;" vertex="1" parent="1">
+          <mxGeometry x="480" y="650" width="120" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="monthly-projection" value="Monthly Projection: $9,360" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#7B1FA2;" vertex="1" parent="1">
+          <mxGeometry x="480" y="670" width="180" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="overtime-alert" value="⚠️ Overtime Alert: 3 staff" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#E65100;" vertex="1" parent="1">
+          <mxGeometry x="720" y="650" width="150" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="budget-status" value="✅ Under Budget: $240 remaining" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="700" y="670" width="170" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Right Panel - Payroll Management -->
+        <mxCell id="right-panel-bg" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="950" y="220" width="220" height="600" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="payroll-title" value="Payroll Management" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="970" y="240" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Base Pay Settings -->
+        <mxCell id="base-pay-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E0E0E0;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="970" y="280" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="base-pay-title" value="Base Pay Rates" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#1A1D21;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="985" y="295" width="100" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="chef-rate" value="Chef: $24/hr" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="985" y="315" width="80" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="server-rate" value="Server: $20/hr" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="985" y="330" width="80" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="host-rate" value="Host: $16/hr" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="985" y="345" width="80" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="edit-rates-btn" value="Edit Rates" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="320" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Account-Based Payroll -->
+        <mxCell id="account-payroll-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="970" y="380" width="180" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="account-payroll-title" value="Account-Based Payroll" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#2E7D32;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="985" y="400" width="140" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="total-payroll" value="Total This Week: $8,940" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="985" y="420" width="140" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="processed-amount" value="Processed: $6,200" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="985" y="435" width="100" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pending-amount" value="Pending: $2,740" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#FF9800;" vertex="1" parent="1">
+          <mxGeometry x="985" y="450" width="100" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="process-payroll-btn" value="Process Payroll" style="rounded=4;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="985" y="470" width="80" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Payroll History -->
+        <mxCell id="history-card" value="" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="970" y="520" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="history-title" value="Recent Payroll History" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#E65100;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="985" y="540" width="140" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="history-1" value="Sep 16-22: $8,420 ✓" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="985" y="560" width="120" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="history-2" value="Sep 9-15: $7,890 ✓" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="985" y="575" width="120" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="history-3" value="Sep 2-8: $8,100 ✓" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="985" y="590" width="120" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- Bottom Action Bar -->
+        <mxCell id="action-bar-bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1D21;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="840" width="1200" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="add-staff-btn" value="➕ Add New Staff" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;fontSize=14;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="855" width="130" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="export-schedule-btn" value="📄 Export Schedule" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#2196F3;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="200" y="855" width="140" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="bulk-actions-btn" value="⚙️ Bulk Actions" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#6C757D;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="360" y="855" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reports-btn" value="📊 Staff Reports" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="500" y="855" width="130" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="settings-btn" value="⚙️ Settings" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=none;fontSize=14;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="855" width="100" height="30" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

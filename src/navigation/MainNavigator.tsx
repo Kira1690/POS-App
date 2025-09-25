@@ -9,7 +9,7 @@ import {
   OrdersStackParamList,
   KitchenStackParamList 
 } from './types';
-import { DashboardScreen } from '@/screens/dashboard';
+import { DashboardScreen, DashboardProvider } from '@/screens/dashboard';
 import { TableManagementScreen } from '@/screens/tables';
 import { 
   POSOrderScreen, 
@@ -111,6 +111,13 @@ const KitchenStackNavigator = () => (
   </OrderProvider>
 );
 
+// Dashboard with Provider wrapper
+const DashboardWithProvider = () => (
+  <DashboardProvider>
+    <DashboardScreen />
+  </DashboardProvider>
+);
+
 // Remove old OrdersScreen as we now use OrdersStackNavigator
 
 const MenuScreen = () => (
@@ -178,7 +185,7 @@ export const MainNavigator: React.FC = () => {
     >
       <Tab.Screen 
         name="Dashboard" 
-        component={DashboardScreen}
+        component={DashboardWithProvider}
         options={{ title: 'Dashboard' }}
       />
       <Tab.Screen 
