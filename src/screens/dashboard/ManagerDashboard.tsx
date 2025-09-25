@@ -20,6 +20,12 @@ import { useAuth } from '@/context/auth/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
+import {
+  getManagerDashboardData,
+  getSalesGrowthPercentage,
+  getOrderCompletionRate,
+  type ManagerDashboardData
+} from '@/data/dashboard/managerDashboard';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
@@ -34,35 +40,30 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(isTablet);
 
-  // Mock data - will be replaced with real data from services
-  const dashboardData = useMemo(() => ({
-    restaurant: authState.restaurant?.name || 'The Food Corner',
-    currentDate: new Date().toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }),
-    currentTime: new Date().toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    }),
-    user: authState.user,
-    stats: {
-      todaysSales: { value: '$2,847.50', change: '+12.5%', trend: 'up' },
-      activeOrders: { value: '23', breakdown: '12 Dine-in | 8 Takeaway | 3 Delivery' },
-      tableOccupancy: { value: '16/25', percentage: '64% occupancy rate' },
-      staffOnDuty: { value: '8', breakdown: '5 Servers | 2 Kitchen | 1 Manager' }
-    },
-    recentOrders: [
-      { id: 1, table: 'Table 12', amount: '$45.50', status: 'Preparing', statusColor: '#ffc107' },
-      { id: 2, table: 'Takeaway', amount: '$28.75', status: 'Ready', statusColor: '#28a745' },
-      { id: 3, table: 'Table 8', amount: '$67.25', status: 'Pending', statusColor: '#dc3545' },
-      { id: 4, table: 'Delivery', amount: '$52.00', status: 'Preparing', statusColor: '#ffc107' },
-      { id: 5, table: 'Table 15', amount: '$89.50', status: 'Ready', statusColor: '#28a745' },
-    ],
-    notifications: 5
-  }), [authState]);
+  // Get centralized dashboard data
+  const dashboardData = useMemo(() => {
+    const data = getManagerDashboardData(authState.restaurant?.id);
+
+    // Update with current user info
+    return {
+      ...data,
+      restaurant: {
+        ...data.restaurant,
+        name: authState.restaurant?.name || data.restaurant.name,
+      },
+      user: authState.user,
+      currentDate: new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      currentTime: new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+    };
+  }, [authState]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -85,21 +86,15 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
     { label: 'Settings', icon: 'settings' },
   ];
 
-  const quickActions = [
-    { label: 'New Order', icon: 'add', color: '#28a745' },
-    { label: 'View Tables', icon: 'table-restaurant', color: '#007bff' },
-    { label: 'Kitchen Display', icon: 'kitchen', color: '#fd7e14' },
-    { label: 'Daily Report', icon: 'assessment', color: '#6610f2' },
-    { label: 'Menu Management', icon: 'restaurant-menu', color: '#20c997' },
-    { label: 'Settings', icon: 'settings', color: '#6c757d' },
-  ];
+  // Use centralized quick actions data
+  const quickActions = useMemo(() => dashboardData.quickActions, [dashboardData]);
 
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
       <View style={styles.headerLeft}>
         <MaterialIcons name="restaurant" size={24} color={theme.colors.onPrimary} />
         <Text style={[styles.headerTitle, { color: theme.colors.onPrimary }]}>
-          🍽️ {dashboardData.restaurant} - Dashboard
+          🍽️ {dashboardData.restaurant.name} - Dashboard
         </Text>
       </View>
       

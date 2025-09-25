@@ -7,7 +7,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Order } from '@/types/order.types';
-import { OrderStatusBadge } from '@/components/business/order';
+import OrderStatusBadge from './OrderStatusBadge';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';

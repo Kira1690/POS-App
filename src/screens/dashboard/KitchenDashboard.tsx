@@ -20,6 +20,14 @@ import { useAuth } from '@/context/auth/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
+import {
+  getKitchenDashboardData,
+  getOrdersByStatus,
+  getStationEfficiency,
+  getOverdueOrders,
+  getKitchenAlerts,
+  type KitchenDashboardData
+} from '@/data/dashboard/kitchenDashboard';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
@@ -62,76 +70,30 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Mock kitchen data - will be replaced with real data from services
-  const kitchenData = useMemo(() => ({
-    chef: {
-      name: authState.user?.name || 'Chef Mike Wilson',
-      employeeId: 'CHEF001',
-    },
-    stations: [
-      { name: 'APPETIZERS', count: 3, color: KITCHEN_THEME.appetizers, emoji: '🥗' },
-      { name: 'MAIN COURSE', count: 7, color: KITCHEN_THEME.mainCourse, emoji: '🍖' },
-      { name: 'SUSHI', count: 2, color: KITCHEN_THEME.sushi, emoji: '🍣' },
-      { name: 'DESSERTS', count: 1, color: KITCHEN_THEME.desserts, emoji: '🍰' },
-    ],
-    priorityOrders: [
-      {
-        id: 1,
-        type: 'TABLE 7 - URGENT',
-        timeInfo: '⏰ 45 min overdue',
-        items: ['• Grilled Salmon', '• Caesar Salad'],
-        color: KITCHEN_THEME.urgent,
-        bgColor: '#f8d7da',
+  // Get centralized kitchen dashboard data
+  const kitchenData = useMemo(() => {
+    // Use employee ID from auth state, fallback to CHEF001 for demo
+    const employeeId = authState.user?.employeeId || 'CHEF001';
+    const data = getKitchenDashboardData(employeeId);
+
+    // Update with current user info from auth state
+    return {
+      ...data,
+      restaurant: {
+        ...data.restaurant,
+        name: authState.restaurant?.name || data.restaurant.name,
       },
-      {
-        id: 2,
-        type: 'TAKEAWAY #T001',
-        timeInfo: '⏰ 30 min prep time',
-        items: ['• Chicken Teriyaki', '• Miso Soup'],
-        color: KITCHEN_THEME.warning,
-        bgColor: '#fff3cd',
+      chef: {
+        ...data.chef,
+        name: authState.user?.name || data.chef.name,
+        employeeId: authState.user?.employeeId || data.chef.employeeId,
       },
-    ],
-    activeOrders: [
-      {
-        id: 1,
-        title: 'TABLE 12',
-        time: '⏱️ 8 min',
-        items: ['• Mushroom Risotto (Ready)', '• Garlic Bread (Ready)', '• House Salad (Ready)'],
-        status: 'ready',
-        bgColor: '#d4edda',
-        borderColor: KITCHEN_THEME.ready,
-      },
-      {
-        id: 2,
-        title: 'TABLE 5',
-        time: '⏱️ 15 min',
-        items: ['• Beef Steak (Cooking)', '• Roasted Vegetables', '• Red Wine Sauce'],
-        status: 'cooking',
-        bgColor: '#fff3cd',
-        borderColor: KITCHEN_THEME.warning,
-      },
-      {
-        id: 3,
-        title: 'DELIVERY #D003',
-        time: '⏱️ 22 min',
-        items: ['• Sushi Platter (Prep)', '• Miso Soup (Ready)', '• Edamame (Ready)'],
-        status: 'preparing',
-        bgColor: '#cce5ff',
-        borderColor: KITCHEN_THEME.preparing,
-      },
-      {
-        id: 4,
-        title: 'TABLE 18',
-        time: '⏱️ Just received',
-        items: ['• Fish & Chips (Queue)', '• Coleslaw (Queue)', '• Tartar Sauce'],
-        status: 'queue',
-        bgColor: '#e2e3e5',
-        borderColor: KITCHEN_THEME.queue,
-      },
-    ],
-    averagePrepTime: 18,
-  }), [authState]);
+      currentTime: new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+    };
+  }, [authState]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -139,14 +101,8 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
-  const controlButtons = [
-    { label: 'Mark as Ready', icon: 'check-circle', color: KITCHEN_THEME.ready },
-    { label: 'Report Delay', icon: 'schedule', color: KITCHEN_THEME.warning },
-    { label: 'Need Help', icon: 'help', color: KITCHEN_THEME.urgent },
-    { label: 'Station Status', icon: 'analytics', color: KITCHEN_THEME.preparing },
-    { label: 'Check Inventory', icon: 'inventory', color: KITCHEN_THEME.desserts },
-    { label: 'Call Manager', icon: 'call', color: KITCHEN_THEME.header },
-  ];
+  // Use centralized control buttons data
+  const controlButtons = useMemo(() => kitchenData.controls, [kitchenData]);
 
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: KITCHEN_THEME.header }]}>
@@ -287,7 +243,7 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
       </View>
       
       <Text style={styles.timerDisplay}>
-        🕐 Average Prep Time: {kitchenData.averagePrepTime} minutes
+        🕐 Average Prep Time: {kitchenData.metrics.averagePrepTime} minutes
       </Text>
     </View>
   );

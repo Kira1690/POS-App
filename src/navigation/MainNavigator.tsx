@@ -9,18 +9,18 @@ import {
   OrdersStackParamList,
   KitchenStackParamList 
 } from './types';
-import { DashboardScreen, DashboardProvider } from '@/screens/dashboard';
-import { TableManagementScreen } from '@/screens/tables';
-import { 
-  POSOrderScreen, 
-  OrderManagementScreen, 
-  OrderDetailsScreen,
-  KitchenDisplayScreen 
-} from '@/screens/orders';
-import {
-  PaymentProcessingScreen,
-  PaymentConfirmationScreen,
-} from '@/screens/payment';
+// Direct imports to avoid complex re-export chain issues
+import DashboardScreen from '@/screens/dashboard/RoleDashboard';
+import { DashboardProvider } from '@/context/dashboard/DashboardContext';
+import TableManagementScreen from '@/screens/tables/TableManagementScreen';
+// Direct imports for order screens
+import POSOrderScreen from '@/screens/orders/POSOrderScreen';
+import OrderManagementScreen from '@/screens/orders/OrderManagementScreen';
+import OrderDetailsScreen from '@/screens/orders/OrderDetailsScreen';
+import KitchenDisplayScreen from '@/screens/orders/KitchenDisplayScreen';
+// Direct imports for payment screens
+import PaymentProcessingScreen from '@/screens/payment/PaymentProcessingScreen';
+import PaymentConfirmationScreen from '@/screens/payment/PaymentConfirmationScreen';
 import { TableProvider } from '@/context/table';
 import { OrderProvider } from '@/context/order';
 import { OrderManagementProvider } from '@/context/orderManagement';

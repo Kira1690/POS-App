@@ -4,7 +4,7 @@ import { RootStackParamList } from './types';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { useAuth } from '@/context/auth/AuthContext';
-import { AppErrorBoundary } from '@/components/common/ErrorBoundary';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { performanceAnalytics } from '@/services/analytics/PerformanceAnalyticsService';
 import { MemoryTracker } from '@/utils/performance';
 import { AppState, AppStateStatus } from 'react-native';
@@ -52,7 +52,7 @@ export const RootNavigator: React.FC = () => {
   }, [isAuthenticated]);
 
   return (
-    <AppErrorBoundary>
+    <ErrorBoundary>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
@@ -98,6 +98,6 @@ export const RootNavigator: React.FC = () => {
           />
         )}
       </Stack.Navigator>
-    </AppErrorBoundary>
+    </ErrorBoundary>
   );
 };

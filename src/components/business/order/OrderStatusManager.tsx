@@ -8,7 +8,7 @@ import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Order } from '@/types/order.types';
 import { OrderStatus } from '@/types/common.types';
-import { OrderStatusBadge } from '@/components/business/order';
+import OrderStatusBadge from './OrderStatusBadge';
 import { useTheme } from '@/hooks/useTheme';
 import { showToast } from '@/utils/toast';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';

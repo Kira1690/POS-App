@@ -20,6 +20,13 @@ import { useAuth } from '@/context/auth/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
+import {
+  getStaffDashboardData,
+  getTasksByPriority,
+  getShiftProgress,
+  getEfficiencyBadge,
+  type StaffDashboardData
+} from '@/data/dashboard/staffDashboard';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
@@ -42,64 +49,26 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
 
-  // Mock staff data - will be replaced with real data from services
-  const staffData = useMemo(() => ({
-    restaurant: authState.restaurant?.name || 'The Food Corner',
-    staff: {
-      name: authState.user?.name || 'John Doe',
-      employeeId: 'EMP001',
-      role: 'Restaurant Staff',
-    },
-    shift: {
-      startTime: '9:00 AM',
-      duration: '5h 30m',
-      scheduledEnd: '6:00 PM',
-    },
-    performance: {
-      rating: '4.8/5.0',
-      status: 'Excellent'
-    },
-    myOrders: {
-      count: 18,
-      totalValue: '$456.75',
-      averageOrder: '$25.38',
-    },
-    assignedTables: {
-      tables: [1, 3, 5, 7, 9, 11, 13, 15],
-      occupied: 5,
-      available: 3,
-    },
-    tasks: [
-      {
-        id: 1,
-        priority: 'urgent',
-        message: 'Table 7 - Order #1234 ready for pickup from kitchen',
-        color: '#dc3545',
-        bgColor: '#f8d7da',
+  // Get centralized staff dashboard data
+  const staffData = useMemo(() => {
+    // Use employee ID from auth state, fallback to EMP001 for demo
+    const employeeId = authState.user?.employeeId || 'EMP001';
+    const data = getStaffDashboardData(employeeId);
+
+    // Update with current user info from auth state
+    return {
+      ...data,
+      restaurant: {
+        ...data.restaurant,
+        name: authState.restaurant?.name || data.restaurant.name,
       },
-      {
-        id: 2,
-        priority: 'medium',
-        message: 'Table 3 - Customer requesting extra napkins and condiments',
-        color: '#ffc107',
-        bgColor: '#fff3cd',
+      staff: {
+        ...data.staff,
+        name: authState.user?.name || data.staff.name,
+        employeeId: authState.user?.employeeId || data.staff.employeeId,
       },
-      {
-        id: 3,
-        priority: 'low',
-        message: 'Table 11 - Ready to take dessert order',
-        color: '#28a745',
-        bgColor: '#d4edda',
-      },
-      {
-        id: 4,
-        priority: 'info',
-        message: 'Table 15 - Check if customer needs drink refills',
-        color: '#007bff',
-        bgColor: '#cce5ff',
-      },
-    ],
-  }), [authState]);
+    };
+  }, [authState]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -114,20 +83,15 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
     { label: 'POS', icon: 'point-of-sale' },
   ];
 
-  const quickActions = [
-    { label: 'Take Order', icon: 'edit', color: STAFF_THEME.primary },
-    { label: 'Check My Tables', icon: 'table-restaurant', color: '#007bff' },
-    { label: 'Send to Kitchen', icon: 'kitchen', color: '#fd7e14' },
-    { label: 'Process Payment', icon: 'payment', color: '#6610f2' },
-    { label: 'Call Manager', icon: 'call', color: '#dc3545' },
-  ];
+  // Use centralized quick actions data
+  const quickActions = useMemo(() => staffData.quickActions, [staffData]);
 
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: STAFF_THEME.primary }]}>
       <View style={styles.headerLeft}>
         <MaterialIcons name="restaurant" size={24} color="white" />
         <Text style={styles.headerTitle}>
-          🍽️ {staffData.restaurant} - Staff Dashboard
+          🍽️ {staffData.restaurant.name} - Staff Dashboard
         </Text>
       </View>
       
