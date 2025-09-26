@@ -14,14 +14,15 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '@/navigation/types';
 import { MaterialIcons } from '@expo/vector-icons';
-import { 
-  AuthButton, 
-  AuthCard,
-  type AuthButtonProps 
-} from '../../components/auth';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, borderRadius } from '../../design-system/theme/spacing';
 import { typography } from '../../design-system/theme/typography';
+
+// APPLE COMPONENT SYSTEM (Universal Welcome Components)
+import {
+  AppleCard,
+  AppleButton,
+} from '@/components/apple';
 
 type WelcomeScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Welcome'>;
 
@@ -177,77 +178,61 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = () => {
             </Text>
           </View>
 
-          {/* Main Action Buttons */}
-          <AuthCard
-            glassmorphism={true}
-            padding={isTablet ? 'large' : 'medium'}
+          {/* APPLE MAIN ACTION BUTTONS CARD */}
+          <AppleCard
+            layer="surface"
+            size={isTablet ? 'large' : 'medium'}
+            shadow={true}
             style={{ width: '100%', maxWidth: isTablet ? 500 : 350 }}
           >
             <View style={getButtonsContainerStyles()}>
-              {/* Staff Login Button */}
-              <AuthButton
+              {/* APPLE STAFF LOGIN BUTTON */}
+              <AppleButton
+                title="👥 Continue as Staff Member"
                 variant="primary"
                 size={isTablet ? 'large' : 'medium'}
-                icon="people"
                 onPress={handleStaffLogin}
-                accessibilityLabel="Continue as staff member"
-                testID="staff-login-button"
-              >
-                Continue as Staff Member
-              </AuthButton>
+                fullWidth={true}
+              />
 
-              {/* Manager Login Button */}
-              <AuthButton
+              {/* APPLE MANAGER LOGIN BUTTON */}
+              <AppleButton
+                title="🛡️ Manager Login"
                 variant="secondary"
                 size={isTablet ? 'large' : 'medium'}
-                icon="admin-panel-settings"
                 onPress={handleManagerLogin}
-                accessibilityLabel="Manager login"
-                testID="manager-login-button"
-              >
-                Manager Login
-              </AuthButton>
+                fullWidth={true}
+              />
 
-              {/* Device Setup Button */}
-              <AuthButton
+              {/* APPLE DEVICE SETUP BUTTON */}
+              <AppleButton
+                title="⚙️ Setup New Device"
                 variant="ghost"
                 size={isTablet ? 'medium' : 'small'}
-                icon="settings"
                 onPress={handleDeviceSetup}
-                accessibilityLabel="Setup new device"
-                testID="device-setup-button"
-              >
-                Setup New Device
-              </AuthButton>
+                fullWidth={true}
+              />
             </View>
-          </AuthCard>
+          </AppleCard>
         </View>
 
-        {/* Footer with Settings and Help */}
+        {/* APPLE FOOTER WITH SETTINGS AND HELP */}
         <View style={getFooterStyles()}>
-          <AuthButton
+          <AppleButton
+            title="⚙️ Settings"
             variant="ghost"
             size="small"
-            icon="settings"
             onPress={handleSettings}
-            accessibilityLabel="Open settings"
-            testID="settings-button"
             style={{ flex: 1, marginRight: spacing.sm }}
-          >
-            Settings
-          </AuthButton>
+          />
 
-          <AuthButton
+          <AppleButton
+            title="❓ Help"
             variant="ghost"
             size="small"
-            icon="help"
             onPress={handleHelp}
-            accessibilityLabel="Get help"
-            testID="help-button"
             style={{ flex: 1, marginLeft: spacing.sm }}
-          >
-            Help
-          </AuthButton>
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

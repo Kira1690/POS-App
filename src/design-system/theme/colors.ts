@@ -121,186 +121,196 @@ export const colors = {
   },
 } as const;
 
-// Professional Light Theme Colors
+// Apple Tahoe Light Theme Colors
 export const lightTheme = {
-  primary: colors.primary[500], // Professional Charcoal
-  primaryContainer: colors.primary[50], // Light Gray Container
-  onPrimary: colors.neutral[0], // White on charcoal
-  onPrimaryContainer: colors.primary[500], // Charcoal on light
+  primary: '#1C1C1E', // Apple's standard dark gray
+  primaryContainer: '#F2F2F7', // Apple's signature light gray background
+  onPrimary: '#FFFFFF', // White on dark gray
+  onPrimaryContainer: '#1C1C1E', // Dark gray on light background
 
-  secondary: colors.secondary[500], // Professional Gray
-  secondaryContainer: colors.secondary[100], // Light gray container
-  onSecondary: colors.neutral[0], // White on gray
-  onSecondaryContainer: colors.secondary[900], // Dark on light
+  secondary: '#8E8E93', // Apple's secondary text color
+  secondaryContainer: '#F2F2F7', // Light gray container
+  onSecondary: '#FFFFFF', // White on gray
+  onSecondaryContainer: '#1C1C1E', // Dark on light
 
-  tertiary: colors.accent[500], // Professional Blue Accent
-  tertiaryContainer: colors.accent[100], // Light blue container
-  onTertiary: colors.neutral[0], // White on blue
-  onTertiaryContainer: colors.accent[900], // Dark blue on light
+  tertiary: '#007AFF', // Apple's signature blue
+  tertiaryContainer: '#E3F2FD', // Light blue container
+  onTertiary: '#FFFFFF', // White on blue
+  onTertiaryContainer: '#1C1C1E', // Dark on light blue
 
-  error: colors.error[500], // Professional Dark Red
-  errorContainer: colors.error[50], // Light error container
-  onError: colors.neutral[0], // White on error
-  onErrorContainer: colors.error[900], // Dark red on light
+  error: '#FF3B30', // Apple's vibrant red
+  errorContainer: '#FFEBEE', // Light red container
+  onError: '#FFFFFF', // White on red
+  onErrorContainer: '#1C1C1E', // Dark on light red
 
-  background: '#F5F6F7', // Off-white professional background
-  onBackground: colors.primary[500], // Professional charcoal text
-  surface: colors.neutral[0], // Clean white surface
-  onSurface: colors.primary[500], // Professional charcoal text
-  surfaceVariant: '#F8F9FA', // Light gray variant
-  onSurfaceVariant: colors.secondary[700], // Professional gray text
-  surfaceDisabled: colors.neutral[200],
-  onSurfaceDisabled: colors.neutral[400],
+  background: '#F2F2F7', // Apple's signature light gray background
+  onBackground: '#1C1C1E', // Apple's primary text color
+  surface: '#FFFFFF', // Pure white surface
+  onSurface: '#1C1C1E', // Apple's primary text color
+  surfaceVariant: '#FAFAFA', // Subtle off-white for layered surfaces
+  onSurfaceVariant: '#8E8E93', // Apple's secondary text color
+  surfaceDisabled: '#F2F2F7',
+  onSurfaceDisabled: '#C7C7CC',
 
-  outline: colors.neutral[300],
-  outlineVariant: colors.neutral[200],
-  shadow: colors.neutral[1000],
-  scrim: colors.neutral[1000],
+  outline: '#D1D1D6', // Apple's standard border color
+  outlineVariant: '#F2F2F7', // Subtle border for layering
+  shadow: '#000000',
+  scrim: '#000000',
 
-  // Professional Status Colors
-  success: colors.success[500], // Professional Green
-  successContainer: colors.success[50], // Light green container
-  onSuccess: colors.neutral[0], // White on green
-  onSuccessContainer: colors.success[900], // Dark green on light
+  // Apple Status Colors
+  success: '#34C759', // Apple's vibrant green
+  successContainer: '#D1F2DF', // Light green background
+  onSuccess: '#FFFFFF', // White on green
+  onSuccessContainer: '#1C1C1E', // Dark on light green
 
-  warning: colors.warning[500], // Professional Gold
-  warningContainer: colors.warning[50], // Light gold container
-  onWarning: colors.neutral[0], // White on gold
-  onWarningContainer: colors.warning[900], // Dark gold on light
+  warning: '#FF9500', // Apple's orange
+  warningContainer: '#FFF4E6', // Light orange background
+  onWarning: '#FFFFFF', // White on orange
+  onWarningContainer: '#1C1C1E', // Dark on light orange
 
-  // Professional Glass/Frosted elements
+  // Apple Glass/Frosted elements
   glass: colors.glass.white,
   glassStrong: colors.glass.whiteDark,
   glassBorder: 'rgba(255, 255, 255, 0.3)',
 
-  // Professional Payment colors
-  amount: colors.primary[500], // Professional charcoal
-  currencySymbol: colors.secondary[600], // Professional gray
-  dialButton: colors.neutral[0],
-  dialButtonActive: colors.primary[50],
-  payButton: colors.success[500], // Professional green
-  clearButton: colors.error[500], // Professional red
+  // Apple Payment colors
+  amount: '#1C1C1E', // Apple's primary dark gray
+  currencySymbol: '#8E8E93', // Apple's secondary gray
+  dialButton: '#FFFFFF',
+  dialButtonActive: '#F2F2F7',
+  payButton: '#34C759', // Apple's green
+  clearButton: '#FF3B30', // Apple's red
 
-  // Professional POS Authentication colors
-  authPrimary: colors.primary[500], // Professional charcoal
-  authSecondary: colors.secondary[500], // Professional gray
-  authSuccess: colors.success[500], // Professional green
-  authError: colors.error[500], // Professional red
-  authWarning: colors.warning[500], // Professional gold
-  
-  // Professional Staff role colors
-  staffRole: colors.secondary[600], // Professional gray for staff
-  managerRole: colors.accent[600], // Professional blue for managers
-  adminRole: colors.primary[600], // Professional charcoal for admin
-  
-  // Professional Authentication states
-  authCardBackground: colors.neutral[0],
-  authInputBackground: colors.primary[50], // Light professional background
-  authInputBorder: colors.neutral[300],
-  authInputFocused: colors.primary[500], // Professional charcoal focus
-  authInputError: colors.error[500], // Professional red error
-  
-  // Professional Biometric colors
-  biometricAvailable: colors.success[500], // Professional green
-  biometricUnavailable: colors.neutral[400],
-  biometricError: colors.error[500], // Professional red
+  // Apple POS Authentication colors
+  authPrimary: '#1C1C1E', // Apple's primary dark gray
+  authSecondary: '#8E8E93', // Apple's secondary gray
+  authSuccess: '#34C759', // Apple's green
+  authError: '#FF3B30', // Apple's red
+  authWarning: '#FF9500', // Apple's orange
 
-  // Professional Pressed states
-  successPressed: colors.success[600],
-  primaryPressed: colors.primary[600], // Professional charcoal pressed
-  secondaryPressed: colors.secondary[600], // Professional gray pressed
-  errorPressed: colors.error[600], // Professional red pressed
+  // Apple Staff role colors
+  staffRole: '#8E8E93', // Apple's secondary gray for staff
+  managerRole: '#007AFF', // Apple's blue for managers
+  adminRole: '#1C1C1E', // Apple's primary for admin
+
+  // Apple Authentication states
+  authCardBackground: '#FFFFFF',
+  authInputBackground: '#F2F2F7', // Apple's light gray background
+  authInputBorder: '#D1D1D6', // Apple's border color
+  authInputFocused: '#007AFF', // Apple's blue focus
+  authInputError: '#FF3B30', // Apple's red error
+
+  // Apple Biometric colors
+  biometricAvailable: '#34C759', // Apple's green
+  biometricUnavailable: '#C7C7CC', // Apple's tertiary text
+  biometricError: '#FF3B30', // Apple's red
+
+  // Apple Pressed states
+  successPressed: '#28A745', // Darker green
+  primaryPressed: '#000000', // True black pressed
+  secondaryPressed: '#636366', // Darker gray pressed
+  errorPressed: '#D70015', // Darker red pressed
 } as const;
 
-// Professional Dark Theme Colors (for future implementation)
+// Apple Tahoe Dark Theme Colors - Authentic Apple Design
 export const darkTheme = {
-  primary: colors.primary[300], // Lighter charcoal for dark theme
-  primaryContainer: colors.primary[800], // Dark charcoal container
-  onPrimary: colors.neutral[0], // White on charcoal
-  onPrimaryContainer: colors.primary[100], // Light on dark
+  // APPLE LAYERED DEPTH SYSTEM (Based on 5 Reference Images Analysis)
+  // This creates Apple's sophisticated layered visual hierarchy
+  layer0: '#000000', // Background layer - Pure black (deepest)
+  layer1: '#1C1C1E', // Primary surface layer - Main content panels, sidebar
+  layer2: '#2C2C2E', // Secondary surface layer - Selected states, nested cards
+  layer3: '#3A3A3C', // Interactive surface layer - Hover states, deeper nesting
+  layer4: 'rgba(255, 255, 255, 0.05)', // Accent overlay layer - Subtle highlights
 
-  secondary: colors.secondary[300], // Lighter gray for dark theme
-  secondaryContainer: colors.secondary[800], // Dark gray container
-  onSecondary: colors.neutral[0], // White on gray
-  onSecondaryContainer: colors.secondary[100], // Light on dark
+  // AUTHENTIC APPLE DARK MODE COLORS
+  primary: '#007AFF', // Apple's signature blue
+  primaryContainer: '#1C1C1E', // Apple's dark surface color
+  onPrimary: '#FFFFFF', // White text on blue
+  onPrimaryContainer: '#FFFFFF', // White text on dark
 
-  tertiary: colors.accent[300], // Lighter professional blue
-  tertiaryContainer: colors.accent[800], // Dark blue container
-  onTertiary: colors.neutral[0], // White on blue
-  onTertiaryContainer: colors.accent[100], // Light on dark
+  secondary: '#8E8E93', // Apple's secondary gray on dark
+  secondaryContainer: '#2C2C2E', // Elevated dark surface
+  onSecondary: '#FFFFFF', // White on secondary
+  onSecondaryContainer: '#EBEBF5', // Light text on dark
 
-  error: colors.error[300], // Lighter professional red
-  errorContainer: colors.error[800], // Dark red container
-  onError: colors.neutral[0], // White on red
-  onErrorContainer: colors.error[100], // Light on dark
+  tertiary: '#64D2FF', // Apple's cyan accent on dark
+  tertiaryContainer: '#1E2A3A', // Dark blue background
+  onTertiary: '#000000', // Black on cyan
+  onTertiaryContainer: '#64D2FF', // Cyan text on dark
 
-  background: colors.primary[900], // Deep professional charcoal
-  onBackground: colors.neutral[100], // Light text on dark
-  surface: colors.primary[800], // Professional dark surface
-  onSurface: colors.neutral[100], // Light text
-  surfaceVariant: colors.neutral[700], // Professional dark variant
-  onSurfaceVariant: colors.neutral[300], // Medium text
-  surfaceDisabled: colors.neutral[700],
-  onSurfaceDisabled: colors.neutral[600],
+  error: '#FF453A', // Apple's vibrant red on dark
+  errorContainer: '#3C1F1F', // Dark red background
+  onError: '#FFFFFF', // White on red
+  onErrorContainer: '#FF453A', // Red text on dark
 
-  outline: colors.neutral[600],
-  outlineVariant: colors.neutral[700],
-  shadow: colors.neutral[1000],
-  scrim: colors.neutral[1000],
+  background: '#000000', // Pure black background (Apple's true dark) - uses layer0
+  onBackground: '#FFFFFF', // White primary text
+  surface: '#1C1C1E', // Apple's dark surface color - uses layer1
+  onSurface: '#FFFFFF', // White text on dark surface
+  surfaceVariant: '#2C2C2E', // Elevated dark surfaces - uses layer2
+  surfaceElevated: '#3A3A3C', // Interactive surfaces - uses layer3
+  onSurfaceVariant: '#EBEBF5', // Apple's secondary text on dark
+  surfaceDisabled: '#2C2C2E',
+  onSurfaceDisabled: '#8E8E93',
 
-  // Professional Dark Status Colors
-  success: colors.success[300], // Professional green for dark
-  successContainer: colors.success[800], // Dark green container
-  onSuccess: colors.neutral[0], // White on green
-  onSuccessContainer: colors.success[100], // Light on dark
+  outline: '#38383A', // Apple's dark border color
+  outlineVariant: '#2C2C2E', // Subtle dark border
+  shadow: '#000000',
+  scrim: '#000000',
 
-  warning: colors.warning[300], // Professional gold for dark
-  warningContainer: colors.warning[800], // Dark gold container
-  onWarning: colors.neutral[0], // White on gold
-  onWarningContainer: colors.warning[100], // Light on dark
+  // Apple Dark Status Colors - Vibrant and Authentic
+  success: '#30D158', // Apple's vibrant green on dark
+  successContainer: '#1E3A2E', // Dark green background
+  onSuccess: '#FFFFFF', // White on green
+  onSuccessContainer: '#30D158', // Green text on dark
 
-  // Professional Dark Glass/Frosted elements
+  warning: '#FF9500', // Apple's orange (matching reference images)
+  warningContainer: '#3D2914', // Dark orange background
+  onWarning: '#FFFFFF', // White on orange
+  onWarningContainer: '#FF9500', // Orange text on dark
+
+  // Apple Dark Glass/Frosted elements
   glass: colors.glass.black,
   glassStrong: colors.glass.blackDark,
   glassBorder: 'rgba(255, 255, 255, 0.1)',
 
-  // Professional Dark Payment colors
-  amount: colors.primary[300], // Light charcoal for dark theme
-  currencySymbol: colors.secondary[400], // Light gray for dark
-  dialButton: colors.neutral[800],
-  dialButtonActive: colors.primary[900],
-  payButton: colors.success[300], // Professional green for dark
-  clearButton: colors.error[300], // Professional red for dark
+  // Apple Dark Payment colors
+  amount: '#FFFFFF', // White for dark theme
+  currencySymbol: '#EBEBF5', // Apple's secondary text on dark
+  dialButton: '#2C2C2E',
+  dialButtonActive: '#1C1C1E',
+  payButton: '#30D158', // Apple's vibrant green on dark
+  clearButton: '#FF453A', // Apple's vibrant red on dark
 
-  // Professional Dark POS Authentication colors
-  authPrimary: colors.primary[300], // Light charcoal for dark
-  authSecondary: colors.secondary[300], // Light gray for dark
-  authSuccess: colors.success[300], // Professional green for dark
-  authError: colors.error[300], // Professional red for dark
-  authWarning: colors.warning[300], // Professional gold for dark
-  
-  // Professional Dark Staff role colors
-  staffRole: colors.secondary[400], // Professional gray for staff
-  managerRole: colors.accent[400], // Professional blue for managers
-  adminRole: colors.primary[300], // Light charcoal for admin
-  
-  // Professional Dark Authentication states
-  authCardBackground: colors.primary[800], // Professional dark card
-  authInputBackground: colors.primary[700], // Professional dark input
-  authInputBorder: colors.neutral[600],
-  authInputFocused: colors.primary[300], // Light charcoal focus
-  authInputError: colors.error[300], // Professional red error
-  
-  // Professional Dark Biometric colors
-  biometricAvailable: colors.success[300], // Professional green
-  biometricUnavailable: colors.neutral[600],
-  biometricError: colors.error[300], // Professional red
+  // Apple Dark POS Authentication colors
+  authPrimary: '#007AFF', // Apple blue for primary auth elements
+  authSecondary: '#EBEBF5', // Apple's secondary text on dark
+  authSuccess: '#30D158', // Apple's vibrant green on dark
+  authError: '#FF453A', // Apple's vibrant red on dark
+  authWarning: '#FF9500', // Apple's orange on dark
 
-  // Professional Dark Pressed states
-  successPressed: colors.success[400],
-  primaryPressed: colors.primary[400], // Professional charcoal pressed
-  secondaryPressed: colors.secondary[400], // Professional gray pressed
-  errorPressed: colors.error[400], // Professional red pressed
+  // Apple Dark Staff role colors
+  staffRole: '#8E8E93', // Apple's secondary gray for staff
+  managerRole: '#007AFF', // Apple's blue for managers
+  adminRole: '#FFFFFF', // White text for admin
+
+  // Apple Dark Authentication states
+  authCardBackground: '#1C1C1E', // Apple's dark surface
+  authInputBackground: '#2C2C2E', // Elevated dark surface
+  authInputBorder: '#38383A', // Apple's dark border
+  authInputFocused: '#007AFF', // Apple's blue focus
+  authInputError: '#FF453A', // Apple's vibrant red error
+
+  // Apple Dark Biometric colors
+  biometricAvailable: '#30D158', // Apple's vibrant green
+  biometricUnavailable: '#8E8E93', // Apple's tertiary text on dark
+  biometricError: '#FF453A', // Apple's vibrant red
+
+  // Apple Dark Pressed states
+  successPressed: '#248A3D', // Darker green for dark theme
+  primaryPressed: '#0051D5', // Darker blue pressed state
+  secondaryPressed: '#636366', // Darker gray pressed
+  errorPressed: '#D70015', // Darker red for dark theme
 } as const;
 
 export type ColorTheme = typeof lightTheme | typeof darkTheme; 

@@ -221,20 +221,17 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
               />
             </FormField>
 
-            {/* Login Button */}
-            <AuthButton
+            {/* APPLE LOGIN BUTTON */}
+            <AppleButton
+              title="⏰ Clock In"
               variant="primary"
               size={isTablet ? 'large' : 'medium'}
               onPress={handleStaffLogin}
-              loading={staffAuthForm.isLoading}
               disabled={staffAuthForm.isLoading || !staffAuthForm.isValid}
-              icon="login"
-              accessibilityLabel="Login to staff account"
-              testID="login-button"
+              loading={staffAuthForm.isLoading}
+              fullWidth={true}
               style={{ marginTop: spacing.md }}
-            >
-              Clock In
-            </AuthButton>
+            />
 
             {/* Biometric Login */}
             {biometricAvailable && (
@@ -258,31 +255,23 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
               </View>
             )}
           </View>
-        </AuthCard>
+        </AppleCard>
 
-        {/* Footer Actions */}
+        {/* APPLE FOOTER ACTIONS */}
         <View style={getFooterStyles()}>
-          <AuthButton
+          <AppleButton
+            title="❓ Forgot Password?"
             variant="ghost"
             size="small"
             onPress={handleForgotPassword}
-            icon="help"
-            accessibilityLabel="Forgot password help"
-            testID="forgot-password-button"
-          >
-            Forgot Password?
-          </AuthButton>
+          />
 
-          <AuthButton
+          <AppleButton
+            title="⬅️ Back to Welcome"
             variant="ghost"
             size="small"
             onPress={handleBack}
-            icon="arrow-back"
-            accessibilityLabel="Go back to welcome screen"
-            testID="back-button"
-          >
-            Back to Welcome
-          </AuthButton>
+          />
         </View>
       </ScrollView>
 

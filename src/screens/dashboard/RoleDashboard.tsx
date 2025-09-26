@@ -5,7 +5,7 @@
  * Enhanced with Staff Management Dashboard routing for managers and admins
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, Suspense } from 'react';
 import {
   View,
   Text,
@@ -24,11 +24,11 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { spacing } from '@/design-system/theme/spacing';
 import { performanceMonitor } from '@/utils/performance';
 
-// Dashboard imports - lazy loaded for performance
-import ManagerDashboard from './ManagerDashboard';
-import StaffDashboard from './StaffDashboard';
-import KitchenDashboard from './KitchenDashboard';
-import StaffManagementDashboard from './StaffManagementDashboard';
+// Dashboard imports - ACTUAL lazy loaded for performance optimization
+const ManagerDashboard = React.lazy(() => import('./ManagerDashboard'));
+const StaffDashboard = React.lazy(() => import('./StaffDashboard'));
+const KitchenDashboard = React.lazy(() => import('./KitchenDashboard'));
+const StaffManagementDashboard = React.lazy(() => import('./StaffManagementDashboard'));
 
 interface RoleDashboardProps {
   // Navigation will be typed properly in navigation setup
@@ -102,7 +102,7 @@ const RoleDashboard: React.FC<RoleDashboardProps> = () => {
           canSwitch: false
         };
     }
-  }, [authState.user, authState.isAuthenticated, theme, isDark, selectedDashboard]);
+  }, [authState.user?.role, authState.isAuthenticated, isDark, selectedDashboard]);
 
   // Handle authentication check
   useEffect(() => {
@@ -166,16 +166,32 @@ const RoleDashboard: React.FC<RoleDashboardProps> = () => {
   const renderDashboard = () => {
     switch (dashboardConfig.type) {
       case 'manager':
-        return <ManagerDashboard />;
+        return (
+          <Suspense fallback={<LoadingScreen message="Loading Manager Dashboard..." />}>
+            <ManagerDashboard />
+          </Suspense>
+        );
 
       case 'staff-management':
-        return <StaffManagementDashboard />;
+        return (
+          <Suspense fallback={<LoadingScreen message="Loading Staff Management..." />}>
+            <StaffManagementDashboard />
+          </Suspense>
+        );
 
       case 'staff':
-        return <StaffDashboard />;
+        return (
+          <Suspense fallback={<LoadingScreen message="Loading Staff Dashboard..." />}>
+            <StaffDashboard />
+          </Suspense>
+        );
 
       case 'kitchen':
-        return <KitchenDashboard />;
+        return (
+          <Suspense fallback={<LoadingScreen message="Loading Kitchen Dashboard..." />}>
+            <KitchenDashboard />
+          </Suspense>
+        );
 
       case 'loading':
       default:

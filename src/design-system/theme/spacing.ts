@@ -18,28 +18,38 @@ export const spacing = {
   '8xl': BASE_UNIT * 24,  // 96px
 } as const;
 
-// Enhanced Border radius scale for POS rounded design language
+// APPLE BORDER RADIUS SYSTEM (SOLID Principles - Based on 5 Reference Images)
+// Universal, reusable border radius tokens following Apple's design language
 export const borderRadius = {
+  // CORE UNIVERSAL TOKENS (Single Responsibility - each serves one purpose)
   none: 0,
-  xs: 2,
-  sm: 4,
-  md: 8,
-  lg: 12,    // Cards and containers
-  xl: 16,
-  '2xl': 20,
-  '3xl': 24,  // Pill-shaped buttons
-  '4xl': 32,  // Bottom sheets and modals
-  full: 9999,
-  
-  // POS-specific radius tokens
-  button: 24,      // Pill-shaped buttons
-  input: 12,       // Form inputs
-  card: 16,        // Auth cards
-  modal: 28,       // Modals and sheets
-  badge: 16,       // Role badges
+  xs: 8,     // Small elements (badges, small pills) - Apple minimum
+  sm: 12,    // Medium elements (search bars, small buttons) - Apple standard
+  md: 16,    // Large elements (standard cards, inputs) - Apple preferred
+  lg: 20,    // Extra large elements (large cards, panels) - Apple generous
+  xl: 24,    // Hero elements (modals, major panels) - Apple maximum
+  pill: '50%', // Perfect pills (toggles, status indicators) - Apple signature
+  full: 9999,  // Circular elements (avatars, circular buttons)
+
+  // APPLE REFERENCE IMAGE SPECIFICATIONS (Open/Closed - extensible)
+  // Based on direct measurements from the 5 Apple reference images
+  appleSmall: 12,    // Small Apple elements (icons, badges)
+  appleMedium: 16,   // Medium Apple elements (buttons, inputs)
+  appleLarge: 20,    // Large Apple elements (cards, panels)
+  appleXLarge: 24,   // Extra large Apple elements (modals, hero sections)
+  applePill: '50%',  // Apple perfect pills (toggles, status)
+
+  // UNIVERSAL COMPONENT TOKENS (Interface Segregation - focused purposes)
+  // These can be used anywhere without component-specific dependencies
+  universalCard: 20,        // Universal card radius - works everywhere
+  universalButton: 22,      // Universal button radius - Apple optimized
+  universalInput: 16,       // Universal input radius - Apple standard
+  universalModal: 24,       // Universal modal radius - Apple hero
+  universalToggle: '50%',   // Universal toggle radius - Apple pill
+  universalBadge: 12,       // Universal badge radius - Apple small
 } as const;
 
-// Professional Shadow/elevation definitions for enterprise environment
+// Apple Tahoe Shadow system following Apple's design language
 export const shadows = {
   none: {
     shadowColor: 'transparent',
@@ -48,71 +58,78 @@ export const shadows = {
     shadowRadius: 0,
     elevation: 0,
   },
-  // Professional subtle shadows
+  // Apple-style subtle shadows
   xs: {
-    shadowColor: '#1A1D21', // Professional charcoal shadow
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, // More subtle for professional look
+    shadowColor: '#000000', // Apple uses true black for shadows
+    shadowOffset: { width: 0, height: 0.5 },
+    shadowOpacity: 0.08, // Apple's subtle shadow opacity
     shadowRadius: 1,
     elevation: 1,
   },
   sm: {
-    shadowColor: '#1A1D21',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, // Professional opacity
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1, // Apple's light shadow
     shadowRadius: 3,
     elevation: 2,
   },
   md: {
-    shadowColor: '#1A1D21',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08, // Enterprise-appropriate subtlety
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12, // Apple's standard shadow
     shadowRadius: 6,
-    elevation: 3,
-  },
-  lg: {
-    shadowColor: '#1A1D21',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10, // Professional shadow depth
-    shadowRadius: 12,
     elevation: 4,
   },
-  xl: {
-    shadowColor: '#1A1D21',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12, // Sophisticated elevation
-    shadowRadius: 16,
+  lg: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15, // Apple's prominent shadow
+    shadowRadius: 12,
     elevation: 6,
   },
-  '2xl': {
-    shadowColor: '#1A1D21',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.15, // Maximum professional shadow
-    shadowRadius: 24,
+  xl: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18, // Apple's strong shadow
+    shadowRadius: 16,
     elevation: 8,
   },
-  
-  // Professional component-specific shadows
-  professional: {
+  '2xl': {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2, // Apple's maximum shadow
+    shadowRadius: 24,
+    elevation: 10,
+  },
+
+  // Apple component-specific shadows
+  apple: {
     card: {
-      shadowColor: '#1A1D21',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
+      shadowOpacity: 0.08, // Apple card shadow
       shadowRadius: 8,
-      elevation: 2,
+      elevation: 3,
     },
     button: {
-      shadowColor: '#1A1D21',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1, // Apple button shadow
       shadowRadius: 4,
       elevation: 2,
     },
     modal: {
-      shadowColor: '#1A1D21',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.12,
-      shadowRadius: 24,
+      shadowOpacity: 0.15, // Apple modal shadow
+      shadowRadius: 20,
+      elevation: 8,
+    },
+    floating: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12, // Apple floating element shadow
+      shadowRadius: 12,
       elevation: 6,
     },
   },

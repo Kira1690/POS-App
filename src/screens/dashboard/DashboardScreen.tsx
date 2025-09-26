@@ -2,14 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   RefreshControl,
-  StyleSheet,
   Alert,
-  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { ProfessionalTheme, DashboardStyles } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import {
+  AppleDashboardPanel,
+  AppleButton,
+  AppleCard,
+  AppleStatusPill,
+  AppleProgressBar,
+} from '@/components/apple';
 import { KPISection } from './components/KPISection';
 import { QuickActionsSection } from './components/QuickActionsSection';
 import { ChartsSection } from './components/ChartsSection';
@@ -121,90 +125,184 @@ export const DashboardScreen: React.FC = () => {
     return 'Good Evening';
   };
 
+  const { theme, isDark } = useTheme();
+
   /**
-   * Error state
+   * APPLE ERROR STATE (using universal components)
    */
   if (error && !loading) {
     return (
-      <View style={DashboardStyles.error}>
-        <Text style={DashboardStyles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => loadDashboardData()}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
+      <View style={{
+        flex: 1,
+        backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+      }}>
+        <AppleCard layer="surface" size="large" style={{ alignItems: 'center' }}>
+          <Text style={{
+            color: theme.colors.onSurface,
+            fontSize: 18,
+            fontWeight: '600',
+            marginBottom: 16,
+            textAlign: 'center'
+          }}>
+            {error}
+          </Text>
+          <AppleButton
+            title="Retry"
+            variant="primary"
+            size="large"
+            onPress={() => loadDashboardData()}
+          />
+        </AppleCard>
       </View>
     );
   }
 
-  return (
-    <View style={DashboardStyles.screen}>
-      {/* Professional Header */}
-      <View style={DashboardStyles.header}>
-        <Text style={DashboardStyles.headerTitle}>
-          {getTimeGreeting()}, Manager
-        </Text>
-        <Text style={DashboardStyles.headerSubtitle}>
-          The Food Corner • {new Date().toLocaleDateString()}
-        </Text>
-      </View>
-
-      {/* Main Content */}
-      <ScrollView
-        style={DashboardStyles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[ProfessionalTheme.colors.primary]}
-            tintColor={ProfessionalTheme.colors.primary}
-          />
-        }
-      >
-        {/* KPI Metrics Section */}
-        <View style={DashboardStyles.section}>
-          <Text style={DashboardStyles.sectionTitle}>Key Metrics</Text>
-          <KPISection kpis={kpis} loading={loading} />
-        </View>
-
-        {/* Charts Section */}
-        <ChartsSection restaurantId={restaurantId} loading={loading} />
-
-        {/* Quick Actions Section */}
-        <QuickActionsSection
-          data={quickActions}
-          onNavigateToTables={handleNavigateToTables}
-          onNavigateToKitchen={handleNavigateToKitchen}
-          onNavigateToStaff={handleNavigateToStaff}
-          loading={loading}
-        />
-
-        {/* Bottom spacing for better scrolling */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
+  /**
+   * APPLE DASHBOARD HEADER ACTIONS (using universal components)
+   */
+  const headerActions = (
+    <View style={{ flexDirection: 'row', gap: 12 }}>
+      <AppleStatusPill status="online" size="small" />
+      <AppleButton
+        title="🔄 Refresh"
+        variant="secondary"
+        size="medium"
+        onPress={() => loadDashboardData(true)}
+      />
     </View>
   );
-};
 
-const styles = StyleSheet.create({
-  retryButton: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-    paddingHorizontal: ProfessionalTheme.spacing.lg,
-    paddingVertical: ProfessionalTheme.spacing.md,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-  },
-  
-  retryButtonText: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.textOnPrimary,
-    textAlign: 'center',
-  },
-  
-  bottomSpacing: {
-    height: ProfessionalTheme.spacing.xxl,
-  },
-});
+  /**
+   * APPLE QUICK ACTIONS (using universal components)
+   */
+  const renderQuickActions = () => (
+    <AppleCard layer="surface" size="large" style={{ marginBottom: 20 }}>
+      <Text style={{
+        fontSize: 18,
+        fontWeight: '600',
+        color: theme.colors.onSurface,
+        marginBottom: 16
+      }}>
+        Quick Actions
+      </Text>
+      <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+        <AppleButton
+          title="📊 Tables"
+          variant="primary"
+          size="medium"
+          onPress={handleNavigateToTables}
+        />
+        <AppleButton
+          title="👨‍🍳 Kitchen"
+          variant="secondary"
+          size="medium"
+          onPress={handleNavigateToKitchen}
+        />
+        <AppleButton
+          title="👥 Staff"
+          variant="ghost"
+          size="medium"
+          onPress={handleNavigateToStaff}
+        />
+      </View>
+    </AppleCard>
+  );
+
+  /**
+   * APPLE DASHBOARD LAYOUT (using universal AppleDashboardPanel)
+   */
+  return (
+    <AppleDashboardPanel
+      title={`${getTimeGreeting()}, Manager`}
+      subtitle={`The Food Corner • ${new Date().toLocaleDateString()}`}
+      headerActions={headerActions}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[theme.colors.primary]}
+          tintColor={theme.colors.primary}
+        />
+      }
+    >
+      {/* APPLE KPI METRICS SECTION (using universal components) */}
+      <AppleCard layer="surfaceVariant" size="large" style={{ marginBottom: 20 }}>
+        <Text style={{
+          fontSize: 18,
+          fontWeight: '600',
+          color: theme.colors.onSurface,
+          marginBottom: 16
+        }}>
+          📈 Key Metrics
+        </Text>
+        <KPISection kpis={kpis} loading={loading} />
+      </AppleCard>
+
+      {/* APPLE CHARTS SECTION (with Apple card wrapper) */}
+      <AppleCard layer="surface" size="large" style={{ marginBottom: 20 }}>
+        <ChartsSection restaurantId={restaurantId} loading={loading} />
+      </AppleCard>
+
+      {/* APPLE QUICK ACTIONS SECTION */}
+      {renderQuickActions()}
+
+      {/* APPLE STATUS INDICATORS (demonstrating status pills) */}
+      <AppleCard layer="surfaceVariant" size="medium" style={{ marginBottom: 20 }}>
+        <Text style={{
+          fontSize: 16,
+          fontWeight: '600',
+          color: theme.colors.onSurface,
+          marginBottom: 12
+        }}>
+          System Status
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          <AppleStatusPill status="active" text="POS System" size="small" />
+          <AppleStatusPill status="online" text="Kitchen" size="small" />
+          <AppleStatusPill status="success" text="Payments" size="small" />
+          <AppleStatusPill status="warning" text="Low Stock" size="small" />
+        </View>
+      </AppleCard>
+
+      {/* APPLE PROGRESS INDICATORS (demonstrating progress bars) */}
+      <AppleCard layer="surface" size="medium">
+        <Text style={{
+          fontSize: 16,
+          fontWeight: '600',
+          color: theme.colors.onSurface,
+          marginBottom: 16
+        }}>
+          Today's Progress
+        </Text>
+        <View style={{ gap: 12 }}>
+          <AppleProgressBar
+            progress={0.75}
+            label="Sales Target"
+            color="success"
+            showPercentage
+            size="medium"
+          />
+          <AppleProgressBar
+            progress={0.92}
+            label="Order Completion"
+            color="primary"
+            showPercentage
+            size="medium"
+          />
+          <AppleProgressBar
+            progress={0.68}
+            label="Customer Satisfaction"
+            color="warning"
+            showPercentage
+            size="medium"
+          />
+        </View>
+      </AppleCard>
+    </AppleDashboardPanel>
+  );
+};
 
 export default DashboardScreen;

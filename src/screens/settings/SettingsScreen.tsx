@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
+import {
   RestaurantProfileSettings,
   UserManagementSettings,
   DeviceHardwareSettings,
@@ -19,23 +12,74 @@ import {
   HelpSupportSettings,
 } from './components';
 import { SettingsCategory } from '@/types/settings.types';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import {
+  AppleSidebar,
+  AppleSettingsPanel,
+  AppleButton,
+  ApplePill,
+  type AppleSidebarItem,
+} from '@/components/apple';
 
-const SETTINGS_CATEGORIES = [
-  { id: 'restaurant_profile', label: '🏪 Restaurant Profile', icon: '🏪' },
-  { id: 'user_management', label: '👥 User Management', icon: '👥' },
-  { id: 'device_hardware', label: '📱 Device & Hardware', icon: '📱' },
-  { id: 'payment_config', label: '💳 Payment Configuration', icon: '💳' },
-  { id: 'integrations', label: '🔗 Integrations', icon: '🔗' },
-  { id: 'security_backup', label: '🔒 Security & Backup', icon: '🔒' },
-  { id: 'system_logs', label: '📊 System Logs', icon: '📊' },
-  { id: 'help_support', label: '❓ Help & Support', icon: '❓' },
-] as const;
+// APPLE SETTINGS CATEGORIES (transformed for AppleSidebar)
+// Using Apple's reference image structure with colorful icon backgrounds
+const SETTINGS_CATEGORIES: AppleSidebarItem[] = [
+  {
+    id: 'restaurant_profile',
+    label: 'Restaurant Profile',
+    icon: '🏪',
+    iconBackground: '#FF453A', // Apple red (like Notifications in reference)
+  },
+  {
+    id: 'user_management',
+    label: 'User Management',
+    icon: '👥',
+    iconBackground: '#007AFF', // Apple blue (like Display & Brightness)
+  },
+  {
+    id: 'device_hardware',
+    label: 'Device & Hardware',
+    icon: '📱',
+    iconBackground: '#32D74B', // Apple green (like Battery)
+  },
+  {
+    id: 'payment_config',
+    label: 'Payment Configuration',
+    icon: '💳',
+    iconBackground: '#FF9500', // Apple orange (like General)
+  },
+  {
+    id: 'integrations',
+    label: 'Integrations',
+    icon: '🔗',
+    iconBackground: '#BF5AF2', // Apple purple (like Focus)
+  },
+  {
+    id: 'security_backup',
+    label: 'Security & Backup',
+    icon: '🔒',
+    iconBackground: '#64D2FF', // Apple cyan (like Privacy)
+  },
+  {
+    id: 'system_logs',
+    label: 'System Logs',
+    icon: '📊',
+    iconBackground: '#FF453A', // Apple red variation
+  },
+  {
+    id: 'help_support',
+    label: 'Help & Support',
+    icon: '❓',
+    iconBackground: '#8E8E93', // Apple gray
+  },
+];
 
 export default function SettingsScreen() {
+  const { theme, isDark } = useTheme();
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>('restaurant_profile');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // APPLE-STYLE INTERACTION HANDLERS (unchanged logic, cleaner implementation)
   const handleCategoryChange = (category: SettingsCategory) => {
     if (hasUnsavedChanges) {
       Alert.alert(
@@ -43,8 +87,8 @@ export default function SettingsScreen() {
         'You have unsaved changes. Do you want to discard them?',
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Discard', 
+          {
+            text: 'Discard',
             style: 'destructive',
             onPress: () => {
               setHasUnsavedChanges(false);
@@ -64,8 +108,8 @@ export default function SettingsScreen() {
       'This will save all pending changes across all settings categories.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Save All', 
+        {
+          text: 'Save All',
           onPress: () => {
             setHasUnsavedChanges(false);
             Alert.alert('Success', 'All settings have been saved successfully.');
@@ -75,6 +119,12 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleBackToDashboard = () => {
+    // Navigate back to dashboard
+    console.log('Navigate back to dashboard');
+  };
+
+  // APPLE SETTINGS CONTENT RENDERING (unchanged)
   const renderCategoryContent = () => {
     switch (activeCategory) {
       case 'restaurant_profile':
@@ -98,180 +148,86 @@ export default function SettingsScreen() {
     }
   };
 
+  // TRANSFORM CATEGORIES FOR APPLE SIDEBAR (adds selection state and handlers)
+  const sidebarItems: AppleSidebarItem[] = SETTINGS_CATEGORIES.map(category => ({
+    ...category,
+    selected: activeCategory === category.id,
+    onPress: () => handleCategoryChange(category.id as SettingsCategory),
+  }));
+
+  // APPLE HEADER ACTIONS (using universal AppleButton components)
+  const headerActions = (
+    <View style={{ flexDirection: 'row', gap: 12 }}>
+      <AppleButton
+        title="💾 Save All"
+        variant="success"
+        size="medium"
+        onPress={handleSaveAllChanges}
+      />
+      <AppleButton
+        title="← Dashboard"
+        variant="secondary"
+        size="medium"
+        onPress={handleBackToDashboard}
+      />
+    </View>
+  );
+
+  // GET CURRENT CATEGORY LABEL (for breadcrumb)
+  const currentCategoryLabel = SETTINGS_CATEGORIES.find(
+    c => c.id === activeCategory
+  )?.label || 'Settings';
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>System Settings</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.headerButton, styles.saveButton]}
-            onPress={handleSaveAllChanges}
-          >
-            <Text style={styles.saveButtonText}>💾 Save All Changes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.headerButton, styles.backButton]}>
-            <Text style={styles.backButtonText}>← Dashboard</Text>
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView style={{
+      flex: 1,
+      backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background // Apple layer 0 background
+    }}>
+      {/* APPLE MAIN LAYOUT (two-panel with generous spacing) */}
+      <View style={{
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+        paddingHorizontal: 24, // Apple generous spacing
+        paddingTop: 24,
+        gap: 20, // Apple spacing between panels
+      }}>
+
+        {/* APPLE SIDEBAR (using universal AppleSidebar component) */}
+        <AppleSidebar
+          items={sidebarItems}
+          title="Settings Categories"
+          searchable={true}
+          searchPlaceholder="Search settings..."
+          variant="settings"
+          width={280}
+        />
+
+        {/* APPLE CONTENT PANEL (using universal AppleSettingsPanel) */}
+        <AppleSettingsPanel
+          title="System Settings"
+          subtitle={currentCategoryLabel}
+          headerActions={headerActions}
+        >
+          {renderCategoryContent()}
+        </AppleSettingsPanel>
       </View>
 
-      {/* Main Content */}
-      <View style={styles.content}>
-        {/* Left Panel - Categories */}
-        <View style={styles.leftPanel}>
-          <Text style={styles.categoriesTitle}>Settings Categories</Text>
-          <ScrollView style={styles.categoriesList} showsVerticalScrollIndicator={false}>
-            {SETTINGS_CATEGORIES.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryItem,
-                  activeCategory === category.id && styles.categoryItemActive
-                ]}
-                onPress={() => handleCategoryChange(category.id)}
-              >
-                <Text style={[
-                  styles.categoryItemText,
-                  activeCategory === category.id && styles.categoryItemTextActive
-                ]}>
-                  {category.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Right Panel - Category Content */}
-        <View style={styles.rightPanel}>
-          <ScrollView 
-            style={styles.categoryContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {renderCategoryContent()}
-          </ScrollView>
-        </View>
-      </View>
-
-      {/* Navigation Breadcrumb */}
-      <View style={styles.breadcrumb}>
-        <Text style={styles.breadcrumbText}>
-          Dashboard &gt; Settings &gt; {SETTINGS_CATEGORIES.find(c => c.id === activeCategory)?.label.replace(/\p{Emoji}/gu, '').trim()}
-        </Text>
+      {/* APPLE BREADCRUMB (subtle bottom navigation) */}
+      <View style={{
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+        borderTopWidth: isDark ? 1 : 0,
+        borderTopColor: isDark ? theme.colors.layer1 : 'transparent',
+      }}>
+        <ApplePill
+          text={`Dashboard › Settings › ${currentCategoryLabel}`}
+          variant="badge"
+          size="small"
+          color="neutral"
+        />
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  header: {
-    height: 80,
-    backgroundColor: theme.colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 30,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.white,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  headerButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  saveButton: {
-    backgroundColor: theme.colors.success,
-  },
-  saveButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  backButton: {
-    backgroundColor: theme.colors.gray,
-  },
-  backButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-  },
-  content: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: theme.colors.lightGray,
-    paddingHorizontal: 30,
-    paddingTop: 30,
-    gap: 20,
-  },
-  leftPanel: {
-    width: 280,
-    backgroundColor: theme.colors.white,
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    height: 460,
-  },
-  categoriesTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 20,
-  },
-  categoriesList: {
-    flex: 1,
-  },
-  categoryItem: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginBottom: 5,
-    backgroundColor: theme.colors.lightGray,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  categoryItemActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  categoryItemText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    textAlign: 'left',
-  },
-  categoryItemTextActive: {
-    color: theme.colors.white,
-    fontWeight: '600',
-  },
-  rightPanel: {
-    flex: 1,
-    backgroundColor: theme.colors.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    height: 460,
-  },
-  categoryContent: {
-    flex: 1,
-    padding: 30,
-  },
-  breadcrumb: {
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    backgroundColor: theme.colors.background,
-  },
-  breadcrumbText: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-});

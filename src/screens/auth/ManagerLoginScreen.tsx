@@ -7,30 +7,34 @@ import {
   StatusBar,
   Alert,
   Dimensions,
-  Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { 
-  AuthButton, 
-  AuthInput, 
-  AuthCard,
+import {
+  AuthInput,
   LoadingOverlay,
   Toast,
   useToast
 } from '../../components/auth';
-import { 
-  FormField, 
-  PasswordInput, 
+import {
+  FormField,
+  PasswordInput,
   OTPInput,
   useOTPInput,
-  BiometricButton, 
-  useBiometricAuth 
+  BiometricButton,
+  useBiometricAuth
 } from '../../components/forms';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthForm, useAuthStatus } from '@/hooks/auth';
 import { spacing } from '../../design-system/theme/spacing';
 import { typography } from '../../design-system/theme/typography';
+
+// APPLE COMPONENT SYSTEM (Universal Auth Components)
+import {
+  AppleCard,
+  AppleButton,
+  AppleToggle,
+} from '@/components/apple';
 
 interface ManagerLoginScreenProps {
   // Navigation will be typed properly in navigation setup
@@ -237,10 +241,12 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
           </Text>
         </View>
 
-        {/* Login Form */}
-        <AuthCard
-          glassmorphism={true}
-          padding={isTablet ? 'large' : 'medium'}
+        {/* APPLE LOGIN FORM CARD */}
+        <AppleCard
+          layer="surface"
+          size={isTablet ? 'large' : 'medium'}
+          shadow={true}
+          style={{ marginBottom: spacing.lg }}
         >
           {!requireMFA ? (
             // Initial Login Form
@@ -285,7 +291,7 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
                 />
               </FormField>
 
-              {/* Remember Me */}
+              {/* APPLE REMEMBER ME TOGGLE */}
               <View style={getRememberMeStyles()}>
                 <Text style={{
                   ...typography.authBody,
@@ -293,32 +299,26 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
                 }}>
                   Remember me on this device
                 </Text>
-                <Switch
+                <AppleToggle
                   value={rememberMe}
                   onValueChange={setRememberMe}
-                  trackColor={{
-                    false: theme.colors.surfaceVariant,
-                    true: theme.colors.primary,
-                  }}
-                  thumbColor={rememberMe ? theme.colors.onPrimary : theme.colors.onSurfaceVariant}
+                  variant="default"
+                  activeColor="primary"
                   accessibilityLabel="Toggle remember me"
                 />
               </View>
 
-              {/* Login Button */}
-              <AuthButton
+              {/* APPLE LOGIN BUTTON */}
+              <AppleButton
+                title="🔐 Sign In"
                 variant="primary"
                 size={isTablet ? 'large' : 'medium'}
                 onPress={handleInitialLogin}
-                loading={authForm.isLoading}
                 disabled={authForm.isLoading || !authForm.isValid}
-                icon="login"
-                accessibilityLabel="Login to manager account"
-                testID="login-button"
+                loading={authForm.isLoading}
+                fullWidth={true}
                 style={{ marginTop: spacing.md }}
-              >
-                Sign In
-              </AuthButton>
+              />
 
               {/* Biometric Login */}
               {biometricAvailable && (
@@ -374,49 +374,38 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
                 />
               </FormField>
 
-              {/* Verify Button */}
-              <AuthButton
+              {/* APPLE VERIFY BUTTON */}
+              <AppleButton
+                title="✅ Verify & Continue"
                 variant="primary"
                 size={isTablet ? 'large' : 'medium'}
                 onPress={handleMFAVerification}
-                loading={authForm.isLoading}
                 disabled={authForm.isLoading || !otpComplete}
-                icon="verified"
-                accessibilityLabel="Verify authentication code"
-                testID="verify-button"
+                loading={authForm.isLoading}
+                fullWidth={true}
                 style={{ marginTop: spacing.md }}
-              >
-                Verify & Continue
-              </AuthButton>
+              />
             </View>
           )}
-        </AuthCard>
+        </AppleCard>
 
-        {/* Footer Actions */}
+        {/* APPLE FOOTER ACTIONS */}
         <View style={getFooterStyles()}>
           {!requireMFA && (
-            <AuthButton
+            <AppleButton
+              title="❓ Forgot Password?"
               variant="ghost"
               size="small"
               onPress={handleForgotPassword}
-              icon="help"
-              accessibilityLabel="Forgot password help"
-              testID="forgot-password-button"
-            >
-              Forgot Password?
-            </AuthButton>
+            />
           )}
 
-          <AuthButton
+          <AppleButton
+            title={requireMFA ? '⬅️ Back to Login' : '⬅️ Back to Welcome'}
             variant="ghost"
             size="small"
             onPress={handleBack}
-            icon="arrow-back"
-            accessibilityLabel={requireMFA ? "Back to login form" : "Go back to welcome screen"}
-            testID="back-button"
-          >
-            {requireMFA ? 'Back to Login' : 'Back to Welcome'}
-          </AuthButton>
+          />
         </View>
       </ScrollView>
 

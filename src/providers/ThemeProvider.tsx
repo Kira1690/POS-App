@@ -11,13 +11,15 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const systemColorScheme = useColorScheme();
-  const [colorScheme, setColorScheme] = useState<'light' | 'dark'>(systemColorScheme || 'light');
-  
-  useEffect(() => {
-    if (systemColorScheme) {
-      setColorScheme(systemColorScheme);
-    }
-  }, [systemColorScheme]);
+  // DEFAULT TO DARK MODE as requested by user
+  const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('dark');
+
+  // Comment out system color scheme sync to maintain dark mode default
+  // useEffect(() => {
+  //   if (systemColorScheme) {
+  //     setColorScheme(systemColorScheme);
+  //   }
+  // }, [systemColorScheme]);
 
   const theme = createTheme(colorScheme);
   const isDark = colorScheme === 'dark';

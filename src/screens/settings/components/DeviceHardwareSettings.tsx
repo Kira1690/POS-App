@@ -6,10 +6,11 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Switch,
 } from 'react-native';
 import { DeviceSettings } from '@/types/settings.types';
 import { MockSettingsService } from '@/services/settings/MockSettingsService';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface DeviceHardwareSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -89,6 +90,7 @@ const API_CONNECTIONS = [
 ];
 
 export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHardwareSettingsProps) {
+  const { theme, isDark, toggleTheme } = useTheme();
   const [devices, setDevices] = useState<DeviceCard[]>(MOCK_DEVICES);
   const [apiConnections, setApiConnections] = useState(API_CONNECTIONS);
   const [networkInfo, setNetworkInfo] = useState({
@@ -156,7 +158,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
       <View style={styles.deviceInfo}>
         <Text style={styles.deviceName}>{device.name}</Text>
         <Text style={[styles.deviceStatus, styles[`deviceStatus${device.status}`]]}>
-          {device.status === 'connected' ? '🔘 Connected' : 
+          {device.status === 'connected' ? '🔘 Connected' :
            device.status === 'disconnected' ? '⚪ Not Connected' : '⚠️ Error'}
         </Text>
         <Text style={styles.deviceDetails}>{device.details}</Text>
@@ -206,6 +208,387 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
     </View>
   );
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 25,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+    },
+    testAllButton: {
+      backgroundColor: theme.colors.success,
+      paddingHorizontal: 15,
+      paddingVertical: 8,
+      borderRadius: 12,
+    },
+    testAllButtonText: {
+      color: theme.colors.onSuccess,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    section: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      padding: 20,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 15,
+    },
+    devicesGrid: {
+      gap: 15,
+    },
+    deviceCard: {
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: 12,
+      padding: 15,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    deviceIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 15,
+    },
+    deviceIconpayment: {
+      backgroundColor: theme.colors.primary,
+    },
+    deviceIconprinter: {
+      backgroundColor: theme.colors.success,
+    },
+    deviceIcondrawer: {
+      backgroundColor: theme.colors.warning,
+    },
+    deviceIconText: {
+      fontSize: 20,
+      color: theme.colors.onPrimary,
+    },
+    deviceInfo: {
+      flex: 1,
+    },
+    deviceName: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 2,
+    },
+    deviceStatus: {
+      fontSize: 12,
+      marginBottom: 4,
+    },
+    deviceStatusconnected: {
+      color: theme.colors.success,
+    },
+    deviceStatusdisconnected: {
+      color: theme.colors.error,
+    },
+    deviceDetails: {
+      fontSize: 11,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 2,
+    },
+    deviceConnection: {
+      fontSize: 11,
+      color: theme.colors.onSurfaceVariant,
+    },
+    deviceActions: {
+      gap: 5,
+    },
+    deviceButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+      alignItems: 'center',
+      minWidth: 70,
+    },
+    configureButton: {
+      backgroundColor: theme.colors.primary,
+    },
+    configureButtonText: {
+      color: theme.colors.onPrimary,
+      fontSize: 11,
+    },
+    testButton: {
+      backgroundColor: theme.colors.success,
+    },
+    testButtonText: {
+      color: theme.colors.onSuccess,
+      fontSize: 11,
+    },
+    addDeviceCard: {
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: 12,
+      padding: 15,
+      borderWidth: 2,
+      borderColor: theme.colors.outline,
+      borderStyle: 'dashed',
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    addDeviceText: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+    },
+    apiGrid: {
+      flexDirection: 'row',
+      gap: 15,
+    },
+    apiCard: {
+      flex: 1,
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: 12,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      alignItems: 'center',
+    },
+    apiIcon: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    apiIconbackend_api: {
+      backgroundColor: theme.colors.success,
+    },
+    apiIconwebsocket: {
+      backgroundColor: theme.colors.primary,
+    },
+    apiIcondelivery_platforms: {
+      backgroundColor: theme.colors.warning,
+    },
+    apiIconText: {
+      fontSize: 16,
+      color: theme.colors.onPrimary,
+    },
+    apiInfo: {
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    apiName: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      textAlign: 'center',
+      marginBottom: 2,
+    },
+    apiStatus: {
+      fontSize: 11,
+      marginBottom: 4,
+    },
+    apiStatusconnected: {
+      color: theme.colors.success,
+    },
+    apiStatusdisconnected: {
+      color: theme.colors.error,
+    },
+    apiUrl: {
+      fontSize: 10,
+      color: theme.colors.onSurfaceVariant,
+      textAlign: 'center',
+    },
+    apiButton: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 6,
+    },
+    apiButtonconnected: {
+      backgroundColor: theme.colors.success,
+    },
+    apiButtondisconnected: {
+      backgroundColor: theme.colors.warning,
+    },
+    apiButtonText: {
+      fontSize: 10,
+      color: theme.colors.onSuccess,
+    },
+    networkRow: {
+      flexDirection: 'row',
+      gap: 15,
+    },
+    networkCard: {
+      flex: 1,
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: 12,
+      padding: 15,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    networkIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.success,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    networkIconText: {
+      fontSize: 20,
+      color: theme.colors.onSuccess,
+    },
+    networkStatus: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 8,
+    },
+    networkDetail: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 4,
+    },
+    networkSignal: {
+      color: theme.colors.success,
+    },
+    networkActions: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 10,
+    },
+    networkButton: {
+      flex: 1,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 8,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    networkButtonText: {
+      color: theme.colors.onPrimary,
+      fontSize: 12,
+    },
+    troubleshootButton: {
+      backgroundColor: theme.colors.warning,
+    },
+    troubleshootButtonText: {
+      color: theme.colors.onWarning,
+      fontSize: 12,
+    },
+    healthCard: {
+      flex: 1,
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: 12,
+      padding: 15,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    healthIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.success,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    healthIconText: {
+      fontSize: 20,
+      color: theme.colors.onSuccess,
+    },
+    healthTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 8,
+    },
+    healthDetail: {
+      fontSize: 12,
+      color: theme.colors.success,
+      marginBottom: 4,
+    },
+    healthActions: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 10,
+    },
+    optimizeButton: {
+      flex: 1,
+      backgroundColor: theme.colors.success,
+      paddingVertical: 8,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    optimizeButtonText: {
+      color: theme.colors.onSuccess,
+      fontSize: 12,
+    },
+    diagnosticsButton: {
+      flex: 1,
+      backgroundColor: theme.colors.warning,
+      paddingVertical: 8,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    diagnosticsButtonText: {
+      color: theme.colors.onWarning,
+      fontSize: 12,
+    },
+    // Theme toggle styles
+    themeCard: {
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: 16,
+      padding: 18,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    themeIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 15,
+    },
+    themeIconText: {
+      fontSize: 20,
+    },
+    themeInfo: {
+      flex: 1,
+    },
+    themeName: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 4,
+    },
+    themeDescription: {
+      fontSize: 13,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 2,
+    },
+    themeNote: {
+      fontSize: 11,
+      color: theme.colors.onSurfaceVariant,
+      fontStyle: 'italic',
+    },
+    themeActions: {
+      marginLeft: 10,
+    },
+  });
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -215,13 +598,44 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
         </TouchableOpacity>
       </View>
 
+      {/* Display & Theme Settings Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Display & Theme Settings</Text>
+        <View style={styles.themeCard}>
+          <View style={styles.themeIcon}>
+            <Text style={styles.themeIconText}>{isDark ? '🌙' : '☀️'}</Text>
+          </View>
+          <View style={styles.themeInfo}>
+            <Text style={styles.themeName}>Dark Mode</Text>
+            <Text style={styles.themeDescription}>
+              {isDark ? 'Currently using dark theme with Apple design' : 'Currently using light theme with Apple design'}
+            </Text>
+            <Text style={styles.themeNote}>
+              Apple Tahoe design system with professional rounded corners and sophisticated colors
+            </Text>
+          </View>
+          <View style={styles.themeActions}>
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{
+                false: theme.colors.outline,
+                true: theme.colors.primary
+              }}
+              thumbColor={isDark ? theme.colors.surface : theme.colors.surface}
+              ios_backgroundColor={theme.colors.outline}
+            />
+          </View>
+        </View>
+      </View>
+
       {/* Payment Devices Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Payment Devices</Text>
         <View style={styles.devicesGrid}>
           {devices.filter(d => d.type === 'payment' || d.type === 'drawer').map(renderDeviceCard)}
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addDeviceCard}
           onPress={() => handleAddDevice('payment')}
         >
@@ -235,7 +649,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
         <View style={styles.devicesGrid}>
           {devices.filter(d => d.type === 'printer').map(renderDeviceCard)}
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addDeviceCard}
           onPress={() => handleAddDevice('printer')}
         >
@@ -268,13 +682,13 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
               </Text>
             </View>
             <View style={styles.networkActions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.networkButton}
                 onPress={() => handleNetworkAction('change')}
               >
                 <Text style={styles.networkButtonText}>Change Network</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.networkButton, styles.troubleshootButton]}
                 onPress={() => handleNetworkAction('troubleshoot')}
               >
@@ -294,13 +708,13 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
               <Text style={styles.healthDetail}>Storage: {systemHealth.storage}</Text>
             </View>
             <View style={styles.healthActions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.optimizeButton}
                 onPress={() => handleSystemAction('optimize')}
               >
                 <Text style={styles.optimizeButtonText}>Optimize</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.diagnosticsButton}
                 onPress={() => handleSystemAction('diagnostics')}
               >
@@ -313,340 +727,3 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-  },
-  testAllButton: {
-    backgroundColor: theme.colors.success,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  testAllButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  section: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  devicesGrid: {
-    gap: 15,
-  },
-  deviceCard: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  deviceIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  deviceIconpayment: {
-    backgroundColor: theme.colors.primary,
-  },
-  deviceIconprinter: {
-    backgroundColor: theme.colors.success,
-  },
-  deviceIcondrawer: {
-    backgroundColor: theme.colors.warning,
-  },
-  deviceIconText: {
-    fontSize: 20,
-    color: theme.colors.white,
-  },
-  deviceInfo: {
-    flex: 1,
-  },
-  deviceName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 2,
-  },
-  deviceStatus: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  deviceStatusconnected: {
-    color: theme.colors.success,
-  },
-  deviceStatusdisconnected: {
-    color: theme.colors.error,
-  },
-  deviceDetails: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    marginBottom: 2,
-  },
-  deviceConnection: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  deviceActions: {
-    gap: 5,
-  },
-  deviceButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignItems: 'center',
-    minWidth: 70,
-  },
-  configureButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  configureButtonText: {
-    color: theme.colors.white,
-    fontSize: 11,
-  },
-  testButton: {
-    backgroundColor: theme.colors.success,
-  },
-  testButtonText: {
-    color: theme.colors.white,
-    fontSize: 11,
-  },
-  addDeviceCard: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    borderWidth: 2,
-    borderColor: theme.colors.inputBorder,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  addDeviceText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-  },
-  apiGrid: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  apiCard: {
-    flex: 1,
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    alignItems: 'center',
-  },
-  apiIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  apiIconbackend_api: {
-    backgroundColor: theme.colors.success,
-  },
-  apiIconwebsocket: {
-    backgroundColor: theme.colors.primary,
-  },
-  apiIcondelivery_platforms: {
-    backgroundColor: theme.colors.warning,
-  },
-  apiIconText: {
-    fontSize: 16,
-    color: theme.colors.white,
-  },
-  apiInfo: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  apiName: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  apiStatus: {
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  apiStatusconnected: {
-    color: theme.colors.success,
-  },
-  apiStatusdisconnected: {
-    color: theme.colors.error,
-  },
-  apiUrl: {
-    fontSize: 10,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  apiButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  apiButtonconnected: {
-    backgroundColor: theme.colors.success,
-  },
-  apiButtondisconnected: {
-    backgroundColor: theme.colors.warning,
-  },
-  apiButtonText: {
-    fontSize: 10,
-    color: theme.colors.white,
-  },
-  networkRow: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  networkCard: {
-    flex: 1,
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  networkIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  networkIconText: {
-    fontSize: 20,
-    color: theme.colors.white,
-  },
-  networkStatus: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 8,
-  },
-  networkDetail: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  networkSignal: {
-    color: theme.colors.success,
-  },
-  networkActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 10,
-  },
-  networkButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  networkButtonText: {
-    color: theme.colors.white,
-    fontSize: 12,
-  },
-  troubleshootButton: {
-    backgroundColor: theme.colors.warning,
-  },
-  troubleshootButtonText: {
-    color: theme.colors.white,
-    fontSize: 12,
-  },
-  healthCard: {
-    flex: 1,
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  healthIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  healthIconText: {
-    fontSize: 20,
-    color: theme.colors.white,
-  },
-  healthTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 8,
-  },
-  healthDetail: {
-    fontSize: 12,
-    color: theme.colors.success,
-    marginBottom: 4,
-  },
-  healthActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 10,
-  },
-  optimizeButton: {
-    flex: 1,
-    backgroundColor: theme.colors.success,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  optimizeButtonText: {
-    color: theme.colors.white,
-    fontSize: 12,
-  },
-  diagnosticsButton: {
-    flex: 1,
-    backgroundColor: theme.colors.warning,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  diagnosticsButtonText: {
-    color: theme.colors.white,
-    fontSize: 12,
-  },
-});
