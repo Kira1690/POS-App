@@ -221,8 +221,8 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
               />
             </FormField>
 
-            {/* APPLE LOGIN BUTTON */}
-            <AppleButton
+            {/* LOGIN BUTTON */}
+            <AuthButton
               title="⏰ Clock In"
               variant="primary"
               size={isTablet ? 'large' : 'medium'}
@@ -255,18 +255,18 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
               </View>
             )}
           </View>
-        </AppleCard>
+        </AuthCard>
 
-        {/* APPLE FOOTER ACTIONS */}
+        {/* FOOTER ACTIONS */}
         <View style={getFooterStyles()}>
-          <AppleButton
+          <AuthButton
             title="❓ Forgot Password?"
             variant="ghost"
             size="small"
             onPress={handleForgotPassword}
           />
 
-          <AppleButton
+          <AuthButton
             title="⬅️ Back to Welcome"
             variant="ghost"
             size="small"
