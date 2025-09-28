@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
 import { KPICard } from './KPICard';
-import { ProfessionalTheme } from '@/constants/theme';
 import { KPIMetrics } from '@/types/dashboard.types';
 
 interface KPISectionProps {
@@ -10,6 +10,25 @@ interface KPISectionProps {
 }
 
 export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false }) => {
+  const { theme } = useTheme();
+
+  const styles = StyleSheet.create({
+    container: {
+      paddingHorizontal: theme.spacing.md,
+    },
+
+    grid: {
+      flexDirection: 'row',
+      marginHorizontal: -theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+    },
+
+    gridItem: {
+      flex: 1,
+      marginHorizontal: theme.spacing.sm,
+    },
+  });
+
   if (loading || !kpis) {
     return (
       <View style={styles.container}>
@@ -22,7 +41,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
               changeDirection="neutral"
               period="Loading..."
               icon="💰"
-              color={ProfessionalTheme.colors.success}
+              color={theme.colors.success}
               loading={true}
             />
           </View>
@@ -34,7 +53,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
               changeDirection="neutral"
               period="Loading..."
               icon="📊"
-              color={ProfessionalTheme.colors.info}
+              color={theme.colors.info}
               loading={true}
             />
           </View>
@@ -48,7 +67,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
               changeDirection="neutral"
               period="Loading..."
               icon="⏱️"
-              color={ProfessionalTheme.colors.warning}
+              color={theme.colors.warning}
               loading={true}
             />
           </View>
@@ -60,7 +79,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
               changeDirection="neutral"
               period="Loading..."
               icon="💎"
-              color={ProfessionalTheme.colors.chart.accent}
+              color={theme.colors.info}
               loading={true}
             />
           </View>
@@ -80,7 +99,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
             changeDirection={kpis.sales.changeDirection}
             period={kpis.sales.period}
             icon="💰"
-            color={ProfessionalTheme.colors.success}
+            color={theme.colors.success}
           />
         </View>
         <View style={styles.gridItem}>
@@ -91,7 +110,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
             changeDirection={kpis.orders.changeDirection}
             period={kpis.orders.period}
             icon="📊"
-            color={ProfessionalTheme.colors.info}
+            color={theme.colors.info}
           />
         </View>
       </View>
@@ -105,7 +124,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
             changeDirection={kpis.revenue.changeDirection}
             period={kpis.revenue.period}
             icon="💎"
-            color={ProfessionalTheme.colors.chart.accent}
+            color={theme.colors.info}
           />
         </View>
         <View style={styles.gridItem}>
@@ -116,27 +135,10 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
             changeDirection={kpis.averageOrderValue.changeDirection}
             period={kpis.averageOrderValue.period}
             icon="⏱️"
-            color={ProfessionalTheme.colors.warning}
+            color={theme.colors.warning}
           />
         </View>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-  },
-  
-  grid: {
-    flexDirection: 'row',
-    marginHorizontal: -ProfessionalTheme.spacing.sm,
-    marginBottom: ProfessionalTheme.spacing.sm,
-  },
-  
-  gridItem: {
-    flex: 1,
-    marginHorizontal: ProfessionalTheme.spacing.sm,
-  },
-});

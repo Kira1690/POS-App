@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
 import { SimpleChart } from './SimpleChart';
-import { ProfessionalTheme } from '@/constants/theme';
 import { ChartDatasets } from '@/types/dashboard.types';
 import { MockAnalyticsService } from '@/services/analytics/MockAnalyticsService';
 
@@ -14,6 +14,121 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
   restaurantId,
   loading = false,
 }) => {
+  const { theme } = useTheme();
+
+  const styles = StyleSheet.create({
+    container: {
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+    },
+
+    sectionTitle: {
+      ...theme.typography.h4,
+      color: theme.colors.onSurface,
+      marginBottom: theme.spacing.md,
+    },
+
+    periodSelector: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surfaceLight,
+      borderRadius: theme.borderRadius.md,
+      padding: 4,
+      marginBottom: theme.spacing.md,
+    },
+
+    periodButton: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderRadius: theme.borderRadius.sm,
+      alignItems: 'center',
+    },
+
+    periodButtonActive: {
+      backgroundColor: theme.colors.primary,
+    },
+
+    periodButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontWeight: '500',
+    },
+
+    periodButtonTextActive: {
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+
+    chartsGrid: {
+      flexDirection: 'row',
+    },
+
+    chartColumn: {
+      width: 300,
+      marginRight: theme.spacing.md,
+    },
+
+    hourlyChartContainer: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      ...theme.shadows.sm,
+      height: 180,
+    },
+
+    hourlyChartTitle: {
+      ...theme.typography.label,
+      color: theme.colors.onSurface,
+      marginBottom: theme.spacing.sm,
+      textAlign: 'center',
+    },
+
+    hourlyBars: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      height: 120,
+      paddingBottom: 20,
+    },
+
+    hourlyBarContainer: {
+      alignItems: 'center',
+      marginHorizontal: 2,
+      width: 20,
+    },
+
+    hourlyBarWrapper: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      width: '100%',
+    },
+
+    hourlyBar: {
+      width: '100%',
+      borderRadius: 1,
+      minHeight: 2,
+    },
+
+    hourlyLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontSize: 8,
+      marginTop: 4,
+    },
+
+    // Loading states
+    loadingContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+
+    loadingChart: {
+      width: '48%',
+      height: 180,
+      backgroundColor: theme.colors.outlineLight,
+      borderRadius: theme.borderRadius.md,
+      opacity: 0.5,
+    },
+  });
+
   const [chartData, setChartData] = useState<ChartDatasets | null>(null);
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('today');
   const [chartLoading, setChartLoading] = useState(true);
@@ -85,14 +200,14 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
             <SimpleChart
               data={chartData.salesTrend}
               title="Sales Trend"
-              color={ProfessionalTheme.colors.success}
+              color={theme.colors.success}
               height={180}
             />
             
             <SimpleChart
               data={chartData.orderTrend}
               title="Order Volume"
-              color={ProfessionalTheme.colors.info}
+              color={theme.colors.info}
               height={180}
             />
           </View>
@@ -101,7 +216,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
             <SimpleChart
               data={chartData.revenueTrend}
               title="Revenue Trend"
-              color={ProfessionalTheme.colors.chart.accent}
+              color={theme.colors.info}
               height={180}
             />
 
@@ -122,11 +237,11 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                               styles.hourlyBar,
                               {
                                 height: Math.max(barHeight, 2),
-                                backgroundColor: hour.sales > maxHourly * 0.7 
-                                  ? ProfessionalTheme.colors.success
+                                backgroundColor: hour.sales > maxHourly * 0.7
+                                  ? theme.colors.success
                                   : hour.sales > maxHourly * 0.4
-                                  ? ProfessionalTheme.colors.warning
-                                  : ProfessionalTheme.colors.textLight,
+                                  ? theme.colors.warning
+                                  : theme.colors.onSurfaceLight,
                               },
                             ]}
                           />
@@ -146,116 +261,3 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    marginBottom: ProfessionalTheme.spacing.lg,
-  },
-
-  sectionTitle: {
-    ...ProfessionalTheme.typography.h4,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  periodSelector: {
-    flexDirection: 'row',
-    backgroundColor: ProfessionalTheme.colors.surfaceLight,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: 4,
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  periodButton: {
-    flex: 1,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    alignItems: 'center',
-  },
-
-  periodButtonActive: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-  },
-
-  periodButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontWeight: '500',
-  },
-
-  periodButtonTextActive: {
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  chartsGrid: {
-    flexDirection: 'row',
-  },
-
-  chartColumn: {
-    width: 300,
-    marginRight: ProfessionalTheme.spacing.md,
-  },
-
-  hourlyChartContainer: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: ProfessionalTheme.spacing.md,
-    ...ProfessionalTheme.shadows.sm,
-    height: 180,
-  },
-
-  hourlyChartTitle: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.sm,
-    textAlign: 'center',
-  },
-
-  hourlyBars: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 120,
-    paddingBottom: 20,
-  },
-
-  hourlyBarContainer: {
-    alignItems: 'center',
-    marginHorizontal: 2,
-    width: 20,
-  },
-
-  hourlyBarWrapper: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    width: '100%',
-  },
-
-  hourlyBar: {
-    width: '100%',
-    borderRadius: 1,
-    minHeight: 2,
-  },
-
-  hourlyLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontSize: 8,
-    marginTop: 4,
-  },
-
-  // Loading states
-  loadingContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  loadingChart: {
-    width: '48%',
-    height: 180,
-    backgroundColor: ProfessionalTheme.colors.borderLight,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    opacity: 0.5,
-  },
-});

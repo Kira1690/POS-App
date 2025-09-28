@@ -51,6 +51,11 @@ export {
 
 export type { AppleSidebarItem } from './layouts';
 
+// SPECIALIZED COMPONENTS (Composition over Inheritance)
+export {
+  AppleStatsCard,
+} from './components';
+
 // APPLE DESIGN PHILOSOPHY:
 // This design system replaces ALL component-specific styling throughout the app.
 // Every component follows SOLID principles and uses Apple's 4-layer depth system.

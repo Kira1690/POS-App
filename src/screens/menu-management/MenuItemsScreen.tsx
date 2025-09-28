@@ -10,7 +10,8 @@ import {
   FlatList,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { ProfessionalTheme, DashboardStyles } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { DashboardStyles } from '@/constants/theme';
 import { MenuItemCard } from './components/MenuItemCard';
 import { MenuItemsTableHeader } from './components/MenuItemsTableHeader';
 import { MenuItemFiltersBar } from './components/MenuItemFiltersBar';
@@ -33,6 +34,7 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
   categoryId,
   categoryName = 'All Categories',
 }) => {
+  const { theme } = useTheme();
   // State management
   const [menuItems, setMenuItems] = useState<MenuItemWithStats[]>([]);
   const [categories, setCategories] = useState<CategoryWithStats[]>([]);
@@ -297,6 +299,134 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
     );
   };
 
+  const styles = StyleSheet.create({
+    headerActions: {
+      position: 'absolute',
+      right: theme.spacing.lg,
+      top: '50%',
+      transform: [{ translateY: -15 }],
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+
+    addButton: {
+      backgroundColor: theme.colors.success,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+    },
+
+    addButtonText: {
+      ...theme.typography.label,
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+
+    categoriesButton: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+    },
+
+    categoriesButtonText: {
+      ...theme.typography.label,
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+
+    retryButton: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.borderRadius.md,
+    },
+
+    retryButtonText: {
+      ...theme.typography.label,
+      color: theme.colors.onSurfaceOnPrimary,
+      textAlign: 'center',
+    },
+
+    selectionControls: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: theme.colors.infoLight,
+      padding: theme.spacing.md,
+      borderRadius: theme.borderRadius.md,
+      marginBottom: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.info,
+    },
+
+    selectionText: {
+      ...theme.typography.body2,
+      color: theme.colors.info,
+      fontWeight: '600',
+    },
+
+    bulkActions: {
+      flexDirection: 'row',
+      gap: theme.spacing.xs,
+    },
+
+    bulkButton: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.sm,
+    },
+
+    enableButton: {
+      backgroundColor: theme.colors.success,
+    },
+
+    disableButton: {
+      backgroundColor: theme.colors.warning,
+    },
+
+    deleteButton: {
+      backgroundColor: theme.colors.error,
+    },
+
+    bulkButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceOnPrimary,
+      fontSize: 10,
+      fontWeight: '600',
+    },
+
+    clearButton: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+    },
+
+    clearButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.info,
+      fontSize: 10,
+      textDecorationLine: 'underline',
+    },
+
+    itemsContainer: {
+      flex: 1,
+    },
+
+    listContainer: {
+      paddingBottom: theme.spacing.xxl,
+    },
+
+    loadingContainer: {
+      flex: 1,
+    },
+
+    loadingItem: {
+      height: 60,
+      backgroundColor: theme.colors.outlineLight,
+      borderRadius: theme.borderRadius.md,
+      marginBottom: theme.spacing.sm,
+      opacity: 0.5,
+    },
+  });
+
   /**
    * Error state
    */
@@ -412,8 +542,8 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  colors={[ProfessionalTheme.colors.primary]}
-                  tintColor={ProfessionalTheme.colors.primary}
+                  colors={[theme.colors.primary]}
+                  tintColor={theme.colors.primary}
                 />
               }
             />
@@ -432,133 +562,5 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  headerActions: {
-    position: 'absolute',
-    right: ProfessionalTheme.spacing.lg,
-    top: '50%',
-    transform: [{ translateY: -15 }],
-    flexDirection: 'row',
-    gap: ProfessionalTheme.spacing.sm,
-  },
-
-  addButton: {
-    backgroundColor: ProfessionalTheme.colors.success,
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-  },
-
-  addButtonText: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  categoriesButton: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-  },
-
-  categoriesButtonText: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  retryButton: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-    paddingHorizontal: ProfessionalTheme.spacing.lg,
-    paddingVertical: ProfessionalTheme.spacing.md,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-  },
-
-  retryButtonText: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.textOnPrimary,
-    textAlign: 'center',
-  },
-
-  selectionControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: ProfessionalTheme.colors.infoLight,
-    padding: ProfessionalTheme.spacing.md,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    marginBottom: ProfessionalTheme.spacing.md,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.info,
-  },
-
-  selectionText: {
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.info,
-    fontWeight: '600',
-  },
-
-  bulkActions: {
-    flexDirection: 'row',
-    gap: ProfessionalTheme.spacing.xs,
-  },
-
-  bulkButton: {
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-  },
-
-  enableButton: {
-    backgroundColor: ProfessionalTheme.colors.success,
-  },
-
-  disableButton: {
-    backgroundColor: ProfessionalTheme.colors.warning,
-  },
-
-  deleteButton: {
-    backgroundColor: ProfessionalTheme.colors.error,
-  },
-
-  bulkButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textOnPrimary,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-
-  clearButton: {
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    paddingVertical: 4,
-  },
-
-  clearButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.info,
-    fontSize: 10,
-    textDecorationLine: 'underline',
-  },
-
-  itemsContainer: {
-    flex: 1,
-  },
-
-  listContainer: {
-    paddingBottom: ProfessionalTheme.spacing.xxl,
-  },
-
-  loadingContainer: {
-    flex: 1,
-  },
-
-  loadingItem: {
-    height: 60,
-    backgroundColor: ProfessionalTheme.colors.borderLight,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    marginBottom: ProfessionalTheme.spacing.sm,
-    opacity: 0.5,
-  },
-});
 
 export default MenuItemsScreen;

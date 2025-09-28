@@ -1,0 +1,567 @@
+// Kitchen Operations Service Database Schema
+// Multi-Restaurant POS System - DbDiagram.io Format
+// Generated: 2025-09-28
+// Service: Kitchen Operations and Food Preparation Management (Restaurant-Specific)
+
+Project "POS Kitchen Operations Service" {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Kitchen Operations Service Database Schema
+
+    **Pattern**: Database per Service (Real-time Optimization)
+    **Purpose**: Kitchen display systems, food preparation tracking, and staff coordination
+    **Scale**: Real-time operations, sub-second response times, high-frequency updates
+
+    ## Key Features
+    - Real-time kitchen display system support
+    - Food preparation workflow management
+    - Kitchen staff assignment and coordination
+    - Equipment and station management
+    - Order timing and quality tracking
+    - Integration with order and inventory services
+
+    ## Performance Requirements
+    - Sub-second query response times
+    - Real-time updates for kitchen displays
+    - High-frequency status updates
+    - Concurrent access from multiple kitchen devices
+
+    ## Restaurant Context
+    This schema represents a single restaurant's kitchen operations.
+    Each restaurant has its own schema: rest_001_kitchen, rest_002_kitchen, etc.
+  '''
+}
+
+// Enums and Types
+enum kitchen_station_type {
+  prep [note: 'Preparation station']
+  grill [note: 'Grill station']
+  fryer [note: 'Deep fryer station']
+  saute [note: 'Sauté/stovetop station']
+  salad [note: 'Salad/cold prep station']
+  pizza [note: 'Pizza oven station']
+  dessert [note: 'Dessert preparation station']
+  expo [note: 'Expediting station']
+  dishwash [note: 'Dishwashing station']
+  beverage [note: 'Beverage preparation station']
+}
+
+enum kitchen_order_status {
+  received [note: 'Order received in kitchen']
+  acknowledged [note: 'Kitchen staff acknowledged order']
+  in_progress [note: 'Preparation started']
+  ready [note: 'Order ready for service']
+  served [note: 'Order served to customer']
+  cancelled [note: 'Order cancelled']
+  delayed [note: 'Order delayed beyond estimated time']
+}
+
+enum kitchen_item_status {
+  pending [note: 'Waiting to be prepared']
+  assigned [note: 'Assigned to kitchen staff']
+  preparing [note: 'Currently being prepared']
+  cooking [note: 'In cooking process']
+  ready [note: 'Item ready for plating']
+  plated [note: 'Item plated and ready for service']
+  served [note: 'Item served to customer']
+  remake [note: 'Item needs to be remade']
+  cancelled [note: 'Item cancelled']
+}
+
+enum kitchen_priority {
+  low [note: 'Standard priority']
+  normal [note: 'Normal priority']
+  high [note: 'High priority - rush order']
+  urgent [note: 'Urgent - special circumstances']
+  vip [note: 'VIP customer order']
+}
+
+enum equipment_status {
+  operational [note: 'Equipment working normally']
+  maintenance [note: 'Under maintenance']
+  broken [note: 'Equipment broken/out of order']
+  cleaning [note: 'Being cleaned']
+  calibration [note: 'Being calibrated']
+}
+
+enum shift_position {
+  head_chef [note: 'Head chef/kitchen manager']
+  sous_chef [note: 'Sous chef']
+  line_cook [note: 'Line cook']
+  prep_cook [note: 'Prep cook']
+  expediter [note: 'Expediting station']
+  dishwasher [note: 'Dishwashing']
+  baker [note: 'Baking specialist']
+  pantry [note: 'Pantry/cold prep']
+}
+
+// Core Kitchen Tables
+
+Table kitchen_stations as KS {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Station Information
+  name text [not null, note: 'Human-readable station name']
+  station_type kitchen_station_type [not null]
+  description text
+  abbreviation text [note: 'Short code for displays (GRL, FRY, SAL)']
+
+  // Capacity and Capabilities
+  max_concurrent_orders integer [not null, default: 3]
+  max_concurrent_items integer [not null, default: 10]
+  capabilities text[] [note: 'What this station can prepare']
+  specialties text[] [note: 'Station specialties']
+
+  // Physical Layout
+  physical_location text [note: 'Physical location in kitchen']
+  display_order integer [default: 0, note: 'Order for kitchen displays']
+  display_position jsonb [note: 'X,Y coordinates for kitchen layout']
+
+  // Equipment Associated
+  equipment_list text[] [note: 'Equipment available at this station']
+  temperature_controlled boolean [default: false]
+  target_temperature decimal(5,2) [note: 'Target temperature for station']
+
+  // Performance Metrics
+  average_prep_time interval [note: 'Average preparation time per item']
+  efficiency_rating decimal(3,2) [note: 'Station efficiency rating (0-100)']
+
+  // Status and Availability
+  is_active boolean [default: true]
+  current_status equipment_status [default: 'operational']
+  status_message text [note: 'Current status description']
+
+  // Maintenance Schedule
+  last_maintenance_date date
+  next_maintenance_date date
+  maintenance_interval_days integer [default: 30]
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+
+  indexes {
+    restaurant_id [name: 'idx_kitchen_stations_restaurant']
+    station_type [name: 'idx_kitchen_stations_type']
+    (is_active, current_status) [name: 'idx_kitchen_stations_active_status']
+    display_order [name: 'idx_kitchen_stations_display_order']
+    name [name: 'idx_kitchen_stations_name']
+  }
+}
+
+Table kitchen_orders as KO {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Order Reference
+  order_id uuid [not null, unique, note: 'Reference to order service']
+  order_number text [not null, note: 'Cached order number']
+  order_type text [note: 'dine_in, takeout, delivery, etc.']
+
+  // Customer and Service Context
+  table_number text [note: 'Table number for dine-in orders']
+  customer_name text [note: 'Customer name for pickup orders']
+  server_name text [note: 'Server handling this order']
+  party_size integer [note: 'Number of people in party']
+
+  // Kitchen Status and Priority
+  kitchen_status kitchen_order_status [not null, default: 'received']
+  priority kitchen_priority [not null, default: 'normal']
+  rush_order boolean [default: false]
+
+  // Timing Information
+  received_at timestamptz [default: 'now()']
+  acknowledged_at timestamptz [note: 'When kitchen acknowledged order']
+  started_at timestamptz [note: 'When preparation started']
+  ready_at timestamptz [note: 'When order was ready']
+  served_at timestamptz [note: 'When order was served']
+
+  // Time Estimates and Tracking
+  estimated_total_time interval [note: 'Total estimated preparation time']
+  actual_total_time interval [note: 'Actual time to complete order']
+  estimated_ready_time timestamptz [note: 'When order is expected to be ready']
+  promised_ready_time timestamptz [note: 'Time promised to customer']
+
+  // Staff Assignment
+  primary_chef_id uuid [note: 'Head chef responsible for order']
+  expediter_id uuid [note: 'Staff member expediting order']
+  team_members uuid[] [note: 'All kitchen staff working on order']
+
+  // Order Instructions and Notes
+  special_instructions text [note: 'Customer special instructions']
+  kitchen_notes text [note: 'Internal kitchen notes']
+  allergen_alerts text[] [note: 'Allergen warnings']
+  dietary_restrictions text[] [note: 'Dietary restriction notes']
+
+  // Quality and Service
+  quality_check_required boolean [default: true]
+  quality_checked_by uuid [note: 'Staff who performed quality check']
+  quality_check_notes text
+  temperature_check_required boolean [default: false]
+
+  // Performance Tracking
+  complexity_score integer [note: '1-10 complexity rating']
+  kitchen_load_factor decimal(3,2) [note: 'Kitchen capacity when order received']
+  weather_delay boolean [default: false, note: 'Delivery delayed by weather']
+
+  // Communication
+  customer_notified boolean [default: false, note: 'Customer notified of delays']
+  notification_sent_at timestamptz
+  delay_reason text [note: 'Reason for any delays']
+
+  // Audit and History
+  status_history jsonb [note: 'Array of status changes with timestamps']
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+  last_status_change timestamptz [default: 'now()']
+
+  indexes {
+    restaurant_id [name: 'idx_kitchen_orders_restaurant']
+    order_id [unique, name: 'idx_kitchen_orders_order']
+    kitchen_status [name: 'idx_kitchen_orders_status']
+    priority [name: 'idx_kitchen_orders_priority']
+    (kitchen_status, priority) [name: 'idx_kitchen_orders_status_priority']
+    primary_chef_id [name: 'idx_kitchen_orders_chef']
+    expediter_id [name: 'idx_kitchen_orders_expediter']
+    received_at [name: 'idx_kitchen_orders_received']
+    estimated_ready_time [name: 'idx_kitchen_orders_ready_time']
+    table_number [name: 'idx_kitchen_orders_table']
+    rush_order [name: 'idx_kitchen_orders_rush']
+  }
+}
+
+Table kitchen_order_items as KOI {
+  id uuid [pk, default: `gen_random_uuid()`]
+  kitchen_order_id uuid [not null]
+  order_item_id uuid [not null, note: 'Reference to order service item']
+
+  // Menu Item Information (Cached)
+  menu_item_id uuid [not null]
+  menu_item_name text [not null]
+  menu_category text [note: 'Menu category for organization']
+  quantity integer [not null, default: 1]
+
+  // Station Assignment
+  assigned_station_id uuid [note: 'Primary station for preparation']
+  secondary_stations uuid[] [note: 'Additional stations involved']
+  station_sequence jsonb [note: 'Order of station processing']
+
+  // Staff Assignment
+  assigned_to uuid [note: 'Kitchen staff assigned to prepare']
+  prepared_by uuid [note: 'Kitchen staff who actually prepared']
+  quality_checked_by uuid [note: 'Staff who quality checked']
+
+  // Item Status and Timing
+  item_status kitchen_item_status [not null, default: 'pending']
+  estimated_prep_time interval [note: 'Estimated time to prepare this item']
+  actual_prep_time interval [note: 'Actual preparation time']
+
+  prep_started_at timestamptz [note: 'When preparation started']
+  cooking_started_at timestamptz [note: 'When cooking started']
+  cooking_completed_at timestamptz [note: 'When cooking completed']
+  plated_at timestamptz [note: 'When item was plated']
+  ready_at timestamptz [note: 'When item was ready for service']
+
+  // Preparation Instructions
+  preparation_instructions text [note: 'How to prepare this item']
+  cooking_method text [note: 'Specific cooking method']
+  cooking_temperature integer [note: 'Target cooking temperature']
+  cooking_time interval [note: 'Required cooking time']
+
+  // Customer Customizations
+  special_requests text [note: 'Customer special requests']
+  cooking_preference text [note: 'Rare, medium, well-done, etc.']
+  temperature_preference text [note: 'Hot, warm, cold']
+  modifications text[] [note: 'Item modifications']
+
+  // Quality Control
+  quality_standards text [note: 'Quality requirements for this item']
+  temperature_check_required boolean [default: false]
+  final_temperature decimal(5,2) [note: 'Final serving temperature']
+  quality_rating integer [note: '1-5 quality rating']
+  quality_notes text
+
+  // Recipe and Ingredients
+  recipe_version text [note: 'Recipe version used']
+  ingredients_used jsonb [note: 'Actual ingredients used']
+  portion_size text [note: 'Portion size served']
+  substitutions_made text[] [note: 'Ingredient substitutions']
+
+  // Problems and Issues
+  remake_count integer [default: 0]
+  remake_reason text [note: 'Reason for remake if applicable']
+  issues_encountered text[] [note: 'Any issues during preparation']
+  resolution_notes text
+
+  // Inventory Impact
+  ingredients_consumed jsonb [note: 'Ingredients consumed from inventory']
+  waste_generated decimal(10,3) [note: 'Amount of waste generated']
+  cost_to_prepare decimal(10,2) [note: 'Calculated cost to prepare']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+  last_status_change timestamptz [default: 'now()']
+
+  indexes {
+    kitchen_order_id [name: 'idx_kitchen_order_items_order']
+    order_item_id [unique, name: 'idx_kitchen_order_items_order_item']
+    menu_item_id [name: 'idx_kitchen_order_items_menu_item']
+    assigned_station_id [name: 'idx_kitchen_order_items_station']
+    assigned_to [name: 'idx_kitchen_order_items_assigned']
+    prepared_by [name: 'idx_kitchen_order_items_prepared_by']
+    item_status [name: 'idx_kitchen_order_items_status']
+    (item_status, assigned_station_id) [name: 'idx_kitchen_order_items_status_station']
+    prep_started_at [name: 'idx_kitchen_order_items_prep_start']
+    ready_at [name: 'idx_kitchen_order_items_ready']
+  }
+}
+
+Table kitchen_staff_shifts as KSS {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Staff Information
+  staff_id uuid [not null, note: 'Reference to auth service']
+  staff_name text [not null, note: 'Cached staff name for performance']
+
+  // Shift Details
+  shift_date date [not null]
+  position shift_position [not null]
+  primary_station_id uuid [note: 'Primary station assignment']
+  secondary_stations uuid[] [note: 'Additional station assignments']
+
+  // Shift Timing
+  scheduled_start_time timestamptz [not null]
+  scheduled_end_time timestamptz [not null]
+  actual_start_time timestamptz
+  actual_end_time timestamptz
+  break_times jsonb [note: 'Break start/end times']
+
+  // Performance Tracking
+  orders_completed integer [default: 0]
+  items_prepared integer [default: 0]
+  average_prep_time interval [note: 'Average item preparation time']
+  quality_score decimal(3,2) [note: 'Quality score for this shift']
+
+  // Status
+  is_present boolean [default: false]
+  clock_in_time timestamptz
+  clock_out_time timestamptz
+  total_hours_worked decimal(4,2) [note: 'Total hours worked this shift']
+
+  // Notes and Issues
+  shift_notes text [note: 'Notes about this shift']
+  performance_notes text [note: 'Performance observations']
+  issues_reported text[] [note: 'Any issues during shift']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+
+  indexes {
+    restaurant_id [name: 'idx_kitchen_staff_shifts_restaurant']
+    staff_id [name: 'idx_kitchen_staff_shifts_staff']
+    (staff_id, shift_date) [unique, name: 'idx_kitchen_staff_shifts_staff_date']
+    shift_date [name: 'idx_kitchen_staff_shifts_date']
+    position [name: 'idx_kitchen_staff_shifts_position']
+    primary_station_id [name: 'idx_kitchen_staff_shifts_station']
+    is_present [name: 'idx_kitchen_staff_shifts_present']
+  }
+}
+
+Table kitchen_equipment as KE {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+  station_id uuid [note: 'Station where equipment is located']
+
+  // Equipment Information
+  name text [not null]
+  equipment_type text [not null, note: 'oven, grill, fryer, mixer, etc.']
+  brand text
+  model text
+  serial_number text [unique]
+
+  // Specifications
+  capacity text [note: 'Equipment capacity description']
+  power_requirements text [note: 'Electrical/gas requirements']
+  temperature_range text [note: 'Operating temperature range']
+  features text[] [note: 'Equipment features and capabilities']
+
+  // Status and Health
+  current_status equipment_status [not null, default: 'operational']
+  health_score integer [note: '0-100 equipment health score']
+  last_status_change timestamptz
+  status_notes text
+
+  // Maintenance
+  maintenance_schedule text [note: 'Maintenance schedule description']
+  last_maintenance_date date
+  next_maintenance_date date
+  maintenance_cost decimal(10,2) [note: 'Last maintenance cost']
+  warranty_expiration_date date
+
+  // Usage Tracking
+  total_usage_hours decimal(10,2) [default: 0]
+  usage_this_month decimal(8,2) [default: 0]
+  last_used_at timestamptz
+  average_daily_usage decimal(6,2) [note: 'Average hours per day']
+
+  // Performance Metrics
+  efficiency_rating decimal(3,2) [note: 'Equipment efficiency (0-100)']
+  breakdown_frequency decimal(5,2) [note: 'Breakdowns per month']
+  repair_cost_ytd decimal(10,2) [note: 'Year-to-date repair costs']
+
+  // Safety and Compliance
+  safety_certifications text[] [note: 'Safety certifications']
+  last_safety_inspection date
+  next_safety_inspection date
+  safety_notes text
+
+  // Financial Information
+  purchase_date date
+  purchase_cost decimal(10,2)
+  current_value decimal(10,2) [note: 'Current estimated value']
+  depreciation_rate decimal(5,4) [note: 'Annual depreciation rate']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+
+  indexes {
+    restaurant_id [name: 'idx_kitchen_equipment_restaurant']
+    station_id [name: 'idx_kitchen_equipment_station']
+    serial_number [unique, name: 'idx_kitchen_equipment_serial']
+    equipment_type [name: 'idx_kitchen_equipment_type']
+    current_status [name: 'idx_kitchen_equipment_status']
+    next_maintenance_date [name: 'idx_kitchen_equipment_maintenance']
+    last_used_at [name: 'idx_kitchen_equipment_last_used']
+  }
+}
+
+Table kitchen_display_config as KDC {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Display Information
+  display_name text [not null]
+  display_location text [note: 'Physical location of display']
+  station_id uuid [note: 'Associated kitchen station']
+
+  // Display Settings
+  screen_resolution text [note: 'Display resolution']
+  refresh_interval_seconds integer [default: 5]
+  font_size text [default: 'medium']
+  color_scheme text [default: 'dark']
+
+  // Content Configuration
+  shows_orders boolean [default: true]
+  shows_items boolean [default: true]
+  shows_times boolean [default: true]
+  shows_special_instructions boolean [default: true]
+  max_orders_displayed integer [default: 10]
+
+  // Filtering and Sorting
+  status_filter kitchen_order_status[] [note: 'Order statuses to display']
+  priority_filter kitchen_priority[] [note: 'Priority levels to display']
+  sort_order text [default: 'oldest_first', note: 'Order display sorting']
+
+  // Alert Settings
+  overdue_alert_enabled boolean [default: true]
+  overdue_threshold_minutes integer [default: 15]
+  sound_alerts_enabled boolean [default: true]
+  visual_alerts_enabled boolean [default: true]
+
+  // Status
+  is_active boolean [default: true]
+  last_heartbeat timestamptz [note: 'Last communication from display']
+  display_online boolean [default: false]
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+
+  indexes {
+    restaurant_id [name: 'idx_kitchen_display_config_restaurant']
+    station_id [name: 'idx_kitchen_display_config_station']
+    is_active [name: 'idx_kitchen_display_config_active']
+    last_heartbeat [name: 'idx_kitchen_display_config_heartbeat']
+  }
+}
+
+// Kitchen Performance Analytics
+Table kitchen_performance_daily as KPD {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+  business_date date [not null]
+  station_id uuid [note: 'Station-specific metrics (null for restaurant-wide)']
+
+  // Order Volume Metrics
+  total_orders integer [not null, default: 0]
+  total_items integer [not null, default: 0]
+  rush_orders integer [default: 0]
+  cancelled_orders integer [default: 0]
+
+  // Timing Performance
+  average_prep_time interval [note: 'Average preparation time']
+  median_prep_time interval [note: 'Median preparation time']
+  fastest_prep_time interval [note: 'Fastest order completion']
+  slowest_prep_time interval [note: 'Slowest order completion']
+
+  // Quality Metrics
+  remake_count integer [default: 0]
+  quality_issues integer [default: 0]
+  customer_complaints integer [default: 0]
+  average_quality_score decimal(3,2) [note: 'Average quality rating']
+
+  // Efficiency Metrics
+  on_time_orders integer [default: 0]
+  late_orders integer [default: 0]
+  on_time_percentage decimal(5,2) [note: 'Percentage of orders on time']
+  kitchen_utilization decimal(5,2) [note: 'Kitchen capacity utilization']
+
+  // Staff Performance
+  staff_count integer [note: 'Number of kitchen staff on duty']
+  total_staff_hours decimal(6,2) [note: 'Total staff hours worked']
+  orders_per_staff_hour decimal(6,2) [note: 'Orders completed per staff hour']
+
+  // Generated Analytics
+  generated_at timestamptz [default: 'now()']
+  last_updated_at timestamptz [default: 'now()']
+
+  indexes {
+    (restaurant_id, business_date) [name: 'idx_kitchen_performance_restaurant_date']
+    (restaurant_id, business_date, station_id) [unique, name: 'idx_kitchen_performance_unique']
+    station_id [name: 'idx_kitchen_performance_station']
+    business_date [name: 'idx_kitchen_performance_date']
+  }
+}
+
+// Relationships
+Ref: KO.primary_chef_id > KSS.staff_id
+Ref: KO.expediter_id > KSS.staff_id
+Ref: KOI.kitchen_order_id > KO.id [delete: cascade]
+Ref: KOI.assigned_station_id > KS.id
+Ref: KOI.assigned_to > KSS.staff_id
+Ref: KOI.prepared_by > KSS.staff_id
+Ref: KSS.primary_station_id > KS.id
+Ref: KE.station_id > KS.id
+Ref: KDC.station_id > KS.id
+Ref: KPD.station_id > KS.id
+
+// Note: External service references (not enforced by foreign keys)
+// - KO.order_id -> order_service.orders.id
+// - KOI.order_item_id -> order_service.order_items.id
+// - KOI.menu_item_id -> menu_service.menu_items.id
+// - KSS.staff_id -> auth_service.users.id
+// - All created_by/updated_by -> auth_service.users.id

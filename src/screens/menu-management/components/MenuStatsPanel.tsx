@@ -1,6 +1,6 @@
 import React from 'react';
+import { useTheme } from '@/hooks/useTheme';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ProfessionalTheme } from '@/constants/theme';
 import { MenuManagementStats } from '@/types/menu-management.types';
 
 interface MenuStatsPanelProps {
@@ -52,14 +52,14 @@ export const MenuStatsPanel: React.FC<MenuStatsPanelProps> = ({
 
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>Active:</Text>
-          <Text style={[styles.statValue, { color: ProfessionalTheme.colors.success }]}>
+          <Text style={[styles.statValue, { color: theme.colors.success }]}>
             {stats.activeCategories}
           </Text>
         </View>
 
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>Inactive:</Text>
-          <Text style={[styles.statValue, { color: ProfessionalTheme.colors.error }]}>
+          <Text style={[styles.statValue, { color: theme.colors.error }]}>
             {stats.inactiveCategories}
           </Text>
         </View>
@@ -78,7 +78,7 @@ export const MenuStatsPanel: React.FC<MenuStatsPanelProps> = ({
 
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>Top Performer:</Text>
-          <Text style={[styles.statValue, { color: ProfessionalTheme.colors.info }]}>
+          <Text style={[styles.statValue, { color: theme.colors.info }]}>
             {stats.topPerformer}
           </Text>
         </View>
@@ -119,8 +119,8 @@ export const MenuStatsPanel: React.FC<MenuStatsPanelProps> = ({
                 { 
                   width: `${Math.min((stats.todayRevenue / 10000) * 100, 100)}%`,
                   backgroundColor: stats.todayRevenue > 10000 
-                    ? ProfessionalTheme.colors.success 
-                    : ProfessionalTheme.colors.warning
+                    ? theme.colors.success 
+                    : theme.colors.warning
                 }
               ]} 
             />
@@ -159,203 +159,3 @@ export const MenuStatsPanel: React.FC<MenuStatsPanelProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: ProfessionalTheme.colors.surfaceLight,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: ProfessionalTheme.spacing.md,
-    ...ProfessionalTheme.shadows.sm,
-    maxWidth: 300,
-  },
-
-  title: {
-    ...ProfessionalTheme.typography.h4,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  statsContainer: {
-    marginBottom: ProfessionalTheme.spacing.lg,
-  },
-
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: ProfessionalTheme.spacing.sm,
-    paddingVertical: 2,
-  },
-
-  highlightRow: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    marginHorizontal: -ProfessionalTheme.spacing.sm,
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    marginVertical: ProfessionalTheme.spacing.xs,
-  },
-
-  statLabel: {
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-
-  statValue: {
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.text,
-    fontWeight: '600',
-  },
-
-  revenueValue: {
-    color: ProfessionalTheme.colors.success,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-
-  performanceSection: {
-    marginBottom: ProfessionalTheme.spacing.lg,
-  },
-
-  performanceTitle: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  performanceBar: {
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  performanceLabel: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-
-  performanceLabelText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-
-  performancePercentage: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.text,
-    fontWeight: '600',
-  },
-
-  progressBar: {
-    height: 6,
-    backgroundColor: ProfessionalTheme.colors.border,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-
-  progressFill: {
-    height: '100%',
-    backgroundColor: ProfessionalTheme.colors.success,
-    borderRadius: 3,
-  },
-
-  actionsContainer: {
-    flexDirection: 'row',
-    gap: ProfessionalTheme.spacing.sm,
-    marginBottom: ProfessionalTheme.spacing.lg,
-  },
-
-  bulkButton: {
-    flex: 1,
-    backgroundColor: ProfessionalTheme.colors.primary,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    alignItems: 'center',
-  },
-
-  bulkButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textOnPrimary,
-    fontWeight: '600',
-  },
-
-  importButton: {
-    flex: 1,
-    backgroundColor: ProfessionalTheme.colors.info,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    alignItems: 'center',
-  },
-
-  importButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textOnPrimary,
-    fontWeight: '600',
-  },
-
-  quickActions: {
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  quickActionsTitle: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.sm,
-  },
-
-  quickAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    marginBottom: ProfessionalTheme.spacing.xs,
-  },
-
-  quickActionIcon: {
-    fontSize: 16,
-    marginRight: ProfessionalTheme.spacing.sm,
-  },
-
-  quickActionText: {
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.text,
-  },
-
-  // Loading states
-  loadingContent: {
-    flex: 1,
-  },
-
-  loadingTitle: {
-    height: 20,
-    backgroundColor: ProfessionalTheme.colors.borderLight,
-    borderRadius: 4,
-    marginBottom: ProfessionalTheme.spacing.md,
-    opacity: 0.5,
-  },
-
-  loadingStat: {
-    height: 16,
-    backgroundColor: ProfessionalTheme.colors.borderLight,
-    borderRadius: 4,
-    marginBottom: ProfessionalTheme.spacing.sm,
-    opacity: 0.3,
-  },
-
-  loadingActions: {
-    flexDirection: 'row',
-    gap: ProfessionalTheme.spacing.sm,
-    marginTop: ProfessionalTheme.spacing.lg,
-  },
-
-  loadingButton: {
-    flex: 1,
-    height: 32,
-    backgroundColor: ProfessionalTheme.colors.borderLight,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    opacity: 0.4,
-  },
-});

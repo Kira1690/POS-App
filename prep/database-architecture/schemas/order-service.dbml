@@ -1,0 +1,497 @@
+// Order Processing Service Database Schema
+// Multi-Restaurant POS System - DbDiagram.io Format
+// Generated: 2025-09-28
+// Service: Order Processing and Management (Restaurant-Specific)
+
+Project "POS Order Processing Service" {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Order Processing Service Database Schema
+
+    **Pattern**: Database per Service (Restaurant-Specific)
+    **Purpose**: Complete order lifecycle management from creation to completion
+    **Scale**: 1000+ orders/day per restaurant, high-volume transaction processing
+
+    ## Key Features
+    - Complete order lifecycle tracking
+    - Order item management with modifications
+    - Real-time status updates for kitchen integration
+    - Support for complex ordering workflows
+    - Event sourcing for complete audit trail
+    - Split payment and partial payment support
+
+    ## Restaurant Context
+    This schema represents a single restaurant's order data.
+    Each restaurant has its own schema: rest_001_orders, rest_002_orders, etc.
+
+    ## Performance Considerations
+    - Optimized for high-volume write operations
+    - Indexed for fast status-based queries
+    - Partitioned by date for large restaurants
+    - Real-time capable for kitchen display systems
+  '''
+}
+
+// Enums and Types
+enum order_status {
+  draft [note: 'Order being created, not yet submitted']
+  pending [note: 'Order submitted, waiting for kitchen']
+  confirmed [note: 'Order confirmed by kitchen/staff']
+  preparing [note: 'Kitchen is preparing the order']
+  ready [note: 'Order ready for pickup/service']
+  served [note: 'Order delivered to customer']
+  completed [note: 'Order fully completed and paid']
+  cancelled [note: 'Order cancelled before completion']
+  refunded [note: 'Order refunded after payment']
+}
+
+enum order_item_status {
+  pending [note: 'Item waiting to be prepared']
+  preparing [note: 'Item being prepared in kitchen']
+  ready [note: 'Item ready for service']
+  served [note: 'Item delivered to customer']
+  cancelled [note: 'Item cancelled']
+  returned [note: 'Item returned by customer']
+}
+
+enum order_type {
+  dine_in [note: 'Customer dining in restaurant']
+  takeout [note: 'Customer pickup order']
+  delivery [note: 'Order for delivery']
+  drive_thru [note: 'Drive-through order']
+  online [note: 'Online/app order']
+  catering [note: 'Large catering order']
+}
+
+enum order_priority {
+  low [note: 'Standard priority']
+  normal [note: 'Normal priority']
+  high [note: 'High priority - rush order']
+  urgent [note: 'Urgent - special circumstances']
+}
+
+enum payment_split_type {
+  none [note: 'Single payment method']
+  equal [note: 'Split equally among parties']
+  custom [note: 'Custom amounts per payment method']
+  by_item [note: 'Split by individual items']
+}
+
+enum modification_type {
+  addition [note: 'Add ingredient/modifier']
+  removal [note: 'Remove ingredient']
+  substitution [note: 'Replace ingredient']
+  preparation [note: 'Special preparation instruction']
+  portion [note: 'Portion size modification']
+}
+
+// Core Order Tables
+
+Table orders as O {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001', note: 'Always matches schema restaurant']
+
+  // Order Identification
+  order_number text [not null, unique, note: 'Human-readable order number (ORD-001234)']
+  order_sequence integer [not null, note: 'Sequential number for this restaurant']
+
+  // Order Context
+  order_type order_type [not null, default: 'dine_in']
+  priority order_priority [not null, default: 'normal']
+  status order_status [not null, default: 'draft']
+
+  // Customer and Service Context
+  table_id uuid [note: 'Reference to table service (for dine-in)']
+  customer_id uuid [note: 'Reference to customer service']
+  customer_name text [note: 'Customer name for this order']
+  party_size integer [note: 'Number of people in party']
+
+  // Staff Assignment
+  created_by uuid [not null, note: 'Staff member who created order']
+  assigned_server uuid [note: 'Primary server for this order']
+  kitchen_staff_id uuid [note: 'Kitchen staff assigned to prepare']
+
+  // Financial Summary
+  subtotal decimal(10,2) [not null, default: 0]
+  tax_rate decimal(5,4) [not null, default: 0.0875]
+  tax_amount decimal(10,2) [not null, default: 0]
+  discount_amount decimal(10,2) [not null, default: 0]
+  tip_amount decimal(10,2) [not null, default: 0]
+  total_amount decimal(10,2) [not null, default: 0]
+
+  // Payment Information
+  payment_status text [not null, default: 'unpaid']
+  payment_split_type payment_split_type [not null, default: 'none']
+  paid_amount decimal(10,2) [not null, default: 0]
+  change_due decimal(10,2) [not null, default: 0]
+
+  // Order Lifecycle Timestamps
+  created_at timestamptz [default: 'now()']
+  submitted_at timestamptz [note: 'When order was submitted to kitchen']
+  confirmed_at timestamptz [note: 'When kitchen confirmed the order']
+  preparing_started_at timestamptz [note: 'When kitchen started preparing']
+  ready_at timestamptz [note: 'When order was ready for service']
+  served_at timestamptz [note: 'When order was delivered to customer']
+  completed_at timestamptz [note: 'When order was fully completed']
+  cancelled_at timestamptz [note: 'When order was cancelled']
+
+  // Timing Estimates and Tracking
+  estimated_prep_time interval [note: 'Estimated total preparation time']
+  actual_prep_time interval [note: 'Actual time to prepare order']
+  estimated_ready_time timestamptz [note: 'When order is expected to be ready']
+  promised_ready_time timestamptz [note: 'Time promised to customer']
+
+  // Order Instructions and Notes
+  special_instructions text [note: 'Customer special instructions']
+  kitchen_notes text [note: 'Internal kitchen notes']
+  allergen_alerts text[] [note: 'Allergen warnings for kitchen']
+  dietary_restrictions text[] [note: 'Customer dietary restrictions']
+
+  // Delivery Information (for delivery orders)
+  delivery_address jsonb [note: 'Delivery address details']
+  delivery_instructions text [note: 'Delivery-specific instructions']
+  delivery_fee decimal(10,2) [default: 0]
+  delivery_tip decimal(10,2) [default: 0]
+
+  // Operational Metadata
+  channel text [note: 'POS, Mobile App, Website, Phone, etc.']
+  source_device_id text [note: 'Device that created the order']
+  pos_terminal_id text [note: 'POS terminal identifier']
+
+  // Modification and History
+  modified_count integer [default: 0, note: 'Number of times order was modified']
+  last_modified_at timestamptz
+  last_modified_by uuid
+
+  // Cancellation and Refund
+  cancellation_reason text [note: 'Reason for order cancellation']
+  cancelled_by uuid [note: 'Staff member who cancelled order']
+  refund_amount decimal(10,2) [default: 0]
+  refund_reason text
+
+  // Audit and Soft Delete
+  updated_at timestamptz [default: 'now()']
+  is_deleted boolean [default: false]
+  deleted_at timestamptz
+  deleted_by uuid
+
+  // Performance and Analytics
+  rush_order boolean [default: false, note: 'Marked as rush order']
+  customer_satisfaction_rating integer [note: '1-5 rating from customer']
+  internal_notes text [note: 'Internal staff notes']
+
+  indexes {
+    order_number [unique, name: 'idx_orders_number']
+    restaurant_id [name: 'idx_orders_restaurant']
+    (restaurant_id, order_sequence) [unique, name: 'idx_orders_restaurant_sequence']
+    status [name: 'idx_orders_status']
+    (status, created_at) [name: 'idx_orders_status_created']
+    table_id [name: 'idx_orders_table']
+    customer_id [name: 'idx_orders_customer']
+    created_by [name: 'idx_orders_created_by']
+    assigned_server [name: 'idx_orders_server']
+    created_at [name: 'idx_orders_created_at']
+    submitted_at [name: 'idx_orders_submitted_at']
+    (payment_status, total_amount) [name: 'idx_orders_payment']
+    order_type [name: 'idx_orders_type']
+    priority [name: 'idx_orders_priority']
+  }
+}
+
+// Order Items with Detailed Tracking
+Table order_items as OI {
+  id uuid [pk, default: `gen_random_uuid()`]
+  order_id uuid [not null]
+
+  // Menu Item Reference
+  menu_item_id uuid [not null, note: 'Reference to menu service']
+  menu_item_name text [not null, note: 'Menu item name (cached for performance)']
+  menu_category text [note: 'Menu category (cached)']
+  menu_item_sku text [note: 'Menu item SKU (cached)']
+
+  // Quantity and Pricing
+  quantity integer [not null, default: 1]
+  unit_price decimal(10,2) [not null]
+  total_price decimal(10,2) [not null]
+  original_price decimal(10,2) [note: 'Original price before discounts']
+
+  // Item Status and Kitchen Tracking
+  status order_item_status [not null, default: 'pending']
+  kitchen_station text [note: 'Kitchen station assigned to prepare this item']
+  preparation_priority integer [default: 0, note: 'Preparation priority order']
+
+  // Timing for Kitchen Operations
+  estimated_prep_time interval [note: 'Estimated time to prepare this item']
+  actual_prep_time interval [note: 'Actual preparation time']
+  prep_started_at timestamptz [note: 'When kitchen started this item']
+  prep_completed_at timestamptz [note: 'When kitchen completed this item']
+
+  // Kitchen Staff Assignment
+  assigned_to uuid [note: 'Kitchen staff assigned to prepare']
+  prepared_by uuid [note: 'Kitchen staff who actually prepared']
+  quality_checked_by uuid [note: 'Staff who performed quality check']
+
+  // Customer Customizations
+  special_instructions text [note: 'Item-specific customer instructions']
+  cooking_preference text [note: 'Rare, medium, well-done, etc.']
+  temperature_preference text [note: 'Hot, warm, cold, extra hot']
+
+  // Allergen and Dietary Information
+  allergen_warnings text[] [note: 'Allergens present in this item']
+  dietary_tags text[] [note: 'Vegetarian, vegan, gluten-free, etc.']
+  ingredient_substitutions text[] [note: 'Ingredient substitutions made']
+
+  // Discounts and Promotions
+  discount_amount decimal(10,2) [default: 0]
+  discount_reason text [note: 'Reason for discount']
+  promotion_id uuid [note: 'Applied promotion/coupon']
+  comp_reason text [note: 'Reason if item was comped']
+
+  // Item Modifications and Add-ons
+  base_modifications text[] [note: 'Base item modifications']
+  additional_charges decimal(10,2) [default: 0, note: 'Extra charges for modifications']
+
+  // Return and Exchange
+  returned boolean [default: false]
+  return_reason text [note: 'Reason item was returned']
+  returned_at timestamptz
+  replacement_item_id uuid [note: 'Replacement item if exchanged']
+
+  // Nutrition and Inventory Impact
+  calories integer [note: 'Calculated calories for this item']
+  inventory_impact jsonb [note: 'Ingredients used from inventory']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  last_modified_by uuid
+
+  indexes {
+    order_id [name: 'idx_order_items_order']
+    menu_item_id [name: 'idx_order_items_menu_item']
+    status [name: 'idx_order_items_status']
+    (order_id, status) [name: 'idx_order_items_order_status']
+    assigned_to [name: 'idx_order_items_assigned']
+    prepared_by [name: 'idx_order_items_prepared_by']
+    kitchen_station [name: 'idx_order_items_station']
+    prep_started_at [name: 'idx_order_items_prep_start']
+    created_at [name: 'idx_order_items_created']
+  }
+}
+
+// Order Item Modifications and Customizations
+Table order_item_modifications as OIM {
+  id uuid [pk, default: `gen_random_uuid()`]
+  order_item_id uuid [not null]
+
+  // Modification Details
+  modification_type modification_type [not null]
+  modifier_name text [not null, note: 'Name of the modification']
+  modifier_id uuid [note: 'Reference to menu modifier if applicable']
+
+  // Modification Specifications
+  instruction text [note: 'Specific instruction for this modification']
+  quantity integer [default: 1, note: 'Quantity of this modification']
+  price_adjustment decimal(10,2) [default: 0, note: 'Price change for this modification']
+
+  // Kitchen Instructions
+  kitchen_instruction text [note: 'Specific kitchen instruction']
+  affects_prep_time boolean [default: false]
+  prep_time_adjustment interval [note: 'Additional prep time required']
+
+  // Priority and Visibility
+  display_order integer [default: 0]
+  visible_to_customer boolean [default: true]
+  critical_for_kitchen boolean [default: false]
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+
+  indexes {
+    order_item_id [name: 'idx_order_item_mods_item']
+    modification_type [name: 'idx_order_item_mods_type']
+    modifier_id [name: 'idx_order_item_mods_modifier']
+  }
+}
+
+// Order Status History for Complete Audit Trail
+Table order_status_history as OSH {
+  id uuid [pk, default: `gen_random_uuid()`]
+  order_id uuid [not null]
+
+  // Status Change Details
+  from_status order_status [note: 'Previous status (null for initial status)']
+  to_status order_status [not null]
+  status_reason text [note: 'Reason for status change']
+
+  // Change Context
+  changed_by uuid [not null, note: 'User who made the change']
+  changed_via text [note: 'POS, Mobile App, Kitchen Display, etc.']
+  automatic_change boolean [default: false, note: 'System-triggered vs manual change']
+
+  // Timing Information
+  changed_at timestamptz [default: 'now()']
+  estimated_duration interval [note: 'How long status was expected to last']
+  actual_duration interval [note: 'How long status actually lasted']
+
+  // Additional Context
+  notes text [note: 'Additional notes about the status change']
+  system_triggered_reason text [note: 'Why system triggered this change']
+
+  // Performance Tracking
+  elapsed_time_since_created interval [note: 'Time since order was created']
+  elapsed_time_since_submitted interval [note: 'Time since order was submitted']
+
+  indexes {
+    order_id [name: 'idx_order_status_history_order']
+    (order_id, changed_at) [name: 'idx_order_status_history_order_time']
+    to_status [name: 'idx_order_status_history_to_status']
+    changed_by [name: 'idx_order_status_history_changed_by']
+    changed_at [name: 'idx_order_status_history_changed_at']
+    automatic_change [name: 'idx_order_status_history_auto']
+  }
+}
+
+// Order Events for Event Sourcing
+Table order_events as OE {
+  id uuid [pk, default: `gen_random_uuid()`]
+  order_id uuid [not null]
+
+  // Event Details
+  event_type text [not null, note: 'order_created, item_added, status_changed, etc.']
+  event_version integer [not null, default: 1]
+  event_data jsonb [not null, note: 'Complete event payload']
+
+  // Event Context
+  aggregate_id uuid [not null, note: 'Order ID for aggregation']
+  aggregate_version integer [not null, note: 'Version of order when event occurred']
+  sequence_number bigserial [note: 'Global sequence for event ordering']
+
+  // Event Metadata
+  caused_by uuid [not null, note: 'User who caused this event']
+  correlation_id uuid [note: 'Correlation ID for related events']
+  event_source text [note: 'POS, API, Kitchen Display, etc.']
+
+  // Timing
+  occurred_at timestamptz [default: 'now()']
+  processed_at timestamptz [default: 'now()']
+
+  // Event Processing
+  published boolean [default: false, note: 'Whether event was published to other services']
+  published_at timestamptz [note: 'When event was published']
+  processing_errors text[] [note: 'Any errors during event processing']
+
+  indexes {
+    order_id [name: 'idx_order_events_order']
+    (order_id, sequence_number) [name: 'idx_order_events_order_sequence']
+    event_type [name: 'idx_order_events_type']
+    occurred_at [name: 'idx_order_events_occurred']
+    caused_by [name: 'idx_order_events_caused_by']
+    correlation_id [name: 'idx_order_events_correlation']
+    (published, published_at) [name: 'idx_order_events_published']
+    sequence_number [name: 'idx_order_events_sequence']
+  }
+}
+
+// Order Payment Tracking (Coordination with Payment Service)
+Table order_payments as OP {
+  id uuid [pk, default: `gen_random_uuid()`]
+  order_id uuid [not null]
+
+  // Payment Reference
+  payment_id uuid [not null, note: 'Reference to payment service']
+  payment_number text [note: 'Human-readable payment number']
+
+  // Payment Details (Cached for Performance)
+  amount decimal(10,2) [not null]
+  payment_method text [not null]
+  payment_status text [not null]
+
+  // Split Payment Information
+  is_partial_payment boolean [default: false]
+  split_sequence integer [note: 'Order in split payment sequence']
+  total_split_payments integer [note: 'Total number of split payments']
+
+  // Payment Processing
+  processed_at timestamptz
+  failed_at timestamptz
+  failure_reason text
+
+  // Reconciliation
+  reconciled boolean [default: false]
+  reconciled_at timestamptz
+  reconciliation_notes text
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+
+  indexes {
+    order_id [name: 'idx_order_payments_order']
+    payment_id [unique, name: 'idx_order_payments_payment']
+    payment_status [name: 'idx_order_payments_status']
+    (order_id, split_sequence) [name: 'idx_order_payments_order_split']
+    processed_at [name: 'idx_order_payments_processed']
+  }
+}
+
+// Order Discounts and Promotions
+Table order_discounts as OD {
+  id uuid [pk, default: `gen_random_uuid()`]
+  order_id uuid [not null]
+
+  // Discount Information
+  discount_type text [not null, note: 'percentage, fixed_amount, bogo, etc.']
+  discount_name text [not null]
+  discount_code text [note: 'Promotion code if applicable']
+  promotion_id uuid [note: 'Reference to promotion service']
+
+  // Discount Calculation
+  discount_amount decimal(10,2) [not null]
+  discount_percentage decimal(5,2) [note: 'Percentage if applicable']
+  applied_to_subtotal boolean [default: true]
+
+  // Scope and Application
+  applies_to text [not null, default: 'order', note: 'order, specific_items, category']
+  affected_items uuid[] [note: 'Specific items if not order-wide']
+  minimum_order_amount decimal(10,2) [note: 'Minimum order for discount']
+
+  // Authorization and Approval
+  requires_manager_approval boolean [default: false]
+  approved_by uuid [note: 'Manager who approved discount']
+  approval_reason text
+
+  // Audit
+  applied_at timestamptz [default: 'now()']
+  applied_by uuid [not null]
+
+  indexes {
+    order_id [name: 'idx_order_discounts_order']
+    discount_code [name: 'idx_order_discounts_code']
+    promotion_id [name: 'idx_order_discounts_promotion']
+    applied_by [name: 'idx_order_discounts_applied_by']
+    approved_by [name: 'idx_order_discounts_approved_by']
+  }
+}
+
+// Relationships
+Ref: OI.order_id > O.id [delete: cascade]
+Ref: OIM.order_item_id > OI.id [delete: cascade]
+Ref: OSH.order_id > O.id [delete: cascade]
+Ref: OE.order_id > O.id [delete: cascade]
+Ref: OP.order_id > O.id [delete: cascade]
+Ref: OD.order_id > O.id [delete: cascade]
+
+// Self-referential relationships
+Ref: OI.replacement_item_id > OI.id
+
+// Note: External service references (not enforced by foreign keys)
+// - O.table_id -> table_service.tables.id
+// - O.customer_id -> customer_service.customers.id
+// - O.created_by -> auth_service.users.id
+// - O.assigned_server -> auth_service.users.id
+// - O.kitchen_staff_id -> auth_service.users.id
+// - OI.menu_item_id -> menu_service.menu_items.id
+// - OP.payment_id -> payment_service.payments.id

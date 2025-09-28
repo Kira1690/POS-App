@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ProfessionalTheme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { QuickActionData } from '@/types/dashboard.types';
 
 interface QuickActionsSectionProps {
@@ -18,6 +18,101 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
   onNavigateToStaff,
   loading = false,
 }) => {
+  const { theme } = useTheme();
+
+  const styles = StyleSheet.create({
+    container: {
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+    },
+
+    sectionTitle: {
+      ...theme.typography.h4,
+      color: theme.colors.onSurface,
+      marginBottom: theme.spacing.md,
+    },
+
+    grid: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+
+    widget: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      ...theme.shadows.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      flex: 1,
+      marginHorizontal: 4,
+      minHeight: 100,
+    },
+
+    widgetHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: theme.spacing.sm,
+    },
+
+    widgetIcon: {
+      fontSize: 20,
+      marginRight: theme.spacing.sm,
+    },
+
+    widgetTitle: {
+      ...theme.typography.label,
+      color: theme.colors.onSurface,
+    },
+
+    widgetContent: {
+      flex: 1,
+    },
+
+    statusRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+
+    statusLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+    },
+
+    statusValue: {
+      ...theme.typography.caption,
+      fontWeight: '600',
+    },
+
+    totalText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceLight,
+      marginTop: 4,
+    },
+
+    alertText: {
+      ...theme.typography.caption,
+      fontWeight: '600',
+      marginTop: 4,
+    },
+
+    // Loading state
+    loadingWidget: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      ...theme.shadows.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      flex: 1,
+      marginHorizontal: 4,
+      height: 100,
+      opacity: 0.5,
+    },
+  });
+
   if (loading || !data) {
     return (
       <View style={styles.container}>
@@ -43,13 +138,13 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
           <View style={styles.widgetContent}>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>Occupied:</Text>
-              <Text style={[styles.statusValue, { color: ProfessionalTheme.colors.warning }]}>
+              <Text style={[styles.statusValue, { color: theme.colors.warning }]}>
                 {data.tables.occupied}
               </Text>
             </View>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>Available:</Text>
-              <Text style={[styles.statusValue, { color: ProfessionalTheme.colors.success }]}>
+              <Text style={[styles.statusValue, { color: theme.colors.success }]}>
                 {data.tables.available}
               </Text>
             </View>
@@ -65,18 +160,18 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
           <View style={styles.widgetContent}>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>Pending:</Text>
-              <Text style={[styles.statusValue, { color: ProfessionalTheme.colors.error }]}>
+              <Text style={[styles.statusValue, { color: theme.colors.error }]}>
                 {data.kitchen.pendingOrders}
               </Text>
             </View>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>Avg Time:</Text>
-              <Text style={[styles.statusValue, { color: ProfessionalTheme.colors.info }]}>
+              <Text style={[styles.statusValue, { color: theme.colors.info }]}>
                 {data.kitchen.avgCookTime}
               </Text>
             </View>
             {data.kitchen.alerts > 0 && (
-              <Text style={[styles.alertText, { color: ProfessionalTheme.colors.error }]}>
+              <Text style={[styles.alertText, { color: theme.colors.error }]}>
                 ⚠️ {data.kitchen.alerts} alerts
               </Text>
             )}
@@ -91,13 +186,13 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
           <View style={styles.widgetContent}>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>On Duty:</Text>
-              <Text style={[styles.statusValue, { color: ProfessionalTheme.colors.success }]}>
+              <Text style={[styles.statusValue, { color: theme.colors.success }]}>
                 {data.staff.onDuty}
               </Text>
             </View>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>On Break:</Text>
-              <Text style={[styles.statusValue, { color: ProfessionalTheme.colors.warning }]}>
+              <Text style={[styles.statusValue, { color: theme.colors.warning }]}>
                 {data.staff.breaks}
               </Text>
             </View>
@@ -108,87 +203,3 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    marginBottom: ProfessionalTheme.spacing.lg,
-  },
-  
-  sectionTitle: {
-    ...ProfessionalTheme.typography.h4,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-  
-  grid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  
-  widget: {
-    ...ProfessionalTheme.dashboard.quickAction,
-    flex: 1,
-    marginHorizontal: 4,
-    minHeight: 100,
-  },
-  
-  widgetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: ProfessionalTheme.spacing.sm,
-  },
-  
-  widgetIcon: {
-    fontSize: 20,
-    marginRight: ProfessionalTheme.spacing.sm,
-  },
-  
-  widgetTitle: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.text,
-  },
-  
-  widgetContent: {
-    flex: 1,
-  },
-  
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  
-  statusLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-  
-  statusValue: {
-    ...ProfessionalTheme.typography.caption,
-    fontWeight: '600',
-  },
-  
-  totalText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textLight,
-    marginTop: 4,
-  },
-  
-  alertText: {
-    ...ProfessionalTheme.typography.caption,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  
-  // Loading state
-  loadingWidget: {
-    ...ProfessionalTheme.dashboard.quickAction,
-    flex: 1,
-    marginHorizontal: 4,
-    height: 100,
-    backgroundColor: ProfessionalTheme.colors.borderLight,
-    opacity: 0.5,
-  },
-});

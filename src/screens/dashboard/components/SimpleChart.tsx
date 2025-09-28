@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { ProfessionalTheme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { ChartProps } from '@/types/dashboard.types';
 
 export const SimpleChart: React.FC<ChartProps> = ({
@@ -11,6 +11,96 @@ export const SimpleChart: React.FC<ChartProps> = ({
   showGrid = true,
   animated = false,
 }) => {
+  const { theme } = useTheme();
+
+  const styles = StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      ...theme.shadows.sm,
+      marginBottom: theme.spacing.md,
+    },
+
+    title: {
+      ...theme.typography.label,
+      color: theme.colors.onSurface,
+      marginBottom: theme.spacing.sm,
+      textAlign: 'center',
+    },
+
+    chartContainer: {
+      flexDirection: 'row',
+      flex: 1,
+      alignItems: 'flex-end',
+    },
+
+    yAxisContainer: {
+      justifyContent: 'space-between',
+      height: '100%',
+      paddingRight: theme.spacing.sm,
+      paddingBottom: 20, // Space for x-axis labels
+    },
+
+    yAxisLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontSize: 10,
+    },
+
+    barsContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      paddingBottom: 20, // Space for x-axis labels
+    },
+
+    barContainer: {
+      flex: 1,
+      alignItems: 'center',
+      marginHorizontal: 1,
+    },
+
+    barWrapper: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      width: '80%',
+    },
+
+    bar: {
+      width: '100%',
+      borderRadius: 2,
+      minHeight: 2,
+    },
+
+    xAxisLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontSize: 9,
+      marginTop: 4,
+      textAlign: 'center',
+    },
+
+    summaryText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      textAlign: 'center',
+      marginTop: theme.spacing.sm,
+    },
+
+    noDataContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    noDataText: {
+      ...theme.typography.body2,
+      color: theme.colors.onSurfaceLight,
+    },
+  });
+
   if (!data || data.length === 0) {
     return (
       <View style={[styles.container, { height }]}>
@@ -75,91 +165,3 @@ export const SimpleChart: React.FC<ChartProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: ProfessionalTheme.spacing.md,
-    ...ProfessionalTheme.shadows.sm,
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  title: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.sm,
-    textAlign: 'center',
-  },
-
-  chartContainer: {
-    flexDirection: 'row',
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-
-  yAxisContainer: {
-    justifyContent: 'space-between',
-    height: '100%',
-    paddingRight: ProfessionalTheme.spacing.sm,
-    paddingBottom: 20, // Space for x-axis labels
-  },
-
-  yAxisLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontSize: 10,
-  },
-
-  barsContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    paddingBottom: 20, // Space for x-axis labels
-  },
-
-  barContainer: {
-    flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 1,
-  },
-
-  barWrapper: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    width: '80%',
-  },
-
-  bar: {
-    width: '100%',
-    borderRadius: 2,
-    minHeight: 2,
-  },
-
-  xAxisLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontSize: 9,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-
-  summaryText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: ProfessionalTheme.spacing.sm,
-  },
-
-  noDataContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  noDataText: {
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.textLight,
-  },
-});

@@ -1,0 +1,559 @@
+// Inventory Management Service Database Schema
+// Multi-Restaurant POS System - DbDiagram.io Format
+// Generated: 2025-09-28
+// Service: Inventory Management and Supply Chain (Restaurant-Specific)
+
+Project "POS Inventory Management Service" {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Inventory Management Service Database Schema
+
+    **Pattern**: Database per Service (Complex Business Logic)
+    **Purpose**: Complete inventory tracking, supplier management, and cost control
+    **Scale**: 1000+ inventory items, 50,000+ movements/month, automated reordering
+
+    ## Key Features
+    - Complete inventory item master data
+    - Real-time stock level tracking
+    - Automated reorder point calculations
+    - Supplier management and purchase orders
+    - Waste tracking and cost analysis
+    - Recipe costing and menu integration
+
+    ## Business Logic
+    - Automated low stock alerts
+    - Intelligent reorder suggestions
+    - Cost variance analysis
+    - Expiration date tracking
+    - Usage pattern analysis
+
+    ## Restaurant Context
+    This schema represents a single restaurant's inventory data.
+    Each restaurant has its own schema: rest_001_inventory, rest_002_inventory, etc.
+  '''
+}
+
+// Enums and Types
+enum inventory_unit {
+  each [note: 'Individual items (pieces)']
+  pound [note: 'Pounds']
+  kilogram [note: 'Kilograms']
+  ounce [note: 'Ounces']
+  gram [note: 'Grams']
+  gallon [note: 'Gallons']
+  liter [note: 'Liters']
+  quart [note: 'Quarts']
+  pint [note: 'Pints']
+  cup [note: 'Cups']
+  tablespoon [note: 'Tablespoons']
+  teaspoon [note: 'Teaspoons']
+  box [note: 'Boxes']
+  case [note: 'Cases']
+  bag [note: 'Bags']
+  bottle [note: 'Bottles']
+  can [note: 'Cans']
+  package [note: 'Packages']
+}
+
+enum inventory_status {
+  active [note: 'Item is actively tracked']
+  inactive [note: 'Item not currently used']
+  discontinued [note: 'Item permanently discontinued']
+  seasonal [note: 'Seasonal item not in season']
+  backordered [note: 'Item on backorder']
+  recalled [note: 'Item recalled for safety']
+}
+
+enum stock_movement_type {
+  receiving [note: 'Stock received from supplier']
+  usage [note: 'Stock used in production']
+  adjustment [note: 'Manual stock adjustment']
+  waste [note: 'Stock wasted or spoiled']
+  transfer_in [note: 'Stock transferred from another location']
+  transfer_out [note: 'Stock transferred to another location']
+  theft [note: 'Stock lost to theft']
+  damage [note: 'Stock damaged']
+  return [note: 'Stock returned to supplier']
+  promotion [note: 'Stock used for promotional purposes']
+  sampling [note: 'Stock used for sampling']
+  expired [note: 'Stock expired and discarded']
+}
+
+enum supplier_status {
+  active [note: 'Currently active supplier']
+  inactive [note: 'Temporarily inactive']
+  discontinued [note: 'No longer using this supplier']
+  evaluation [note: 'Under evaluation']
+  blacklisted [note: 'Blacklisted supplier']
+}
+
+enum purchase_order_status {
+  draft [note: 'Order being created']
+  pending [note: 'Order created but not sent']
+  sent [note: 'Order sent to supplier']
+  confirmed [note: 'Order confirmed by supplier']
+  partially_received [note: 'Partial delivery received']
+  received [note: 'Order fully received']
+  cancelled [note: 'Order cancelled']
+  disputed [note: 'Order disputed']
+}
+
+enum storage_location_type {
+  freezer [note: 'Freezer storage']
+  refrigerator [note: 'Refrigerated storage']
+  dry_storage [note: 'Dry storage area']
+  pantry [note: 'Pantry storage']
+  wine_cellar [note: 'Wine storage']
+  bar [note: 'Bar storage']
+  office [note: 'Office supplies']
+  cleaning [note: 'Cleaning supplies storage']
+}
+
+// Core Inventory Tables
+
+Table inventory_items as II {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Item Identification
+  sku text [not null, note: 'Stock Keeping Unit - unique per restaurant']
+  name text [not null]
+  description text
+  brand text [note: 'Brand name']
+  product_code text [note: 'Manufacturer product code']
+
+  // Categorization
+  category text [not null, note: 'Primary category (Meat, Produce, Dairy)']
+  subcategory text [note: 'Subcategory (Chicken, Vegetables, Cheese)']
+  item_type text [note: 'Food, Beverage, Supply, Equipment, etc.']
+
+  // Unit and Measurement
+  unit_of_measure inventory_unit [not null]
+  unit_size decimal(10,3) [note: 'Size per unit (e.g., 16 for 16oz)']
+  unit_description text [note: 'Description of unit size']
+  case_size integer [note: 'Units per case']
+  minimum_order_unit text [note: 'Minimum order unit from supplier']
+
+  // Stock Levels
+  current_stock decimal(10,3) [not null, default: 0]
+  reserved_stock decimal(10,3) [default: 0, note: 'Stock reserved for orders']
+  available_stock decimal(10,3) [not null, default: 0, note: 'current - reserved']
+
+  // Reorder Management
+  minimum_stock decimal(10,3) [not null, note: 'Reorder point']
+  maximum_stock decimal(10,3) [not null, note: 'Maximum stock level']
+  reorder_quantity decimal(10,3) [not null, note: 'Standard reorder quantity']
+  safety_stock decimal(10,3) [default: 0, note: 'Safety stock buffer']
+
+  // Cost Information
+  last_cost_per_unit decimal(10,4) [note: 'Most recent cost per unit']
+  average_cost_per_unit decimal(10,4) [note: 'Weighted average cost']
+  standard_cost_per_unit decimal(10,4) [note: 'Standard/budgeted cost']
+  total_value decimal(12,2) [not null, default: 0, note: 'current_stock * average_cost']
+
+  // Supplier Information
+  primary_supplier_id uuid [note: 'Primary supplier']
+  alternate_supplier_id uuid [note: 'Alternate supplier']
+  supplier_item_code text [note: 'Supplier SKU/item code']
+  lead_time_days integer [default: 7, note: 'Delivery lead time']
+
+  // Storage and Handling
+  storage_location storage_location_type [not null, default: 'dry_storage']
+  storage_area text [note: 'Specific storage area/shelf']
+  storage_requirements text [note: 'Special storage requirements']
+  handling_instructions text [note: 'Special handling instructions']
+
+  // Expiration and Quality
+  perishable boolean [default: false]
+  shelf_life_days integer [note: 'Shelf life in days']
+  expiration_alert_days integer [note: 'Alert X days before expiration']
+  temperature_sensitive boolean [default: false]
+  target_temperature_min decimal(5,2) [note: 'Minimum storage temperature']
+  target_temperature_max decimal(5,2) [note: 'Maximum storage temperature']
+
+  // Usage Analytics
+  average_daily_usage decimal(10,3) [note: 'Average daily consumption']
+  usage_variance decimal(10,3) [note: 'Variance in daily usage']
+  seasonal_usage_pattern jsonb [note: 'Monthly usage patterns']
+  last_usage_calculation_date date [note: 'When usage was last calculated']
+
+  // Recipe and Menu Integration
+  used_in_recipes boolean [default: false]
+  recipe_count integer [default: 0, note: 'Number of recipes using this item']
+  menu_item_count integer [default: 0, note: 'Number of menu items using this']
+  critical_ingredient boolean [default: false, note: 'Critical for operations']
+
+  // Quality Control
+  quality_specifications text [note: 'Quality requirements']
+  inspection_required boolean [default: false]
+  batch_tracking_required boolean [default: false]
+  allergen_info text[] [note: 'Allergen information']
+
+  // Status and Tracking
+  status inventory_status [not null, default: 'active']
+  is_tracked boolean [default: true, note: 'Whether to track this item']
+  abc_classification text [note: 'A/B/C classification for importance']
+
+  // Financial Tracking
+  annual_usage_value decimal(12,2) [note: 'Annual usage value']
+  carrying_cost_rate decimal(5,4) [note: 'Annual carrying cost rate']
+  ordering_cost decimal(8,2) [note: 'Cost to place an order']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  last_counted_at timestamptz [note: 'Last physical inventory count']
+  last_counted_by uuid [note: 'Who performed last count']
+  is_deleted boolean [default: false]
+
+  indexes {
+    (restaurant_id, sku) [unique, name: 'idx_inventory_items_restaurant_sku']
+    restaurant_id [name: 'idx_inventory_items_restaurant']
+    name [name: 'idx_inventory_items_name']
+    category [name: 'idx_inventory_items_category']
+    (category, subcategory) [name: 'idx_inventory_items_category_sub']
+    status [name: 'idx_inventory_items_status']
+    primary_supplier_id [name: 'idx_inventory_items_supplier']
+    storage_location [name: 'idx_inventory_items_storage']
+    (current_stock, minimum_stock) [name: 'idx_inventory_items_reorder']
+    (is_tracked, status) [name: 'idx_inventory_items_tracked_status']
+    perishable [name: 'idx_inventory_items_perishable']
+    critical_ingredient [name: 'idx_inventory_items_critical']
+    last_counted_at [name: 'idx_inventory_items_last_counted']
+  }
+}
+
+Table stock_movements as SM {
+  id uuid [pk, default: `gen_random_uuid()`]
+  item_id uuid [not null]
+
+  // Movement Details
+  movement_type stock_movement_type [not null]
+  quantity decimal(10,3) [not null, note: 'Positive for in, negative for out']
+  unit_of_measure inventory_unit [not null]
+
+  // Stock Levels
+  stock_before decimal(10,3) [not null, note: 'Stock level before movement']
+  stock_after decimal(10,3) [not null, note: 'Stock level after movement']
+
+  // Cost Information
+  unit_cost decimal(10,4) [note: 'Cost per unit for this movement']
+  total_cost decimal(12,2) [note: 'Total cost of movement']
+  cost_variance decimal(10,4) [note: 'Variance from standard cost']
+
+  // Reference Information
+  reference_type text [note: 'purchase_order, recipe, adjustment, etc.']
+  reference_id uuid [note: 'ID of related document']
+  reference_number text [note: 'Human-readable reference']
+
+  // Batch and Lot Tracking
+  batch_number text [note: 'Batch/lot number']
+  lot_number text [note: 'Supplier lot number']
+  expiration_date date [note: 'Expiration date for this batch']
+  receive_date date [note: 'Date received']
+
+  // Reason and Details
+  reason text [not null, note: 'Reason for movement']
+  notes text [note: 'Additional notes']
+  location text [note: 'Storage location']
+
+  // Staff and Approval
+  performed_by uuid [not null, note: 'Staff member who performed movement']
+  approved_by uuid [note: 'Manager approval for large adjustments']
+  requires_approval boolean [default: false]
+  approval_status text [note: 'pending, approved, rejected']
+
+  // Supplier Information (for receiving)
+  supplier_id uuid [note: 'Supplier for receiving movements']
+  supplier_invoice_number text [note: 'Supplier invoice number']
+  supplier_delivery_number text [note: 'Delivery confirmation number']
+
+  // Quality Information
+  quality_rating integer [note: '1-5 quality rating for received items']
+  quality_notes text [note: 'Quality inspection notes']
+  rejected_quantity decimal(10,3) [note: 'Quantity rejected due to quality']
+
+  // Timing
+  movement_date timestamptz [default: 'now()']
+  business_date date [not null, note: 'Business date for reporting']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  is_deleted boolean [default: false]
+
+  indexes {
+    item_id [name: 'idx_stock_movements_item']
+    (item_id, movement_date) [name: 'idx_stock_movements_item_date']
+    movement_type [name: 'idx_stock_movements_type']
+    performed_by [name: 'idx_stock_movements_performed_by']
+    reference_id [name: 'idx_stock_movements_reference']
+    supplier_id [name: 'idx_stock_movements_supplier']
+    movement_date [name: 'idx_stock_movements_date']
+    business_date [name: 'idx_stock_movements_business_date']
+    batch_number [name: 'idx_stock_movements_batch']
+    expiration_date [name: 'idx_stock_movements_expiration']
+    (approval_status, requires_approval) [name: 'idx_stock_movements_approval']
+  }
+}
+
+Table suppliers as S {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Supplier Information
+  name text [not null]
+  legal_name text [note: 'Legal business name']
+  tax_id text [note: 'Tax identification number']
+  vendor_number text [note: 'Internal vendor number']
+
+  // Contact Information
+  primary_contact_name text [not null]
+  primary_contact_title text
+  phone text [not null]
+  email text
+  website text
+
+  // Address Information
+  address_line1 text [not null]
+  address_line2 text
+  city text [not null]
+  state text [not null]
+  postal_code text [not null]
+  country text [default: 'US']
+
+  // Business Information
+  business_type text [note: 'Distributor, Farm, Manufacturer, etc.']
+  certifications text[] [note: 'Organic, Fair Trade, etc.']
+  licenses text[] [note: 'Required licenses/permits']
+
+  // Delivery and Service
+  delivery_days integer[] [note: 'Days of week they deliver (1=Monday)']
+  delivery_times text [note: 'Delivery time windows']
+  minimum_order_amount decimal(10,2) [note: 'Minimum order amount']
+  delivery_fee decimal(8,2) [note: 'Standard delivery fee']
+  free_delivery_threshold decimal(10,2) [note: 'Free delivery minimum']
+
+  // Payment Terms
+  payment_terms text [not null, note: 'Net 30, COD, etc.']
+  payment_methods text[] [note: 'Accepted payment methods']
+  credit_limit decimal(12,2) [note: 'Credit limit with supplier']
+  discount_terms text [note: '2/10 Net 30, etc.']
+
+  // Performance Metrics
+  rating decimal(3,2) [note: '1-5 star rating']
+  on_time_delivery_rate decimal(5,2) [note: 'Percentage of on-time deliveries']
+  quality_rating decimal(3,2) [note: 'Quality rating 1-5']
+  service_rating decimal(3,2) [note: 'Service rating 1-5']
+  price_competitiveness decimal(3,2) [note: 'Price rating 1-5']
+
+  // Financial Information
+  current_balance decimal(12,2) [default: 0, note: 'Current outstanding balance']
+  ytd_purchases decimal(15,2) [default: 0, note: 'Year-to-date purchases']
+  last_payment_date date [note: 'Last payment made']
+  last_order_date date [note: 'Last order placed']
+
+  // Relationship Management
+  account_manager_name text [note: 'Supplier account manager']
+  account_manager_phone text
+  account_manager_email text
+  relationship_start_date date [not null]
+  contract_expiration_date date [note: 'Contract renewal date']
+
+  // Status and Preferences
+  status supplier_status [not null, default: 'active']
+  preferred_supplier boolean [default: false]
+  emergency_supplier boolean [default: false, note: 'For emergency orders']
+  accepts_electronic_orders boolean [default: false]
+
+  // Special Requirements
+  insurance_requirements text [note: 'Insurance requirements']
+  special_instructions text [note: 'Special ordering/delivery instructions']
+  sustainability_rating text [note: 'Sustainability practices rating']
+
+  // Communication Preferences
+  preferred_contact_method text [note: 'Phone, Email, Portal, etc.']
+  order_confirmation_required boolean [default: true]
+  invoice_delivery_method text [note: 'Email, Mail, Portal, etc.']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+
+  indexes {
+    restaurant_id [name: 'idx_suppliers_restaurant']
+    (restaurant_id, name) [name: 'idx_suppliers_restaurant_name']
+    status [name: 'idx_suppliers_status']
+    preferred_supplier [name: 'idx_suppliers_preferred']
+    rating [name: 'idx_suppliers_rating']
+    payment_terms [name: 'idx_suppliers_payment_terms']
+    delivery_days [name: 'idx_suppliers_delivery_days', type: gin]
+    tax_id [name: 'idx_suppliers_tax_id']
+    vendor_number [name: 'idx_suppliers_vendor_number']
+  }
+}
+
+Table purchase_orders as PO {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+  supplier_id uuid [not null]
+
+  // Order Identification
+  po_number text [not null, unique, note: 'Purchase order number']
+  supplier_reference text [note: 'Supplier reference/quote number']
+
+  // Order Details
+  status purchase_order_status [not null, default: 'draft']
+  order_type text [default: 'standard', note: 'standard, emergency, standing, etc.']
+  priority text [default: 'normal', note: 'low, normal, high, urgent']
+
+  // Timing
+  order_date date [not null]
+  requested_delivery_date date [not null]
+  expected_delivery_date date
+  actual_delivery_date date
+  delivery_window_start time [note: 'Preferred delivery start time']
+  delivery_window_end time [note: 'Preferred delivery end time']
+
+  // Financial Summary
+  subtotal decimal(12,2) [not null, default: 0]
+  tax_amount decimal(10,2) [default: 0]
+  shipping_amount decimal(10,2) [default: 0]
+  discount_amount decimal(10,2) [default: 0]
+  total_amount decimal(12,2) [not null, default: 0]
+
+  // Payment Information
+  payment_terms text [note: 'Payment terms for this order']
+  payment_due_date date [note: 'Calculated payment due date']
+  discount_terms text [note: 'Early payment discount terms']
+  payment_method text [note: 'Planned payment method']
+
+  // Delivery Information
+  delivery_address jsonb [note: 'Delivery address if different from restaurant']
+  delivery_instructions text [note: 'Special delivery instructions']
+  contact_person text [note: 'Person to contact on delivery']
+  contact_phone text [note: 'Contact phone for delivery']
+
+  // Order Processing
+  created_by uuid [not null, note: 'Staff member who created order']
+  approved_by uuid [note: 'Manager who approved order']
+  sent_by uuid [note: 'Staff member who sent order']
+  received_by uuid [note: 'Staff member who received delivery']
+
+  // Communication
+  sent_at timestamptz [note: 'When order was sent to supplier']
+  confirmed_at timestamptz [note: 'When supplier confirmed order']
+  confirmation_number text [note: 'Supplier confirmation number']
+
+  // Receiving Information
+  partially_received boolean [default: false]
+  fully_received boolean [default: false]
+  receiving_notes text [note: 'Notes from receiving staff']
+  quality_issues text [note: 'Quality issues noted']
+
+  // Special Instructions
+  notes text [note: 'Internal notes about this order']
+  supplier_notes text [note: 'Notes to supplier']
+  rush_order boolean [default: false]
+  standing_order boolean [default: false, note: 'Recurring order']
+
+  // Dispute and Issues
+  disputed boolean [default: false]
+  dispute_reason text [note: 'Reason for dispute']
+  dispute_amount decimal(10,2) [note: 'Disputed amount']
+  resolution_notes text [note: 'Dispute resolution notes']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+  is_deleted boolean [default: false]
+
+  indexes {
+    restaurant_id [name: 'idx_purchase_orders_restaurant']
+    po_number [unique, name: 'idx_purchase_orders_number']
+    supplier_id [name: 'idx_purchase_orders_supplier']
+    status [name: 'idx_purchase_orders_status']
+    order_date [name: 'idx_purchase_orders_order_date']
+    requested_delivery_date [name: 'idx_purchase_orders_delivery_date']
+    created_by [name: 'idx_purchase_orders_created_by']
+    approved_by [name: 'idx_purchase_orders_approved_by']
+    (status, requested_delivery_date) [name: 'idx_purchase_orders_status_delivery']
+    rush_order [name: 'idx_purchase_orders_rush']
+    disputed [name: 'idx_purchase_orders_disputed']
+  }
+}
+
+Table purchase_order_items as POI {
+  id uuid [pk, default: `gen_random_uuid()`]
+  purchase_order_id uuid [not null]
+  inventory_item_id uuid [not null]
+
+  // Item Details
+  item_description text [not null, note: 'Item description from supplier']
+  supplier_item_code text [note: 'Supplier SKU/item code']
+
+  // Quantity and Units
+  quantity_ordered decimal(10,3) [not null]
+  unit_of_measure inventory_unit [not null]
+  quantity_received decimal(10,3) [default: 0]
+  quantity_outstanding decimal(10,3) [not null, note: 'ordered - received']
+
+  // Pricing
+  unit_cost decimal(10,4) [not null]
+  total_cost decimal(12,2) [not null]
+  discount_percentage decimal(5,2) [default: 0]
+  discount_amount decimal(10,2) [default: 0]
+
+  // Receiving Details
+  received_date date [note: 'Date item was received']
+  received_by uuid [note: 'Staff member who received item']
+  lot_number text [note: 'Supplier lot number']
+  expiration_date date [note: 'Expiration date']
+
+  // Quality Control
+  quality_rating integer [note: '1-5 quality rating']
+  quality_notes text [note: 'Quality inspection notes']
+  rejected_quantity decimal(10,3) [default: 0, note: 'Quantity rejected']
+  rejection_reason text [note: 'Reason for rejection']
+
+  // Status
+  line_status text [default: 'pending', note: 'pending, received, cancelled, backordered']
+  backorder_quantity decimal(10,3) [default: 0]
+  estimated_backorder_date date [note: 'Expected backorder delivery']
+
+  // Special Instructions
+  item_notes text [note: 'Special notes for this item']
+  substitution_allowed boolean [default: false]
+  substitute_item_id uuid [note: 'Approved substitute item']
+
+  indexes {
+    purchase_order_id [name: 'idx_purchase_order_items_po']
+    inventory_item_id [name: 'idx_purchase_order_items_item']
+    (purchase_order_id, inventory_item_id) [name: 'idx_purchase_order_items_po_item']
+    line_status [name: 'idx_purchase_order_items_status']
+    received_by [name: 'idx_purchase_order_items_received_by']
+    expiration_date [name: 'idx_purchase_order_items_expiration']
+    lot_number [name: 'idx_purchase_order_items_lot']
+  }
+}
+
+// Relationships
+Ref: II.primary_supplier_id > S.id
+Ref: II.alternate_supplier_id > S.id
+Ref: SM.item_id > II.id [delete: restrict]
+Ref: SM.supplier_id > S.id
+Ref: PO.supplier_id > S.id [delete: restrict]
+Ref: POI.purchase_order_id > PO.id [delete: cascade]
+Ref: POI.inventory_item_id > II.id [delete: restrict]
+Ref: POI.substitute_item_id > II.id
+
+// Note: External service references (not enforced by foreign keys)
+// - SM.performed_by -> auth_service.users.id
+// - SM.approved_by -> auth_service.users.id
+// - PO.created_by -> auth_service.users.id
+// - PO.approved_by -> auth_service.users.id
+// - POI.received_by -> auth_service.users.id

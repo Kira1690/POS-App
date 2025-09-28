@@ -1,0 +1,578 @@
+// Menu Management Service Database Schema
+// Multi-Restaurant POS System - DbDiagram.io Format
+// Generated: 2025-09-28
+// Service: Menu Management and Item Configuration (Restaurant-Specific)
+
+Project "POS Menu Management Service" {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Menu Management Service Database Schema
+
+    **Pattern**: Database per Service (Restaurant-Specific)
+    **Purpose**: Complete menu structure, items, pricing, and availability management
+    **Scale**: 500+ menu items per restaurant, frequent updates, high read volume
+
+    ## Key Features
+    - Hierarchical menu category structure
+    - Complete menu item specifications with variants
+    - Dynamic pricing and availability management
+    - Modifier and customization support
+    - Nutritional information and dietary tags
+    - Seasonal and time-based availability
+    - Integration with inventory for cost tracking
+
+    ## Performance Features
+    - Optimized for high-volume read operations (order processing)
+    - Cached menu data for real-time order entry
+    - Efficient category and item filtering
+    - Version control for menu changes
+
+    ## Restaurant Context
+    This schema represents a single restaurant's menu data.
+    Each restaurant has its own schema: rest_001_menu, rest_002_menu, etc.
+  '''
+}
+
+// Enums and Types
+enum menu_display_style {
+  grid [note: 'Grid layout with images']
+  list [note: 'List layout with descriptions']
+  carousel [note: 'Carousel/slider layout']
+  tiles [note: 'Tile-based layout']
+  minimal [note: 'Minimal text-only layout']
+}
+
+enum item_availability_status {
+  available [note: 'Item is available for ordering']
+  unavailable [note: 'Temporarily unavailable']
+  out_of_stock [note: 'Out of stock/ingredients']
+  seasonal_unavailable [note: 'Not in season']
+  discontinued [note: 'Permanently discontinued']
+  coming_soon [note: 'Planned but not yet available']
+}
+
+enum modifier_type {
+  addition [note: 'Add ingredient/option (extra cheese)']
+  substitution [note: 'Replace ingredient (wheat for white bread)']
+  removal [note: 'Remove ingredient (no onions)']
+  preparation [note: 'Cooking style (rare, well-done)']
+  portion [note: 'Size modification (extra large)']
+  side [note: 'Side item selection']
+  sauce [note: 'Sauce selection']
+  temperature [note: 'Hot, cold, room temperature']
+}
+
+enum nutritional_unit {
+  calories
+  grams
+  milligrams
+  ounces
+  percentage
+}
+
+enum dietary_restriction {
+  vegetarian
+  vegan
+  gluten_free
+  dairy_free
+  nut_free
+  soy_free
+  keto
+  paleo
+  halal
+  kosher
+  low_sodium
+  low_sugar
+  organic
+}
+
+enum allergen_type {
+  milk
+  eggs
+  fish
+  shellfish
+  tree_nuts
+  peanuts
+  wheat
+  soybeans
+  sesame
+  sulfites
+}
+
+// Core Menu Tables
+
+Table menu_categories as MC {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001', note: 'Always matches schema restaurant']
+
+  // Category Information
+  name text [not null]
+  description text
+  short_description text [note: 'Brief description for mobile/small screens']
+
+  // Hierarchy Support
+  parent_category_id uuid [note: 'Parent category for nested structure']
+  category_level integer [not null, default: 1, note: 'Depth in hierarchy (1=top level)']
+  full_path text [note: 'Full category path (Beverages > Hot Drinks > Coffee)']
+
+  // Display and Ordering
+  sort_order integer [not null, default: 0]
+  display_style menu_display_style [default: 'grid']
+  featured boolean [default: false, note: 'Featured category promotion']
+
+  // Visual Elements
+  image_url text [note: 'Category image URL']
+  icon_name text [note: 'Icon identifier for UI']
+  color_theme text [note: 'Hex color for category theming']
+  background_image_url text
+
+  // Availability Scheduling
+  is_active boolean [default: true]
+  available_all_day boolean [default: true]
+  available_from time [note: 'Start time when category is available']
+  available_until time [note: 'End time when category is unavailable']
+  available_days integer[] [note: 'Days of week (1=Monday, 7=Sunday)']
+
+  // Seasonal Availability
+  seasonal boolean [default: false]
+  seasonal_start_date date [note: 'Start date for seasonal availability']
+  seasonal_end_date date [note: 'End date for seasonal availability']
+
+  // Business Rules
+  requires_age_verification boolean [default: false, note: 'For alcohol categories']
+  minimum_order_quantity integer [default: 1]
+  maximum_order_quantity integer [note: 'Maximum items from this category per order']
+
+  // SEO and Metadata
+  seo_title text [note: 'SEO-optimized title']
+  seo_description text [note: 'SEO meta description']
+  meta_keywords text[] [note: 'Search keywords']
+
+  // Analytics and Performance
+  view_count bigint [default: 0, note: 'Number of times category was viewed']
+  order_count bigint [default: 0, note: 'Number of items ordered from category']
+  last_ordered_at timestamptz [note: 'When last item was ordered from category']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+  deleted_at timestamptz
+  deleted_by uuid
+
+  indexes {
+    restaurant_id [name: 'idx_menu_categories_restaurant']
+    parent_category_id [name: 'idx_menu_categories_parent']
+    (restaurant_id, sort_order) [name: 'idx_menu_categories_restaurant_sort']
+    (is_active, is_deleted) [name: 'idx_menu_categories_active']
+    featured [name: 'idx_menu_categories_featured']
+    (available_from, available_until) [name: 'idx_menu_categories_availability']
+    name [name: 'idx_menu_categories_name']
+    full_path [name: 'idx_menu_categories_path']
+  }
+}
+
+Table menu_items as MI {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+  category_id uuid [not null]
+
+  // Item Identification
+  sku text [not null, note: 'Stock Keeping Unit - unique per restaurant']
+  name text [not null]
+  description text
+  short_description text [note: 'Brief description for POS/mobile']
+
+  // Pricing Structure
+  base_price decimal(10,2) [not null]
+  cost_price decimal(10,2) [note: 'Cost to make (for profit calculations)']
+  markup_percentage decimal(5,2) [note: 'Markup over cost price']
+
+  // Size/Variant Pricing
+  has_size_variants boolean [default: false]
+  small_price decimal(10,2) [note: 'Small size price']
+  medium_price decimal(10,2) [note: 'Medium size price']
+  large_price decimal(10,2) [note: 'Large size price']
+  extra_large_price decimal(10,2) [note: 'Extra large size price']
+
+  // Visual Elements
+  image_url text [note: 'Primary item image']
+  images jsonb [note: 'Array of additional images']
+  video_url text [note: 'Product video/demo']
+  thumbnail_url text [note: 'Thumbnail for lists']
+
+  // Display and Ordering
+  sort_order integer [not null, default: 0]
+  featured boolean [default: false]
+  popular boolean [default: false, note: 'Marked as popular item']
+  chef_special boolean [default: false]
+  new_item boolean [default: false]
+  spicy_level integer [note: '0-5 spice level indicator']
+
+  // Availability Management
+  availability_status item_availability_status [not null, default: 'available']
+  is_available boolean [default: true]
+  availability_message text [note: 'Custom availability message']
+
+  // Time-Based Availability
+  available_all_day boolean [default: true]
+  available_from time
+  available_until time
+  available_days integer[]
+
+  // Seasonal Availability
+  seasonal boolean [default: false]
+  seasonal_start_date date
+  seasonal_end_date date
+  seasonal_message text
+
+  // Preparation Information
+  preparation_time interval [default: '15 minutes']
+  min_preparation_time interval [note: 'Minimum prep time under ideal conditions']
+  max_preparation_time interval [note: 'Maximum prep time during busy periods']
+  requires_advance_notice boolean [default: false]
+  advance_notice_hours integer [note: 'Hours of advance notice required']
+
+  // Kitchen Information
+  cooking_instructions text [note: 'Detailed cooking instructions']
+  plating_instructions text [note: 'How to plate/present the item']
+  requires_kitchen boolean [default: true]
+  kitchen_station text [note: 'Primary kitchen station (grill, fryer, salad)']
+  secondary_stations text[] [note: 'Additional stations involved']
+
+  // Nutritional Information
+  calories integer [note: 'Total calories per serving']
+  protein_grams decimal(5,2)
+  carbs_grams decimal(5,2)
+  fat_grams decimal(5,2)
+  fiber_grams decimal(5,2)
+  sugar_grams decimal(5,2)
+  sodium_mg decimal(7,2)
+  serving_size text [note: 'Description of serving size']
+
+  // Dietary Information
+  dietary_tags dietary_restriction[] [note: 'Array of dietary restrictions met']
+  allergens allergen_type[] [note: 'Array of allergens present']
+  allergen_warnings text[] [note: 'Custom allergen warnings']
+
+  // Ingredients and Recipe
+  ingredients text[] [note: 'List of ingredients']
+  recipe_id uuid [note: 'Reference to detailed recipe if available']
+  yields_servings integer [default: 1, note: 'Number of servings this recipe makes']
+
+  // Inventory Integration
+  track_inventory boolean [default: false]
+  inventory_item_id uuid [note: 'Reference to inventory service']
+  auto_disable_when_out boolean [default: true, note: 'Auto-disable when inventory depleted']
+  low_stock_threshold integer [note: 'Warn when inventory below this level']
+
+  // Customization and Modifiers
+  allows_modifications boolean [default: true]
+  required_modifiers integer [default: 0, note: 'Number of required modifier selections']
+  maximum_modifiers integer [note: 'Maximum allowed modifications']
+
+  // Ordering Constraints
+  minimum_quantity integer [default: 1]
+  maximum_quantity integer [note: 'Maximum quantity per order']
+  quantity_increment integer [default: 1, note: 'Must order in increments (e.g., dozen items)']
+
+  // Pricing Rules
+  happy_hour_price decimal(10,2) [note: 'Special price during happy hour']
+  happy_hour_start time
+  happy_hour_end time
+  bulk_pricing_threshold integer [note: 'Quantity for bulk pricing']
+  bulk_price decimal(10,2) [note: 'Price per item for bulk orders']
+
+  // Performance Analytics
+  total_ordered bigint [default: 0]
+  total_revenue decimal(12,2) [default: 0]
+  average_rating decimal(3,2) [note: 'Customer rating average']
+  rating_count integer [default: 0]
+  last_ordered_at timestamptz
+  popularity_score decimal(5,2) [note: 'Calculated popularity score']
+
+  // Audit and Versioning
+  version integer [default: 1, note: 'Version number for menu changes']
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+  deleted_at timestamptz
+  deleted_by uuid
+
+  indexes {
+    (restaurant_id, sku) [unique, name: 'idx_menu_items_restaurant_sku']
+    category_id [name: 'idx_menu_items_category']
+    (category_id, sort_order) [name: 'idx_menu_items_category_sort']
+    availability_status [name: 'idx_menu_items_availability']
+    (is_available, is_deleted) [name: 'idx_menu_items_active']
+    featured [name: 'idx_menu_items_featured']
+    popular [name: 'idx_menu_items_popular']
+    (base_price, cost_price) [name: 'idx_menu_items_pricing']
+    kitchen_station [name: 'idx_menu_items_station']
+    dietary_tags [name: 'idx_menu_items_dietary', type: gin]
+    allergens [name: 'idx_menu_items_allergens', type: gin]
+    ingredients [name: 'idx_menu_items_ingredients', type: gin]
+    name [name: 'idx_menu_items_name']
+    total_ordered [name: 'idx_menu_items_ordered']
+    popularity_score [name: 'idx_menu_items_popularity']
+  }
+}
+
+// Menu Item Modifiers and Add-ons
+Table menu_item_modifiers as MIM {
+  id uuid [pk, default: `gen_random_uuid()`]
+  menu_item_id uuid [not null]
+
+  // Modifier Information
+  name text [not null]
+  description text
+  modifier_type modifier_type [not null]
+
+  // Pricing
+  price_adjustment decimal(10,2) [default: 0, note: 'Additional cost (can be negative)']
+  percentage_adjustment decimal(5,2) [note: 'Percentage adjustment instead of fixed']
+
+  // Selection Rules
+  is_required boolean [default: false]
+  is_default boolean [default: false, note: 'Default selection for required modifiers']
+  minimum_selections integer [default: 0]
+  maximum_selections integer [default: 1]
+
+  // Group Management
+  modifier_group text [note: 'Group name for related modifiers (Dressing, Size, etc.)']
+  group_display_name text [note: 'Display name for the group']
+  group_sort_order integer [default: 0]
+  mutually_exclusive boolean [default: false, note: 'Only one from group can be selected']
+
+  // Display
+  sort_order integer [default: 0]
+  visible_to_customer boolean [default: true]
+  highlight boolean [default: false, note: 'Highlighted/recommended modifier']
+
+  // Kitchen Impact
+  affects_preparation boolean [default: false]
+  kitchen_instruction text [note: 'Special kitchen instruction for this modifier']
+  prep_time_adjustment interval [note: 'Additional prep time']
+
+  // Inventory Impact
+  affects_inventory boolean [default: false]
+  inventory_item_id uuid [note: 'Inventory item consumed by this modifier']
+  inventory_quantity decimal(10,3) [note: 'Quantity consumed from inventory']
+
+  // Nutritional Impact
+  calorie_adjustment integer [note: 'Calories added/removed by modifier']
+  nutritional_changes jsonb [note: 'Changes to nutritional information']
+
+  // Availability
+  is_available boolean [default: true]
+  availability_message text
+  available_days integer[]
+  available_from time
+  available_until time
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+
+  indexes {
+    menu_item_id [name: 'idx_menu_item_modifiers_item']
+    (menu_item_id, modifier_group) [name: 'idx_menu_item_modifiers_item_group']
+    modifier_type [name: 'idx_menu_item_modifiers_type']
+    (is_required, is_available) [name: 'idx_menu_item_modifiers_required_available']
+    modifier_group [name: 'idx_menu_item_modifiers_group']
+    sort_order [name: 'idx_menu_item_modifiers_sort']
+  }
+}
+
+// Combo/Bundle Items
+Table menu_combos as MCO {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+  category_id uuid [not null]
+
+  // Combo Information
+  name text [not null]
+  description text
+  sku text [not null]
+
+  // Pricing
+  combo_price decimal(10,2) [not null]
+  individual_total decimal(10,2) [not null, note: 'Sum of individual item prices']
+  savings_amount decimal(10,2) [not null, note: 'Amount saved vs individual purchase']
+  savings_percentage decimal(5,2) [not null]
+
+  // Display
+  image_url text
+  sort_order integer [default: 0]
+  featured boolean [default: false]
+
+  // Rules and Constraints
+  minimum_items integer [not null, default: 2]
+  maximum_items integer [note: 'Maximum items allowed in combo']
+  allows_substitutions boolean [default: true]
+  substitution_upcharge decimal(10,2) [default: 0]
+
+  // Availability
+  is_available boolean [default: true]
+  available_from time
+  available_until time
+  available_days integer[]
+
+  // Preparation
+  preparation_time interval [note: 'Total prep time for combo']
+
+  // Analytics
+  total_ordered bigint [default: 0]
+  total_revenue decimal(12,2) [default: 0]
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+
+  indexes {
+    (restaurant_id, sku) [unique, name: 'idx_menu_combos_restaurant_sku']
+    category_id [name: 'idx_menu_combos_category']
+    (is_available, is_deleted) [name: 'idx_menu_combos_available']
+    savings_percentage [name: 'idx_menu_combos_savings']
+    featured [name: 'idx_menu_combos_featured']
+  }
+}
+
+// Combo Item Components
+Table menu_combo_items as MCI {
+  id uuid [pk, default: `gen_random_uuid()`]
+  combo_id uuid [not null]
+  menu_item_id uuid [not null]
+
+  // Item Role in Combo
+  item_category text [not null, note: 'main, side, drink, dessert, etc.']
+  is_required boolean [default: true]
+  quantity integer [default: 1]
+
+  // Selection Rules
+  allows_substitution boolean [default: false]
+  substitution_category text [note: 'Category items can be substituted from']
+  substitution_upcharge decimal(10,2) [default: 0]
+
+  // Display
+  display_name text [note: 'How to display this item in combo']
+  sort_order integer [default: 0]
+
+  // Pricing (if item has special combo pricing)
+  combo_item_price decimal(10,2) [note: 'Special price for this item in combo']
+
+  indexes {
+    combo_id [name: 'idx_menu_combo_items_combo']
+    menu_item_id [name: 'idx_menu_combo_items_item']
+    (combo_id, item_category) [name: 'idx_menu_combo_items_combo_category']
+    sort_order [name: 'idx_menu_combo_items_sort']
+  }
+}
+
+// Menu Item Reviews and Ratings
+Table menu_item_reviews as MIR {
+  id uuid [pk, default: `gen_random_uuid()`]
+  menu_item_id uuid [not null]
+  customer_id uuid [note: 'Reference to customer service']
+  order_id uuid [note: 'Order where item was purchased']
+
+  // Review Content
+  rating integer [not null, note: '1-5 star rating']
+  title text [note: 'Review title']
+  comment text [note: 'Detailed review comment']
+
+  // Review Metadata
+  verified_purchase boolean [default: true]
+  helpful_votes integer [default: 0]
+  unhelpful_votes integer [default: 0]
+
+  // Moderation
+  is_approved boolean [default: false]
+  approved_by uuid [note: 'Staff member who approved review']
+  approved_at timestamptz
+  flagged_inappropriate boolean [default: false]
+  moderation_notes text
+
+  // Customer Information (Anonymous)
+  customer_alias text [note: 'Anonymous customer name for display']
+  repeat_customer boolean [note: 'Has customer ordered this item before']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+  is_deleted boolean [default: false]
+
+  indexes {
+    menu_item_id [name: 'idx_menu_item_reviews_item']
+    customer_id [name: 'idx_menu_item_reviews_customer']
+    order_id [name: 'idx_menu_item_reviews_order']
+    rating [name: 'idx_menu_item_reviews_rating']
+    (is_approved, created_at) [name: 'idx_menu_item_reviews_approved']
+    verified_purchase [name: 'idx_menu_item_reviews_verified']
+  }
+}
+
+// Menu Change History for Version Control
+Table menu_change_history as MCH {
+  id uuid [pk, default: `gen_random_uuid()`]
+
+  // What Changed
+  entity_type text [not null, note: 'category, item, modifier, combo']
+  entity_id uuid [not null]
+  change_type text [not null, note: 'created, updated, deleted, price_changed']
+
+  // Change Details
+  field_name text [note: 'Specific field that changed']
+  old_value jsonb [note: 'Previous value']
+  new_value jsonb [note: 'New value']
+
+  // Change Context
+  changed_by uuid [not null]
+  change_reason text [note: 'Reason for change']
+  batch_change_id uuid [note: 'Groups related changes together']
+
+  // Timing
+  effective_date date [note: 'When change becomes effective']
+  changed_at timestamptz [default: 'now()']
+
+  // Approval Workflow
+  requires_approval boolean [default: false]
+  approved_by uuid
+  approved_at timestamptz
+  approval_notes text
+
+  indexes {
+    (entity_type, entity_id) [name: 'idx_menu_change_history_entity']
+    changed_by [name: 'idx_menu_change_history_changed_by']
+    changed_at [name: 'idx_menu_change_history_changed_at']
+    batch_change_id [name: 'idx_menu_change_history_batch']
+    change_type [name: 'idx_menu_change_history_type']
+    effective_date [name: 'idx_menu_change_history_effective']
+  }
+}
+
+// Relationships
+Ref: MC.parent_category_id > MC.id
+Ref: MI.category_id > MC.id [delete: restrict]
+Ref: MIM.menu_item_id > MI.id [delete: cascade]
+Ref: MCO.category_id > MC.id [delete: restrict]
+Ref: MCI.combo_id > MCO.id [delete: cascade]
+Ref: MCI.menu_item_id > MI.id [delete: restrict]
+Ref: MIR.menu_item_id > MI.id [delete: cascade]
+
+// Note: External service references (not enforced by foreign keys)
+// - MI.inventory_item_id -> inventory_service.items.id
+// - MI.recipe_id -> recipe_service.recipes.id (if implemented)
+// - MIR.customer_id -> customer_service.customers.id
+// - MIR.order_id -> order_service.orders.id
+// - All created_by/updated_by -> auth_service.users.id

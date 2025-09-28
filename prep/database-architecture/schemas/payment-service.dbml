@@ -1,0 +1,622 @@
+// Payment Processing Service Database Schema
+// Multi-Restaurant POS System - DbDiagram.io Format
+// Generated: 2025-09-28
+// Service: Payment Processing and Financial Management (Restaurant-Specific)
+
+Project "POS Payment Processing Service" {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Payment Processing Service Database Schema
+
+    **Pattern**: Database per Service (Secure Isolation)
+    **Purpose**: Secure payment processing with PCI compliance considerations
+    **Scale**: 400,000+ payments/year, multiple payment methods, split payments
+
+    ## Key Features
+    - Multiple payment methods (cash, card, split, VP3350 device)
+    - Complete transaction audit trail
+    - Refund and void capabilities
+    - Receipt generation and management
+    - PCI compliance considerations
+    - Real-time payment processing
+
+    ## Security Features
+    - Minimal PCI data storage (card last 4 digits only)
+    - Complete payment audit trail
+    - Manager approval workflows
+    - Secure token-based card processing
+    - VP3350 Bluetooth device integration
+
+    ## Restaurant Context
+    This schema represents a single restaurant's payment data.
+    Each restaurant has its own schema: rest_001_payment, rest_002_payment, etc.
+  '''
+}
+
+// Enums and Types
+enum payment_method {
+  cash
+  card
+  split
+  vp3350
+  gift_card
+  loyalty_points
+  house_account
+  digital_wallet
+  check
+  comp
+}
+
+enum payment_status {
+  pending [note: 'Payment initiated but not processed']
+  processing [note: 'Payment being processed']
+  authorized [note: 'Card authorized but not captured']
+  completed [note: 'Payment successfully completed']
+  failed [note: 'Payment failed']
+  cancelled [note: 'Payment cancelled before processing']
+  refunded [note: 'Payment refunded']
+  partially_refunded [note: 'Payment partially refunded']
+  voided [note: 'Payment voided']
+  disputed [note: 'Payment disputed by customer']
+  settled [note: 'Payment settled with processor']
+}
+
+enum card_type {
+  visa
+  mastercard
+  american_express
+  discover
+  diners_club
+  jcb
+  maestro
+  unknown
+}
+
+enum receipt_type {
+  customer
+  merchant
+  kitchen
+  manager
+  email
+  sms
+}
+
+enum receipt_status {
+  generated
+  printed
+  emailed
+  sms_sent
+  failed
+  cancelled
+}
+
+enum refund_reason {
+  customer_request
+  order_error
+  food_quality
+  service_issue
+  system_error
+  manager_discretion
+  promotional
+  duplicate_charge
+}
+
+enum vp3350_transaction_type {
+  sale
+  refund
+  void
+  preauth
+  completion
+  adjustment
+}
+
+// Core Payment Tables
+
+Table payments as P {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001', note: 'Always matches schema restaurant']
+
+  // Payment Identification
+  payment_number text [not null, unique, note: 'Human-readable payment number (PAY-001234)']
+  payment_sequence integer [not null, note: 'Sequential number for this restaurant']
+
+  // Order and Customer Context
+  order_id uuid [not null, note: 'Reference to order service']
+  order_number text [note: 'Cached order number for performance']
+  customer_id uuid [note: 'Reference to customer service']
+  table_id uuid [note: 'Reference to table service']
+
+  // Payment Details
+  payment_method payment_method [not null]
+  status payment_status [not null, default: 'pending']
+  currency text [not null, default: 'USD']
+
+  // Amount Information
+  amount decimal(10,2) [not null, note: 'Total payment amount']
+  tip_amount decimal(10,2) [not null, default: 0]
+  tax_amount decimal(10,2) [not null, default: 0]
+  service_fee decimal(10,2) [not null, default: 0]
+  processing_fee decimal(10,2) [not null, default: 0]
+  net_amount decimal(10,2) [not null, note: 'Amount after all fees']
+
+  // Card Payment Information (PCI Compliant)
+  card_last4 text [note: 'Last 4 digits only (PCI compliance)']
+  card_type card_type [note: 'Card brand']
+  card_expiry_month integer [note: 'Expiry month (MM)']
+  card_expiry_year integer [note: 'Expiry year (YY)']
+  cardholder_name text [note: 'Name on card']
+
+  // Payment Processing
+  gateway_provider text [note: 'stripe, square, paypal, etc.']
+  gateway_transaction_id text [note: 'External gateway transaction ID']
+  authorization_code text [note: 'Payment authorization code']
+  merchant_id text [note: 'Merchant account identifier']
+  terminal_id text [note: 'Terminal/device identifier']
+
+  // VP3350 Device Integration
+  vp3350_device_id text [note: 'VP3350 device identifier']
+  vp3350_transaction_id text [note: 'VP3350 specific transaction ID']
+  vp3350_response jsonb [note: 'Complete VP3350 response data']
+  emv_data jsonb [note: 'EMV chip data (encrypted)']
+  contactless_used boolean [default: false]
+  pin_verified boolean [default: false]
+  signature_required boolean [default: false]
+  signature_captured boolean [default: false]
+
+  // Cash Payment Details
+  cash_tendered decimal(10,2) [note: 'Amount of cash given by customer']
+  change_amount decimal(10,2) [note: 'Change given to customer']
+  cash_drawer_id text [note: 'Cash drawer used for transaction']
+
+  // Split Payment Management
+  is_split_payment boolean [default: false]
+  split_payment_group_id uuid [note: 'Groups related split payments']
+  split_sequence integer [note: 'Order in split payment sequence']
+  total_split_amount decimal(10,2) [note: 'Total amount being split']
+
+  // Gift Card and Loyalty
+  gift_card_number text [note: 'Gift card number (masked)']
+  gift_card_balance_before decimal(10,2) [note: 'Balance before transaction']
+  gift_card_balance_after decimal(10,2) [note: 'Balance after transaction']
+  loyalty_points_used integer [default: 0]
+  loyalty_points_earned integer [default: 0]
+  loyalty_account_id text
+
+  // Timing Information
+  initiated_at timestamptz [default: 'now()']
+  authorized_at timestamptz [note: 'When payment was authorized']
+  processed_at timestamptz [note: 'When payment was completed']
+  failed_at timestamptz [note: 'When payment failed']
+  settled_at timestamptz [note: 'When payment was settled']
+
+  // Staff and Approval
+  processed_by uuid [not null, note: 'Staff member who processed payment']
+  approved_by uuid [note: 'Manager approval for large amounts']
+  manager_override boolean [default: false]
+  approval_reason text [note: 'Reason for manager approval']
+
+  // Error Handling
+  error_code text [note: 'Error code if payment failed']
+  error_message text [note: 'Human-readable error message']
+  gateway_error_details jsonb [note: 'Complete error response from gateway']
+  retry_count integer [default: 0]
+  max_retries integer [default: 3]
+
+  // Customer Information
+  customer_email text [note: 'Email for receipt delivery']
+  customer_phone text [note: 'Phone for SMS receipt']
+  billing_address jsonb [note: 'Billing address details']
+
+  // Receipt Management
+  receipt_generated boolean [default: false]
+  receipt_printed boolean [default: false]
+  receipt_emailed boolean [default: false]
+  receipt_sms_sent boolean [default: false]
+
+  // Compliance and Security
+  pci_compliance_level text [default: 'level_1']
+  encryption_key_id text [note: 'Key used for sensitive data encryption']
+  compliance_notes text
+
+  // Analytics and Reporting
+  transaction_category text [note: 'sale, refund, tip_adjustment, etc.']
+  business_date date [not null, note: 'Business date for reporting']
+  shift_id uuid [note: 'Staff shift when payment was processed']
+
+  // Audit and Soft Delete
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+  is_deleted boolean [default: false]
+  deleted_at timestamptz
+  deleted_by uuid
+
+  indexes {
+    payment_number [unique, name: 'idx_payments_number']
+    restaurant_id [name: 'idx_payments_restaurant']
+    (restaurant_id, payment_sequence) [unique, name: 'idx_payments_restaurant_sequence']
+    order_id [name: 'idx_payments_order']
+    status [name: 'idx_payments_status']
+    payment_method [name: 'idx_payments_method']
+    (status, processed_at) [name: 'idx_payments_status_processed']
+    gateway_transaction_id [name: 'idx_payments_gateway_id']
+    authorization_code [name: 'idx_payments_auth_code']
+    split_payment_group_id [name: 'idx_payments_split_group']
+    processed_by [name: 'idx_payments_processed_by']
+    business_date [name: 'idx_payments_business_date']
+    created_at [name: 'idx_payments_created_at']
+    vp3350_device_id [name: 'idx_payments_vp3350_device']
+  }
+}
+
+// Split Payment Details
+Table split_payment_items as SPI {
+  id uuid [pk, default: `gen_random_uuid()`]
+  payment_id uuid [not null]
+  split_group_id uuid [not null, note: 'Groups all payments in this split']
+
+  // Split Configuration
+  split_method text [not null, note: 'equal, percentage, fixed_amount, by_item']
+  split_percentage decimal(5,2) [note: 'Percentage of total (for percentage splits)']
+  split_amount decimal(10,2) [not null, note: 'Amount for this split payment']
+
+  // Payment Method for This Split
+  payment_method payment_method [not null]
+  status payment_status [not null, default: 'pending']
+
+  // Method-Specific Details
+  card_last4 text
+  authorization_code text
+  gateway_transaction_id text
+  cash_tendered decimal(10,2)
+  change_amount decimal(10,2)
+
+  // Processing Information
+  processed_at timestamptz
+  processed_by uuid [not null]
+  error_message text
+
+  // Description and Notes
+  description text [note: 'Human-readable description of this split']
+  customer_name text [note: 'Name associated with this split payment']
+  internal_notes text
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+
+  indexes {
+    payment_id [name: 'idx_split_payment_items_payment']
+    split_group_id [name: 'idx_split_payment_items_group']
+    (split_group_id, split_method) [name: 'idx_split_payment_items_group_method']
+    processed_by [name: 'idx_split_payment_items_processed_by']
+    status [name: 'idx_split_payment_items_status']
+  }
+}
+
+// Payment Refunds and Voids
+Table payment_refunds as PR {
+  id uuid [pk, default: `gen_random_uuid()`]
+  original_payment_id uuid [not null]
+  refund_payment_id uuid [note: 'New payment record for the refund']
+
+  // Refund Details
+  refund_type text [not null, note: 'full, partial, void']
+  refund_amount decimal(10,2) [not null]
+  refund_reason refund_reason [not null]
+  refund_description text [note: 'Detailed description of refund reason']
+
+  // Processing Information
+  refund_method text [note: 'original_method, cash, store_credit']
+  gateway_refund_id text [note: 'External gateway refund ID']
+  status payment_status [not null, default: 'pending']
+
+  // Authorization and Approval
+  requested_by uuid [not null, note: 'Staff member who requested refund']
+  approved_by uuid [note: 'Manager who approved refund']
+  requires_approval boolean [default: true]
+  approval_reason text
+
+  // Customer Information
+  customer_signature boolean [default: false]
+  customer_id_verified boolean [default: false]
+  verification_method text [note: 'id_card, receipt, phone, etc.']
+
+  // Processing Timestamps
+  requested_at timestamptz [default: 'now()']
+  approved_at timestamptz
+  processed_at timestamptz
+  completed_at timestamptz
+  failed_at timestamptz
+
+  // Error Handling
+  error_message text
+  retry_count integer [default: 0]
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+
+  indexes {
+    original_payment_id [name: 'idx_payment_refunds_original']
+    refund_payment_id [name: 'idx_payment_refunds_payment']
+    status [name: 'idx_payment_refunds_status']
+    requested_by [name: 'idx_payment_refunds_requested_by']
+    approved_by [name: 'idx_payment_refunds_approved_by']
+    refund_reason [name: 'idx_payment_refunds_reason']
+    requested_at [name: 'idx_payment_refunds_requested_at']
+  }
+}
+
+// Receipt Management
+Table receipts as R {
+  id uuid [pk, default: `gen_random_uuid()`]
+  payment_id uuid [not null]
+  order_id uuid [not null, note: 'Reference to order service']
+
+  // Receipt Details
+  receipt_type receipt_type [not null]
+  receipt_number text [not null, note: 'Unique receipt number']
+  template_id uuid [note: 'Receipt template used']
+
+  // Receipt Content (Structured Data)
+  header_data jsonb [not null, note: 'Restaurant info, logo, contact details']
+  order_data jsonb [not null, note: 'Order details, items, quantities']
+  payment_data jsonb [not null, note: 'Payment method, amounts, change']
+  totals_data jsonb [not null, note: 'Subtotal, tax, tip, total calculations']
+  footer_data jsonb [note: 'Thank you message, return policy, survey links']
+
+  // Receipt Generation
+  generated_at timestamptz [default: 'now()']
+  generated_by uuid [not null]
+  generation_method text [note: 'automatic, manual, reprint']
+
+  // Receipt Delivery
+  status receipt_status [not null, default: 'generated']
+  printed_at timestamptz
+  printed_by uuid
+  printer_id text [note: 'Physical printer used']
+
+  emailed_at timestamptz
+  email_address text
+  email_delivery_id text [note: 'Email service delivery ID']
+
+  sms_sent_at timestamptz
+  sms_phone_number text
+  sms_delivery_id text [note: 'SMS service delivery ID']
+
+  // Receipt Format and Layout
+  format text [not null, default: 'thermal', note: 'thermal, letter, email, sms']
+  width_characters integer [default: 40, note: 'Width for thermal printers']
+  template_version text [note: 'Version of template used']
+
+  // Customer Preferences
+  customer_copy boolean [default: true]
+  merchant_copy boolean [default: true]
+  email_requested boolean [default: false]
+  sms_requested boolean [default: false]
+
+  // Digital Receipt Features
+  qr_code_data text [note: 'QR code for digital receipt']
+  digital_receipt_url text [note: 'URL to view receipt online']
+  survey_url text [note: 'Customer satisfaction survey URL']
+
+  // Reprint Tracking
+  reprint_count integer [default: 0]
+  last_reprinted_at timestamptz
+  last_reprinted_by uuid
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  updated_at timestamptz [default: 'now()']
+
+  indexes {
+    payment_id [name: 'idx_receipts_payment']
+    order_id [name: 'idx_receipts_order']
+    receipt_number [unique, name: 'idx_receipts_number']
+    receipt_type [name: 'idx_receipts_type']
+    status [name: 'idx_receipts_status']
+    generated_at [name: 'idx_receipts_generated_at']
+    printed_at [name: 'idx_receipts_printed_at']
+    email_address [name: 'idx_receipts_email']
+    sms_phone_number [name: 'idx_receipts_sms']
+  }
+}
+
+// VP3350 Device Management
+Table vp3350_devices as VD {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Device Identification
+  device_name text [not null, note: 'User-friendly device name']
+  device_serial text [not null, unique, note: 'VP3350 serial number']
+  bluetooth_id text [not null, note: 'Bluetooth device identifier']
+  firmware_version text
+  hardware_version text
+
+  // Configuration
+  terminal_id text [not null, note: 'Terminal ID for processing']
+  merchant_id text [not null, note: 'Merchant account ID']
+  encryption_key text [note: 'Device encryption key']
+
+  // Capabilities
+  supports_contactless boolean [default: true]
+  supports_chip boolean [default: true]
+  supports_swipe boolean [default: true]
+  supports_pin boolean [default: true]
+  supports_signature boolean [default: true]
+
+  // Connection Settings
+  connection_timeout integer [default: 30, note: 'Connection timeout in seconds']
+  transaction_timeout integer [default: 60, note: 'Transaction timeout in seconds']
+  auto_connect boolean [default: true]
+
+  // Status and Health
+  is_active boolean [default: true]
+  is_online boolean [default: false]
+  last_heartbeat timestamptz
+  battery_level integer [note: 'Battery percentage']
+  signal_strength integer [note: 'Bluetooth signal strength']
+
+  // Maintenance
+  last_maintenance_date date
+  next_maintenance_date date
+  maintenance_notes text
+
+  // Usage Statistics
+  total_transactions bigint [default: 0]
+  successful_transactions bigint [default: 0]
+  failed_transactions bigint [default: 0]
+  last_transaction_at timestamptz
+
+  // Audit
+  registered_at timestamptz [default: 'now()']
+  registered_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  deactivated_at timestamptz
+  deactivated_by uuid
+
+  indexes {
+    restaurant_id [name: 'idx_vp3350_devices_restaurant']
+    device_serial [unique, name: 'idx_vp3350_devices_serial']
+    bluetooth_id [name: 'idx_vp3350_devices_bluetooth']
+    terminal_id [name: 'idx_vp3350_devices_terminal']
+    is_active [name: 'idx_vp3350_devices_active']
+    last_heartbeat [name: 'idx_vp3350_devices_heartbeat']
+  }
+}
+
+// VP3350 Transaction Log
+Table vp3350_transactions as VT {
+  id uuid [pk, default: `gen_random_uuid()`]
+  device_id uuid [not null]
+  payment_id uuid [not null]
+
+  // Transaction Details
+  transaction_type vp3350_transaction_type [not null]
+  amount decimal(10,2) [not null]
+  currency text [default: 'USD']
+
+  // VP3350 Specific Data
+  transaction_id text [not null, note: 'VP3350 internal transaction ID']
+  sequence_number integer [note: 'Device sequence number']
+  batch_number integer [note: 'Settlement batch number']
+
+  // Card Information
+  card_type card_type
+  entry_method text [note: 'chip, contactless, swipe']
+  aid text [note: 'Application Identifier']
+  application_label text [note: 'Card application name']
+
+  // Security and Encryption
+  encryption_type text [note: 'Encryption method used']
+  key_serial_number text [note: 'Encryption key identifier']
+  pin_block text [note: 'Encrypted PIN block']
+
+  // EMV Data
+  emv_tags jsonb [note: 'EMV tag data']
+  cryptogram text [note: 'Transaction cryptogram']
+  cryptogram_type text [note: 'TC, ARQC, AAC']
+
+  // Processing Results
+  response_code text [not null]
+  response_message text [not null]
+  authorization_code text
+  host_reference_number text
+
+  // Signature and Receipt
+  signature_required boolean [default: false]
+  signature_data bytea [note: 'Digital signature data']
+  receipt_data text [note: 'Receipt text from device']
+
+  // Timing
+  started_at timestamptz [default: 'now()']
+  completed_at timestamptz
+  duration_ms integer [note: 'Transaction duration in milliseconds']
+
+  // Error Handling
+  error_code text
+  error_description text
+  retry_attempted boolean [default: false]
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+
+  indexes {
+    device_id [name: 'idx_vp3350_transactions_device']
+    payment_id [name: 'idx_vp3350_transactions_payment']
+    transaction_id [name: 'idx_vp3350_transactions_id']
+    response_code [name: 'idx_vp3350_transactions_response']
+    started_at [name: 'idx_vp3350_transactions_started']
+    batch_number [name: 'idx_vp3350_transactions_batch']
+  }
+}
+
+// Payment Analytics and Reporting
+Table payment_analytics_daily as PAD {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+  business_date date [not null]
+
+  // Volume Metrics
+  total_transactions integer [not null, default: 0]
+  total_amount decimal(12,2) [not null, default: 0]
+  total_tips decimal(12,2) [not null, default: 0]
+  total_refunds decimal(12,2) [not null, default: 0]
+  average_transaction_amount decimal(10,2) [not null, default: 0]
+
+  // Payment Method Breakdown
+  cash_transactions integer [default: 0]
+  cash_amount decimal(12,2) [default: 0]
+  card_transactions integer [default: 0]
+  card_amount decimal(12,2) [default: 0]
+  split_transactions integer [default: 0]
+  split_amount decimal(12,2) [default: 0]
+
+  // Performance Metrics
+  successful_transactions integer [default: 0]
+  failed_transactions integer [default: 0]
+  success_rate decimal(5,2) [default: 0]
+  average_processing_time_ms integer [default: 0]
+
+  // VP3350 Specific Metrics
+  vp3350_transactions integer [default: 0]
+  vp3350_amount decimal(12,2) [default: 0]
+  contactless_transactions integer [default: 0]
+  chip_transactions integer [default: 0]
+  swipe_transactions integer [default: 0]
+
+  // Customer Behavior
+  average_tip_percentage decimal(5,2) [default: 0]
+  receipts_printed integer [default: 0]
+  receipts_emailed integer [default: 0]
+  receipts_sms integer [default: 0]
+
+  // Generated Analytics
+  generated_at timestamptz [default: 'now()']
+  last_updated_at timestamptz [default: 'now()']
+
+  indexes {
+    (restaurant_id, business_date) [unique, name: 'idx_payment_analytics_restaurant_date']
+    business_date [name: 'idx_payment_analytics_date']
+    generated_at [name: 'idx_payment_analytics_generated']
+  }
+}
+
+// Relationships
+Ref: SPI.payment_id > P.id [delete: cascade]
+Ref: PR.original_payment_id > P.id
+Ref: PR.refund_payment_id > P.id
+Ref: R.payment_id > P.id [delete: cascade]
+Ref: VT.device_id > VD.id
+Ref: VT.payment_id > P.id
+
+// Self-referential relationships
+Ref: P.split_payment_group_id > P.id
+
+// Note: External service references (not enforced by foreign keys)
+// - P.order_id -> order_service.orders.id
+// - P.customer_id -> customer_service.customers.id
+// - P.table_id -> table_service.tables.id
+// - P.processed_by -> auth_service.users.id
+// - P.approved_by -> auth_service.users.id

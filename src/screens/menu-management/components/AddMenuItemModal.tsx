@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '@/hooks/useTheme';
 import {
   View,
   Text,
@@ -10,7 +11,6 @@ import {
   Alert,
   Switch,
 } from 'react-native';
-import { ProfessionalTheme } from '@/constants/theme';
 import { CategoryWithStats, CreateMenuItemRequest } from '@/types/menu-management.types';
 
 interface AddMenuItemModalProps {
@@ -28,6 +28,8 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
   onSubmit,
   onClose,
 }) => {
+  const { theme } = useTheme();
+
   // Form state
   const [formData, setFormData] = useState<CreateMenuItemRequest>({
     restaurant_id: 'rest_001', // Would come from auth context
@@ -135,6 +137,176 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
 
   const dietaryOptions = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 'Spicy'];
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: theme.colors.primary,
+      padding: theme.spacing.lg,
+      paddingTop: 50,
+    },
+    headerTitle: {
+      ...theme.typography.h3,
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+    closeButton: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    closeButtonText: {
+      fontSize: 16,
+      color: theme.colors.onSurfaceOnPrimary,
+      fontWeight: '600',
+    },
+    content: {
+      flex: 1,
+      padding: theme.spacing.lg,
+    },
+    section: {
+      marginBottom: theme.spacing.xl,
+    },
+    sectionTitle: {
+      ...theme.typography.h4,
+      color: theme.colors.onSurface,
+      marginBottom: theme.spacing.md,
+    },
+    fieldContainer: {
+      marginBottom: theme.spacing.md,
+    },
+    fieldLabel: {
+      ...theme.typography.label,
+      color: theme.colors.onSurface,
+      marginBottom: theme.spacing.xs,
+    },
+    textInput: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      ...theme.typography.body2,
+      color: theme.colors.onSurface,
+      minHeight: 44,
+    },
+    textArea: {
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    errorInput: {
+      borderColor: theme.colors.error,
+    },
+    errorText: {
+      ...theme.typography.caption,
+      color: theme.colors.error,
+      marginTop: 4,
+    },
+    categoryContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: theme.spacing.xs,
+    },
+    categoryOption: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      borderRadius: theme.borderRadius.md,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    selectedCategoryOption: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+    },
+    categoryOptionText: {
+      ...theme.typography.body2,
+      color: theme.colors.onSurface,
+    },
+    selectedCategoryOptionText: {
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    dietaryOptionsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: theme.spacing.xs,
+    },
+    dietaryOption: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      borderRadius: theme.borderRadius.md,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+    },
+    selectedDietaryOption: {
+      backgroundColor: theme.colors.successLight,
+      borderColor: theme.colors.success,
+    },
+    dietaryOptionText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurface,
+    },
+    selectedDietaryOptionText: {
+      color: theme.colors.success,
+      fontWeight: '600',
+    },
+    bottomSpacing: {
+      height: 100,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      padding: theme.spacing.lg,
+      backgroundColor: theme.colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.outline,
+      gap: theme.spacing.md,
+    },
+    cancelButton: {
+      flex: 1,
+      backgroundColor: theme.colors.outline,
+      borderRadius: theme.borderRadius.md,
+      paddingVertical: theme.spacing.md,
+      alignItems: 'center',
+    },
+    cancelButtonText: {
+      ...theme.typography.label,
+      color: theme.colors.onSurface,
+    },
+    submitButton: {
+      flex: 1,
+      backgroundColor: theme.colors.success,
+      borderRadius: theme.borderRadius.md,
+      paddingVertical: theme.spacing.md,
+      alignItems: 'center',
+    },
+    disabledButton: {
+      backgroundColor: theme.colors.outlineLight,
+    },
+    submitButtonText: {
+      ...theme.typography.label,
+      color: theme.colors.onSurfaceOnPrimary,
+      fontWeight: '600',
+    },
+  });
+
   return (
     <Modal
       visible={visible}
@@ -163,7 +335,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
               <TextInput
                 style={[styles.textInput, errors.name && styles.errorInput]}
                 placeholder="Enter item name"
-                placeholderTextColor={ProfessionalTheme.colors.textLight}
+                placeholderTextColor={theme.colors.onSurfaceLight}
                 value={formData.name}
                 onChangeText={(text) => updateField('name', text)}
                 editable={!loading}
@@ -205,7 +377,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
               <TextInput
                 style={[styles.textInput, styles.textArea]}
                 placeholder="Enter item description"
-                placeholderTextColor={ProfessionalTheme.colors.textLight}
+                placeholderTextColor={theme.colors.onSurfaceLight}
                 value={formData.description}
                 onChangeText={(text) => updateField('description', text)}
                 multiline
@@ -225,7 +397,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
               <TextInput
                 style={[styles.textInput, errors.price && styles.errorInput]}
                 placeholder="0.00"
-                placeholderTextColor={ProfessionalTheme.colors.textLight}
+                placeholderTextColor={theme.colors.onSurfaceLight}
                 value={formData.price.toString()}
                 onChangeText={(text) => updateField('price', parseFloat(text) || 0)}
                 keyboardType="decimal-pad"
@@ -240,7 +412,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
               <TextInput
                 style={[styles.textInput, errors.preparation_time_minutes && styles.errorInput]}
                 placeholder="10"
-                placeholderTextColor={ProfessionalTheme.colors.textLight}
+                placeholderTextColor={theme.colors.onSurfaceLight}
                 value={formData.preparation_time_minutes?.toString() || ''}
                 onChangeText={(text) => updateField('preparation_time_minutes', parseInt(text) || undefined)}
                 keyboardType="number-pad"
@@ -257,10 +429,10 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
                   value={formData.is_available}
                   onValueChange={(value) => updateField('is_available', value)}
                   trackColor={{
-                    false: ProfessionalTheme.colors.border,
-                    true: ProfessionalTheme.colors.success,
+                    false: theme.colors.outline,
+                    true: theme.colors.success,
                   }}
-                  thumbColor={ProfessionalTheme.colors.surface}
+                  thumbColor={theme.colors.surface}
                   disabled={loading}
                 />
               </View>
@@ -304,7 +476,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
               <TextInput
                 style={styles.textInput}
                 placeholder="https://example.com/image.jpg"
-                placeholderTextColor={ProfessionalTheme.colors.textLight}
+                placeholderTextColor={theme.colors.onSurfaceLight}
                 value={formData.image_url}
                 onChangeText={(text) => updateField('image_url', text)}
                 keyboardType="url"
@@ -318,7 +490,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
               <TextInput
                 style={[styles.textInput, styles.textArea]}
                 placeholder="ingredient1, ingredient2, ingredient3"
-                placeholderTextColor={ProfessionalTheme.colors.textLight}
+                placeholderTextColor={theme.colors.onSurfaceLight}
                 value={formData.ingredients?.join(', ') || ''}
                 onChangeText={(text) => updateField('ingredients', text.split(',').map(item => item.trim()).filter(Boolean))}
                 multiline
@@ -355,204 +527,3 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: ProfessionalTheme.colors.background,
-  },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: ProfessionalTheme.colors.primary,
-    padding: ProfessionalTheme.spacing.lg,
-    paddingTop: 50, // Account for status bar
-  },
-
-  headerTitle: {
-    ...ProfessionalTheme.typography.h3,
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  closeButtonText: {
-    fontSize: 16,
-    color: ProfessionalTheme.colors.textOnPrimary,
-    fontWeight: '600',
-  },
-
-  content: {
-    flex: 1,
-    padding: ProfessionalTheme.spacing.lg,
-  },
-
-  section: {
-    marginBottom: ProfessionalTheme.spacing.xl,
-  },
-
-  sectionTitle: {
-    ...ProfessionalTheme.typography.h4,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  fieldContainer: {
-    marginBottom: ProfessionalTheme.spacing.md,
-  },
-
-  fieldLabel: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.text,
-    marginBottom: ProfessionalTheme.spacing.xs,
-  },
-
-  textInput: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: ProfessionalTheme.spacing.md,
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.text,
-    minHeight: 44,
-  },
-
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-
-  errorInput: {
-    borderColor: ProfessionalTheme.colors.error,
-  },
-
-  errorText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.error,
-    marginTop: 4,
-  },
-
-  categoryContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: ProfessionalTheme.spacing.xs,
-  },
-
-  categoryOption: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-  },
-
-  selectedCategoryOption: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-    borderColor: ProfessionalTheme.colors.primary,
-  },
-
-  categoryOptionText: {
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.text,
-  },
-
-  selectedCategoryOptionText: {
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  switchContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: ProfessionalTheme.spacing.md,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-  },
-
-  dietaryOptionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: ProfessionalTheme.spacing.xs,
-  },
-
-  dietaryOption: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    paddingVertical: ProfessionalTheme.spacing.xs,
-  },
-
-  selectedDietaryOption: {
-    backgroundColor: ProfessionalTheme.colors.successLight,
-    borderColor: ProfessionalTheme.colors.success,
-  },
-
-  dietaryOptionText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.text,
-  },
-
-  selectedDietaryOptionText: {
-    color: ProfessionalTheme.colors.success,
-    fontWeight: '600',
-  },
-
-  bottomSpacing: {
-    height: 100, // Extra space for action buttons
-  },
-
-  actionButtons: {
-    flexDirection: 'row',
-    padding: ProfessionalTheme.spacing.lg,
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: ProfessionalTheme.colors.border,
-    gap: ProfessionalTheme.spacing.md,
-  },
-
-  cancelButton: {
-    flex: 1,
-    backgroundColor: ProfessionalTheme.colors.border,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    paddingVertical: ProfessionalTheme.spacing.md,
-    alignItems: 'center',
-  },
-
-  cancelButtonText: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.text,
-  },
-
-  submitButton: {
-    flex: 1,
-    backgroundColor: ProfessionalTheme.colors.success,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    paddingVertical: ProfessionalTheme.spacing.md,
-    alignItems: 'center',
-  },
-
-  disabledButton: {
-    backgroundColor: ProfessionalTheme.colors.borderLight,
-  },
-
-  submitButtonText: {
-    ...ProfessionalTheme.typography.label,
-    color: ProfessionalTheme.colors.textOnPrimary,
-    fontWeight: '600',
-  },
-});

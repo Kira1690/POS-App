@@ -1,0 +1,531 @@
+// Table Management Service Database Schema
+// Multi-Restaurant POS System - DbDiagram.io Format
+// Generated: 2025-09-28
+// Service: Table Management and Reservation System (Restaurant-Specific)
+
+Project "POS Table Management Service" {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Table Management Service Database Schema
+
+    **Pattern**: Database per Service (Restaurant-Specific)
+    **Purpose**: Table layout, status tracking, reservations, and seating management
+    **Scale**: 50+ tables per restaurant, real-time status updates, reservation system
+
+    ## Key Features
+    - Complete table layout and configuration
+    - Real-time table status tracking
+    - Reservation system with conflict management
+    - Table assignment and optimization
+    - Cleaning and maintenance schedules
+    - Section and server assignment
+
+    ## Performance Features
+    - Optimized for frequent status updates
+    - Real-time table availability queries
+    - Efficient reservation conflict detection
+    - Fast table assignment algorithms
+
+    ## Restaurant Context
+    This schema represents a single restaurant's table management.
+    Each restaurant has its own schema: rest_001_table, rest_002_table, etc.
+  '''
+}
+
+// Enums and Types
+enum table_status {
+  available [note: 'Table is clean and ready for seating']
+  occupied [note: 'Table currently has customers']
+  reserved [note: 'Table is reserved for future seating']
+  cleaning [note: 'Table is being cleaned']
+  maintenance [note: 'Table requires maintenance']
+  out_of_order [note: 'Table is temporarily unavailable']
+  blocked [note: 'Table blocked for special use']
+}
+
+enum table_shape {
+  round [note: 'Round table']
+  square [note: 'Square table']
+  rectangle [note: 'Rectangular table']
+  oval [note: 'Oval table']
+  booth [note: 'Booth seating']
+  bar [note: 'Bar/counter seating']
+  high_top [note: 'High-top table']
+  banquet [note: 'Banquet/long table']
+}
+
+enum reservation_status {
+  pending [note: 'Reservation requested but not confirmed']
+  confirmed [note: 'Reservation confirmed']
+  arrived [note: 'Customer has arrived']
+  seated [note: 'Customer has been seated']
+  no_show [note: 'Customer did not show up']
+  cancelled [note: 'Reservation cancelled']
+  completed [note: 'Reservation completed']
+  waitlist [note: 'On waiting list']
+}
+
+enum seating_preference {
+  no_preference [note: 'No specific preference']
+  window [note: 'Prefer window seating']
+  quiet [note: 'Prefer quiet area']
+  booth [note: 'Prefer booth seating']
+  bar [note: 'Prefer bar/counter seating']
+  patio [note: 'Prefer outdoor/patio seating']
+  private [note: 'Prefer private/secluded area']
+  accessible [note: 'Require accessible seating']
+}
+
+enum cleaning_status {
+  clean [note: 'Table is clean and ready']
+  needs_cleaning [note: 'Table needs to be cleaned']
+  cleaning_in_progress [note: 'Currently being cleaned']
+  deep_clean_required [note: 'Requires deep cleaning']
+  sanitized [note: 'Recently sanitized']
+}
+
+// Core Table Tables
+
+Table tables as T {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Table Identification
+  table_number text [not null, note: 'Human-readable table number']
+  table_name text [note: 'Optional table name (The Corner Booth)']
+  qr_code text [unique, note: 'QR code for digital menus/ordering']
+
+  // Physical Characteristics
+  capacity integer [not null, note: 'Maximum number of seats']
+  min_capacity integer [note: 'Minimum recommended capacity']
+  max_capacity integer [note: 'Maximum capacity with extra chairs']
+  table_shape table_shape [not null, default: 'round']
+
+  // Location and Layout
+  section text [note: 'Restaurant section (Dining Room, Patio, Bar)']
+  floor_level text [note: 'Floor or level (Ground, Mezzanine, Upstairs)']
+  location_description text [note: 'Descriptive location (By the window, Near kitchen)']
+
+  // Coordinates for Visual Layout
+  x_position decimal(6,2) [note: 'X coordinate in restaurant layout']
+  y_position decimal(6,2) [note: 'Y coordinate in restaurant layout']
+  rotation_angle integer [default: 0, note: 'Table rotation in degrees']
+  width decimal(6,2) [note: 'Table width in layout units']
+  height decimal(6,2) [note: 'Table height in layout units']
+
+  // Current Status
+  current_status table_status [not null, default: 'available']
+  status_changed_at timestamptz [default: 'now()']
+  status_changed_by uuid [note: 'Staff member who changed status']
+
+  // Current Occupancy
+  current_party_size integer [default: 0]
+  current_order_id uuid [note: 'Active order for this table']
+  current_customer_name text [note: 'Name for current reservation/order']
+  seated_at timestamptz [note: 'When current party was seated']
+  estimated_turnover_time timestamptz [note: 'Expected table availability']
+
+  // Reservation Information
+  next_reservation_id uuid [note: 'Next confirmed reservation']
+  reserved_until timestamptz [note: 'When current reservation ends']
+  reservation_buffer_minutes integer [default: 15, note: 'Buffer time between reservations']
+
+  // Server Assignment
+  assigned_server_id uuid [note: 'Primary server for this table']
+  server_section text [note: 'Server section this table belongs to']
+
+  // Accessibility and Features
+  is_accessible boolean [default: false, note: 'ADA accessible table']
+  is_outdoor boolean [default: false, note: 'Outdoor/patio table']
+  has_power_outlet boolean [default: false]
+  has_window_view boolean [default: false]
+  is_booth boolean [default: false]
+  is_high_top boolean [default: false]
+  is_bar_seating boolean [default: false]
+
+  // Cleaning and Maintenance
+  cleaning_status cleaning_status [not null, default: 'clean']
+  last_cleaned_at timestamptz
+  cleaned_by uuid [note: 'Staff member who last cleaned table']
+  deep_clean_scheduled date [note: 'Next scheduled deep cleaning']
+
+  // Table Preferences and Notes
+  special_features text[] [note: 'Special features (Fireplace view, Private corner)']
+  usage_notes text [note: 'Special usage notes or restrictions']
+  vip_table boolean [default: false, note: 'Designated VIP table']
+
+  // Performance and Analytics
+  daily_turns integer [default: 0, note: 'Number of table turns today']
+  weekly_revenue decimal(10,2) [default: 0, note: 'Revenue this week']
+  average_stay_duration interval [note: 'Average customer stay time']
+  utilization_rate decimal(5,2) [note: 'Table utilization percentage']
+
+  // Operational Settings
+  is_active boolean [default: true]
+  allow_online_reservations boolean [default: true]
+  require_reservation boolean [default: false]
+  minimum_advance_booking interval [default: '30 minutes']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+  deleted_at timestamptz
+
+  indexes {
+    (restaurant_id, table_number) [unique, name: 'idx_tables_restaurant_number']
+    restaurant_id [name: 'idx_tables_restaurant']
+    current_status [name: 'idx_tables_status']
+    (current_status, capacity) [name: 'idx_tables_status_capacity']
+    section [name: 'idx_tables_section']
+    assigned_server_id [name: 'idx_tables_server']
+    qr_code [unique, name: 'idx_tables_qr_code']
+    (is_active, is_deleted) [name: 'idx_tables_active']
+    next_reservation_id [name: 'idx_tables_next_reservation']
+    (x_position, y_position) [name: 'idx_tables_coordinates']
+    capacity [name: 'idx_tables_capacity']
+    is_accessible [name: 'idx_tables_accessible']
+    vip_table [name: 'idx_tables_vip']
+  }
+}
+
+Table table_reservations as TR {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+  table_id uuid [note: 'Specific table (null for any available table)']
+
+  // Reservation Details
+  reservation_number text [not null, unique, note: 'Human-readable reservation number']
+  status reservation_status [not null, default: 'pending']
+
+  // Customer Information
+  customer_id uuid [note: 'Reference to customer service if registered']
+  customer_name text [not null]
+  customer_phone text [not null]
+  customer_email text
+  party_size integer [not null]
+
+  // Timing
+  reservation_date date [not null]
+  reservation_time time [not null]
+  reservation_datetime timestamptz [not null, note: 'Combined date/time for queries']
+  duration_minutes integer [default: 120, note: 'Expected duration']
+  arrival_window_minutes integer [default: 15, note: 'Grace period for arrival']
+
+  // Preferences and Requirements
+  seating_preference seating_preference [default: 'no_preference']
+  special_requests text [note: 'Customer special requests']
+  occasion text [note: 'Birthday, anniversary, business meeting, etc.']
+  accessibility_required boolean [default: false]
+
+  // Status Tracking
+  confirmed_at timestamptz [note: 'When reservation was confirmed']
+  arrived_at timestamptz [note: 'When customer arrived']
+  seated_at timestamptz [note: 'When customer was seated']
+  completed_at timestamptz [note: 'When reservation was completed']
+  no_show_at timestamptz [note: 'When marked as no-show']
+
+  // Table Assignment
+  assigned_table_id uuid [note: 'Actually assigned table']
+  assigned_server_id uuid [note: 'Server assigned to this reservation']
+  assignment_notes text [note: 'Notes about table assignment']
+
+  // Communication
+  confirmation_sent boolean [default: false]
+  confirmation_sent_at timestamptz
+  reminder_sent boolean [default: false]
+  reminder_sent_at timestamptz
+  customer_notified_delays boolean [default: false]
+
+  // Wait List Management
+  wait_list_position integer [note: 'Position on wait list if applicable']
+  estimated_wait_time interval [note: 'Estimated wait time']
+  wait_list_joined_at timestamptz [note: 'When added to wait list']
+
+  // Cancellation Information
+  cancelled_at timestamptz
+  cancelled_by uuid [note: 'Who cancelled (customer or staff)']
+  cancellation_reason text
+  cancellation_notice_hours integer [note: 'Hours of notice given']
+
+  // Revenue and Deposit
+  deposit_required boolean [default: false]
+  deposit_amount decimal(10,2) [default: 0]
+  deposit_paid boolean [default: false]
+  minimum_spend decimal(10,2) [note: 'Minimum spend requirement']
+
+  // Staff Notes
+  internal_notes text [note: 'Internal staff notes']
+  vip_guest boolean [default: false]
+  repeat_customer boolean [default: false]
+  customer_preferences text [note: 'Known customer preferences']
+
+  // Source and Channel
+  booking_source text [note: 'Phone, Website, App, Walk-in, Third-party']
+  source_details text [note: 'Specific source details']
+  referral_source text [note: 'How customer heard about restaurant']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [note: 'Staff member who created reservation']
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+
+  indexes {
+    restaurant_id [name: 'idx_reservations_restaurant']
+    reservation_number [unique, name: 'idx_reservations_number']
+    table_id [name: 'idx_reservations_table']
+    customer_phone [name: 'idx_reservations_phone']
+    customer_email [name: 'idx_reservations_email']
+    status [name: 'idx_reservations_status']
+    reservation_datetime [name: 'idx_reservations_datetime']
+    (restaurant_id, reservation_date, reservation_time) [name: 'idx_reservations_date_time']
+    (status, reservation_datetime) [name: 'idx_reservations_status_datetime']
+    assigned_table_id [name: 'idx_reservations_assigned_table']
+    assigned_server_id [name: 'idx_reservations_assigned_server']
+    wait_list_position [name: 'idx_reservations_wait_list']
+    party_size [name: 'idx_reservations_party_size']
+    vip_guest [name: 'idx_reservations_vip']
+  }
+}
+
+Table table_status_history as TSH {
+  id uuid [pk, default: `gen_random_uuid()`]
+  table_id uuid [not null]
+
+  // Status Change Details
+  from_status table_status [note: 'Previous status']
+  to_status table_status [not null]
+  change_reason text [note: 'Reason for status change']
+
+  // Change Context
+  changed_by uuid [not null, note: 'Staff member who changed status']
+  changed_at timestamptz [default: 'now()']
+  automatic_change boolean [default: false, note: 'System vs manual change']
+
+  // Duration Information
+  status_duration interval [note: 'How long previous status lasted']
+  customer_party_size integer [note: 'Party size during this status']
+  order_id uuid [note: 'Associated order if applicable']
+
+  // Additional Context
+  notes text [note: 'Additional notes about status change']
+  cleaning_required boolean [default: false]
+  maintenance_issues text [note: 'Any maintenance issues noted']
+
+  indexes {
+    table_id [name: 'idx_table_status_history_table']
+    (table_id, changed_at) [name: 'idx_table_status_history_table_time']
+    to_status [name: 'idx_table_status_history_to_status']
+    changed_by [name: 'idx_table_status_history_changed_by']
+    changed_at [name: 'idx_table_status_history_changed_at']
+    order_id [name: 'idx_table_status_history_order']
+  }
+}
+
+Table table_layouts as TL {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Layout Information
+  layout_name text [not null, note: 'Name of this layout configuration']
+  description text [note: 'Description of when to use this layout']
+  is_active boolean [default: false, note: 'Currently active layout']
+  is_default boolean [default: false, note: 'Default layout configuration']
+
+  // Layout Specifications
+  floor_plan jsonb [not null, note: 'Complete floor plan data']
+  table_positions jsonb [not null, note: 'Table positions and configurations']
+  section_definitions jsonb [note: 'Section boundaries and names']
+
+  // Layout Metadata
+  total_capacity integer [note: 'Total seating capacity in this layout']
+  table_count integer [note: 'Number of tables in layout']
+  section_count integer [note: 'Number of sections defined']
+
+  // Usage Context
+  event_type text [note: 'Regular, Banquet, Private Event, etc.']
+  time_of_day text[] [note: 'When this layout is typically used']
+  days_of_week integer[] [note: 'Days when layout is used']
+  seasonal boolean [default: false]
+
+  // Layout Performance
+  efficiency_rating decimal(3,2) [note: 'Layout efficiency score']
+  server_steps_optimization decimal(5,2) [note: 'Optimization for server movement']
+  customer_satisfaction_score decimal(3,2) [note: 'Customer satisfaction with layout']
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+
+  indexes {
+    restaurant_id [name: 'idx_table_layouts_restaurant']
+    (restaurant_id, layout_name) [unique, name: 'idx_table_layouts_restaurant_name']
+    is_active [name: 'idx_table_layouts_active']
+    is_default [name: 'idx_table_layouts_default']
+    event_type [name: 'idx_table_layouts_event_type']
+  }
+}
+
+Table server_sections as SS {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+
+  // Section Information
+  section_name text [not null]
+  section_code text [note: 'Short code for section (A, B, PATIO)']
+  description text
+
+  // Server Assignment
+  primary_server_id uuid [note: 'Primary server for this section']
+  backup_server_id uuid [note: 'Backup server for this section']
+  server_capacity integer [default: 1, note: 'How many servers can work this section']
+
+  // Section Characteristics
+  table_count integer [note: 'Number of tables in section']
+  total_capacity integer [note: 'Total seating capacity']
+  average_table_size decimal(3,1) [note: 'Average table capacity']
+
+  // Performance Metrics
+  average_steps_per_service integer [note: 'Average steps for server']
+  difficulty_rating integer [note: '1-5 difficulty rating for servers']
+  tip_performance_rating decimal(3,2) [note: 'Average tip performance']
+
+  // Operational Settings
+  is_active boolean [default: true]
+  auto_assign_servers boolean [default: true]
+  priority_level integer [default: 1, note: 'Assignment priority (1=highest)']
+
+  // Timing and Availability
+  available_shifts text[] [note: 'Shifts when section is open']
+  minimum_staff_required integer [default: 1]
+
+  // Audit
+  created_at timestamptz [default: 'now()']
+  created_by uuid [not null]
+  updated_at timestamptz [default: 'now()']
+  updated_by uuid
+  is_deleted boolean [default: false]
+
+  indexes {
+    restaurant_id [name: 'idx_server_sections_restaurant']
+    (restaurant_id, section_name) [unique, name: 'idx_server_sections_restaurant_name']
+    primary_server_id [name: 'idx_server_sections_primary_server']
+    backup_server_id [name: 'idx_server_sections_backup_server']
+    is_active [name: 'idx_server_sections_active']
+    priority_level [name: 'idx_server_sections_priority']
+  }
+}
+
+Table table_cleaning_log as TCL {
+  id uuid [pk, default: `gen_random_uuid()`]
+  table_id uuid [not null]
+
+  // Cleaning Details
+  cleaning_type text [not null, note: 'standard, deep, sanitization, maintenance']
+  cleaning_started_at timestamptz [default: 'now()']
+  cleaning_completed_at timestamptz
+  duration_minutes integer [note: 'Time taken to clean']
+
+  // Staff Information
+  cleaned_by uuid [not null, note: 'Staff member who cleaned']
+  verified_by uuid [note: 'Staff member who verified cleaning']
+  cleaning_quality_score integer [note: '1-5 quality rating']
+
+  // Cleaning Details
+  tasks_completed text[] [note: 'Specific cleaning tasks completed']
+  supplies_used text[] [note: 'Cleaning supplies used']
+  issues_found text[] [note: 'Issues discovered during cleaning']
+
+  // Post-Cleaning Status
+  table_condition_notes text [note: 'Notes about table condition']
+  maintenance_required boolean [default: false]
+  maintenance_notes text [note: 'Required maintenance details']
+
+  // Next Cleaning Schedule
+  next_cleaning_due timestamptz [note: 'When next cleaning is due']
+  next_deep_clean_due date [note: 'When next deep clean is due']
+
+  indexes {
+    table_id [name: 'idx_table_cleaning_log_table']
+    (table_id, cleaning_started_at) [name: 'idx_table_cleaning_log_table_time']
+    cleaned_by [name: 'idx_table_cleaning_log_cleaned_by']
+    cleaning_type [name: 'idx_table_cleaning_log_type']
+    cleaning_completed_at [name: 'idx_table_cleaning_log_completed']
+    maintenance_required [name: 'idx_table_cleaning_log_maintenance']
+  }
+}
+
+// Table Performance Analytics
+Table table_analytics_daily as TAD {
+  id uuid [pk, default: `gen_random_uuid()`]
+  restaurant_id text [not null, default: 'rest_001']
+  table_id uuid [note: 'Specific table (null for restaurant-wide)']
+  business_date date [not null]
+
+  // Usage Metrics
+  total_seatings integer [default: 0]
+  total_customers integer [default: 0]
+  table_turns integer [default: 0]
+  hours_occupied decimal(4,2) [default: 0]
+  utilization_percentage decimal(5,2) [default: 0]
+
+  // Revenue Metrics
+  total_revenue decimal(10,2) [default: 0]
+  average_check decimal(8,2) [default: 0]
+  revenue_per_hour decimal(8,2) [default: 0]
+  tip_percentage decimal(5,2) [default: 0]
+
+  // Service Metrics
+  average_stay_duration interval [note: 'Average customer stay time']
+  average_turnover_time interval [note: 'Average time between seatings']
+  fastest_turnover interval [note: 'Fastest table turnover']
+  slowest_turnover interval [note: 'Slowest table turnover']
+
+  // Reservation Metrics
+  reservations_honored integer [default: 0]
+  no_shows integer [default: 0]
+  walk_ins_seated integer [default: 0]
+  wait_list_seated integer [default: 0]
+
+  // Quality Metrics
+  cleaning_frequency integer [default: 0]
+  maintenance_issues integer [default: 0]
+  customer_complaints integer [default: 0]
+  customer_compliments integer [default: 0]
+
+  // Generated Analytics
+  generated_at timestamptz [default: 'now()']
+  last_updated_at timestamptz [default: 'now()']
+
+  indexes {
+    (restaurant_id, business_date) [name: 'idx_table_analytics_restaurant_date']
+    (restaurant_id, business_date, table_id) [unique, name: 'idx_table_analytics_unique']
+    table_id [name: 'idx_table_analytics_table']
+    business_date [name: 'idx_table_analytics_date']
+    utilization_percentage [name: 'idx_table_analytics_utilization']
+    total_revenue [name: 'idx_table_analytics_revenue']
+  }
+}
+
+// Relationships
+Ref: TR.table_id > T.id
+Ref: TR.assigned_table_id > T.id
+Ref: TSH.table_id > T.id [delete: cascade]
+Ref: TCL.table_id > T.id [delete: cascade]
+Ref: TAD.table_id > T.id
+Ref: T.assigned_server_id > SS.primary_server_id
+Ref: T.next_reservation_id > TR.id
+
+// Note: External service references (not enforced by foreign keys)
+// - T.current_order_id -> order_service.orders.id
+// - T.assigned_server_id -> auth_service.users.id
+// - T.status_changed_by -> auth_service.users.id
+// - TR.customer_id -> customer_service.customers.id
+// - TR.assigned_server_id -> auth_service.users.id
+// - All created_by/updated_by -> auth_service.users.id

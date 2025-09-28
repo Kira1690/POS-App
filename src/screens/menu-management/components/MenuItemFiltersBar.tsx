@@ -1,6 +1,6 @@
 import React from 'react';
+import { useTheme } from '@/hooks/useTheme';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { ProfessionalTheme } from '@/constants/theme';
 import { MenuItemFilters, CategoryWithStats } from '@/types/menu-management.types';
 
 interface MenuItemFiltersBarProps {
@@ -16,6 +16,8 @@ export const MenuItemFiltersBar: React.FC<MenuItemFiltersBarProps> = ({
   onFiltersChange,
   loading,
 }) => {
+  const { theme } = useTheme();
+
   const updateFilter = (key: keyof MenuItemFilters, value: any) => {
     onFiltersChange({
       ...filters,
@@ -39,6 +41,292 @@ export const MenuItemFiltersBar: React.FC<MenuItemFiltersBarProps> = ({
     { key: 'grid', label: 'Grid', icon: '⊞' },
   ];
 
+  const styles = StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.surfaceLight,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+      ...theme.shadows.sm,
+    },
+
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: theme.spacing.md,
+      gap: theme.spacing.sm,
+    },
+
+    searchContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      paddingHorizontal: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+
+    searchIcon: {
+      fontSize: 16,
+      marginRight: theme.spacing.sm,
+      color: theme.colors.onSurfaceSecondary,
+    },
+
+    searchInput: {
+      flex: 1,
+      ...theme.typography.body2,
+      color: theme.colors.onSurface,
+      paddingVertical: theme.spacing.sm,
+      height: 40,
+    },
+
+    clearButton: {
+      padding: 4,
+    },
+
+    clearIcon: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceSecondary,
+    },
+
+    filterButton: {
+      backgroundColor: theme.colors.surface,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+
+    activeFilterButton: {
+      backgroundColor: theme.colors.successLight,
+      borderColor: theme.colors.success,
+    },
+
+    filterButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontWeight: '500',
+    },
+
+    activeFilterButtonText: {
+      color: theme.colors.success,
+    },
+
+    viewModeContainer: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      overflow: 'hidden',
+    },
+
+    viewModeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      borderRightWidth: 1,
+      borderRightColor: theme.colors.outline,
+    },
+
+    activeViewModeButton: {
+      backgroundColor: theme.colors.primary,
+    },
+
+    viewModeIcon: {
+      fontSize: 12,
+      marginRight: 4,
+      color: theme.colors.onSurfaceSecondary,
+    },
+
+    activeViewModeIcon: {
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+
+    viewModeText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontSize: 10,
+    },
+
+    activeViewModeText: {
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+
+    bottomRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.lg,
+    },
+
+    filterLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      marginRight: theme.spacing.xs,
+    },
+
+    categoryFilterContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+
+    categoryScroll: {
+      flex: 1,
+    },
+
+    categoryButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 6,
+      borderRadius: theme.borderRadius.sm,
+      marginRight: theme.spacing.xs,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+
+    activeCategoryButton: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+    },
+
+    categoryButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontSize: 10,
+    },
+
+    activeCategoryButtonText: {
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+
+    categoryItemCount: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceLight,
+      fontSize: 9,
+      marginLeft: 2,
+    },
+
+    sortContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+    },
+
+    sortButtons: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      overflow: 'hidden',
+    },
+
+    sortOption: {
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 6,
+      borderRightWidth: 1,
+      borderRightColor: theme.colors.outline,
+    },
+
+    activeSortOption: {
+      backgroundColor: theme.colors.primary,
+    },
+
+    sortOptionText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontSize: 10,
+    },
+
+    activeSortOptionText: {
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+
+    sortOrderButton: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      borderRadius: theme.borderRadius.sm,
+      padding: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: 24,
+    },
+
+    sortOrderIcon: {
+      fontSize: 12,
+      color: theme.colors.onSurface,
+      fontWeight: '600',
+    },
+
+    activeFiltersContainer: {
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.outline,
+      paddingTop: theme.spacing.sm,
+      marginTop: theme.spacing.sm,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+
+    activeFiltersLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      marginRight: theme.spacing.sm,
+    },
+
+    activeFilters: {
+      flexDirection: 'row',
+      gap: theme.spacing.xs,
+      marginRight: theme.spacing.sm,
+    },
+
+    activeFilter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.infoLight,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.info,
+    },
+
+    activeFilterText: {
+      ...theme.typography.caption,
+      color: theme.colors.info,
+      fontSize: 9,
+    },
+
+    removeFilter: {
+      marginLeft: 4,
+      padding: 1,
+    },
+
+    removeFilterText: {
+      fontSize: 9,
+      color: theme.colors.info,
+      fontWeight: '600',
+    },
+
+    clearAllFilters: {
+      paddingHorizontal: theme.spacing.xs,
+    },
+
+    clearAllFiltersText: {
+      ...theme.typography.caption,
+      color: theme.colors.error,
+      fontSize: 9,
+      textDecorationLine: 'underline',
+    },
+  });
+
   return (
     <View style={styles.container}>
       {/* Search and Main Filters */}
@@ -49,7 +337,7 @@ export const MenuItemFiltersBar: React.FC<MenuItemFiltersBarProps> = ({
           <TextInput
             style={styles.searchInput}
             placeholder="Search menu items..."
-            placeholderTextColor={ProfessionalTheme.colors.textLight}
+            placeholderTextColor={theme.colors.onSurfaceLight}
             value={filters.searchQuery}
             onChangeText={(text) => updateFilter('searchQuery', text)}
             editable={!loading}
@@ -284,289 +572,3 @@ export const MenuItemFiltersBar: React.FC<MenuItemFiltersBarProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: ProfessionalTheme.colors.surfaceLight,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: ProfessionalTheme.spacing.md,
-    marginBottom: ProfessionalTheme.spacing.lg,
-    ...ProfessionalTheme.shadows.sm,
-  },
-
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: ProfessionalTheme.spacing.md,
-    gap: ProfessionalTheme.spacing.sm,
-  },
-
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-  },
-
-  searchIcon: {
-    fontSize: 16,
-    marginRight: ProfessionalTheme.spacing.sm,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-
-  searchInput: {
-    flex: 1,
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.text,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    height: 40,
-  },
-
-  clearButton: {
-    padding: 4,
-  },
-
-  clearIcon: {
-    fontSize: 14,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-
-  filterButton: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-  },
-
-  activeFilterButton: {
-    backgroundColor: ProfessionalTheme.colors.successLight,
-    borderColor: ProfessionalTheme.colors.success,
-  },
-
-  filterButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontWeight: '500',
-  },
-
-  activeFilterButtonText: {
-    color: ProfessionalTheme.colors.success,
-  },
-
-  viewModeContainer: {
-    flexDirection: 'row',
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-    overflow: 'hidden',
-  },
-
-  viewModeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    paddingVertical: ProfessionalTheme.spacing.xs,
-    borderRightWidth: 1,
-    borderRightColor: ProfessionalTheme.colors.border,
-  },
-
-  activeViewModeButton: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-  },
-
-  viewModeIcon: {
-    fontSize: 12,
-    marginRight: 4,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-
-  activeViewModeIcon: {
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  viewModeText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontSize: 10,
-  },
-
-  activeViewModeText: {
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: ProfessionalTheme.spacing.lg,
-  },
-
-  filterLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    marginRight: ProfessionalTheme.spacing.xs,
-  },
-
-  categoryFilterContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  categoryScroll: {
-    flex: 1,
-  },
-
-  categoryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: ProfessionalTheme.colors.surface,
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    paddingVertical: 6,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    marginRight: ProfessionalTheme.spacing.xs,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-  },
-
-  activeCategoryButton: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-    borderColor: ProfessionalTheme.colors.primary,
-  },
-
-  categoryButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontSize: 10,
-  },
-
-  activeCategoryButtonText: {
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  categoryItemCount: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textLight,
-    fontSize: 9,
-    marginLeft: 2,
-  },
-
-  sortContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: ProfessionalTheme.spacing.xs,
-  },
-
-  sortButtons: {
-    flexDirection: 'row',
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-    overflow: 'hidden',
-  },
-
-  sortOption: {
-    paddingHorizontal: ProfessionalTheme.spacing.xs,
-    paddingVertical: 6,
-    borderRightWidth: 1,
-    borderRightColor: ProfessionalTheme.colors.border,
-  },
-
-  activeSortOption: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-  },
-
-  sortOptionText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontSize: 10,
-  },
-
-  activeSortOptionText: {
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  sortOrderButton: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    padding: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 24,
-  },
-
-  sortOrderIcon: {
-    fontSize: 12,
-    color: ProfessionalTheme.colors.text,
-    fontWeight: '600',
-  },
-
-  activeFiltersContainer: {
-    borderTopWidth: 1,
-    borderTopColor: ProfessionalTheme.colors.border,
-    paddingTop: ProfessionalTheme.spacing.sm,
-    marginTop: ProfessionalTheme.spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  activeFiltersLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    marginRight: ProfessionalTheme.spacing.sm,
-  },
-
-  activeFilters: {
-    flexDirection: 'row',
-    gap: ProfessionalTheme.spacing.xs,
-    marginRight: ProfessionalTheme.spacing.sm,
-  },
-
-  activeFilter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: ProfessionalTheme.colors.infoLight,
-    paddingHorizontal: ProfessionalTheme.spacing.xs,
-    paddingVertical: 2,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.info,
-  },
-
-  activeFilterText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.info,
-    fontSize: 9,
-  },
-
-  removeFilter: {
-    marginLeft: 4,
-    padding: 1,
-  },
-
-  removeFilterText: {
-    fontSize: 9,
-    color: ProfessionalTheme.colors.info,
-    fontWeight: '600',
-  },
-
-  clearAllFilters: {
-    paddingHorizontal: ProfessionalTheme.spacing.xs,
-  },
-
-  clearAllFiltersText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.error,
-    fontSize: 9,
-    textDecorationLine: 'underline',
-  },
-});

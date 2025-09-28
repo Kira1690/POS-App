@@ -1,6 +1,6 @@
 import React from 'react';
+import { useTheme } from '@/hooks/useTheme';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { ProfessionalTheme } from '@/constants/theme';
 import { MenuManagementFilters } from '@/types/menu-management.types';
 
 interface SearchFilterBarProps {
@@ -14,6 +14,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   onFiltersChange,
   loading,
 }) => {
+  const { theme } = useTheme();
   const updateFilter = (key: keyof MenuManagementFilters, value: any) => {
     onFiltersChange({
       ...filters,
@@ -32,6 +33,197 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
     { key: 'updated', label: 'Updated' },
   ];
 
+  const styles = StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.surfaceLight,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+      ...theme.shadows.sm,
+    },
+
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+
+    searchIcon: {
+      fontSize: 16,
+      marginRight: theme.spacing.sm,
+      color: theme.colors.onSurfaceSecondary,
+    },
+
+    searchInput: {
+      flex: 1,
+      ...theme.typography.body2,
+      color: theme.colors.onSurface,
+      paddingVertical: theme.spacing.sm,
+      height: 40,
+    },
+
+    clearButton: {
+      padding: 4,
+    },
+
+    clearIcon: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceSecondary,
+    },
+
+    filtersRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: theme.spacing.sm,
+    },
+
+    filterButton: {
+      backgroundColor: theme.colors.surface,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+
+    activeFilterButton: {
+      backgroundColor: theme.colors.successLight,
+      borderColor: theme.colors.success,
+    },
+
+    filterButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontWeight: '500',
+    },
+
+    activeFilterButtonText: {
+      color: theme.colors.success,
+    },
+
+    sortContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+
+    sortLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+    },
+
+    sortButtons: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      overflow: 'hidden',
+    },
+
+    sortOption: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 6,
+      borderRightWidth: 1,
+      borderRightColor: theme.colors.outline,
+    },
+
+    activeSortOption: {
+      backgroundColor: theme.colors.primary,
+    },
+
+    sortOptionText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontSize: 11,
+    },
+
+    activeSortOptionText: {
+      color: theme.colors.onSurfaceOnPrimary,
+    },
+
+    sortOrderButton: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      borderRadius: theme.borderRadius.sm,
+      padding: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: 28,
+    },
+
+    sortOrderIcon: {
+      fontSize: 12,
+      color: theme.colors.onSurface,
+      fontWeight: '600',
+    },
+
+    activeFiltersContainer: {
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.outline,
+      paddingTop: theme.spacing.sm,
+    },
+
+    activeFiltersLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      marginBottom: theme.spacing.xs,
+    },
+
+    activeFilters: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: theme.spacing.xs,
+      marginBottom: theme.spacing.xs,
+    },
+
+    activeFilter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.infoLight,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.info,
+    },
+
+    activeFilterText: {
+      ...theme.typography.caption,
+      color: theme.colors.info,
+      fontSize: 10,
+    },
+
+    removeFilter: {
+      marginLeft: 4,
+      padding: 2,
+    },
+
+    removeFilterText: {
+      fontSize: 10,
+      color: theme.colors.info,
+      fontWeight: '600',
+    },
+
+    clearAllFilters: {
+      alignSelf: 'flex-start',
+    },
+
+    clearAllFiltersText: {
+      ...theme.typography.caption,
+      color: theme.colors.error,
+      fontSize: 10,
+      textDecorationLine: 'underline',
+    },
+  });
+
   return (
     <View style={styles.container}>
       {/* Search Input */}
@@ -40,7 +232,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
         <TextInput
           style={styles.searchInput}
           placeholder="Search categories..."
-          placeholderTextColor={ProfessionalTheme.colors.textLight}
+          placeholderTextColor={theme.colors.onSurfaceLight}
           value={filters.searchQuery}
           onChangeText={(text) => updateFilter('searchQuery', text)}
           editable={!loading}
@@ -175,194 +367,3 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: ProfessionalTheme.colors.surfaceLight,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: ProfessionalTheme.spacing.md,
-    marginBottom: ProfessionalTheme.spacing.lg,
-    ...ProfessionalTheme.shadows.sm,
-  },
-
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    marginBottom: ProfessionalTheme.spacing.md,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-  },
-
-  searchIcon: {
-    fontSize: 16,
-    marginRight: ProfessionalTheme.spacing.sm,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-
-  searchInput: {
-    flex: 1,
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.text,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    height: 40,
-  },
-
-  clearButton: {
-    padding: 4,
-  },
-
-  clearIcon: {
-    fontSize: 14,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-
-  filtersRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: ProfessionalTheme.spacing.sm,
-  },
-
-  filterButton: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    paddingHorizontal: ProfessionalTheme.spacing.md,
-    paddingVertical: ProfessionalTheme.spacing.sm,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-  },
-
-  activeFilterButton: {
-    backgroundColor: ProfessionalTheme.colors.successLight,
-    borderColor: ProfessionalTheme.colors.success,
-  },
-
-  filterButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontWeight: '500',
-  },
-
-  activeFilterButtonText: {
-    color: ProfessionalTheme.colors.success,
-  },
-
-  sortContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: ProfessionalTheme.spacing.sm,
-  },
-
-  sortLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-  },
-
-  sortButtons: {
-    flexDirection: 'row',
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-    overflow: 'hidden',
-  },
-
-  sortOption: {
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    paddingVertical: 6,
-    borderRightWidth: 1,
-    borderRightColor: ProfessionalTheme.colors.border,
-  },
-
-  activeSortOption: {
-    backgroundColor: ProfessionalTheme.colors.primary,
-  },
-
-  sortOptionText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    fontSize: 11,
-  },
-
-  activeSortOptionText: {
-    color: ProfessionalTheme.colors.textOnPrimary,
-  },
-
-  sortOrderButton: {
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    padding: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 28,
-  },
-
-  sortOrderIcon: {
-    fontSize: 12,
-    color: ProfessionalTheme.colors.text,
-    fontWeight: '600',
-  },
-
-  activeFiltersContainer: {
-    borderTopWidth: 1,
-    borderTopColor: ProfessionalTheme.colors.border,
-    paddingTop: ProfessionalTheme.spacing.sm,
-  },
-
-  activeFiltersLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
-    marginBottom: ProfessionalTheme.spacing.xs,
-  },
-
-  activeFilters: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: ProfessionalTheme.spacing.xs,
-    marginBottom: ProfessionalTheme.spacing.xs,
-  },
-
-  activeFilter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: ProfessionalTheme.colors.infoLight,
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.info,
-  },
-
-  activeFilterText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.info,
-    fontSize: 10,
-  },
-
-  removeFilter: {
-    marginLeft: 4,
-    padding: 2,
-  },
-
-  removeFilterText: {
-    fontSize: 10,
-    color: ProfessionalTheme.colors.info,
-    fontWeight: '600',
-  },
-
-  clearAllFilters: {
-    alignSelf: 'flex-start',
-  },
-
-  clearAllFiltersText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.error,
-    fontSize: 10,
-    textDecorationLine: 'underline',
-  },
-});

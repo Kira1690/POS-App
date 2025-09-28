@@ -1,6 +1,6 @@
 import React from 'react';
+import { useTheme } from '@/hooks/useTheme';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ProfessionalTheme } from '@/constants/theme';
 import { CategoryWithStats } from '@/types/menu-management.types';
 
 interface CategoryCardProps {
@@ -9,6 +9,8 @@ interface CategoryCardProps {
 }
 
 export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }) => {
+  const { theme } = useTheme();
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -17,12 +19,152 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }
   };
 
   const getStatusColor = () => {
-    return category.is_active ? ProfessionalTheme.colors.success : ProfessionalTheme.colors.error;
+    return category.is_active ? theme.colors.success : theme.colors.error;
   };
 
   const getStatusBgColor = () => {
-    return category.is_active ? ProfessionalTheme.colors.successLight : ProfessionalTheme.colors.errorLight;
+    return category.is_active ? theme.colors.successLight : theme.colors.errorLight;
   };
+
+  const styles = StyleSheet.create({
+    card: {
+      width: '48%',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      marginHorizontal: theme.spacing.sm,
+      marginBottom: theme.spacing.md,
+      ...theme.shadows.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      minHeight: 220,
+    },
+    inactiveCard: {
+      opacity: 0.8,
+      borderColor: theme.colors.outlineLight,
+    },
+    statusBadge: {
+      position: 'absolute',
+      top: theme.spacing.sm,
+      right: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.xl,
+    },
+    statusText: {
+      ...theme.typography.caption,
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    header: {
+      marginBottom: theme.spacing.sm,
+      marginTop: theme.spacing.xs,
+    },
+    categoryName: {
+      ...theme.typography.h4,
+      color: theme.colors.onSurface,
+      marginBottom: 4,
+    },
+    inactiveText: {
+      color: theme.colors.onSurfaceSecondary,
+    },
+    itemCount: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+    },
+    description: {
+      ...theme.typography.body2,
+      color: theme.colors.onSurfaceSecondary,
+      marginBottom: theme.spacing.sm,
+      lineHeight: 16,
+    },
+    statsContainer: {
+      marginBottom: theme.spacing.sm,
+    },
+    statRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    statLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      flex: 1,
+    },
+    statValue: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurface,
+      fontWeight: '600',
+      flex: 1,
+      textAlign: 'right',
+    },
+    popularItems: {
+      marginBottom: theme.spacing.sm,
+    },
+    popularTitle: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurface,
+      fontWeight: '600',
+      marginBottom: 2,
+    },
+    popularList: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceSecondary,
+      fontSize: 10,
+      lineHeight: 12,
+    },
+    actionsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: theme.spacing.xs,
+      gap: 4,
+    },
+    actionButton: {
+      flex: 1,
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      borderRadius: theme.borderRadius.sm,
+      alignItems: 'center',
+    },
+    editButton: {
+      backgroundColor: theme.colors.info,
+    },
+    editButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceOnPrimary,
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    itemsButton: {
+      backgroundColor: theme.colors.primary,
+    },
+    itemsButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceOnPrimary,
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    toggleButton: {
+      backgroundColor: theme.colors.warning,
+    },
+    toggleButtonText: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceOnPrimary,
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    deleteArea: {
+      alignItems: 'center',
+      paddingVertical: 4,
+    },
+    deleteHint: {
+      ...theme.typography.caption,
+      color: theme.colors.onSurfaceLight,
+      fontSize: 9,
+      fontStyle: 'italic',
+    },
+  });
 
   return (
     <View style={[styles.card, !category.is_active && styles.inactiveCard]}>
@@ -123,66 +265,66 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }
 const styles = StyleSheet.create({
   card: {
     width: '48%',
-    backgroundColor: ProfessionalTheme.colors.surface,
-    borderRadius: ProfessionalTheme.borderRadius.md,
-    padding: ProfessionalTheme.spacing.md,
-    marginHorizontal: ProfessionalTheme.spacing.sm,
-    marginBottom: ProfessionalTheme.spacing.md,
-    ...ProfessionalTheme.shadows.sm,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginHorizontal: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
     borderWidth: 1,
-    borderColor: ProfessionalTheme.colors.border,
+    borderColor: theme.colors.outline,
     minHeight: 220,
   },
 
   inactiveCard: {
     opacity: 0.8,
-    borderColor: ProfessionalTheme.colors.borderLight,
+    borderColor: theme.colors.outlineLight,
   },
 
   statusBadge: {
     position: 'absolute',
-    top: ProfessionalTheme.spacing.sm,
-    right: ProfessionalTheme.spacing.sm,
-    paddingHorizontal: ProfessionalTheme.spacing.sm,
+    top: theme.spacing.sm,
+    right: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
-    borderRadius: ProfessionalTheme.borderRadius.xl,
+    borderRadius: theme.borderRadius.xl,
   },
 
   statusText: {
-    ...ProfessionalTheme.typography.caption,
+    ...theme.typography.caption,
     fontSize: 10,
     fontWeight: '600',
   },
 
   header: {
-    marginBottom: ProfessionalTheme.spacing.sm,
-    marginTop: ProfessionalTheme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
   },
 
   categoryName: {
-    ...ProfessionalTheme.typography.h4,
-    color: ProfessionalTheme.colors.text,
+    ...theme.typography.h4,
+    color: theme.colors.onSurface,
     marginBottom: 4,
   },
 
   inactiveText: {
-    color: ProfessionalTheme.colors.textSecondary,
+    color: theme.colors.onSurfaceSecondary,
   },
 
   itemCount: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
+    ...theme.typography.caption,
+    color: theme.colors.onSurfaceSecondary,
   },
 
   description: {
-    ...ProfessionalTheme.typography.body2,
-    color: ProfessionalTheme.colors.textSecondary,
-    marginBottom: ProfessionalTheme.spacing.sm,
+    ...theme.typography.body2,
+    color: theme.colors.onSurfaceSecondary,
+    marginBottom: theme.spacing.sm,
     lineHeight: 16,
   },
 
   statsContainer: {
-    marginBottom: ProfessionalTheme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
 
   statRow: {
@@ -193,33 +335,33 @@ const styles = StyleSheet.create({
   },
 
   statLabel: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
+    ...theme.typography.caption,
+    color: theme.colors.onSurfaceSecondary,
     flex: 1,
   },
 
   statValue: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.text,
+    ...theme.typography.caption,
+    color: theme.colors.onSurface,
     fontWeight: '600',
     flex: 1,
     textAlign: 'right',
   },
 
   popularItems: {
-    marginBottom: ProfessionalTheme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
 
   popularTitle: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.text,
+    ...theme.typography.caption,
+    color: theme.colors.onSurface,
     fontWeight: '600',
     marginBottom: 2,
   },
 
   popularList: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textSecondary,
+    ...theme.typography.caption,
+    color: theme.colors.onSurfaceSecondary,
     fontSize: 10,
     lineHeight: 12,
   },
@@ -227,7 +369,7 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: ProfessionalTheme.spacing.xs,
+    marginBottom: theme.spacing.xs,
     gap: 4,
   },
 
@@ -235,39 +377,39 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 6,
     paddingHorizontal: 8,
-    borderRadius: ProfessionalTheme.borderRadius.sm,
+    borderRadius: theme.borderRadius.sm,
     alignItems: 'center',
   },
 
   editButton: {
-    backgroundColor: ProfessionalTheme.colors.info,
+    backgroundColor: theme.colors.info,
   },
 
   editButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textOnPrimary,
+    ...theme.typography.caption,
+    color: theme.colors.onSurfaceOnPrimary,
     fontSize: 10,
     fontWeight: '600',
   },
 
   itemsButton: {
-    backgroundColor: ProfessionalTheme.colors.primary,
+    backgroundColor: theme.colors.primary,
   },
 
   itemsButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textOnPrimary,
+    ...theme.typography.caption,
+    color: theme.colors.onSurfaceOnPrimary,
     fontSize: 10,
     fontWeight: '600',
   },
 
   toggleButton: {
-    backgroundColor: ProfessionalTheme.colors.warning,
+    backgroundColor: theme.colors.warning,
   },
 
   toggleButtonText: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textOnPrimary,
+    ...theme.typography.caption,
+    color: theme.colors.onSurfaceOnPrimary,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -278,8 +420,8 @@ const styles = StyleSheet.create({
   },
 
   deleteHint: {
-    ...ProfessionalTheme.typography.caption,
-    color: ProfessionalTheme.colors.textLight,
+    ...theme.typography.caption,
+    color: theme.colors.onSurfaceLight,
     fontSize: 9,
     fontStyle: 'italic',
   },
