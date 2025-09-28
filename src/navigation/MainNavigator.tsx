@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '@/hooks/useTheme';
 import { 
   MainTabParamList, 
   TablesStackParamList, 
@@ -120,37 +121,43 @@ const DashboardWithProvider = () => (
 
 // Remove old OrdersScreen as we now use OrdersStackNavigator
 
-const MenuScreen = () => (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Menu Screen</Text>
-  </View>
-);
+const MenuScreen = () => {
+  const { theme } = useTheme();
+  return (
+    <View style={[styles.placeholderContainer, { backgroundColor: theme.colors.background }]}>
+      <Text style={[styles.placeholderText, { color: theme.colors.onSurfaceVariant }]}>Menu Screen</Text>
+    </View>
+  );
+};
 
-const SettingsScreen = () => (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Settings Screen</Text>
-  </View>
-);
+const SettingsScreen = () => {
+  const { theme } = useTheme();
+  return (
+    <View style={[styles.placeholderContainer, { backgroundColor: theme.colors.background }]}>
+      <Text style={[styles.placeholderText, { color: theme.colors.onSurfaceVariant }]}>Settings Screen</Text>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   placeholderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   placeholderText: {
     fontSize: 18,
-    color: '#666',
   },
 });
 
 export const MainNavigator: React.FC = () => {
+  const { theme } = useTheme();
+
   return (
     <Tab.Navigator
       initialRouteName="Orders"
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof MaterialIcons.glyphMap;
 
           switch (route.name) {
@@ -178,15 +185,19 @@ export const MainNavigator: React.FC = () => {
 
           return <MaterialIcons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#2196F3',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.outline,
+        },
         headerShown: true,
       })}
     >
-      <Tab.Screen 
-        name="Dashboard" 
+      <Tab.Screen
+        name="Dashboard"
         component={DashboardWithProvider}
-        options={{ title: 'Dashboard' }}
+        options={{ title: 'Dashboard', headerShown: false }}
       />
       <Tab.Screen 
         name="Orders" 

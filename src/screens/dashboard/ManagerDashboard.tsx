@@ -26,6 +26,8 @@ import {
   getOrderCompletionRate,
   type ManagerDashboardData
 } from '@/data/dashboard/managerDashboard';
+import { WEEKLY_SALES_DATA, CATEGORY_SALES_DATA } from '@/data/charts/salesChartData';
+import { SimpleLineChart } from './components/SimpleLineChart';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
@@ -81,9 +83,7 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
     { label: 'Orders', icon: 'receipt-long' },
     { label: 'Tables', icon: 'table-restaurant' },
     { label: 'Kitchen', icon: 'kitchen' },
-    { label: 'Menu', icon: 'restaurant-menu' },
     { label: 'Reports', icon: 'analytics' },
-    { label: 'Settings', icon: 'settings' },
   ];
 
   // Use centralized quick actions data
@@ -111,7 +111,7 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
         <TouchableOpacity style={styles.notificationBadge}>
           <MaterialIcons name="notifications" size={24} color={theme.colors.onPrimary} />
           {dashboardData.notifications > 0 && (
-            <View style={[styles.badge, { backgroundColor: '#dc3545' }]}>
+            <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
               <Text style={styles.badgeText}>{dashboardData.notifications}</Text>
             </View>
           )}
@@ -157,10 +157,10 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
             Today's Sales
           </Text>
         </View>
-        <Text style={[styles.statsValue, { color: '#28a745' }]}>
+        <Text style={[styles.statsValue, { color: theme.colors.success }]}>
           {dashboardData.stats.todaysSales.value}
         </Text>
-        <Text style={[styles.statsChange, { color: '#28a745' }]}>
+        <Text style={[styles.statsChange, { color: theme.colors.success }]}>
           ↗️ {dashboardData.stats.todaysSales.change} from yesterday
         </Text>
       </View>
@@ -173,7 +173,7 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
             Active Orders
           </Text>
         </View>
-        <Text style={[styles.statsValue, { color: '#007bff' }]}>
+        <Text style={[styles.statsValue, { color: theme.colors.tertiary }]}>
           {dashboardData.stats.activeOrders.value}
         </Text>
         <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
@@ -189,7 +189,7 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
             Table Occupancy
           </Text>
         </View>
-        <Text style={[styles.statsValue, { color: '#fd7e14' }]}>
+        <Text style={[styles.statsValue, { color: theme.colors.warning }]}>
           {dashboardData.stats.tableOccupancy.value}
         </Text>
         <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
@@ -205,7 +205,7 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
             Staff On Duty
           </Text>
         </View>
-        <Text style={[styles.statsValue, { color: '#6610f2' }]}>
+        <Text style={[styles.statsValue, { color: theme.colors.tertiary }]}>
           {dashboardData.stats.staffOnDuty.value}
         </Text>
         <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
@@ -227,15 +227,17 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
       {/* Charts and Orders Row */}
       <View style={styles.middleRow}>
         {/* Sales Chart */}
-        <View style={[styles.chartContainer, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-            Sales Trend (Last 7 Days)
-          </Text>
-          <View style={styles.chartPlaceholder}>
-            <Text style={[styles.placeholderText, { color: theme.colors.onSurfaceVariant }]}>
-              📊 Sales Chart Visualization{'\n\n'}Interactive chart showing:{'\n'}• Daily sales comparison{'\n'}• Revenue trends{'\n'}• Peak hours analysis{'\n'}• Order volume patterns
-            </Text>
-          </View>
+        <View style={[styles.chartContainer, { backgroundColor: 'transparent' }]}>
+          <SimpleLineChart
+            data={WEEKLY_SALES_DATA.map(day => ({
+              label: day.date,
+              value: day.sales,
+              date: day.date,
+            }))}
+            title="Sales Trend (Last 7 Days)"
+            height={320}
+            accentColor={theme.colors.tertiary}
+          />
         </View>
 
         {/* Recent Orders */}
@@ -251,17 +253,37 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
             </TouchableOpacity>
           </View>
           
-          {dashboardData.recentOrders.map((order) => (
-            <View 
-              key={order.id} 
-              style={[
-                styles.orderItem, 
-                { backgroundColor: `${order.statusColor}20`, borderColor: order.statusColor }
-              ]}
-            >
-              <Text style={[styles.orderText, { color: theme.colors.onSurface }]}>
-                {order.table} | {order.amount} | 🟡 {order.status}
-              </Text>
+          {dashboardData.recentOrders.map((order, index) => (
+            <View key={order.id}>
+              <View style={[styles.orderItem, { backgroundColor: theme.colors.surface }]}>
+                <View style={styles.orderContent}>
+                  <View style={styles.orderHeader}>
+                    <Text style={[styles.orderTitle, { color: theme.colors.onSurface }]}>
+                      {order.table}
+                    </Text>
+                    <Text style={[styles.orderAmount, { color: theme.colors.onSurface }]}>
+                      {order.amount}
+                    </Text>
+                  </View>
+                  <View style={styles.orderStatus}>
+                    <View
+                      style={[
+                        styles.statusIndicator,
+                        { backgroundColor: order.statusColor }
+                      ]}
+                    />
+                    <Text style={[styles.statusText, { color: theme.colors.onSurfaceVariant }]}>
+                      {order.status}
+                    </Text>
+                    <Text style={[styles.orderTime, { color: theme.colors.onSurfaceVariant }]}>
+                      • {order.time}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              {index < dashboardData.recentOrders.length - 1 && (
+                <View style={[styles.orderSeparator, { backgroundColor: theme.colors.outline }]} />
+              )}
             </View>
           ))}
         </View>
@@ -286,6 +308,16 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
             </TouchableOpacity>
           ))}
         </View>
+      </View>
+
+      {/* Category Breakdown - Temporarily removed */}
+      <View style={[styles.categoryChartContainer, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface, textAlign: 'center' }]}>
+          📊 Category Analytics
+        </Text>
+        <Text style={[styles.placeholderText, { color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: theme.spacing.md }]}>
+          Advanced category breakdown chart will be restored after resolving Metro bundler compatibility.
+        </Text>
       </View>
     </ScrollView>
   );
@@ -483,17 +515,64 @@ const styles = StyleSheet.create({
   orderItem: {
     padding: spacing.md,
     borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    marginBottom: spacing.sm,
+    marginBottom: 0,
   },
-  orderText: {
+  orderContent: {
+    flex: 1,
+  },
+  orderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  orderTitle: {
     ...typography.bodyMedium,
+    fontWeight: '600',
+    flex: 1,
+  },
+  orderAmount: {
+    ...typography.bodyMedium,
+    fontWeight: '600',
+  },
+  orderStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statusIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusText: {
+    ...typography.bodySmall,
+    fontSize: 13,
+  },
+  orderTime: {
+    ...typography.bodySmall,
+    fontSize: 13,
+  },
+  orderSeparator: {
+    height: 0.5,
+    marginHorizontal: spacing.md,
   },
   quickActionsContainer: {
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)',
+    marginBottom: spacing.xl,
+  },
+  categoryChartContainer: {
+    marginBottom: spacing.xl,
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+  },
+  placeholderText: {
+    ...typography.bodyMedium,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   actionsGrid: {
     flexDirection: 'row',
