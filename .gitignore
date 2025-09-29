@@ -42,3 +42,8 @@ yarn-error.*
 # images
 images
 
+# Android build outputs
+android/app/build/
+*.apk
+*.aab
+

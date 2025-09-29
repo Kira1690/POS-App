@@ -12,6 +12,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import {
   AppleDashboardPanel,
@@ -44,28 +45,18 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
   const { theme } = useTheme();
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return '#FF3B30';
-      case 'high': return '#FF9500';
-      default: return '#32D74B';
-    }
+    return theme.colors.statusColors[priority as keyof typeof theme.colors.statusColors] || theme.colors.statusColors.normal;
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return '#FF3B30';
-      case 'preparing': return '#FF9500';
-      case 'ready': return '#32D74B';
-      case 'served': return '#007AFF';
-      default: return theme.colors.outline;
-    }
+    return theme.colors.statusColors[status as keyof typeof theme.colors.statusColors] || theme.colors.outline;
   };
 
   const getTimeColor = (timeElapsed: number, estimatedTime: number) => {
     const ratio = timeElapsed / estimatedTime;
-    if (ratio > 1.2) return '#FF3B30'; // Overdue
-    if (ratio > 0.8) return '#FF9500'; // Nearly due
-    return '#32D74B'; // On time
+    if (ratio > 1.2) return theme.colors.statusColors.poor; // Overdue
+    if (ratio > 0.8) return theme.colors.statusColors.average; // Nearly due
+    return theme.colors.statusColors.excellent; // On time
   };
 
   const styles = {
@@ -137,7 +128,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
       marginTop: 2,
     },
     allergenTag: {
-      backgroundColor: '#FF3B30',
+      backgroundColor: theme.colors.statusColors.error,
       paddingHorizontal: 6,
       paddingVertical: 2,
       borderRadius: theme.borderRadius.sm,
@@ -145,7 +136,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
     },
     allergenText: {
       fontSize: 10,
-      color: '#FFFFFF',
+      color: theme.colors.onError,
       fontWeight: '600' as const,
     },
     actionsContainer: {
@@ -153,7 +144,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
       gap: 8,
     },
     overdueIndicator: {
-      backgroundColor: '#FF3B30',
+      backgroundColor: theme.colors.statusColors.error,
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: theme.borderRadius.sm,
@@ -162,7 +153,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
     },
     overdueText: {
       fontSize: 12,
-      color: '#FFFFFF',
+      color: theme.colors.onError,
       fontWeight: '600' as const,
     },
   };
@@ -173,7 +164,10 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
     <AppleCard layer="surface" size="large" style={styles.card}>
       {order.isOverdue && (
         <View style={styles.overdueIndicator}>
-          <Text style={styles.overdueText}>⚠️ OVERDUE</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MaterialIcons name="warning" size={16} color={theme.colors.statusColors.error} />
+            <Text style={styles.overdueText}>OVERDUE</Text>
+          </View>
         </View>
       )}
 
@@ -194,12 +188,16 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
       </View>
 
       <View style={styles.timeContainer}>
-        <Text style={[styles.timeText, { color: timeElapsedColor }]}>
-          ⏱️ {order.timeElapsed}m / {order.estimatedTime}m
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <MaterialIcons name="access-time" size={16} color={timeElapsedColor} />
+          <Text style={[styles.timeText, { color: timeElapsedColor }]}>
+            {order.timeElapsed}m / {order.estimatedTime}m
+          </Text>
+        </View>
         <AppleProgressBar
           progress={Math.min(order.timeElapsed / order.estimatedTime, 1)}
-          color={timeElapsedColor === '#32D74B' ? 'success' : timeElapsedColor === '#FF9500' ? 'warning' : 'error'}
+          color={timeElapsedColor === theme.colors.statusColors.excellent ? 'success' :
+                 timeElapsedColor === theme.colors.statusColors.average ? 'warning' : 'error'}
           size="small"
           style={{ flex: 1 }}
         />
@@ -232,9 +230,12 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
       </View>
 
       {order.specialNotes && (
-        <Text style={[styles.specialInstructions, { marginBottom: 12 }]}>
-          🗒️ Special Notes: {order.specialNotes}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginBottom: 12 }}>
+          <MaterialIcons name="note" size={16} color={theme.colors.onSurfaceVariant} />
+          <Text style={[styles.specialInstructions, { flex: 1 }]}>
+            Special Notes: {order.specialNotes}
+          </Text>
+        </View>
       )}
 
       <View style={styles.actionsContainer}>
@@ -282,13 +283,7 @@ const KitchenStationCard: React.FC<KitchenStationCardProps> = ({ station, onView
   const { theme } = useTheme();
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return '#32D74B';
-      case 'busy': return '#FF9500';
-      case 'break': return '#8E8E93';
-      case 'offline': return '#FF3B30';
-      default: return theme.colors.outline;
-    }
+    return theme.colors.statusColors[status as keyof typeof theme.colors.statusColors] || theme.colors.outline;
   };
 
   const styles = {
@@ -348,7 +343,9 @@ const KitchenStationCard: React.FC<KitchenStationCardProps> = ({ station, onView
     efficiencyValue: {
       fontSize: 14,
       fontWeight: '600' as const,
-      color: station.efficiency >= 90 ? '#32D74B' : station.efficiency >= 75 ? '#FF9500' : '#FF3B30',
+      color: station.efficiency >= 90 ? theme.colors.statusColors.excellent :
+             station.efficiency >= 75 ? theme.colors.statusColors.average :
+             theme.colors.statusColors.poor,
     },
   };
 
@@ -358,16 +355,16 @@ const KitchenStationCard: React.FC<KitchenStationCardProps> = ({ station, onView
         <View style={styles.header}>
           <Text style={styles.stationName}>{station.name}</Text>
           <AppleStatusPill
-            status={station.status === 'active' ? 'success' : station.status === 'busy' ? 'warning' : 'neutral'}
+            status={station.status === 'active' ? 'success' : station.status === 'busy' ? 'info' : 'neutral'}
             text={station.status.toUpperCase()}
             size="small"
           />
         </View>
 
-        <Text style={styles.chefName}>👨‍🍳 {station.chef}</Text>
+        <Text style={styles.chefName}>Chef: {station.chef}</Text>
 
         <Text style={styles.ordersCount}>
-          📋 {station.currentOrders.length} active orders
+          {station.currentOrders.length} active orders
         </Text>
 
         <View style={styles.specialtyContainer}>
@@ -522,7 +519,7 @@ const KitchenStaffDashboard: React.FC = () => {
       marginBottom: 16,
     },
     urgentAlert: {
-      backgroundColor: '#FF3B30',
+      backgroundColor: theme.colors.statusColors.urgent,
       padding: 12,
       borderRadius: theme.borderRadius.md,
       marginBottom: 16,
@@ -531,7 +528,7 @@ const KitchenStaffDashboard: React.FC = () => {
       gap: 8,
     },
     urgentText: {
-      color: '#FFFFFF',
+      color: theme.colors.onError,
       fontWeight: '600' as const,
       flex: 1,
     },
@@ -565,7 +562,7 @@ const KitchenStaffDashboard: React.FC = () => {
         size="small"
       />
       <AppleButton
-        title="🔄 Refresh"
+        title="Refresh"
         variant="secondary"
         size="medium"
         onPress={handleRefresh}
@@ -573,12 +570,203 @@ const KitchenStaffDashboard: React.FC = () => {
     </View>
   );
 
+  // Render header components for FlatList
+  const renderHeaderComponents = () => (
+    <View style={{ padding: 16 }}>
+      {/* Header Title */}
+      <View style={{ marginBottom: 24 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize: 28,
+              fontWeight: '700',
+              color: theme.colors.onSurface,
+              marginBottom: 4,
+            }}>
+              Kitchen Dashboard
+            </Text>
+            <Text style={{
+              fontSize: 14,
+              color: theme.colors.onSurfaceVariant,
+            }}>
+              {`${data.stats.activeOrders} Active Orders • ${data.stats.averageTime}m Avg Time • ${data.stats.efficiency}% Efficiency`}
+            </Text>
+          </View>
+          {headerActions}
+        </View>
+      </View>
+
+      {/* Urgent Alert */}
+      {(urgentOrders.length > 0 || overdueOrders.length > 0) && (
+        <View style={[styles.urgentAlert, { marginBottom: 16 }]}>
+          <Text style={styles.urgentText}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <MaterialIcons name="warning" size={16} color={theme.colors.statusColors.urgent} />
+              <Text>{urgentOrders.length} urgent orders • {overdueOrders.length} overdue orders</Text>
+            </View>
+          </Text>
+          <AppleButton
+            title="View"
+            variant="ghost"
+            size="small"
+            onPress={() => setSelectedPriority('urgent')}
+          />
+        </View>
+      )}
+
+      {/* Kitchen Stats */}
+      <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <MaterialIcons name="analytics" size={20} color={theme.colors.primary} />
+          <Text style={styles.sectionTitle}>Kitchen Performance</Text>
+        </View>
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{data.stats.activeOrders}</Text>
+            <Text style={styles.statLabel}>Active Orders</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{data.stats.completedToday}</Text>
+            <Text style={styles.statLabel}>Completed Today</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{data.stats.averageTime}m</Text>
+            <Text style={styles.statLabel}>Avg Prep Time</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{data.stats.efficiency}%</Text>
+            <Text style={styles.statLabel}>Efficiency</Text>
+          </View>
+        </View>
+      </AppleCard>
+
+      {/* Kitchen Stations */}
+      <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <MaterialIcons name="restaurant" size={20} color={theme.colors.primary} />
+          <Text style={styles.sectionTitle}>Kitchen Stations</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={{ flexDirection: 'row', paddingVertical: 8 }}>
+            {data.stations.map((station) => (
+              <KitchenStationCard
+                key={station.id}
+                station={station}
+                onViewOrders={handleViewStationOrders}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </AppleCard>
+
+      {/* Filters */}
+      <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <MaterialIcons name="filter-list" size={20} color={theme.colors.primary} />
+          <Text style={styles.sectionTitle}>Filter Orders</Text>
+        </View>
+
+        <Text style={[styles.sectionTitle, { fontSize: 14, marginBottom: 8 }]}>Status</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.filtersContainer}>
+            {statusFilters.map((filter) => (
+              <AppleInteractive
+                key={filter.key}
+                onPress={() => setSelectedStatus(filter.key)}
+                feedbackType="scale"
+              >
+                <AppleCard
+                  layer={selectedStatus === filter.key ? "primary" : "surfaceVariant"}
+                  size="small"
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 14,
+                    fontWeight: '500',
+                    color: selectedStatus === filter.key ? theme.colors.onPrimary : theme.colors.onSurface,
+                  }}>
+                    {filter.label}
+                  </Text>
+                  <AppleStatusPill
+                    status="neutral"
+                    text={filter.count.toString()}
+                    size="small"
+                  />
+                </AppleCard>
+              </AppleInteractive>
+            ))}
+          </View>
+        </ScrollView>
+
+        <Text style={[styles.sectionTitle, { fontSize: 14, marginTop: 12, marginBottom: 8 }]}>Priority</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.filtersContainer}>
+            {priorityFilters.map((filter) => (
+              <AppleInteractive
+                key={filter.key}
+                onPress={() => setSelectedPriority(filter.key)}
+                feedbackType="scale"
+              >
+                <AppleCard
+                  layer={selectedPriority === filter.key ? "primary" : "surfaceVariant"}
+                  size="small"
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 14,
+                    fontWeight: '500',
+                    color: selectedPriority === filter.key ? theme.colors.onPrimary : theme.colors.onSurface,
+                  }}>
+                    {filter.label}
+                  </Text>
+                  <AppleStatusPill
+                    status="neutral"
+                    text={filter.count.toString()}
+                    size="small"
+                  />
+                </AppleCard>
+              </AppleInteractive>
+            ))}
+          </View>
+        </ScrollView>
+      </AppleCard>
+
+      {/* Orders List Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, paddingHorizontal: 16 }}>
+        <MaterialIcons name="assignment" size={20} color={theme.colors.primary} />
+        <Text style={styles.sectionTitle}>Kitchen Orders ({filteredOrders.length})</Text>
+      </View>
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-      <AppleDashboardPanel
-        title="Kitchen Dashboard"
-        subtitle={`${data.stats.activeOrders} Active Orders • ${data.stats.averageTime}m Avg Time • ${data.stats.efficiency}% Efficiency`}
-        headerActions={headerActions}
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <FlatList
+        data={filteredOrders}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <KitchenOrderCard
+              order={item}
+              onUpdateStatus={handleOrderStatusUpdate}
+              onViewDetails={handleViewOrderDetails}
+            />
+          </View>
+        )}
+        ListHeaderComponent={renderHeaderComponents}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -587,179 +775,30 @@ const KitchenStaffDashboard: React.FC = () => {
             tintColor={theme.colors.primary}
           />
         }
-      >
-        {/* Urgent Alert */}
-        {(urgentOrders.length > 0 || overdueOrders.length > 0) && (
-          <View style={styles.urgentAlert}>
-            <Text style={styles.urgentText}>
-              ⚠️ {urgentOrders.length} urgent orders • {overdueOrders.length} overdue orders
-            </Text>
-            <AppleButton
-              title="View"
-              variant="ghost"
-              size="small"
-              onPress={() => setSelectedPriority('urgent')}
-            />
+        contentContainerStyle={{ paddingBottom: 20 }}
+        ListEmptyComponent={
+          <View style={{ paddingHorizontal: 16 }}>
+            <AppleCard layer="surfaceVariant" size="large" style={{ alignItems: 'center', padding: 32 }}>
+              <MaterialIcons name="restaurant" size={48} color={theme.colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
+              <Text style={{
+                fontSize: 18,
+                fontWeight: '600',
+                color: theme.colors.onSurface,
+                marginBottom: 8,
+              }}>
+                No Orders to Prepare
+              </Text>
+              <Text style={{
+                fontSize: 14,
+                color: theme.colors.onSurfaceVariant,
+                textAlign: 'center',
+              }}>
+                All orders are up to date! Great work!
+              </Text>
+            </AppleCard>
           </View>
-        )}
-
-        {/* Kitchen Stats */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>📊 Kitchen Performance</Text>
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{data.stats.activeOrders}</Text>
-              <Text style={styles.statLabel}>Active Orders</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{data.stats.completedToday}</Text>
-              <Text style={styles.statLabel}>Completed Today</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{data.stats.averageTime}m</Text>
-              <Text style={styles.statLabel}>Avg Prep Time</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{data.stats.efficiency}%</Text>
-              <Text style={styles.statLabel}>Efficiency</Text>
-            </View>
-          </View>
-        </AppleCard>
-
-        {/* Kitchen Stations */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>🏪 Kitchen Stations</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={{ flexDirection: 'row', paddingVertical: 8 }}>
-              {data.stations.map((station) => (
-                <KitchenStationCard
-                  key={station.id}
-                  station={station}
-                  onViewOrders={handleViewStationOrders}
-                />
-              ))}
-            </View>
-          </ScrollView>
-        </AppleCard>
-
-        {/* Filters */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>🔍 Filter Orders</Text>
-
-          <Text style={[styles.sectionTitle, { fontSize: 14, marginBottom: 8 }]}>Status</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.filtersContainer}>
-              {statusFilters.map((filter) => (
-                <AppleInteractive
-                  key={filter.key}
-                  onPress={() => setSelectedStatus(filter.key)}
-                  feedbackType="scale"
-                >
-                  <AppleCard
-                    layer={selectedStatus === filter.key ? "primary" : "surfaceVariant"}
-                    size="small"
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    <Text style={{
-                      fontSize: 14,
-                      fontWeight: '500',
-                      color: selectedStatus === filter.key ? theme.colors.onPrimary : theme.colors.onSurface,
-                    }}>
-                      {filter.label}
-                    </Text>
-                    <AppleStatusPill
-                      status="neutral"
-                      text={filter.count.toString()}
-                      size="small"
-                    />
-                  </AppleCard>
-                </AppleInteractive>
-              ))}
-            </View>
-          </ScrollView>
-
-          <Text style={[styles.sectionTitle, { fontSize: 14, marginTop: 12, marginBottom: 8 }]}>Priority</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.filtersContainer}>
-              {priorityFilters.map((filter) => (
-                <AppleInteractive
-                  key={filter.key}
-                  onPress={() => setSelectedPriority(filter.key)}
-                  feedbackType="scale"
-                >
-                  <AppleCard
-                    layer={selectedPriority === filter.key ? "primary" : "surfaceVariant"}
-                    size="small"
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    <Text style={{
-                      fontSize: 14,
-                      fontWeight: '500',
-                      color: selectedPriority === filter.key ? theme.colors.onPrimary : theme.colors.onSurface,
-                    }}>
-                      {filter.label}
-                    </Text>
-                    <AppleStatusPill
-                      status="neutral"
-                      text={filter.count.toString()}
-                      size="small"
-                    />
-                  </AppleCard>
-                </AppleInteractive>
-              ))}
-            </View>
-          </ScrollView>
-        </AppleCard>
-
-        {/* Orders List */}
-        <AppleCard layer="surface" size="large">
-          <Text style={styles.sectionTitle}>📋 Kitchen Orders ({filteredOrders.length})</Text>
-          <FlatList
-            data={filteredOrders}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <KitchenOrderCard
-                order={item}
-                onUpdateStatus={handleOrderStatusUpdate}
-                onViewDetails={handleViewOrderDetails}
-              />
-            )}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <AppleCard layer="surfaceVariant" size="large" style={{ alignItems: 'center', padding: 32 }}>
-                <Text style={{ fontSize: 48, marginBottom: 16 }}>👨‍🍳</Text>
-                <Text style={{
-                  fontSize: 18,
-                  fontWeight: '600',
-                  color: theme.colors.onSurface,
-                  marginBottom: 8,
-                }}>
-                  No Orders to Prepare
-                </Text>
-                <Text style={{
-                  fontSize: 14,
-                  color: theme.colors.onSurfaceVariant,
-                  textAlign: 'center',
-                }}>
-                  All orders are up to date! Great work! 🎉
-                </Text>
-              </AppleCard>
-            }
-          />
-        </AppleCard>
-      </AppleDashboardPanel>
+        }
+      />
     </View>
   );
 };

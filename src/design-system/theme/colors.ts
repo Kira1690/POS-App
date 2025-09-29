@@ -119,6 +119,104 @@ export const colors = {
     800: '#1E40AF',
     900: '#1E3A8A',
   },
+
+  // CENTRALIZED STATUS COLOR SYSTEM (Single Source of Truth)
+  // Professional status colors for all UI states across the application
+  status: {
+    // Order Status Colors
+    pending: '#FF453A',     // Apple red - urgent/pending
+    preparing: '#FF9500',   // Apple orange - in progress
+    ready: '#32D74B',       // Apple green - completed/ready
+    served: '#007AFF',      // Apple blue - delivered/served
+    cancelled: '#8E8E93',   // Apple gray - cancelled/inactive
+
+    // Priority Status Colors
+    urgent: '#FF453A',      // Apple red - high priority
+    high: '#FF9500',        // Apple orange - medium-high priority
+    normal: '#32D74B',      // Apple green - normal priority
+    low: '#8E8E93',         // Apple gray - low priority
+
+    // Table Status Colors
+    occupied: '#FF6B6B',    // Red variant - table in use
+    available: '#32CD32',   // Green variant - table free
+    cleaning: '#FFB347',    // Orange variant - being cleaned
+    reserved: '#4A90E2',    // Blue variant - reserved
+
+    // Kitchen Status Colors
+    active: '#32D74B',      // Green - station active
+    busy: '#FF9500',        // Orange - station busy
+    break: '#8E8E93',       // Gray - on break
+    offline: '#FF453A',     // Red - offline/unavailable
+
+    // System Status Colors
+    online: '#32D74B',      // Green - system online
+    offline: '#FF453A',     // Red - system offline
+    warning: '#FF9500',     // Orange - warning state
+    error: '#FF453A',       // Red - error state
+    success: '#32D74B',     // Green - success state
+    info: '#007AFF',        // Blue - informational
+
+    // Performance Status Colors
+    excellent: '#32D74B',   // Green - 90%+ performance
+    good: '#32CD32',        // Light green - 75-89% performance
+    average: '#FF9500',     // Orange - 60-74% performance
+    poor: '#FF453A',        // Red - <60% performance
+  },
+
+  // STATUS ICONS MAPPING (Vector Icons Replace Emojis)
+  // Material Icons mapping for consistent premium UI
+  statusIcons: {
+    // Order Status Icons
+    pending: 'schedule',           // clock icon
+    preparing: 'restaurant',       // kitchen icon
+    ready: 'check-circle',         // checkmark icon
+    served: 'delivery-dining',     // delivery icon
+    cancelled: 'cancel',           // cancel icon
+
+    // Priority Icons
+    urgent: 'priority-high',       // high priority icon
+    high: 'keyboard-arrow-up',     // up arrow
+    normal: 'remove',              // horizontal line
+    low: 'keyboard-arrow-down',    // down arrow
+
+    // Table Status Icons
+    occupied: 'people',            // people icon
+    available: 'event-available',  // available icon
+    cleaning: 'cleaning-services', // cleaning icon
+    reserved: 'event-seat',        // reserved seat icon
+
+    // Kitchen Icons
+    active: 'check-circle',        // active/ready icon
+    busy: 'access-time',           // busy/time icon
+    break: 'coffee',               // break icon
+    offline: 'error',              // error/offline icon
+
+    // System Icons
+    online: 'wifi',                // online icon
+    offline: 'wifi-off',           // offline icon
+    warning: 'warning',            // warning icon
+    error: 'error',                // error icon
+    success: 'check-circle',       // success icon
+    info: 'info',                  // info icon
+
+    // Performance Icons
+    excellent: 'star',             // star icon
+    good: 'thumb-up',              // thumbs up
+    average: 'remove',             // neutral
+    poor: 'thumb-down',            // thumbs down
+
+    // Dashboard Section Icons
+    orders: 'receipt',             // orders icon
+    tables: 'table-restaurant',    // tables icon
+    kitchen: 'restaurant',         // kitchen icon
+    reports: 'analytics',          // reports icon
+    overview: 'dashboard',         // overview icon
+    export: 'file-download',       // export icon
+    refresh: 'refresh',            // refresh icon
+    search: 'search',              // search icon
+    filter: 'filter-list',         // filter icon
+    settings: 'settings',          // settings icon
+  },
 } as const;
 
 // Apple Tahoe Light Theme Colors
@@ -210,6 +308,12 @@ export const lightTheme = {
   primaryPressed: '#000000', // True black pressed
   secondaryPressed: '#636366', // Darker gray pressed
   errorPressed: '#D70015', // Darker red pressed
+
+  // CENTRALIZED STATUS COLORS (Single Source of Truth)
+  statusColors: colors.status,
+
+  // STATUS ICONS MAPPING (Premium Vector Icons)
+  statusIcons: colors.statusIcons,
 } as const;
 
 // Apple Tahoe Dark Theme Colors - Authentic Apple Design
@@ -312,6 +416,12 @@ export const darkTheme = {
   primaryPressed: '#0051D5', // Darker blue pressed state
   secondaryPressed: '#636366', // Darker gray pressed
   errorPressed: '#D70015', // Darker red for dark theme
+
+  // CENTRALIZED STATUS COLORS (Single Source of Truth)
+  statusColors: colors.status,
+
+  // STATUS ICONS MAPPING (Premium Vector Icons)
+  statusIcons: colors.statusIcons,
 } as const;
 
 export type ColorTheme = typeof lightTheme | typeof darkTheme; 
