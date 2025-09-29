@@ -5,6 +5,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '@/hooks/useTheme';
 import {
@@ -167,7 +168,8 @@ export const DashboardScreen: React.FC = () => {
     <View style={{ flexDirection: 'row', gap: 12 }}>
       <AppleStatusPill status="online" size="small" />
       <AppleButton
-        title="🔄 Refresh"
+        title="Refresh"
+        icon={<MaterialIcons name="refresh" size={16} color={theme.colors.onSecondary} />}
         variant="secondary"
         size="medium"
         onPress={() => loadDashboardData(true)}
@@ -179,32 +181,42 @@ export const DashboardScreen: React.FC = () => {
    * APPLE QUICK ACTIONS (using universal components)
    */
   const renderQuickActions = () => (
-    <AppleCard layer="surface" size="large" style={{ marginBottom: 20 }}>
-      <Text style={{
-        fontSize: 18,
-        fontWeight: '600',
-        color: theme.colors.onSurface,
-        marginBottom: 16
-      }}>
-        Quick Actions
-      </Text>
-      <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+    <AppleCard layer="surface" size="large" style={{
+      marginBottom: 20,
+      padding: 24,
+      ...theme.shadows.md,
+      elevation: 4
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+        <MaterialIcons name="flash-on" size={20} color={theme.colors.primary} />
+        <Text style={{
+          fontSize: 18,
+          fontWeight: '600',
+          color: theme.colors.onSurface,
+        }}>
+          Quick Actions
+        </Text>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
         <AppleButton
-          title="📊 Tables"
+          title="Tables"
+          icon={<MaterialIcons name="table-restaurant" size={18} color={theme.colors.onPrimary} />}
           variant="primary"
-          size="medium"
+          size="large"
           onPress={handleNavigateToTables}
         />
         <AppleButton
-          title="👨‍🍳 Kitchen"
+          title="Kitchen"
+          icon={<MaterialIcons name="restaurant" size={18} color={theme.colors.onSecondary} />}
           variant="secondary"
-          size="medium"
+          size="large"
           onPress={handleNavigateToKitchen}
         />
         <AppleButton
-          title="👥 Staff"
+          title="Staff"
+          icon={<MaterialIcons name="group" size={18} color={theme.colors.onSurface} />}
           variant="ghost"
-          size="medium"
+          size="large"
           onPress={handleNavigateToStaff}
         />
       </View>
@@ -230,14 +242,16 @@ export const DashboardScreen: React.FC = () => {
     >
       {/* APPLE KPI METRICS SECTION (using universal components) */}
       <AppleCard layer="surfaceVariant" size="large" style={{ marginBottom: 20 }}>
-        <Text style={{
-          fontSize: 18,
-          fontWeight: '600',
-          color: theme.colors.onSurface,
-          marginBottom: 16
-        }}>
-          📈 Key Metrics
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <MaterialIcons name="trending-up" size={20} color={theme.colors.primary} />
+          <Text style={{
+            fontSize: 18,
+            fontWeight: '600',
+            color: theme.colors.onSurface,
+          }}>
+            Key Metrics
+          </Text>
+        </View>
         <KPISection kpis={kpis} loading={loading} />
       </AppleCard>
 

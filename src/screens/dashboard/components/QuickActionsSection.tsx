@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { QuickActionData } from '@/types/dashboard.types';
 
@@ -78,7 +79,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
 
     statusLabel: {
       ...theme.typography.caption,
-      color: theme.colors.onSurfaceSecondary,
+      color: theme.colors.onSurfaceVariant,
     },
 
     statusValue: {
@@ -132,7 +133,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
       <View style={styles.grid}>
         <TouchableOpacity style={styles.widget} onPress={onNavigateToTables}>
           <View style={styles.widgetHeader}>
-            <Text style={styles.widgetIcon}>🏪</Text>
+            <MaterialIcons name="table-restaurant" size={20} color={theme.colors.primary} />
             <Text style={styles.widgetTitle}>Tables</Text>
           </View>
           <View style={styles.widgetContent}>
@@ -154,7 +155,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
 
         <TouchableOpacity style={styles.widget} onPress={onNavigateToKitchen}>
           <View style={styles.widgetHeader}>
-            <Text style={styles.widgetIcon}>🍳</Text>
+            <MaterialIcons name="restaurant" size={20} color={theme.colors.primary} />
             <Text style={styles.widgetTitle}>Kitchen</Text>
           </View>
           <View style={styles.widgetContent}>
@@ -172,7 +173,10 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
             </View>
             {data.kitchen.alerts > 0 && (
               <Text style={[styles.alertText, { color: theme.colors.error }]}>
-                ⚠️ {data.kitchen.alerts} alerts
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <MaterialIcons name="warning" size={14} color={theme.colors.error} />
+                  <Text>{data.kitchen.alerts} alerts</Text>
+                </View>
               </Text>
             )}
           </View>
@@ -180,7 +184,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
 
         <TouchableOpacity style={styles.widget} onPress={onNavigateToStaff}>
           <View style={styles.widgetHeader}>
-            <Text style={styles.widgetIcon}>👥</Text>
+            <MaterialIcons name="group" size={20} color={theme.colors.primary} />
             <Text style={styles.widgetTitle}>Staff</Text>
           </View>
           <View style={styles.widgetContent}>

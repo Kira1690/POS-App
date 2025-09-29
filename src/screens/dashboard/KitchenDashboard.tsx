@@ -32,25 +32,25 @@ import {
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
 
-// Kitchen theme colors - high contrast for kitchen environment
-const KITCHEN_THEME = {
-  background: '#1A1D21', // Dark background
-  header: '#fd7e14',      // Orange header
-  white: '#ffffff',
-  
+// Get kitchen theme colors from centralized theme
+const getKitchenTheme = (theme: any) => ({
+  background: theme.colors.layer0,
+  header: theme.colors.statusColors.high,
+  white: theme.colors.onPrimary,
+
   // Station colors
-  appetizers: '#28a745',   // Green - good
-  mainCourse: '#dc3545',   // Red - busy
-  sushi: '#007bff',        // Blue - normal
-  desserts: '#6610f2',     // Purple - normal
-  
+  appetizers: theme.colors.statusColors.excellent,
+  mainCourse: theme.colors.statusColors.urgent,
+  sushi: theme.colors.statusColors.info,
+  desserts: theme.colors.primary,
+
   // Status colors
-  urgent: '#dc3545',
-  warning: '#ffc107', 
-  ready: '#28a745',
-  preparing: '#007bff',
-  queue: '#6c757d',
-};
+  urgent: theme.colors.statusColors.urgent,
+  warning: theme.colors.statusColors.warning,
+  ready: theme.colors.statusColors.ready,
+  preparing: theme.colors.statusColors.preparing,
+  queue: theme.colors.statusColors.cancelled,
+});
 
 interface KitchenDashboardProps {}
 
@@ -58,6 +58,7 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
   const navigation = useNavigation();
   const { state: authState } = useAuth();
   const { theme } = useTheme();
+  const KITCHEN_THEME = getKitchenTheme(theme);
   
   const [refreshing, setRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -107,24 +108,33 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: KITCHEN_THEME.header }]}>
       <View style={styles.headerLeft}>
-        <Text style={styles.timeDisplay}>
-          🕐 {currentTime.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <MaterialIcons name="access-time" size={24} color="white" />
+          <Text style={styles.timeDisplay}>
+            {currentTime.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </Text>
+        </View>
       </View>
       
       <View style={styles.headerCenter}>
-        <Text style={styles.headerTitle}>
-          🍽️ KITCHEN DISPLAY SYSTEM
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <MaterialIcons name="restaurant" size={32} color="white" />
+          <Text style={styles.headerTitle}>
+            KITCHEN DISPLAY SYSTEM
+          </Text>
+        </View>
       </View>
       
       <View style={styles.headerRight}>
-        <Text style={styles.chefInfo}>
-          👨‍🍳 {kitchenData.chef.name} ({kitchenData.chef.employeeId})
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <MaterialIcons name="person" size={20} color="white" />
+          <Text style={styles.chefInfo}>
+            {kitchenData.chef.name} ({kitchenData.chef.employeeId})
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -139,9 +149,12 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
             { backgroundColor: station.color }
           ]}
         >
-          <Text style={styles.stationText}>
-            {station.emoji} {station.name} ({station.count})
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MaterialIcons name="restaurant" size={16} color="white" />
+            <Text style={styles.stationText}>
+              {station.name} ({station.count})
+            </Text>
+          </View>
         </TouchableOpacity>
       ))}
     </View>
@@ -150,7 +163,7 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
   const renderPriorityQueue = () => (
     <View style={[styles.priorityQueue, { backgroundColor: theme.colors.surface }]}>
       <Text style={[styles.priorityTitle, { color: KITCHEN_THEME.urgent }]}>
-        🚨 PRIORITY ORDERS - IMMEDIATE ATTENTION
+        PRIORITY ORDERS - IMMEDIATE ATTENTION
       </Text>
       
       <View style={styles.priorityOrdersRow}>
@@ -159,21 +172,21 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
             key={order.id}
             style={[
               styles.priorityOrderCard,
-              { 
-                backgroundColor: order.bgColor,
-                borderColor: order.color,
+              {
+                backgroundColor: theme.colors.surfaceVariant,
+                borderColor: theme.colors.error,
               }
             ]}
           >
-            <Text style={[styles.priorityOrderTitle, { color: order.color }]}>
+            <Text style={[styles.priorityOrderTitle, { color: theme.colors.onSurface }]}>
               {order.type}
             </Text>
-            <Text style={[styles.priorityOrderTime, { color: order.color }]}>
+            <Text style={[styles.priorityOrderTime, { color: theme.colors.onSurfaceVariant }]}>
               {order.timeInfo}
             </Text>
             <View style={styles.priorityOrderItems}>
               {order.items.map((item, index) => (
-                <Text key={index} style={styles.priorityOrderItem}>
+                <Text key={index} style={[styles.priorityOrderItem, { color: theme.colors.onSurface }]}>
                   {item}
                 </Text>
               ))}
@@ -196,16 +209,16 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
             key={order.id}
             style={[
               styles.orderCard,
-              { 
-                backgroundColor: order.bgColor,
-                borderColor: order.borderColor,
+              {
+                backgroundColor: theme.colors.surfaceVariant,
+                borderColor: theme.colors.outline,
               }
             ]}
           >
             <Text style={[styles.orderTitle, { color: theme.colors.onSurface }]}>
               {order.title}
             </Text>
-            <Text style={[styles.orderTime, { color: order.borderColor }]}>
+            <Text style={[styles.orderTime, { color: theme.colors.primary }]}>
               {order.time}
             </Text>
             <View style={styles.orderItems}>
@@ -226,7 +239,7 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
       <Text style={styles.controlsTitle}>
         KITCHEN CONTROLS
       </Text>
-      
+
       <View style={styles.controlsGrid}>
         {controlButtons.map((button, index) => (
           <TouchableOpacity
@@ -236,24 +249,214 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
               { backgroundColor: button.color }
             ]}
           >
-            <MaterialIcons name={button.icon as any} size={24} color="white" />
+            <MaterialIcons name={button.icon as any} size={24} color={theme.colors.onPrimary} />
             <Text style={styles.controlButtonText}>{button.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
-      
+
       <Text style={styles.timerDisplay}>
-        🕐 Average Prep Time: {kitchenData.metrics.averagePrepTime} minutes
+        Average Prep Time: {kitchenData.metrics.averagePrepTime} minutes
       </Text>
     </View>
   );
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.lg,
+      height: 100,
+    },
+    headerLeft: {
+      flex: 1,
+    },
+    headerCenter: {
+      flex: 2,
+      alignItems: 'center',
+    },
+    headerRight: {
+      flex: 1,
+      alignItems: 'flex-end',
+    },
+    timeDisplay: {
+      ...typography.titleLarge,
+      color: theme.colors.onPrimary,
+      fontWeight: '700',
+    },
+    headerTitle: {
+      ...typography.headlineLarge,
+      color: theme.colors.onPrimary,
+      fontWeight: '700',
+      fontSize: 32,
+    },
+    chefInfo: {
+      ...typography.titleMedium,
+      color: theme.colors.onPrimary,
+      fontWeight: '600',
+    },
+    stationStatusBar: {
+      flexDirection: 'row',
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      gap: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.outline,
+    },
+    stationIndicator: {
+      flex: 1,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderRadius: borderRadius.md,
+      alignItems: 'center',
+    },
+    stationText: {
+      ...typography.titleMedium,
+      color: theme.colors.onPrimary,
+      fontWeight: '700',
+    },
+    content: {
+      flex: 1,
+      padding: spacing.lg,
+    },
+    priorityQueue: {
+      padding: spacing.xl,
+      borderRadius: borderRadius.lg,
+      borderWidth: 2,
+      borderColor: theme.colors.error,
+      marginBottom: spacing.xl,
+    },
+    priorityTitle: {
+      ...typography.headlineSmall,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: spacing.xl,
+    },
+    priorityOrdersRow: {
+      flexDirection: isTablet ? 'row' : 'column',
+      gap: spacing.lg,
+    },
+    priorityOrderCard: {
+      flex: 1,
+      padding: spacing.lg,
+      borderRadius: borderRadius.lg,
+      borderWidth: 3,
+    },
+    priorityOrderTitle: {
+      ...typography.titleLarge,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    priorityOrderTime: {
+      ...typography.bodyLarge,
+      fontWeight: '600',
+      textAlign: 'center',
+      marginBottom: spacing.md,
+    },
+    priorityOrderItems: {
+      alignItems: 'center',
+    },
+    priorityOrderItem: {
+      ...typography.bodyMedium,
+      marginBottom: spacing.xs,
+    },
+    activeOrdersQueue: {
+      padding: spacing.xl,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      marginBottom: spacing.xl,
+    },
+    queueTitle: {
+      ...typography.titleLarge,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: spacing.xl,
+    },
+    ordersGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.lg,
+    },
+    orderCard: {
+      width: isTablet ? '48%' : '100%',
+      padding: spacing.lg,
+      borderRadius: borderRadius.lg,
+      borderWidth: 2,
+    },
+    orderTitle: {
+      ...typography.titleMedium,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    orderTime: {
+      ...typography.bodyLarge,
+      fontWeight: '600',
+      textAlign: 'center',
+      marginBottom: spacing.md,
+    },
+    orderItems: {
+      marginTop: spacing.sm,
+    },
+    orderItem: {
+      ...typography.bodySmall,
+      marginBottom: spacing.xs,
+    },
+    kitchenControls: {
+      padding: spacing.xl,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    controlsTitle: {
+      ...typography.titleLarge,
+      color: theme.colors.onPrimary,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: spacing.xl,
+    },
+    controlsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.md,
+      marginBottom: spacing.xl,
+    },
+    controlButton: {
+      width: isTablet ? '30%' : '48%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.lg,
+      borderRadius: borderRadius.md,
+      minHeight: 50,
+    },
+    controlButtonText: {
+      color: theme.colors.onPrimary,
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      marginLeft: spacing.sm,
+    },
+    timerDisplay: {
+      ...typography.titleMedium,
+      color: theme.colors.onPrimary,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: KITCHEN_THEME.background }]}>
       {renderHeader()}
       {renderStationStatus()}
-      
-      <ScrollView 
+
+      <ScrollView
         style={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
@@ -265,195 +468,5 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-    height: 100,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  headerCenter: {
-    flex: 2,
-    alignItems: 'center',
-  },
-  headerRight: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  timeDisplay: {
-    ...typography.titleLarge,
-    color: 'white',
-    fontWeight: '700',
-  },
-  headerTitle: {
-    ...typography.headlineLarge,
-    color: 'white',
-    fontWeight: '700',
-    fontSize: 32,
-  },
-  chefInfo: {
-    ...typography.titleMedium,
-    color: 'white',
-    fontWeight: '600',
-  },
-  stationStatusBar: {
-    flexDirection: 'row',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    gap: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
-  },
-  stationIndicator: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  stationText: {
-    ...typography.titleMedium,
-    color: 'white',
-    fontWeight: '700',
-  },
-  content: {
-    flex: 1,
-    padding: spacing.lg,
-  },
-  priorityQueue: {
-    padding: spacing.xl,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: 'rgba(220, 53, 69, 0.3)',
-    marginBottom: spacing.xl,
-  },
-  priorityTitle: {
-    ...typography.headlineSmall,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  priorityOrdersRow: {
-    flexDirection: isTablet ? 'row' : 'column',
-    gap: spacing.lg,
-  },
-  priorityOrderCard: {
-    flex: 1,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 3,
-  },
-  priorityOrderTitle: {
-    ...typography.titleLarge,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  priorityOrderTime: {
-    ...typography.bodyLarge,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
-  priorityOrderItems: {
-    alignItems: 'center',
-  },
-  priorityOrderItem: {
-    ...typography.bodyMedium,
-    marginBottom: spacing.xs,
-  },
-  activeOrdersQueue: {
-    padding: spacing.xl,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
-    marginBottom: spacing.xl,
-  },
-  queueTitle: {
-    ...typography.titleLarge,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  ordersGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.lg,
-  },
-  orderCard: {
-    width: isTablet ? '48%' : '100%',
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-  },
-  orderTitle: {
-    ...typography.titleMedium,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  orderTime: {
-    ...typography.bodyLarge,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
-  orderItems: {
-    marginTop: spacing.sm,
-  },
-  orderItem: {
-    ...typography.bodySmall,
-    marginBottom: spacing.xs,
-  },
-  kitchenControls: {
-    padding: spacing.xl,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: 'white',
-  },
-  controlsTitle: {
-    ...typography.titleLarge,
-    color: 'white',
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  controlsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  controlButton: {
-    width: isTablet ? '30%' : '48%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-    borderRadius: borderRadius.md,
-    minHeight: 50,
-  },
-  controlButtonText: {
-    color: 'white',
-    ...typography.bodyMedium,
-    fontWeight: '700',
-    marginLeft: spacing.sm,
-  },
-  timerDisplay: {
-    ...typography.titleMedium,
-    color: 'white',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-});
 
 export default KitchenDashboard;

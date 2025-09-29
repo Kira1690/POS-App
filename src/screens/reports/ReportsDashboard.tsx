@@ -12,6 +12,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import {
   AppleDashboardPanel,
@@ -45,17 +46,18 @@ const KPICard: React.FC<KPICardProps> = ({ kpi }) => {
   const { theme } = useTheme();
 
   const getTrendIcon = (trend?: string) => {
-    switch (trend) {
-      case 'up': return '📈';
-      case 'down': return '📉';
-      default: return '➡️';
-    }
+    const iconName = trend === 'up' ? 'trending-up' : trend === 'down' ? 'trending-down' : 'trending-flat';
+    const iconColor = trend === 'up' ? theme.colors.statusColors.success :
+                     trend === 'down' ? theme.colors.statusColors.error :
+                     theme.colors.onSurfaceVariant;
+
+    return <MaterialIcons name={iconName as any} size={16} color={iconColor} />;
   };
 
   const getChangeColor = (changeType?: string) => {
     switch (changeType) {
-      case 'increase': return '#32CD32';
-      case 'decrease': return '#FF3B30';
+      case 'increase': return theme.colors.statusColors.success;
+      case 'decrease': return theme.colors.statusColors.error;
       default: return theme.colors.onSurfaceVariant;
     }
   };
@@ -104,7 +106,7 @@ const KPICard: React.FC<KPICardProps> = ({ kpi }) => {
       <Text style={styles.value}>{kpi.value}</Text>
       {kpi.change !== undefined && (
         <View style={styles.changeContainer}>
-          <Text style={styles.trendIcon}>{getTrendIcon(kpi.trend)}</Text>
+          {getTrendIcon(kpi.trend)}
           <Text style={[styles.changeText, { color: getChangeColor(kpi.changeType) }]}>
             {formatPercentage(kpi.change)}
           </Text>
@@ -241,17 +243,18 @@ const PerformanceReportCard: React.FC<PerformanceReportCardProps> = ({ report })
   const { theme } = useTheme();
 
   const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case 'up': return '📈';
-      case 'down': return '📉';
-      default: return '➡️';
-    }
+    const iconName = trend === 'up' ? 'trending-up' : trend === 'down' ? 'trending-down' : 'trending-flat';
+    const iconColor = trend === 'up' ? theme.colors.statusColors.success :
+                     trend === 'down' ? theme.colors.statusColors.error :
+                     theme.colors.onSurfaceVariant;
+
+    return <MaterialIcons name={iconName as any} size={16} color={iconColor} />;
   };
 
   const getTrendColor = (trend: string) => {
     switch (trend) {
-      case 'up': return '#32CD32';
-      case 'down': return '#FF3B30';
+      case 'up': return theme.colors.statusColors.success;
+      case 'down': return theme.colors.statusColors.error;
       default: return theme.colors.onSurfaceVariant;
     }
   };
@@ -311,7 +314,7 @@ const PerformanceReportCard: React.FC<PerformanceReportCardProps> = ({ report })
               `${item.value}${report.category.includes('Performance') ? '%' : ''}`}
           </Text>
           <View style={styles.trendContainer}>
-            <Text>{getTrendIcon(item.trend)}</Text>
+            {getTrendIcon(item.trend)}
             <Text style={[styles.trendText, { color: getTrendColor(item.trend) }]}>
               {formatPercentage(item.change)}
             </Text>
@@ -397,13 +400,15 @@ const ReportsDashboard: React.FC = () => {
         size="small"
       />
       <AppleButton
-        title="📊 Export"
+        title="Export"
+        icon={<MaterialIcons name="file-download" size={16} color={theme.colors.onPrimary} />}
         variant="secondary"
         size="medium"
         onPress={() => handleExport('pdf')}
       />
       <AppleButton
-        title="🔄 Refresh"
+        title="Refresh"
+        icon={<MaterialIcons name="refresh" size={16} color={theme.colors.onPrimary} />}
         variant="primary"
         size="medium"
         onPress={handleRefresh}
@@ -428,7 +433,10 @@ const ReportsDashboard: React.FC = () => {
       >
         {/* Date Range Filters */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>📅 Date Range</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="date-range" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Date Range</Text>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.dateRangeContainer}>
               {data.dateRangeFilters.map((filter) => (
@@ -461,7 +469,10 @@ const ReportsDashboard: React.FC = () => {
 
         {/* Key Performance Indicators */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>📊 Key Performance Indicators</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="analytics" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Key Performance Indicators</Text>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.kpiContainer}>
               {data.kpis.map((kpi, index) => (
@@ -473,7 +484,10 @@ const ReportsDashboard: React.FC = () => {
 
         {/* Interactive Charts */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>📈 Performance Charts</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="trending-up" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Performance Charts</Text>
+          </View>
 
           <SimpleChart
             data={data.revenueChart}
@@ -498,7 +512,10 @@ const ReportsDashboard: React.FC = () => {
 
         {/* Performance Reports */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>📋 Detailed Performance Reports</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="assessment" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Detailed Performance Reports</Text>
+          </View>
 
           <PerformanceReportCard report={data.salesPerformanceReport} />
           <PerformanceReportCard report={data.menuPerformanceReport} />
@@ -508,7 +525,10 @@ const ReportsDashboard: React.FC = () => {
 
         {/* Quick Insights */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>💡 Quick Insights</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="lightbulb" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Quick Insights</Text>
+          </View>
 
           <View style={{ gap: 12 }}>
             <AppleCard layer="surfaceVariant" size="medium" style={{ padding: 16 }}>
@@ -518,7 +538,7 @@ const ReportsDashboard: React.FC = () => {
                 color: theme.colors.onSurface,
                 marginBottom: 8,
               }}>
-                🏆 Top Performing Hour
+                Top Performing Hour
               </Text>
               <Text style={{
                 fontSize: 14,
@@ -535,7 +555,7 @@ const ReportsDashboard: React.FC = () => {
                 color: theme.colors.onSurface,
                 marginBottom: 8,
               }}>
-                🍽️ Best Category
+                Best Category
               </Text>
               <Text style={{
                 fontSize: 14,
@@ -552,7 +572,7 @@ const ReportsDashboard: React.FC = () => {
                 color: theme.colors.onSurface,
                 marginBottom: 8,
               }}>
-                ⭐ Top Menu Items
+                Top Menu Items
               </Text>
               <Text style={{
                 fontSize: 14,
@@ -566,7 +586,10 @@ const ReportsDashboard: React.FC = () => {
 
         {/* Export Options */}
         <AppleCard layer="surface" size="large">
-          <Text style={styles.sectionTitle}>📤 Export & Share</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="share" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Export & Share</Text>
+          </View>
           <Text style={{
             fontSize: 14,
             color: theme.colors.onSurfaceVariant,
@@ -577,19 +600,22 @@ const ReportsDashboard: React.FC = () => {
 
           <View style={styles.exportContainer}>
             <AppleButton
-              title="📄 PDF Report"
+              title="PDF Report"
+              icon={<MaterialIcons name="picture-as-pdf" size={16} color={theme.colors.onPrimary} />}
               variant="primary"
               size="medium"
               onPress={() => handleExport('pdf')}
             />
             <AppleButton
-              title="📊 Excel Data"
+              title="Excel Data"
+              icon={<MaterialIcons name="table-chart" size={16} color={theme.colors.onSurface} />}
               variant="secondary"
               size="medium"
               onPress={() => handleExport('excel')}
             />
             <AppleButton
-              title="📧 Email Report"
+              title="Email Report"
+              icon={<MaterialIcons name="email" size={16} color={theme.colors.onSurface} />}
               variant="ghost"
               size="medium"
               onPress={() => handleExport('email')}

@@ -40,7 +40,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
               change={0}
               changeDirection="neutral"
               period="Loading..."
-              icon="💰"
+              icon="attach-money"
               color={theme.colors.success}
               loading={true}
             />
@@ -52,7 +52,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
               change={0}
               changeDirection="neutral"
               period="Loading..."
-              icon="📊"
+              icon="analytics"
               color={theme.colors.info}
               loading={true}
             />
@@ -66,7 +66,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
               change={0}
               changeDirection="neutral"
               period="Loading..."
-              icon="⏱️"
+              icon="access-time"
               color={theme.colors.warning}
               loading={true}
             />
@@ -78,7 +78,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
               change={0}
               changeDirection="neutral"
               period="Loading..."
-              icon="💎"
+              icon="diamond"
               color={theme.colors.info}
               loading={true}
             />
@@ -98,7 +98,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
             change={kpis.sales.change}
             changeDirection={kpis.sales.changeDirection}
             period={kpis.sales.period}
-            icon="💰"
+            icon="attach-money"
             color={theme.colors.success}
           />
         </View>
@@ -109,7 +109,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
             change={kpis.orders.change}
             changeDirection={kpis.orders.changeDirection}
             period={kpis.orders.period}
-            icon="📊"
+            icon="analytics"
             color={theme.colors.info}
           />
         </View>
@@ -123,7 +123,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
             change={kpis.revenue.change}
             changeDirection={kpis.revenue.changeDirection}
             period={kpis.revenue.period}
-            icon="💎"
+            icon="diamond"
             color={theme.colors.info}
           />
         </View>
@@ -134,7 +134,7 @@ export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false })
             change={kpis.averageOrderValue.change}
             changeDirection={kpis.averageOrderValue.changeDirection}
             period={kpis.averageOrderValue.period}
-            icon="⏱️"
+            icon="access-time"
             color={theme.colors.warning}
           />
         </View>

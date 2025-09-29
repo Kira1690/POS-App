@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { KPICardProps } from '@/types/dashboard.types';
 
@@ -14,6 +15,13 @@ export const KPICard: React.FC<KPICardProps> = ({
   loading = false,
 }) => {
   const { theme } = useTheme();
+
+  const getIconName = (iconName: string) => {
+    // Return the icon name directly since we're now passing proper MaterialIcons names
+    const validIcons = ['attach-money', 'analytics', 'access-time', 'diamond', 'trending-up'];
+    return validIcons.includes(iconName) ? iconName : 'trending-up';
+  };
+
   const getChangeColor = () => {
     switch (changeDirection) {
       case 'up':
@@ -21,30 +29,27 @@ export const KPICard: React.FC<KPICardProps> = ({
       case 'down':
         return theme.colors.error;
       default:
-        return theme.colors.onSurfaceSecondary;
+        return theme.colors.onSurfaceVariant;
     }
   };
 
   const getChangeIcon = () => {
-    switch (changeDirection) {
-      case 'up':
-        return '↗️';
-      case 'down':
-        return '↘️';
-      default:
-        return '→';
-    }
+    const iconName = changeDirection === 'up' ? 'trending-up' :
+                    changeDirection === 'down' ? 'trending-down' : 'trending-flat';
+
+    return <MaterialIcons name={iconName as any} size={14} color={getChangeColor()} />;
   };
 
   const styles = StyleSheet.create({
     card: {
       backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      ...theme.shadows.sm,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.lg,
+      ...theme.shadows.md,
       borderWidth: 1,
       borderColor: theme.colors.outline,
-      minHeight: 120,
+      minHeight: 140,
+      elevation: 4,
     },
 
     header: {
@@ -55,11 +60,16 @@ export const KPICard: React.FC<KPICardProps> = ({
     },
 
     iconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: theme.borderRadius.md,
+      width: 48,
+      height: 48,
+      borderRadius: theme.borderRadius.lg,
       justifyContent: 'center',
       alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
     },
 
     icon: {
@@ -89,18 +99,20 @@ export const KPICard: React.FC<KPICardProps> = ({
       ...theme.typography.h2,
       fontWeight: '700',
       marginBottom: 4,
+      color: theme.colors.onSurface,
     },
 
     title: {
       ...theme.typography.body2,
       color: theme.colors.onSurface,
-      fontWeight: '500',
-      marginBottom: 2,
+      fontWeight: '600',
+      marginBottom: 4,
     },
 
     period: {
       ...theme.typography.caption,
-      color: theme.colors.onSurfaceSecondary,
+      color: theme.colors.onSurfaceVariant,
+      fontWeight: '500',
     },
 
     // Loading states
@@ -149,20 +161,18 @@ export const KPICard: React.FC<KPICardProps> = ({
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: color }]}>
-          <Text style={styles.icon}>{icon}</Text>
+          <MaterialIcons name={getIconName(icon)} size={24} color={theme.colors.onPrimary} />
         </View>
         <View style={styles.changeContainer}>
-          <Text style={[styles.changeIcon, { color: getChangeColor() }]}>
-            {getChangeIcon()}
-          </Text>
+          {getChangeIcon()}
           <Text style={[styles.changeText, { color: getChangeColor() }]}>
             {Math.abs(change)}%
           </Text>
         </View>
       </View>
-      
+
       <View style={styles.content}>
-        <Text style={[styles.value, { color }]}>{value}</Text>
+        <Text style={styles.value}>{value}</Text>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.period}>{period}</Text>
       </View>

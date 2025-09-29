@@ -13,6 +13,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import {
   AppleDashboardPanel,
@@ -45,12 +46,22 @@ const TableComponent: React.FC<TableComponentProps> = ({ table, isSelected, onPr
   const { theme } = useTheme();
 
   const getStatusColor = (status: Table['status']) => {
+    return theme.colors.statusColors[status as keyof typeof theme.colors.statusColors] || theme.colors.outline;
+  };
+
+  const getTextColorForStatus = (status: Table['status']) => {
+    // Use high contrast colors for table text based on status
     switch (status) {
-      case 'occupied': return '#FF6B6B';
-      case 'available': return '#32CD32';
-      case 'cleaning': return '#FFB347';
-      case 'reserved': return '#4A90E2';
-      default: return theme.colors.outline;
+      case 'occupied':
+        return theme.colors.onError; // High contrast on error/red background
+      case 'available':
+        return theme.colors.onSurface; // Dark text on light green background
+      case 'cleaning':
+        return theme.colors.onSurface; // Dark text on light yellow background
+      case 'reserved':
+        return theme.colors.onPrimary; // White text on blue background
+      default:
+        return theme.colors.onSurface; // Safe default
     }
   };
 
@@ -99,7 +110,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ table, isSelected, onPr
       <Text style={{
         fontSize: 12 * scale,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: getTextColorForStatus(table.status),
         textAlign: 'center',
       }}>
         {table.number}
@@ -107,7 +118,7 @@ const TableComponent: React.FC<TableComponentProps> = ({ table, isSelected, onPr
       {table.capacity && (
         <Text style={{
           fontSize: 8 * scale,
-          color: '#FFFFFF',
+          color: getTextColorForStatus(table.status),
           textAlign: 'center',
         }}>
           ({table.capacity})
@@ -168,7 +179,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({ selectedTable, onTableSelect }) =
           height: floorPlan.specialAreas.kitchen.height * scale,
         }
       ]}>
-        <Text style={styles.specialAreaText}>🍳 Kitchen</Text>
+        <Text style={styles.specialAreaText}>Kitchen</Text>
       </View>
 
       <View style={[
@@ -180,7 +191,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({ selectedTable, onTableSelect }) =
           height: floorPlan.specialAreas.bar.height * scale,
         }
       ]}>
-        <Text style={styles.specialAreaText}>🍸 Bar</Text>
+        <Text style={styles.specialAreaText}>Bar</Text>
       </View>
 
       <View style={[
@@ -192,7 +203,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({ selectedTable, onTableSelect }) =
           height: floorPlan.specialAreas.entrance.height * scale,
         }
       ]}>
-        <Text style={styles.specialAreaText}>🚪 Entrance</Text>
+        <Text style={styles.specialAreaText}>Entrance</Text>
       </View>
 
       {/* Tables */}
@@ -296,7 +307,7 @@ const TableDetails: React.FC<TableDetailsProps> = ({ table, onClose, onAction })
           />
         </View>
         <AppleButton
-          title="✕"
+          title="Close"
           variant="ghost"
           size="small"
           onPress={onClose}
@@ -548,10 +559,10 @@ const TablesDashboard: React.FC = () => {
 
   // Status legend
   const statusLegend = [
-    { status: 'occupied', color: '#FF6B6B', label: 'Occupied' },
-    { status: 'available', color: '#32CD32', label: 'Available' },
-    { status: 'cleaning', color: '#FFB347', label: 'Cleaning' },
-    { status: 'reserved', color: '#4A90E2', label: 'Reserved' },
+    { status: 'occupied', color: theme.colors.statusColors.occupied, label: 'Occupied' },
+    { status: 'available', color: theme.colors.statusColors.available, label: 'Available' },
+    { status: 'cleaning', color: theme.colors.statusColors.cleaning, label: 'Cleaning' },
+    { status: 'reserved', color: theme.colors.statusColors.reserved, label: 'Reserved' },
   ];
 
   // Header actions
@@ -563,7 +574,8 @@ const TablesDashboard: React.FC = () => {
         size="small"
       />
       <AppleButton
-        title="🔄 Refresh"
+        title="Refresh"
+        icon={<MaterialIcons name="refresh" size={16} color={theme.colors.onPrimary} />}
         variant="secondary"
         size="medium"
         onPress={handleRefresh}
@@ -588,7 +600,10 @@ const TablesDashboard: React.FC = () => {
       >
         {/* Table Status Summary */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>📊 Table Status Summary</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="table-restaurant" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Table Status Summary</Text>
+          </View>
           <View style={styles.summaryContainer}>
             <View style={styles.summaryCard}>
               <Text style={styles.summaryValue}>{data.summary.occupied}</Text>
@@ -611,7 +626,7 @@ const TablesDashboard: React.FC = () => {
 
         {/* Status Legend */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>🎨 Status Legend</Text>
+          <Text style={styles.sectionTitle}>Status Legend</Text>
           <View style={styles.legendContainer}>
             {statusLegend.map((item) => (
               <View key={item.status} style={styles.legendItem}>
@@ -624,7 +639,7 @@ const TablesDashboard: React.FC = () => {
 
         {/* Floor Plan */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>🏪 Restaurant Floor Plan</Text>
+          <Text style={styles.sectionTitle}>Restaurant Floor Plan</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={true}

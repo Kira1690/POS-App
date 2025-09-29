@@ -13,6 +13,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import {
   AppleDashboardPanel,
@@ -40,22 +41,18 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onPress, onUpdateStatus })
   const { theme } = useTheme();
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return '#FF3B30';
-      case 'preparing': return '#FF9500';
-      case 'ready': return '#32D74B';
-      case 'served': return '#007AFF';
-      case 'cancelled': return '#8E8E93';
-      default: return theme.colors.outline;
-    }
+    return theme.colors.statusColors[status as keyof typeof theme.colors.statusColors] || theme.colors.outline;
   };
 
   const getUrgencyIcon = (urgency: string) => {
-    switch (urgency) {
-      case 'urgent': return '🔴';
-      case 'priority': return '🟡';
-      default: return '';
-    }
+    const iconName = theme.colors.statusIcons[urgency as keyof typeof theme.colors.statusIcons];
+    if (!iconName) return null;
+
+    const iconColor = urgency === 'urgent' ? theme.colors.statusColors.urgent :
+                     urgency === 'priority' ? theme.colors.statusColors.high :
+                     theme.colors.onSurfaceVariant;
+
+    return <MaterialIcons name={iconName as any} size={16} color={iconColor} />;
   };
 
   const styles = {
@@ -129,7 +126,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onPress, onUpdateStatus })
         <View style={styles.header}>
           <Text style={styles.orderNumber}>{order.orderNumber}</Text>
           <View style={styles.urgencyBadge}>
-            <Text>{getUrgencyIcon(order.urgencyLevel)}</Text>
+            {getUrgencyIcon(order.urgencyLevel)}
             <AppleStatusPill
               status={order.status === 'ready' ? 'success' : order.status === 'preparing' ? 'warning' : 'error'}
               text={order.status.toUpperCase()}
@@ -262,23 +259,33 @@ const OrdersDashboard: React.FC = () => {
     },
     analyticsContainer: {
       flexDirection: 'row' as const,
-      gap: 12,
+      gap: 16,
       marginBottom: 16,
     },
     analyticsCard: {
       flex: 1,
       alignItems: 'center' as const,
+      backgroundColor: theme.colors.surfaceVariant,
+      paddingVertical: 20,
+      paddingHorizontal: 16,
+      borderRadius: theme.borderRadius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      ...theme.shadows.sm,
+      elevation: 2,
     },
     analyticsValue: {
-      fontSize: 24,
-      fontWeight: '700' as const,
-      color: theme.colors.primary,
+      fontSize: 28,
+      fontWeight: '800' as const,
+      color: theme.colors.onSurface,
+      marginBottom: 4,
     },
     analyticsLabel: {
-      fontSize: 12,
+      fontSize: 13,
       color: theme.colors.onSurfaceVariant,
       textAlign: 'center' as const,
-      marginTop: 4,
+      fontWeight: '600' as const,
+      letterSpacing: 0.5,
     },
     filtersContainer: {
       marginBottom: 16,
@@ -292,9 +299,13 @@ const OrdersDashboard: React.FC = () => {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 14,
       backgroundColor: theme.colors.surfaceVariant,
-      borderRadius: theme.borderRadius.lg,
+      borderRadius: theme.borderRadius.xl,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      ...theme.shadows.xs,
+      elevation: 1,
     },
     searchInput: {
       flex: 1,
@@ -336,7 +347,8 @@ const OrdersDashboard: React.FC = () => {
         size="small"
       />
       <AppleButton
-        title="🔄 Refresh"
+        title="Refresh"
+        icon={<MaterialIcons name="refresh" size={16} color={theme.colors.onPrimary} />}
         variant="secondary"
         size="medium"
         onPress={handleRefresh}
@@ -361,21 +373,28 @@ const OrdersDashboard: React.FC = () => {
       >
         {/* Analytics Summary */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>📊 Order Analytics</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="analytics" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Order Analytics</Text>
+          </View>
           <View style={styles.analyticsContainer}>
             <View style={styles.analyticsCard}>
+              <MaterialIcons name="receipt" size={24} color={theme.colors.primary} style={{ marginBottom: 8 }} />
               <Text style={styles.analyticsValue}>{data.analytics.totalOrders}</Text>
               <Text style={styles.analyticsLabel}>Total Orders</Text>
             </View>
             <View style={styles.analyticsCard}>
+              <MaterialIcons name="attach-money" size={24} color={theme.colors.success} style={{ marginBottom: 8 }} />
               <Text style={styles.analyticsValue}>${data.analytics.totalRevenue.toFixed(0)}</Text>
               <Text style={styles.analyticsLabel}>Revenue</Text>
             </View>
             <View style={styles.analyticsCard}>
+              <MaterialIcons name="trending-up" size={24} color={theme.colors.info} style={{ marginBottom: 8 }} />
               <Text style={styles.analyticsValue}>${data.analytics.avgOrderValue.toFixed(0)}</Text>
               <Text style={styles.analyticsLabel}>Avg Order</Text>
             </View>
             <View style={styles.analyticsCard}>
+              <MaterialIcons name="check-circle" size={24} color={theme.colors.warning} style={{ marginBottom: 8 }} />
               <Text style={styles.analyticsValue}>{data.analytics.completionRate.toFixed(1)}%</Text>
               <Text style={styles.analyticsLabel}>Completion</Text>
             </View>
@@ -384,11 +403,14 @@ const OrdersDashboard: React.FC = () => {
 
         {/* Search and Filters */}
         <AppleCard layer="surface" size="large" style={styles.filtersContainer}>
-          <Text style={styles.sectionTitle}>🔍 Search & Filter</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="search" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Search & Filter</Text>
+          </View>
 
           {/* Search Bar */}
           <View style={styles.searchBar}>
-            <Text>🔍</Text>
+            <MaterialIcons name="search" size={16} color={theme.colors.onSurfaceVariant} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search orders, customers, tables..."
@@ -479,7 +501,10 @@ const OrdersDashboard: React.FC = () => {
 
         {/* Orders Grid */}
         <AppleCard layer="surface" size="large">
-          <Text style={styles.sectionTitle}>📋 Order Grid ({filteredOrders.length} orders)</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <MaterialIcons name="receipt" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Order Grid ({filteredOrders.length} orders)</Text>
+          </View>
           <FlatList
             data={filteredOrders}
             keyExtractor={(item) => item.id}
@@ -490,10 +515,11 @@ const OrdersDashboard: React.FC = () => {
                 onUpdateStatus={handleStatusUpdate}
               />
             )}
+            scrollEnabled={false}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <AppleCard layer="surfaceVariant" size="large" style={{ alignItems: 'center', padding: 32 }}>
-                <Text style={{ fontSize: 48, marginBottom: 16 }}>📋</Text>
+                <MaterialIcons name="receipt" size={48} color={theme.colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
                 <Text style={{
                   fontSize: 18,
                   fontWeight: '600',
