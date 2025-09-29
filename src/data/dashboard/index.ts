@@ -74,9 +74,89 @@ export {
   type TrainingRecord,
 } from './staffManagementDashboard';
 
+// Orders Dashboard exports
+export {
+  ORDERS_DASHBOARD_DATA,
+  MOCK_ORDERS,
+  MOCK_ORDER_ANALYTICS,
+  getOrdersByStatus,
+  getOrdersByType,
+  getUrgentOrders,
+  getOrderCompletionRate,
+  type OrdersDashboardData,
+  type DashboardOrder,
+  type OrderAnalytics,
+  type OrderItem,
+  type Customer,
+  type OrderFilters,
+} from './ordersDashboard';
+
+// Tables Dashboard exports
+export {
+  TABLES_DASHBOARD_DATA,
+  MOCK_FLOOR_PLAN,
+  getTableById,
+  getTablesByStatus,
+  getTablesBySection,
+  getOccupiedTables,
+  getAvailableTables,
+  getLongestWaitingTable,
+  type TablesDashboardData,
+  type Table,
+  type TableSection,
+  type TableSummary,
+  type FloorPlan,
+} from './tablesDashboard';
+
+// Reports Dashboard exports
+export {
+  REPORTS_DASHBOARD_DATA,
+  MOCK_KPIS,
+  MOCK_REVENUE_CHART,
+  MOCK_HOURLY_ORDER_CHART,
+  MOCK_CATEGORY_PERFORMANCE_CHART,
+  getKPIByLabel,
+  getTopPerformingMenuItems,
+  getLowPerformingMenuItems,
+  getRevenueGrowth,
+  getPeakHour,
+  getTopCategory,
+  formatCurrency,
+  formatPercentage,
+  type ReportsDashboardData,
+  type KPIMetric,
+  type ChartDataPoint,
+  type PerformanceReport,
+  type DateRangeFilter,
+} from './reportsDashboard';
+
+// Kitchen Staff Dashboard exports
+export {
+  KITCHEN_STAFF_DASHBOARD_DATA,
+  MOCK_KITCHEN_ORDERS,
+  MOCK_KITCHEN_STATS,
+  MOCK_KITCHEN_STATIONS,
+  getOrdersByStatus as getKitchenOrdersByStatus,
+  getOrdersByPriority,
+  getOverdueOrders as getKitchenOverdueOrders,
+  getUrgentOrders as getKitchenUrgentOrders,
+  getActiveStations,
+  getStationByChef,
+  getOrderById,
+  getAveragePreparationTime,
+  getStationEfficiency as getKitchenStationEfficiency,
+  sortOrdersByPriority,
+  getNextOrderInQueue,
+  type KitchenDashboardData,
+  type KitchenOrder,
+  type KitchenOrderItem,
+  type KitchenStats,
+  type KitchenStation,
+} from './kitchenStaffDashboard';
+
 // Common dashboard utilities
 export const getDashboardDataByType = (
-  dashboardType: 'manager' | 'staff' | 'kitchen' | 'staff-management',
+  dashboardType: 'manager' | 'staff' | 'kitchen' | 'staff-management' | 'orders' | 'tables' | 'reports' | 'kitchen-staff',
   identifier?: string
 ) => {
   switch (dashboardType) {
@@ -91,6 +171,18 @@ export const getDashboardDataByType = (
 
     case 'staff-management':
       return getStaffManagementDashboardData(identifier);
+
+    case 'orders':
+      return ORDERS_DASHBOARD_DATA;
+
+    case 'tables':
+      return TABLES_DASHBOARD_DATA;
+
+    case 'reports':
+      return REPORTS_DASHBOARD_DATA;
+
+    case 'kitchen-staff':
+      return KITCHEN_STAFF_DASHBOARD_DATA;
 
     default:
       throw new Error(`Unknown dashboard type: ${dashboardType}`);
@@ -148,6 +240,10 @@ export const ALL_DASHBOARD_DATA = {
   staff: STAFF_DASHBOARD_DATA,
   kitchen: KITCHEN_DASHBOARD_DATA,
   staffManagement: STAFF_MANAGEMENT_DASHBOARD_DATA,
+  orders: ORDERS_DASHBOARD_DATA,
+  tables: TABLES_DASHBOARD_DATA,
+  reports: REPORTS_DASHBOARD_DATA,
+  kitchenStaff: KITCHEN_STAFF_DASHBOARD_DATA,
 };
 
 export default ALL_DASHBOARD_DATA;

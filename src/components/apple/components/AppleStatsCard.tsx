@@ -70,7 +70,7 @@ export const AppleStatsCard: React.FC<AppleStatsCardProps> = ({
 
     title: {
       ...theme.typography.label,
-      color: theme.colors.onSurfaceSecondary,
+      color: theme.colors.onSurfaceVariant,
       fontSize: getTitleSize(size),
       fontWeight: '500',
       flex: 1,
@@ -86,7 +86,7 @@ export const AppleStatsCard: React.FC<AppleStatsCardProps> = ({
 
     subtitle: {
       ...theme.typography.caption,
-      color: theme.colors.onSurfaceSecondary,
+      color: theme.colors.onSurfaceVariant,
       fontSize: getSubtitleSize(size),
       marginBottom: theme.spacing.sm,
       lineHeight: 16,

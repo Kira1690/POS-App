@@ -12,12 +12,25 @@ export type AuthStackParamList = {
 };
 
 export type MainTabParamList = {
-  Dashboard: undefined;
+  Dashboard: NavigatorScreenParams<DashboardStackParamList>;
   Orders: NavigatorScreenParams<OrdersStackParamList>;
   Tables: NavigatorScreenParams<TablesStackParamList>;
   Kitchen: NavigatorScreenParams<KitchenStackParamList>;
   Menu: undefined;
   Settings: undefined;
+};
+
+export type DashboardStackParamList = {
+  Overview: undefined;
+  OrdersDashboard: undefined;
+  TablesDashboard: undefined;
+  KitchenDashboard: undefined;
+  ReportsDashboard: undefined;
+  // Fallback screens
+  OrderManagement: undefined;
+  TableManagement: undefined;
+  KitchenDisplay: undefined;
+  Reports: undefined;
 };
 
 export type TablesStackParamList = {

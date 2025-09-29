@@ -250,6 +250,7 @@ export const darkTheme = {
   surfaceVariant: '#2C2C2E', // Elevated dark surfaces - uses layer2
   surfaceElevated: '#3A3A3C', // Interactive surfaces - uses layer3
   onSurfaceVariant: '#EBEBF5', // Apple's secondary text on dark
+  onSurfaceSecondary: '#EBEBF5', // Secondary text color for dark theme
   surfaceDisabled: '#2C2C2E',
   onSurfaceDisabled: '#8E8E93',
 

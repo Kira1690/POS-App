@@ -4,14 +4,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { 
-  MainTabParamList, 
-  TablesStackParamList, 
+import {
+  MainTabParamList,
+  TablesStackParamList,
   OrdersStackParamList,
-  KitchenStackParamList 
+  KitchenStackParamList
 } from './types';
-// Direct imports to avoid complex re-export chain issues
-import DashboardScreen from '@/screens/dashboard/RoleDashboard';
+// Import the new dashboard navigator
+import { DashboardNavigator } from './DashboardNavigator';
 import { DashboardProvider } from '@/context/dashboard/DashboardContext';
 import TableManagementScreen from '@/screens/tables/TableManagementScreen';
 // Direct imports for order screens
@@ -115,7 +115,7 @@ const KitchenStackNavigator = () => (
 // Dashboard with Provider wrapper
 const DashboardWithProvider = () => (
   <DashboardProvider>
-    <DashboardScreen />
+    <DashboardNavigator />
   </DashboardProvider>
 );
 
