@@ -161,7 +161,7 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
     title: {
       fontSize: 20,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 25,
     },
     section: {
@@ -175,7 +175,7 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
     sectionTitle: {
       fontSize: 16,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 15,
     },
     syncRow: {
@@ -192,12 +192,12 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
     syncLabel: {
       fontSize: 14,
       fontWeight: '600',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 2,
     },
     syncDesc: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
     },
     integrationCard: {
       flexDirection: 'row',
@@ -236,7 +236,7 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
     integrationName: {
       fontSize: 14,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginRight: 10,
     },
     categoryTag: {
@@ -252,7 +252,7 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
     },
     integrationDescription: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       marginBottom: 4,
     },
     integrationStatus: {
@@ -295,11 +295,11 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
     },
     apiLabel: {
       fontSize: 14,
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
     },
     apiValue: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       fontFamily: 'monospace',
     },
     apiActions: {

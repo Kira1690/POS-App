@@ -8,7 +8,7 @@ import {
   FlatList,
   TextInput,
 } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface SystemLogsSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -26,6 +26,9 @@ const MOCK_LOGS = [
 ];
 
 export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSettingsProps) {
+  // Theme hook FIRST (REQUIRED per CLAUDE.md)
+  const { theme } = useTheme();
+
   const [logs, setLogs] = useState(MOCK_LOGS);
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState('ALL');
@@ -74,6 +77,245 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
       </View>
     </View>
   );
+
+  // StyleSheet AFTER hooks/handlers, BEFORE return (REQUIRED per CLAUDE.md)
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 25,
+    },
+    filtersSection: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    searchInput: {
+      backgroundColor: theme.colors.white,
+      borderWidth: 1,
+      borderColor: theme.colors.inputBorder,
+      borderRadius: 8,
+      paddingHorizontal: 15,
+      paddingVertical: 10,
+      fontSize: 14,
+      marginBottom: 10,
+    },
+    filterRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    filterButton: {
+      backgroundColor: theme.colors.white,
+      borderWidth: 1,
+      borderColor: theme.colors.inputBorder,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
+    filterButtonText: {
+      fontSize: 12,
+      color: theme.colors.onSurface,
+    },
+    statsSection: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    statsTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 15,
+    },
+    statsRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: theme.colors.white,
+      borderRadius: 8,
+      padding: 12,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    errorStat: {
+      backgroundColor: '#FFEBEE',
+      borderColor: theme.colors.error,
+    },
+    warningStat: {
+      backgroundColor: '#FFF8E1',
+      borderColor: theme.colors.warning,
+    },
+    infoStat: {
+      backgroundColor: '#E3F2FD',
+      borderColor: theme.colors.primary,
+    },
+    statNumber: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 4,
+    },
+    statLabel: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+    },
+    logsSection: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    logsHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 15,
+    },
+    logsTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+    },
+    logsActions: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    actionButton: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 6,
+    },
+    actionButtonText: {
+      color: theme.colors.white,
+      fontSize: 11,
+    },
+    logsContainer: {
+      height: 300,
+    },
+    logsList: {
+      flex: 1,
+    },
+    logItem: {
+      backgroundColor: theme.colors.white,
+      borderRadius: 6,
+      padding: 12,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    logHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    logLevel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+    },
+    logIcon: {
+      fontSize: 8,
+    },
+    logLevelText: {
+      fontSize: 11,
+      fontWeight: 'bold',
+    },
+    logTimestamp: {
+      fontSize: 10,
+      color: theme.colors.onSurfaceVariant,
+      fontFamily: 'monospace',
+    },
+    logContent: {
+      gap: 4,
+    },
+    logCategory: {
+      fontSize: 11,
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    logMessage: {
+      fontSize: 12,
+      color: theme.colors.onSurface,
+      lineHeight: 16,
+    },
+    settingsSection: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    settingsTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 15,
+    },
+    settingRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    settingLabel: {
+      fontSize: 14,
+      color: theme.colors.onSurface,
+    },
+    settingValue: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+      fontWeight: '600',
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: 15,
+      marginBottom: 30,
+    },
+    saveButton: {
+      flex: 1,
+      backgroundColor: theme.colors.success,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    downloadButton: {
+      flex: 1,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    downloadButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+  });
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -182,241 +424,3 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 25,
-  },
-  filtersSection: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  searchInput: {
-    backgroundColor: theme.colors.white,
-    borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  filterButton: {
-    backgroundColor: theme.colors.white,
-    borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  filterButtonText: {
-    fontSize: 12,
-    color: theme.colors.text,
-  },
-  statsSection: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  statsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: theme.colors.white,
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  errorStat: {
-    backgroundColor: '#FFEBEE',
-    borderColor: theme.colors.error,
-  },
-  warningStat: {
-    backgroundColor: '#FFF8E1',
-    borderColor: theme.colors.warning,
-  },
-  infoStat: {
-    backgroundColor: '#E3F2FD',
-    borderColor: theme.colors.primary,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  logsSection: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  logsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  logsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-  },
-  logsActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  actionButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
-  },
-  actionButtonText: {
-    color: theme.colors.white,
-    fontSize: 11,
-  },
-  logsContainer: {
-    height: 300,
-  },
-  logsList: {
-    flex: 1,
-  },
-  logItem: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 6,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  logHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  logLevel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  logIcon: {
-    fontSize: 8,
-  },
-  logLevelText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  logTimestamp: {
-    fontSize: 10,
-    color: theme.colors.textSecondary,
-    fontFamily: 'monospace',
-  },
-  logContent: {
-    gap: 4,
-  },
-  logCategory: {
-    fontSize: 11,
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
-  logMessage: {
-    fontSize: 12,
-    color: theme.colors.text,
-    lineHeight: 16,
-  },
-  settingsSection: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  settingsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  settingLabel: {
-    fontSize: 14,
-    color: theme.colors.text,
-  },
-  settingValue: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontWeight: '600',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 15,
-    marginBottom: 30,
-  },
-  saveButton: {
-    flex: 1,
-    backgroundColor: theme.colors.success,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  downloadButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  downloadButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-});

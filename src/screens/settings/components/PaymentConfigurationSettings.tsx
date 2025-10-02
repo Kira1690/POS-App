@@ -78,7 +78,7 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
     title: {
       fontSize: 20,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 25,
     },
     section: {
@@ -92,7 +92,7 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
     sectionTitle: {
       fontSize: 16,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 15,
     },
     methodRow: {
@@ -109,12 +109,12 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
     methodLabel: {
       fontSize: 14,
       fontWeight: '600',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 2,
     },
     methodDesc: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
     },
     configRow: {
       flexDirection: 'row',
@@ -126,12 +126,12 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
     },
     configLabel: {
       fontSize: 14,
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       flex: 1,
     },
     configValue: {
       fontSize: 14,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       fontWeight: '500',
     },
     tipsContainer: {

@@ -122,7 +122,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
     },
     loadingText: {
       fontSize: 16,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
     },
     errorContainer: {
       flex: 1,
@@ -136,7 +136,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
     title: {
       fontSize: 20,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 25,
     },
     section: {
@@ -150,7 +150,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
     sectionTitle: {
       fontSize: 16,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 15,
     },
     formRow: {
@@ -172,7 +172,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
     },
     label: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       marginBottom: 5,
     },
     input: {
@@ -183,7 +183,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
       paddingHorizontal: 8,
       paddingVertical: 8,
       fontSize: 12,
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
     },
     inputCenter: {
       textAlign: 'center',
@@ -199,7 +199,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
     },
     selectText: {
       fontSize: 12,
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
     },
     hoursContainer: {
       gap: 15,
@@ -211,7 +211,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
     },
     dayLabel: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       width: 120,
     },
     timeInputs: {
@@ -232,7 +232,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
     },
     timeDash: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
     },
     sameAsMonday: {
       backgroundColor: theme.colors.successLight, // Fixed: was hardcoded '#E8F5E8'

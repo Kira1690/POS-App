@@ -68,7 +68,7 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
     title: {
       fontSize: 20,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 25,
     },
     section: {
@@ -82,7 +82,7 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
     sectionTitle: {
       fontSize: 16,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 15,
     },
     settingRow: {
@@ -99,12 +99,12 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
     settingLabel: {
       fontSize: 14,
       fontWeight: '600',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 2,
     },
     settingDesc: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
     },
     valueRow: {
       flexDirection: 'row',
@@ -116,11 +116,11 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
     },
     valueLabel: {
       fontSize: 14,
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
     },
     valueText: {
       fontSize: 14,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       fontWeight: '600',
     },
     backupRow: {
@@ -137,12 +137,12 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
     backupDate: {
       fontSize: 14,
       fontWeight: '600',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 2,
     },
     backupDetails: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
     },
     backupStatus: {
       paddingHorizontal: 8,
@@ -167,7 +167,7 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
     },
     encryptionLabel: {
       fontSize: 14,
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
     },
     encryptionStatus: {
       fontSize: 12,
