@@ -8,13 +8,17 @@ import {
   Alert,
   Switch,
 } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Icon } from '@/components/common';
 
 interface SecurityBackupSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
 }
 
 export default function SecurityBackupSettings({ onChangesDetected }: SecurityBackupSettingsProps) {
+  // Theme hook FIRST (REQUIRED per CLAUDE.md)
+  const { theme } = useTheme();
+
   const [securitySettings, setSecuritySettings] = useState({
     two_factor_auth: false,
     session_timeout: 30,
@@ -55,6 +59,152 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
       ]
     );
   };
+
+  // StyleSheet AFTER hooks and handlers, BEFORE return (REQUIRED per CLAUDE.md)
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 25,
+    },
+    section: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 20,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 15,
+    },
+    settingRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    settingInfo: {
+      flex: 1,
+    },
+    settingLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.text,
+      marginBottom: 2,
+    },
+    settingDesc: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    valueRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    valueLabel: {
+      fontSize: 14,
+      color: theme.colors.text,
+    },
+    valueText: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      fontWeight: '600',
+    },
+    backupRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    backupInfo: {
+      flex: 1,
+    },
+    backupDate: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.text,
+      marginBottom: 2,
+    },
+    backupDetails: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    backupStatus: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    statusSuccess: {
+      backgroundColor: theme.colors.successLight, // Fixed: was hardcoded '#E8F5E8'
+    },
+    backupStatusText: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: theme.colors.success, // Fixed: was hardcoded '#2E7D32'
+    },
+    encryptionInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    encryptionLabel: {
+      fontSize: 14,
+      color: theme.colors.text,
+    },
+    encryptionStatus: {
+      fontSize: 12,
+      color: theme.colors.success,
+      fontWeight: '600',
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: 15,
+      marginTop: 20,
+      marginBottom: 30,
+    },
+    backupButton: {
+      flex: 1,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    backupButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    restoreButton: {
+      flex: 1,
+      backgroundColor: theme.colors.warning,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    restoreButtonText: {
+      color: theme.colors.onSurface, // Dark text on warning for WCAG AA compliance
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+  });
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -190,173 +340,53 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Data Encryption</Text>
         <View style={styles.encryptionInfo}>
-          <Text style={styles.encryptionLabel}>🔒 Database Encryption</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="lock" size={16} color={theme.colors.success} />
+            <Text style={styles.encryptionLabel}>Database Encryption</Text>
+          </View>
           <Text style={styles.encryptionStatus}>Enabled (AES-256)</Text>
         </View>
         <View style={styles.encryptionInfo}>
-          <Text style={styles.encryptionLabel}>🔐 Backup Encryption</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="lock-check" size={16} color={theme.colors.success} />
+            <Text style={styles.encryptionLabel}>Backup Encryption</Text>
+          </View>
           <Text style={styles.encryptionStatus}>Enabled (AES-256)</Text>
         </View>
         <View style={styles.encryptionInfo}>
-          <Text style={styles.encryptionLabel}>📡 Data Transmission</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="broadcast" size={16} color={theme.colors.success} />
+            <Text style={styles.encryptionLabel}>Data Transmission</Text>
+          </View>
           <Text style={styles.encryptionStatus}>TLS 1.3</Text>
         </View>
       </View>
 
       {/* Action Buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.backupButton} onPress={handleBackupNow}>
-          <Text style={styles.backupButtonText}>💾 Backup Now</Text>
+        <TouchableOpacity
+          style={styles.backupButton}
+          onPress={handleBackupNow}
+          accessibilityRole="button"
+          accessibilityLabel="Backup now"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <Icon name="content-save" size={16} color={theme.colors.white} />
+            <Text style={styles.backupButtonText}>Backup Now</Text>
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.restoreButton} onPress={handleRestoreData}>
-          <Text style={styles.restoreButtonText}>🔄 Restore Data</Text>
+        <TouchableOpacity
+          style={styles.restoreButton}
+          onPress={handleRestoreData}
+          accessibilityRole="button"
+          accessibilityLabel="Restore data"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <Icon name="restore" size={16} color={theme.colors.white} />
+            <Text style={styles.restoreButtonText}>Restore Data</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 25,
-  },
-  section: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  settingInfo: {
-    flex: 1,
-  },
-  settingLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 2,
-  },
-  settingDesc: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  valueRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  valueLabel: {
-    fontSize: 14,
-    color: theme.colors.text,
-  },
-  valueText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    fontWeight: '600',
-  },
-  backupRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  backupInfo: {
-    flex: 1,
-  },
-  backupDate: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 2,
-  },
-  backupDetails: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  backupStatus: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusSuccess: {
-    backgroundColor: '#E8F5E8',
-  },
-  backupStatusText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#2E7D32',
-  },
-  encryptionInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  encryptionLabel: {
-    fontSize: 14,
-    color: theme.colors.text,
-  },
-  encryptionStatus: {
-    fontSize: 12,
-    color: theme.colors.success,
-    fontWeight: '600',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 15,
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  backupButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  backupButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  restoreButton: {
-    flex: 1,
-    backgroundColor: theme.colors.warning,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  restoreButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-});

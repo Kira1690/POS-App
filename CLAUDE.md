@@ -2,6 +2,82 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL ERROR PREVENTION - READ FIRST
+
+### "Cannot read property 'colors' of undefined" Error
+
+**THIS ERROR HAS CAUSED EXTREME HAVOC IN THE PAST. ALWAYS CHECK THIS FIRST.**
+
+#### Error Message:
+```
+ERROR [runtime not ready]: TypeError: Cannot read property 'colors' of undefined
+```
+
+#### Root Causes (CHECK ALL):
+
+1. **Missing Theme Export** (MOST COMMON)
+   - Components import `{ theme }` from `@/constants/theme`
+   - But `/src/constants/theme.ts` doesn't export `theme`
+   - **FIX**: Add `export const theme = ProfessionalTheme;` to theme.ts
+
+2. **Missing ThemeProvider Wrapper**
+   - Component uses `useTheme()` hook but isn't wrapped in ThemeProvider
+   - **FIX**: Ensure App.tsx has ThemeProvider wrapping NavigationContainer
+
+3. **Export/Import Pattern Mismatch**
+   - Component uses `export const` but imported with `export default`
+   - Or vice versa
+   - **FIX**: Match export/import patterns (use default exports for settings components)
+
+4. **StyleSheet Outside Component**
+   - StyleSheet.create() at module level accessing theme
+   - Theme not available at module parse time
+   - **FIX**: Move StyleSheet.create() inside component after useTheme()
+
+#### Diagnostic Steps:
+
+1. **Check theme.ts exports:**
+   ```bash
+   grep "export.*theme" src/constants/theme.ts
+   ```
+   Should show: `export const theme = ProfessionalTheme;`
+
+2. **Check component imports:**
+   ```bash
+   grep "import.*theme" src/screens/settings/components/*.tsx
+   ```
+   Verify all imports match available exports
+
+3. **Check App.tsx provider chain:**
+   ```bash
+   grep -A10 "ThemeProvider" App.tsx
+   ```
+   Verify ThemeProvider wraps all components
+
+4. **Check for module-level StyleSheet:**
+   ```bash
+   grep -B5 "const styles = StyleSheet.create" src/screens/settings/components/*.tsx
+   ```
+   Should be inside component function, not at module level
+
+#### Quick Fix Checklist:
+
+- [ ] Add `export const theme = ProfessionalTheme;` to `/src/constants/theme.ts`
+- [ ] Kill all Metro bundlers: `pkill -9 -f "expo\|metro"`
+- [ ] Clear all caches: `rm -rf node_modules/.cache .expo`
+- [ ] Restart: `bun expo start --clear`
+- [ ] If still failing, check provider chain in App.tsx
+- [ ] If still failing, check export/import patterns
+
+#### Prevention Rules:
+
+1. **ALWAYS** export `theme` from theme.ts for backward compatibility
+2. **NEVER** use StyleSheet.create() at module level with theme colors
+3. **ALWAYS** use default exports for settings components
+4. **ALWAYS** wrap app in ThemeProvider before any theme-consuming components
+
+---
+
 ## CRITICAL CODING RULES - MUST FOLLOW
 
 ### 🚨 NEVER VIOLATE THESE RULES

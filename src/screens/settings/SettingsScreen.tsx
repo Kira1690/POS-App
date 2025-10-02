@@ -20,64 +20,66 @@ import {
   ApplePill,
   type AppleSidebarItem,
 } from '@/components/apple';
-
-// APPLE SETTINGS CATEGORIES (transformed for AppleSidebar)
-// Using Apple's reference image structure with colorful icon backgrounds
-const SETTINGS_CATEGORIES: AppleSidebarItem[] = [
-  {
-    id: 'restaurant_profile',
-    label: 'Restaurant Profile',
-    icon: '🏪',
-    iconBackground: '#FF453A', // Apple red (like Notifications in reference)
-  },
-  {
-    id: 'user_management',
-    label: 'User Management',
-    icon: '👥',
-    iconBackground: '#007AFF', // Apple blue (like Display & Brightness)
-  },
-  {
-    id: 'device_hardware',
-    label: 'Device & Hardware',
-    icon: '📱',
-    iconBackground: '#32D74B', // Apple green (like Battery)
-  },
-  {
-    id: 'payment_config',
-    label: 'Payment Configuration',
-    icon: '💳',
-    iconBackground: '#FF9500', // Apple orange (like General)
-  },
-  {
-    id: 'integrations',
-    label: 'Integrations',
-    icon: '🔗',
-    iconBackground: '#BF5AF2', // Apple purple (like Focus)
-  },
-  {
-    id: 'security_backup',
-    label: 'Security & Backup',
-    icon: '🔒',
-    iconBackground: '#64D2FF', // Apple cyan (like Privacy)
-  },
-  {
-    id: 'system_logs',
-    label: 'System Logs',
-    icon: '📊',
-    iconBackground: '#FF453A', // Apple red variation
-  },
-  {
-    id: 'help_support',
-    label: 'Help & Support',
-    icon: '❓',
-    iconBackground: '#8E8E93', // Apple gray
-  },
-];
+import { Icon } from '@/components/common';
 
 export default function SettingsScreen() {
+  // Theme hook FIRST (REQUIRED per CLAUDE.md)
   const { theme, isDark } = useTheme();
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>('restaurant_profile');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // APPLE SETTINGS CATEGORIES (transformed for AppleSidebar)
+  // Using Apple's reference image structure with colorful icon backgrounds
+  const SETTINGS_CATEGORIES: AppleSidebarItem[] = [
+    {
+      id: 'restaurant_profile',
+      label: 'Restaurant Profile',
+      icon: <Icon name="store" size={20} color={theme.colors.white} accessibilityLabel="Restaurant profile" />,
+      iconBackground: theme.colors.error, // Fixed: was hardcoded '#FF453A'
+    },
+    {
+      id: 'user_management',
+      label: 'User Management',
+      icon: <Icon name="account-group" size={20} color={theme.colors.white} accessibilityLabel="User management" />,
+      iconBackground: theme.colors.info, // Fixed: was hardcoded '#007AFF'
+    },
+    {
+      id: 'device_hardware',
+      label: 'Device & Hardware',
+      icon: <Icon name="devices" size={20} color={theme.colors.white} accessibilityLabel="Device and hardware" />,
+      iconBackground: theme.colors.success, // Fixed: was hardcoded '#32D74B'
+    },
+    {
+      id: 'payment_config',
+      label: 'Payment Configuration',
+      icon: <Icon name="credit-card-outline" size={20} color={theme.colors.white} accessibilityLabel="Payment configuration" />,
+      iconBackground: theme.colors.warning, // Fixed: was hardcoded '#FF9500'
+    },
+    {
+      id: 'integrations',
+      label: 'Integrations',
+      icon: <Icon name="link-variant" size={20} color={theme.colors.white} accessibilityLabel="Integrations" />,
+      iconBackground: theme.colors.purple, // Fixed: was hardcoded '#BF5AF2'
+    },
+    {
+      id: 'security_backup',
+      label: 'Security & Backup',
+      icon: <Icon name="shield-lock-outline" size={20} color={theme.colors.white} accessibilityLabel="Security and backup" />,
+      iconBackground: theme.colors.cyan, // Fixed: was hardcoded '#64D2FF'
+    },
+    {
+      id: 'system_logs',
+      label: 'System Logs',
+      icon: <Icon name="chart-line" size={20} color={theme.colors.white} accessibilityLabel="System logs" />,
+      iconBackground: theme.colors.error, // Fixed: was hardcoded '#FF453A'
+    },
+    {
+      id: 'help_support',
+      label: 'Help & Support',
+      icon: <Icon name="help-circle-outline" size={20} color={theme.colors.white} accessibilityLabel="Help and support" />,
+      iconBackground: theme.colors.onSurfaceVariant, // Fixed: was hardcoded '#8E8E93'
+    },
+  ];
 
   // APPLE-STYLE INTERACTION HANDLERS (unchanged logic, cleaner implementation)
   const handleCategoryChange = (category: SettingsCategory) => {
@@ -159,15 +161,19 @@ export default function SettingsScreen() {
   const headerActions = (
     <View style={{ flexDirection: 'row', gap: 12 }}>
       <AppleButton
-        title="💾 Save All"
+        title="Save All"
         variant="success"
         size="medium"
+        icon={<Icon name="content-save" size={18} color={theme.colors.white} />}
+        iconPosition="left"
         onPress={handleSaveAllChanges}
       />
       <AppleButton
-        title="← Dashboard"
+        title="Dashboard"
         variant="secondary"
         size="medium"
+        icon={<Icon name="arrow-left" size={18} color={theme.colors.onSurface} />}
+        iconPosition="left"
         onPress={handleBackToDashboard}
       />
     </View>

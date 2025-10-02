@@ -301,7 +301,7 @@ export interface SystemLogs {
   };
 }
 
-export type SettingsCategory = 
+export type SettingsCategory =
   | 'restaurant_profile'
   | 'user_management'
   | 'device_hardware'

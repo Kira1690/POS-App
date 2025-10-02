@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { RestaurantProfile } from '@/types/settings.types';
 import { MockSettingsService } from '@/services/settings/MockSettingsService';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Icon } from '@/components/common';
 
 interface RestaurantProfileSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -32,6 +33,9 @@ const TIMEZONES = [
 ];
 
 export default function RestaurantProfileSettings({ onChangesDetected }: RestaurantProfileSettingsProps) {
+  // Theme hook FIRST (REQUIRED per CLAUDE.md)
+  const { theme } = useTheme();
+
   const [profile, setProfile] = useState<RestaurantProfile | null>(null);
   const [originalProfile, setOriginalProfile] = useState<RestaurantProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,6 +109,197 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
       setProfile({ ...profile, [field]: value });
     }
   };
+
+  // StyleSheet AFTER hooks and handlers, BEFORE return (REQUIRED per CLAUDE.md)
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: 16,
+      color: theme.colors.textSecondary,
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    errorText: {
+      fontSize: 16,
+      color: theme.colors.error,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 25,
+    },
+    section: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 20,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 15,
+    },
+    formRow: {
+      flexDirection: 'row',
+      gap: 10,
+      marginBottom: 15,
+    },
+    formGroup: {
+      flex: 1,
+    },
+    formGroupHalf: {
+      flex: 0.5,
+    },
+    formGroupThird: {
+      flex: 0.33,
+    },
+    formGroupQuarter: {
+      flex: 0.25,
+    },
+    label: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginBottom: 5,
+    },
+    input: {
+      backgroundColor: theme.colors.white,
+      borderWidth: 1,
+      borderColor: theme.colors.inputBorder,
+      borderRadius: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      fontSize: 12,
+      color: theme.colors.text,
+    },
+    inputCenter: {
+      textAlign: 'center',
+    },
+    selectInput: {
+      backgroundColor: theme.colors.white,
+      borderWidth: 1,
+      borderColor: theme.colors.inputBorder,
+      borderRadius: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      justifyContent: 'center',
+    },
+    selectText: {
+      fontSize: 12,
+      color: theme.colors.text,
+    },
+    hoursContainer: {
+      gap: 15,
+    },
+    hoursRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    dayLabel: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      width: 120,
+    },
+    timeInputs: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    timeInput: {
+      backgroundColor: theme.colors.white,
+      borderWidth: 1,
+      borderColor: theme.colors.inputBorder,
+      borderRadius: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+      fontSize: 12,
+      textAlign: 'center',
+      width: 60,
+    },
+    timeDash: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    sameAsMonday: {
+      backgroundColor: theme.colors.successLight, // Fixed: was hardcoded '#E8F5E8'
+      borderRadius: 15,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderWidth: 1,
+      borderColor: theme.colors.success,
+    },
+    sameAsMondayText: {
+      fontSize: 11,
+      color: theme.colors.success, // Fixed: was hardcoded '#2E7D32'
+    },
+    holidayHours: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 10,
+    },
+    holidayHoursText: {
+      fontSize: 12,
+      color: theme.colors.primary,
+    },
+    configureButton: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    configureButtonText: {
+      fontSize: 11,
+      color: theme.colors.white,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: 20,
+      marginTop: 20,
+      marginBottom: 30,
+    },
+    button: {
+      borderRadius: 8,
+      paddingHorizontal: 15,
+      paddingVertical: 10,
+    },
+    updateButton: {
+      backgroundColor: theme.colors.success,
+    },
+    updateButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    resetButton: {
+      backgroundColor: theme.colors.warning,
+    },
+    resetButtonText: {
+      color: theme.colors.onSurface, // Dark text on warning for WCAG AA compliance
+      fontSize: 12,
+    },
+    logoButton: {
+      backgroundColor: theme.colors.primary,
+    },
+    logoButtonText: {
+      color: theme.colors.white,
+      fontSize: 12,
+    },
+  });
 
   if (loading) {
     return (
@@ -334,216 +529,41 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
           style={[styles.button, styles.updateButton]}
           onPress={handleUpdateProfile}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={saving ? 'Updating profile' : 'Update profile'}
         >
-          <Text style={styles.updateButtonText}>
-            {saving ? 'Updating...' : '💾 Update Profile'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {!saving && <Icon name="content-save" size={16} color={theme.colors.white} />}
+            <Text style={styles.updateButtonText}>
+              {saving ? 'Updating...' : 'Update Profile'}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, styles.resetButton]}
           onPress={handleResetChanges}
+          accessibilityRole="button"
+          accessibilityLabel="Reset changes"
         >
-          <Text style={styles.resetButtonText}>🔄 Reset Changes</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="refresh" size={16} color={theme.colors.white} />
+            <Text style={styles.resetButtonText}>Reset Changes</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, styles.logoButton]}
           onPress={handleUploadLogo}
+          accessibilityRole="button"
+          accessibilityLabel="Upload logo"
         >
-          <Text style={styles.logoButtonText}>📷 Upload Logo</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="camera" size={16} color={theme.colors.white} />
+            <Text style={styles.logoButtonText}>Upload Logo</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: theme.colors.error,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 25,
-  },
-  section: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  formRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 15,
-  },
-  formGroup: {
-    flex: 1,
-  },
-  formGroupHalf: {
-    flex: 0.5,
-  },
-  formGroupThird: {
-    flex: 0.33,
-  },
-  formGroupQuarter: {
-    flex: 0.25,
-  },
-  label: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginBottom: 5,
-  },
-  input: {
-    backgroundColor: theme.colors.white,
-    borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    fontSize: 12,
-    color: theme.colors.text,
-  },
-  inputCenter: {
-    textAlign: 'center',
-  },
-  selectInput: {
-    backgroundColor: theme.colors.white,
-    borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    justifyContent: 'center',
-  },
-  selectText: {
-    fontSize: 12,
-    color: theme.colors.text,
-  },
-  hoursContainer: {
-    gap: 15,
-  },
-  hoursRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dayLabel: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    width: 120,
-  },
-  timeInputs: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  timeInput: {
-    backgroundColor: theme.colors.white,
-    borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    fontSize: 12,
-    textAlign: 'center',
-    width: 60,
-  },
-  timeDash: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  sameAsMonday: {
-    backgroundColor: '#E8F5E8',
-    borderRadius: 15,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: theme.colors.success,
-  },
-  sameAsMondayText: {
-    fontSize: 11,
-    color: '#2E7D32',
-  },
-  holidayHours: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  holidayHoursText: {
-    fontSize: 12,
-    color: theme.colors.primary,
-  },
-  configureButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  configureButtonText: {
-    fontSize: 11,
-    color: theme.colors.white,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 20,
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  button: {
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  updateButton: {
-    backgroundColor: theme.colors.success,
-  },
-  updateButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  resetButton: {
-    backgroundColor: theme.colors.warning,
-  },
-  resetButtonText: {
-    color: theme.colors.white,
-    fontSize: 12,
-  },
-  logoButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  logoButtonText: {
-    color: theme.colors.white,
-    fontSize: 12,
-  },
-});

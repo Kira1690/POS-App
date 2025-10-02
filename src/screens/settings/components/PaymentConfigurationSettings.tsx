@@ -9,13 +9,17 @@ import {
   Switch,
 } from 'react-native';
 import { PaymentConfiguration } from '@/types/settings.types';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Icon } from '@/components/common';
 
 interface PaymentConfigurationSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
 }
 
 export default function PaymentConfigurationSettings({ onChangesDetected }: PaymentConfigurationSettingsProps) {
+  // Theme hook FIRST (REQUIRED per CLAUDE.md)
+  const { theme } = useTheme();
+
   const [config, setConfig] = useState<PaymentConfiguration>({
     enabled_methods: ['card', 'cash'],
     card_processing: {
@@ -66,6 +70,121 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
     onChangesDetected(false);
   };
 
+  // StyleSheet AFTER hooks and handlers, BEFORE return (REQUIRED per CLAUDE.md)
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 25,
+    },
+    section: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 20,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 15,
+    },
+    methodRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    methodInfo: {
+      flex: 1,
+    },
+    methodLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.text,
+      marginBottom: 2,
+    },
+    methodDesc: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    configRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    configLabel: {
+      fontSize: 14,
+      color: theme.colors.text,
+      flex: 1,
+    },
+    configValue: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      fontWeight: '500',
+    },
+    tipsContainer: {
+      paddingVertical: 10,
+    },
+    tipsRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 8,
+    },
+    tipTag: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+    },
+    tipText: {
+      color: theme.colors.white,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: 15,
+      marginTop: 20,
+      marginBottom: 30,
+    },
+    testButton: {
+      flex: 1,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    testButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    saveButton: {
+      flex: 1,
+      backgroundColor: theme.colors.success,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+  });
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Payment Configuration</Text>
@@ -74,15 +193,18 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Enabled Payment Methods</Text>
         {[
-          { id: 'card', label: '💳 Credit/Debit Cards', desc: 'VP3350 Card Reader' },
-          { id: 'cash', label: '💵 Cash Payments', desc: 'Cash drawer integration' },
-          { id: 'split', label: '🔄 Split Payments', desc: 'Multiple payment methods' },
-          { id: 'gift_card', label: '🎁 Gift Cards', desc: 'Digital gift card system' },
+          { id: 'card', iconName: 'credit-card', label: 'Credit/Debit Cards', desc: 'VP3350 Card Reader' },
+          { id: 'cash', iconName: 'cash', label: 'Cash Payments', desc: 'Cash drawer integration' },
+          { id: 'split', iconName: 'swap-horizontal', label: 'Split Payments', desc: 'Multiple payment methods' },
+          { id: 'gift_card', iconName: 'gift', label: 'Gift Cards', desc: 'Digital gift card system' },
         ].map(method => (
           <View key={method.id} style={styles.methodRow}>
-            <View style={styles.methodInfo}>
-              <Text style={styles.methodLabel}>{method.label}</Text>
-              <Text style={styles.methodDesc}>{method.desc}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+              <Icon name={method.iconName} size={20} color={theme.colors.primary} />
+              <View style={styles.methodInfo}>
+                <Text style={styles.methodLabel}>{method.label}</Text>
+                <Text style={styles.methodDesc}>{method.desc}</Text>
+              </View>
             </View>
             <Switch
               value={config.enabled_methods.includes(method.id)}
@@ -186,127 +308,29 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
 
       {/* Action Buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.testButton} onPress={handleTestPayment}>
-          <Text style={styles.testButtonText}>🧪 Test Payment</Text>
+        <TouchableOpacity
+          style={styles.testButton}
+          onPress={handleTestPayment}
+          accessibilityRole="button"
+          accessibilityLabel="Test payment"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <Icon name="flask" size={16} color={theme.colors.white} />
+            <Text style={styles.testButtonText}>Test Payment</Text>
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveConfiguration}>
-          <Text style={styles.saveButtonText}>💾 Save Configuration</Text>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSaveConfiguration}
+          accessibilityRole="button"
+          accessibilityLabel="Save configuration"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <Icon name="content-save" size={16} color={theme.colors.white} />
+            <Text style={styles.saveButtonText}>Save Configuration</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 25,
-  },
-  section: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  methodRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  methodInfo: {
-    flex: 1,
-  },
-  methodLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 2,
-  },
-  methodDesc: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  configRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  configLabel: {
-    fontSize: 14,
-    color: theme.colors.text,
-    flex: 1,
-  },
-  configValue: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    fontWeight: '500',
-  },
-  tipsContainer: {
-    paddingVertical: 10,
-  },
-  tipsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  tipTag: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  tipText: {
-    color: theme.colors.white,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 15,
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  testButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  testButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  saveButton: {
-    flex: 1,
-    backgroundColor: theme.colors.success,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-});

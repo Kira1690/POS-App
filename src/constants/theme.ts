@@ -623,3 +623,6 @@ export const DarkTheme = {
     },
   },
 };
+
+// Default theme export for backward compatibility
+export const theme = ProfessionalTheme;

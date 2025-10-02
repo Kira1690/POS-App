@@ -2,6 +2,27 @@
 
 A comprehensive Point of Sale (POS) mobile application built with React Native and Expo, designed to integrate with a microservices backend architecture for complete restaurant operations management.
 
+## 🚨 CRITICAL ISSUE ALERT
+
+**If you encounter: "Cannot read property 'colors' of undefined"**
+
+This is a known critical error that has caused significant issues in the past. **DO NOT PANIC.**
+
+**Quick Fix:**
+```bash
+# 1. Verify theme export exists in src/constants/theme.ts (at the end):
+export const theme = ProfessionalTheme;
+
+# 2. Restart Metro with cleared cache:
+pkill -9 -f "expo\|metro" && bun expo start --clear
+```
+
+**Complete troubleshooting guide:** See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+
+**Root cause:** Legacy settings components import theme directly, but export was missing.
+
+---
+
 ## 🏗️ Project Status
 
 **Current Phase**: Phase 1 Complete ✅  
