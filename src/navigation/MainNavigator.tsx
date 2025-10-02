@@ -22,6 +22,8 @@ import KitchenDisplayScreen from '@/screens/orders/KitchenDisplayScreen';
 // Direct imports for payment screens
 import PaymentProcessingScreen from '@/screens/payment/PaymentProcessingScreen';
 import PaymentConfirmationScreen from '@/screens/payment/PaymentConfirmationScreen';
+// Import actual Settings screen
+import SettingsScreen from '@/screens/settings/SettingsScreen';
 import { TableProvider } from '@/context/table';
 import { OrderProvider } from '@/context/order';
 import { OrderManagementProvider } from '@/context/orderManagement';
@@ -130,15 +132,6 @@ const MenuScreen = () => {
   );
 };
 
-const SettingsScreen = () => {
-  const { theme } = useTheme();
-  return (
-    <View style={[styles.placeholderContainer, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.placeholderText, { color: theme.colors.onSurfaceVariant }]}>Settings Screen</Text>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
   placeholderContainer: {
     flex: 1,
@@ -219,10 +212,10 @@ export const MainNavigator: React.FC = () => {
         component={MenuScreen}
         options={{ title: 'Menu Management' }}
       />
-      <Tab.Screen 
-        name="Settings" 
+      <Tab.Screen
+        name="Settings"
         component={SettingsScreen}
-        options={{ title: 'Settings' }}
+        options={{ title: 'Settings', headerShown: false }}
       />
     </Tab.Navigator>
   );

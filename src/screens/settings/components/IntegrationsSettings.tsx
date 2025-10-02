@@ -8,7 +8,8 @@ import {
   Alert,
   Switch,
 } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Icon, StatusIndicator } from '@/components/common';
 
 interface IntegrationsSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -20,7 +21,7 @@ const INTEGRATIONS = [
     name: 'Uber Eats',
     category: 'Delivery',
     status: 'disconnected',
-    icon: '🍔',
+    iconName: 'food',
     description: 'Order management and menu sync',
   },
   {
@@ -28,7 +29,7 @@ const INTEGRATIONS = [
     name: 'DoorDash',
     category: 'Delivery',
     status: 'connected',
-    icon: '🚗',
+    iconName: 'truck-delivery',
     description: 'Delivery order integration',
   },
   {
@@ -36,7 +37,7 @@ const INTEGRATIONS = [
     name: 'GrubHub',
     category: 'Delivery',
     status: 'disconnected',
-    icon: '📱',
+    iconName: 'cellphone',
     description: 'Online ordering platform',
   },
   {
@@ -44,7 +45,7 @@ const INTEGRATIONS = [
     name: 'QuickBooks',
     category: 'Accounting',
     status: 'connected',
-    icon: '📊',
+    iconName: 'chart-bar',
     description: 'Financial reporting and accounting',
   },
   {
@@ -52,7 +53,7 @@ const INTEGRATIONS = [
     name: 'MailChimp',
     category: 'Marketing',
     status: 'disconnected',
-    icon: '📧',
+    iconName: 'email',
     description: 'Customer email marketing',
   },
   {
@@ -60,12 +61,15 @@ const INTEGRATIONS = [
     name: 'Google Analytics',
     category: 'Analytics',
     status: 'connected',
-    icon: '📈',
+    iconName: 'chart-line',
     description: 'Website and app analytics',
   },
 ];
 
 export default function IntegrationsSettings({ onChangesDetected }: IntegrationsSettingsProps) {
+  // Theme hook FIRST (REQUIRED per CLAUDE.md)
+  const { theme } = useTheme();
+
   const [integrations, setIntegrations] = useState(INTEGRATIONS);
   const [syncSettings, setSyncSettings] = useState({
     auto_menu_sync: true,
@@ -107,7 +111,7 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
   const renderIntegrationCard = (integration: any) => (
     <View key={integration.id} style={styles.integrationCard}>
       <View style={[styles.integrationIcon, integration.status === 'connected' && styles.integrationIconConnected]}>
-        <Text style={styles.integrationIconText}>{integration.icon}</Text>
+        <Icon name={integration.iconName} size={18} color={theme.colors.white} />
       </View>
       <View style={styles.integrationInfo}>
         <View style={styles.integrationHeader}>
@@ -117,12 +121,11 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
           </View>
         </View>
         <Text style={styles.integrationDescription}>{integration.description}</Text>
-        <Text style={[
-          styles.integrationStatus,
-          integration.status === 'connected' ? styles.statusConnected : styles.statusDisconnected
-        ]}>
-          {integration.status === 'connected' ? '🔘 Connected' : '⚪ Disconnected'}
-        </Text>
+        <StatusIndicator
+          status={integration.status === 'connected' ? 'connected' : 'disconnected'}
+          textSize={11}
+          iconSize={12}
+        />
       </View>
       <TouchableOpacity
         style={[
@@ -149,6 +152,203 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
     acc[category].push(integration);
     return acc;
   }, {} as Record<string, any[]>);
+
+  // StyleSheet AFTER hooks and handlers, BEFORE return (REQUIRED per CLAUDE.md)
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 25,
+    },
+    section: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 20,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 15,
+    },
+    syncRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    syncInfo: {
+      flex: 1,
+    },
+    syncLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.text,
+      marginBottom: 2,
+    },
+    syncDesc: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    integrationCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.white,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    integrationIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.gray,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 15,
+    },
+    integrationIconConnected: {
+      backgroundColor: theme.colors.success,
+    },
+    integrationIconText: {
+      fontSize: 18,
+      color: theme.colors.white,
+    },
+    integrationInfo: {
+      flex: 1,
+    },
+    integrationHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    integrationName: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginRight: 10,
+    },
+    categoryTag: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 10,
+    },
+    categoryTagText: {
+      fontSize: 10,
+      color: theme.colors.white,
+      fontWeight: '600',
+    },
+    integrationDescription: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginBottom: 4,
+    },
+    integrationStatus: {
+      fontSize: 11,
+    },
+    statusConnected: {
+      color: theme.colors.success,
+    },
+    statusDisconnected: {
+      color: theme.colors.error,
+    },
+    integrationButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 6,
+    },
+    connectButton: {
+      backgroundColor: theme.colors.primary,
+    },
+    disconnectButton: {
+      backgroundColor: theme.colors.error,
+    },
+    integrationButtonText: {
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    connectButtonText: {
+      color: theme.colors.white,
+    },
+    disconnectButtonText: {
+      color: theme.colors.white,
+    },
+    apiInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    apiLabel: {
+      fontSize: 14,
+      color: theme.colors.text,
+    },
+    apiValue: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      fontFamily: 'monospace',
+    },
+    apiActions: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 15,
+    },
+    apiButton: {
+      flex: 1,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 8,
+      borderRadius: 6,
+      alignItems: 'center',
+    },
+    apiButtonText: {
+      color: theme.colors.white,
+      fontSize: 12,
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: 15,
+      marginTop: 20,
+      marginBottom: 30,
+    },
+    saveButton: {
+      flex: 1,
+      backgroundColor: theme.colors.success,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    testButton: {
+      flex: 1,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    testButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+  });
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -209,209 +409,27 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
 
       {/* Action Buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>💾 Save Settings</Text>
+        <TouchableOpacity
+          style={styles.saveButton}
+          accessibilityRole="button"
+          accessibilityLabel="Save settings"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <Icon name="content-save" size={16} color={theme.colors.white} />
+            <Text style={styles.saveButtonText}>Save Settings</Text>
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.testButton}>
-          <Text style={styles.testButtonText}>🧪 Test All Connections</Text>
+        <TouchableOpacity
+          style={styles.testButton}
+          accessibilityRole="button"
+          accessibilityLabel="Test all connections"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <Icon name="flask" size={16} color={theme.colors.white} />
+            <Text style={styles.testButtonText}>Test All Connections</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 25,
-  },
-  section: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  syncRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  syncInfo: {
-    flex: 1,
-  },
-  syncLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 2,
-  },
-  syncDesc: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  integrationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.white,
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  integrationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.gray,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  integrationIconConnected: {
-    backgroundColor: theme.colors.success,
-  },
-  integrationIconText: {
-    fontSize: 18,
-    color: theme.colors.white,
-  },
-  integrationInfo: {
-    flex: 1,
-  },
-  integrationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  integrationName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginRight: 10,
-  },
-  categoryTag: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  categoryTagText: {
-    fontSize: 10,
-    color: theme.colors.white,
-    fontWeight: '600',
-  },
-  integrationDescription: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  integrationStatus: {
-    fontSize: 11,
-  },
-  statusConnected: {
-    color: theme.colors.success,
-  },
-  statusDisconnected: {
-    color: theme.colors.error,
-  },
-  integrationButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  connectButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  disconnectButton: {
-    backgroundColor: theme.colors.error,
-  },
-  integrationButtonText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  connectButtonText: {
-    color: theme.colors.white,
-  },
-  disconnectButtonText: {
-    color: theme.colors.white,
-  },
-  apiInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  apiLabel: {
-    fontSize: 14,
-    color: theme.colors.text,
-  },
-  apiValue: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontFamily: 'monospace',
-  },
-  apiActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 15,
-  },
-  apiButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  apiButtonText: {
-    color: theme.colors.white,
-    fontSize: 12,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 15,
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  saveButton: {
-    flex: 1,
-    backgroundColor: theme.colors.success,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  testButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  testButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-});

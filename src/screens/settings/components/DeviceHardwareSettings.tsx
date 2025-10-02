@@ -11,6 +11,7 @@ import {
 import { DeviceSettings } from '@/types/settings.types';
 import { MockSettingsService } from '@/services/settings/MockSettingsService';
 import { useTheme } from '@/hooks/useTheme';
+import { Icon, StatusIndicator } from '@/components/common';
 
 interface DeviceHardwareSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -21,7 +22,7 @@ interface DeviceCard {
   name: string;
   type: 'payment' | 'printer' | 'drawer';
   status: 'connected' | 'disconnected' | 'error';
-  icon: string;
+  iconName: string;
   details: string;
   connection: string;
 }
@@ -32,7 +33,7 @@ const MOCK_DEVICES: DeviceCard[] = [
     name: 'VP3350 Card Reader',
     type: 'payment',
     status: 'connected',
-    icon: '💳',
+    iconName: 'credit-card',
     details: 'Serial: VP3350-001-NYC',
     connection: 'Last Used: 15 mins ago',
   },
@@ -41,7 +42,7 @@ const MOCK_DEVICES: DeviceCard[] = [
     name: 'Cash Drawer',
     type: 'drawer',
     status: 'disconnected',
-    icon: '📦',
+    iconName: 'package-variant',
     details: 'Model: APG Vasario 1616',
     connection: 'Port: USB-Serial',
   },
@@ -50,7 +51,7 @@ const MOCK_DEVICES: DeviceCard[] = [
     name: 'Receipt Printer',
     type: 'printer',
     status: 'connected',
-    icon: '🧾',
+    iconName: 'receipt',
     details: 'Epson TM-T88VI',
     connection: 'IP: 192.168.1.105',
   },
@@ -59,7 +60,7 @@ const MOCK_DEVICES: DeviceCard[] = [
     name: 'Kitchen Printer',
     type: 'printer',
     status: 'connected',
-    icon: '👨‍🍳',
+    iconName: 'chef-hat',
     details: 'Star TSP143IIIU',
     connection: 'USB Connected',
   },
@@ -70,21 +71,21 @@ const API_CONNECTIONS = [
     id: 'backend_api',
     name: 'POS Backend API',
     status: 'connected',
-    icon: '🔧',
+    iconName: 'api',
     url: 'api.pos.local:4000',
   },
   {
     id: 'websocket',
     name: 'Real-time Updates',
     status: 'connected',
-    icon: '⚡',
+    iconName: 'flash',
     url: 'ws://pos.local:4001',
   },
   {
     id: 'delivery_platforms',
     name: 'Delivery Platforms',
     status: 'disconnected',
-    icon: '🔗',
+    iconName: 'link-variant',
     url: 'UberEats, DoorDash, etc.',
   },
 ];
@@ -153,14 +154,15 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
   const renderDeviceCard = (device: DeviceCard) => (
     <View key={device.id} style={styles.deviceCard}>
       <View style={[styles.deviceIcon, styles[`deviceIcon${device.type}`]]}>
-        <Text style={styles.deviceIconText}>{device.icon}</Text>
+        <Icon name={device.iconName} size={20} color={theme.colors.onPrimary} />
       </View>
       <View style={styles.deviceInfo}>
         <Text style={styles.deviceName}>{device.name}</Text>
-        <Text style={[styles.deviceStatus, styles[`deviceStatus${device.status}`]]}>
-          {device.status === 'connected' ? '🔘 Connected' :
-           device.status === 'disconnected' ? '⚪ Not Connected' : '⚠️ Error'}
-        </Text>
+        <StatusIndicator
+          status={device.status === 'connected' ? 'connected' : device.status === 'disconnected' ? 'disconnected' : 'error'}
+          textSize={12}
+          iconSize={14}
+        />
         <Text style={styles.deviceDetails}>{device.details}</Text>
         <Text style={styles.deviceConnection}>{device.connection}</Text>
       </View>
@@ -188,13 +190,16 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
   const renderApiCard = (api: any) => (
     <View key={api.id} style={styles.apiCard}>
       <View style={[styles.apiIcon, styles[`apiIcon${api.id}`]]}>
-        <Text style={styles.apiIconText}>{api.icon}</Text>
+        <Icon name={api.iconName} size={16} color={theme.colors.onPrimary} />
       </View>
       <View style={styles.apiInfo}>
         <Text style={styles.apiName}>{api.name}</Text>
-        <Text style={[styles.apiStatus, styles[`apiStatus${api.status}`]]}>
-          {api.status === 'connected' ? '🔘 Connected' : '⚪ Not Configured'}
-        </Text>
+        <StatusIndicator
+          status={api.status === 'connected' ? 'connected' : 'disconnected'}
+          label={api.status === 'connected' ? 'Connected' : 'Not Configured'}
+          textSize={11}
+          iconSize={12}
+        />
         <Text style={styles.apiUrl}>{api.url}</Text>
       </View>
       <TouchableOpacity
@@ -230,7 +235,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
       borderRadius: 12,
     },
     testAllButtonText: {
-      color: theme.colors.onSuccess,
+      color: theme.colors.white, // White text on success buttons (WCAG compliant for 14px+ bold)
       fontSize: 14,
       fontWeight: 'bold',
     },
@@ -330,7 +335,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
       backgroundColor: theme.colors.success,
     },
     testButtonText: {
-      color: theme.colors.onSuccess,
+      color: theme.colors.white, // White text on success buttons (WCAG compliant for 14px+ bold)
       fontSize: 11,
     },
     addDeviceCard: {
@@ -420,7 +425,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
     },
     apiButtonText: {
       fontSize: 10,
-      color: theme.colors.onSuccess,
+      color: theme.colors.white, // White text on success buttons (WCAG compliant for 14px+ bold)
     },
     networkRow: {
       flexDirection: 'row',
@@ -445,7 +450,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
     },
     networkIconText: {
       fontSize: 20,
-      color: theme.colors.onSuccess,
+      color: theme.colors.white, // White text on success buttons (WCAG compliant for 14px+ bold)
     },
     networkStatus: {
       fontSize: 14,
@@ -481,7 +486,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
       backgroundColor: theme.colors.warning,
     },
     troubleshootButtonText: {
-      color: theme.colors.onWarning,
+      color: theme.colors.onSurface, // Dark text on warning for WCAG AA compliance
       fontSize: 12,
     },
     healthCard: {
@@ -503,7 +508,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
     },
     healthIconText: {
       fontSize: 20,
-      color: theme.colors.onSuccess,
+      color: theme.colors.white, // White text on success buttons (WCAG compliant for 14px+ bold)
     },
     healthTitle: {
       fontSize: 14,
@@ -529,7 +534,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
       alignItems: 'center',
     },
     optimizeButtonText: {
-      color: theme.colors.onSuccess,
+      color: theme.colors.white, // White text on success buttons (WCAG compliant for 14px+ bold)
       fontSize: 12,
     },
     diagnosticsButton: {
@@ -540,7 +545,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
       alignItems: 'center',
     },
     diagnosticsButtonText: {
-      color: theme.colors.onWarning,
+      color: theme.colors.onSurface, // Dark text on warning for WCAG AA compliance
       fontSize: 12,
     },
     // Theme toggle styles
@@ -593,8 +598,16 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.title}>Device & Integration Configuration</Text>
-        <TouchableOpacity style={styles.testAllButton} onPress={handleTestAllConnections}>
-          <Text style={styles.testAllButtonText}>🧪 Test All Connections</Text>
+        <TouchableOpacity
+          style={styles.testAllButton}
+          onPress={handleTestAllConnections}
+          accessibilityRole="button"
+          accessibilityLabel="Test all connections"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="flask" size={16} color={theme.colors.white} />
+            <Text style={styles.testAllButtonText}>Test All Connections</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -603,7 +616,11 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
         <Text style={styles.sectionTitle}>Display & Theme Settings</Text>
         <View style={styles.themeCard}>
           <View style={styles.themeIcon}>
-            <Text style={styles.themeIconText}>{isDark ? '🌙' : '☀️'}</Text>
+            <Icon
+              name={isDark ? 'weather-night' : 'white-balance-sunny'}
+              size={20}
+              color={theme.colors.onPrimary}
+            />
           </View>
           <View style={styles.themeInfo}>
             <Text style={styles.themeName}>Dark Mode</Text>
@@ -671,7 +688,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
         <View style={styles.networkRow}>
           <View style={styles.networkCard}>
             <View style={styles.networkIcon}>
-              <Text style={styles.networkIconText}>📶</Text>
+              <Icon name="wifi" size={20} color={theme.colors.white} />
             </View>
             <View style={styles.networkInfo}>
               <Text style={styles.networkStatus}>Network Status: Connected</Text>
@@ -699,7 +716,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
 
           <View style={styles.healthCard}>
             <View style={styles.healthIcon}>
-              <Text style={styles.healthIconText}>💻</Text>
+              <Icon name="monitor" size={20} color={theme.colors.white} />
             </View>
             <View style={styles.healthInfo}>
               <Text style={styles.healthTitle}>System Health</Text>
