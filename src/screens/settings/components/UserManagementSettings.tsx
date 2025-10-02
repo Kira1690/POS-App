@@ -115,12 +115,12 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
     },
     loadingText: {
       fontSize: 16,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
     },
     title: {
       fontSize: 20,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 20,
     },
     headerActions: {
@@ -176,7 +176,7 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
     },
     filterButtonText: {
       fontSize: 12,
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
     },
     content: {
       flexDirection: 'row',
@@ -189,7 +189,7 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
     usersTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 15,
     },
     usersContainer: {
@@ -229,11 +229,11 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
     userName: {
       fontSize: 14,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
     },
     userEmail: {
       fontSize: 11,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       marginTop: 2,
     },
     roleTag: {
@@ -280,7 +280,7 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
     detailsTitle: {
       fontSize: 16,
       fontWeight: 'bold',
-      color: theme.colors.text,
+      color: theme.colors.onSurface,
       marginBottom: 10,
     },
     selectedUserText: {
@@ -299,7 +299,7 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
     },
     permissionLabel: {
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       flex: 1,
     },
     permissionToggle: {
@@ -324,12 +324,12 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
     workingHoursTitle: {
       fontSize: 12,
       fontWeight: 'bold',
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       marginBottom: 5,
     },
     workingHoursText: {
       fontSize: 11,
-      color: theme.colors.textSecondary,
+      color: theme.colors.onSurfaceVariant,
       marginBottom: 2,
     },
     detailsActions: {

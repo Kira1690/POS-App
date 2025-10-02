@@ -8,7 +8,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface HelpSupportSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -93,6 +93,9 @@ const SUPPORT_CONTACTS = [
 ];
 
 export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSettingsProps) {
+  // Theme hook FIRST (REQUIRED per CLAUDE.md)
+  const { theme } = useTheme();
+
   const handleSectionPress = (sectionId: string) => {
     Alert.alert('Help Section', `Opening ${sectionId} documentation...`);
   };
@@ -148,6 +151,159 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
       <Text style={styles.contactDescription}>{contact.description}</Text>
     </TouchableOpacity>
   );
+
+  // StyleSheet AFTER hooks/handlers, BEFORE return (REQUIRED per CLAUDE.md)
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 25,
+    },
+    section: {
+      backgroundColor: theme.colors.lightGray,
+      borderRadius: 8,
+      padding: 20,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    sectionHeader: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 15,
+    },
+    quickActions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+    },
+    quickAction: {
+      flex: 1,
+      minWidth: '45%',
+      backgroundColor: theme.colors.white,
+      borderRadius: 8,
+      padding: 15,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    quickActionIcon: {
+      fontSize: 24,
+      marginBottom: 8,
+    },
+    quickActionText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      textAlign: 'center',
+    },
+    helpSection: {
+      backgroundColor: theme.colors.white,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 15,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 5,
+    },
+    sectionDescription: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 10,
+    },
+    sectionItems: {
+      marginBottom: 10,
+    },
+    sectionItem: {
+      fontSize: 11,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 2,
+    },
+    sectionLink: {
+      fontSize: 12,
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    contactGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+    },
+    contactCard: {
+      flex: 1,
+      minWidth: '45%',
+      backgroundColor: theme.colors.white,
+      borderRadius: 8,
+      padding: 15,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    contactLabel: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+      marginBottom: 5,
+    },
+    contactValue: {
+      fontSize: 13,
+      color: theme.colors.primary,
+      fontWeight: '600',
+      marginBottom: 5,
+    },
+    contactDescription: {
+      fontSize: 11,
+      color: theme.colors.onSurfaceVariant,
+    },
+    systemInfo: {
+      backgroundColor: theme.colors.white,
+      borderRadius: 8,
+      padding: 15,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    infoLabel: {
+      fontSize: 14,
+      color: theme.colors.onSurface,
+    },
+    infoValue: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+      fontFamily: 'monospace',
+    },
+    legalLinks: {
+      gap: 10,
+    },
+    legalLink: {
+      backgroundColor: theme.colors.white,
+      borderRadius: 8,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    legalLinkText: {
+      fontSize: 13,
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+  });
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -238,155 +394,3 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 25,
-  },
-  section: {
-    backgroundColor: theme.colors.lightGray,
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  sectionHeader: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  quickAction: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: theme.colors.white,
-    borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  quickActionIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  quickActionText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.colors.text,
-    textAlign: 'center',
-  },
-  helpSection: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 5,
-  },
-  sectionDescription: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginBottom: 10,
-  },
-  sectionItems: {
-    marginBottom: 10,
-  },
-  sectionItem: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    marginBottom: 2,
-  },
-  sectionLink: {
-    fontSize: 12,
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
-  contactGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  contactCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: theme.colors.white,
-    borderRadius: 8,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  contactLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 5,
-  },
-  contactValue: {
-    fontSize: 13,
-    color: theme.colors.primary,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  contactDescription: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  systemInfo: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 8,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: theme.colors.text,
-  },
-  infoValue: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontFamily: 'monospace',
-  },
-  legalLinks: {
-    gap: 10,
-  },
-  legalLink: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  legalLinkText: {
-    fontSize: 13,
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
-});

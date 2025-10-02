@@ -38,6 +38,11 @@ export const ProfessionalTheme = {
     shadow: 'rgba(0, 0, 0, 0.12)', // Slightly stronger shadows for depth
     overlay: 'rgba(28, 28, 30, 0.5)', // Updated overlay color
 
+    // Settings components compatibility colors
+    lightGray: '#F2F2F7',     // Light gray for sections (same as background)
+    white: '#FFFFFF',          // Pure white for cards (same as surface)
+    inputBorder: '#D1D1D6',   // Input border color (same as border)
+
     // Apple-inspired accent colors
     accent: '#007AFF',        // Apple's signature blue
     accentLight: '#E3F2FD',   // Light blue for highlights
@@ -473,6 +478,11 @@ export const DarkTheme = {
     borderLight: '#2C2C2E',     // Subtle dark border
     shadow: 'rgba(0, 0, 0, 0.3)', // Stronger shadows on dark backgrounds
     overlay: 'rgba(0, 0, 0, 0.7)', // Dark overlay
+
+    // Settings components compatibility colors (DARK MODE)
+    lightGray: '#2C2C2E',       // Dark gray for sections (elevated surface)
+    white: '#FFFFFF',            // Keep white for icons/text on colored backgrounds
+    inputBorder: '#38383A',     // Dark input border color (same as border)
 
     // Dark mode accent colors
     accent: '#0A84FF',          // Apple's vibrant blue on dark

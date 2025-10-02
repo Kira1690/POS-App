@@ -1,6 +1,9 @@
 import { useContext, createContext } from 'react';
 import { useColorScheme } from 'react-native';
-import { themes, type Theme } from '../design-system/theme';
+import { ProfessionalTheme, DarkTheme } from '../constants/theme';
+
+// Use the old theme system that settings components expect
+type Theme = typeof ProfessionalTheme;
 
 interface ThemeContextType {
   theme: Theme;
@@ -9,7 +12,7 @@ interface ThemeContextType {
 }
 
 export const ThemeContext = createContext<ThemeContextType>({
-  theme: themes.light,
+  theme: ProfessionalTheme,
   isDark: false,
   toggleTheme: () => {},
 });
@@ -20,8 +23,8 @@ export const useTheme = () => {
     // Fallback for when context is not available
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
-    const theme = isDark ? themes.dark : themes.light;
-    
+    const theme = isDark ? DarkTheme : ProfessionalTheme;
+
     return {
       theme,
       isDark,
