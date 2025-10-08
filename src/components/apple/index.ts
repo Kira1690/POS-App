@@ -41,6 +41,7 @@ export {
 // LAYOUT COMPONENTS (Interface Segregation)
 export {
   AppleSidebar,
+  AppleSidebarCollapsible,
   AppleTopTabNavigation,
   AppleContentPanel,
   AppleSettingsPanel,

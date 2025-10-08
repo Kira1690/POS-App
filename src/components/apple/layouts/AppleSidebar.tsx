@@ -1,9 +1,19 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, ViewStyle } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet, ViewStyle, Animated, TextInput, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { AppleCard } from '../primitives/AppleCard';
 import { AppleInteractive } from '../primitives/AppleInteractive';
 import { borderRadius, spacing } from '@/design-system/theme/spacing';
+import { Icon } from '@/components/common';
+import {
+  SIDEBAR_EXPANDED_WIDTH,
+  SIDEBAR_COLLAPSED_WIDTH,
+  getSidebarWidth,
+  getSidebarTransition,
+  saveSidebarState,
+  loadSidebarState,
+  debounce,
+} from '@/utils/sidebarHelpers';
 
 // SOLID PRINCIPLES IMPLEMENTATION:
 // - Single Responsibility: Only handles Apple sidebar layout
@@ -34,8 +44,14 @@ interface AppleSidebarProps {
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
 
+  // COLLAPSIBLE SIDEBAR FEATURES (NEW)
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  onCollapseChange?: (isCollapsed: boolean) => void;
+  showTooltips?: boolean; // Show tooltips on hover when collapsed
+
   // APPLE SIZING SYSTEM (from reference images)
-  width?: number;
+  width?: number; // Ignored if collapsible=true (uses fixed widths)
   height?: number | 'auto';
 
   // UNIVERSAL STYLING SYSTEM (extensible)
@@ -51,11 +67,90 @@ export const AppleSidebar: React.FC<AppleSidebarProps> = ({
   searchable = false,
   searchPlaceholder = 'Search',
   onSearch,
+  collapsible = false,
+  defaultCollapsed = false,
+  onCollapseChange,
+  showTooltips = true,
   width = 280,
   height = 'auto',
   style,
 }) => {
   const { theme, isDark } = useTheme();
+
+  // Collapsible state
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredItems, setFilteredItems] = useState(items);
+
+  // Animation values
+  const sidebarWidth = useRef(new Animated.Value(
+    collapsible ? getSidebarWidth(defaultCollapsed) : width
+  )).current;
+  const textOpacity = useRef(new Animated.Value(defaultCollapsed ? 0 : 1)).current;
+
+  // Load saved sidebar state on mount
+  useEffect(() => {
+    if (collapsible) {
+      loadSidebarState().then((savedCollapsed) => {
+        setIsCollapsed(savedCollapsed);
+        // Immediately set width without animation on mount
+        sidebarWidth.setValue(getSidebarWidth(savedCollapsed));
+        textOpacity.setValue(savedCollapsed ? 0 : 1);
+      });
+    }
+  }, [collapsible]);
+
+  // Filter items based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredItems(items);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredItems(
+        items.filter((item) =>
+          item.label.toLowerCase().includes(query)
+        )
+      );
+    }
+  }, [searchQuery, items]);
+
+  // Handle collapse/expand toggle
+  const toggleCollapse = () => {
+    if (!collapsible) return;
+
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+
+    // Save state
+    saveSidebarState(newCollapsed);
+
+    // Notify parent
+    onCollapseChange?.(newCollapsed);
+
+    // Animate width and text opacity
+    const targetWidth = getSidebarWidth(newCollapsed);
+    const targetOpacity = newCollapsed ? 0 : 1;
+
+    Animated.parallel([
+      Animated.timing(sidebarWidth, {
+        toValue: targetWidth,
+        ...getSidebarTransition(),
+      }),
+      Animated.timing(textOpacity, {
+        toValue: targetOpacity,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // Debounced search handler
+  const debouncedSearch = useRef(
+    debounce((query: string) => {
+      setSearchQuery(query);
+      onSearch?.(query);
+    }, 300)
+  ).current;
 
   // APPLE SIDEBAR STYLING (from 5 reference images analysis)
   const sidebarStyles = StyleSheet.create({

@@ -10,6 +10,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { AppleCard, AppleButton } from '@/components/apple';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
+import { Icon } from '@/components/common';
 
 interface AdvancedSettingsProps {
   onChangesDetected?: (hasChanges: boolean) => void;
@@ -87,10 +88,15 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ onChangesDetected }
       padding: spacing.lg,
     },
     dangerTitle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    dangerTitleText: {
       ...typography.headlineSmall,
       fontWeight: '700',
       color: theme.colors.error,
-      marginBottom: spacing.sm,
     },
     dangerText: {
       ...typography.bodyMedium,
@@ -341,7 +347,10 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ onChangesDetected }
 
       {/* Danger Zone */}
       <View style={[styles.dangerZone, { marginTop: spacing.xl }]}>
-        <Text style={styles.dangerTitle}>⚠️ Danger Zone</Text>
+        <View style={styles.dangerTitle}>
+          <Icon name="alert" size={24} color={theme.colors.error} accessibilityLabel="Danger zone warning icon" />
+          <Text style={styles.dangerTitleText}>Danger Zone</Text>
+        </View>
         <Text style={styles.dangerText}>
           CAUTION: These actions cannot be undone
         </Text>
