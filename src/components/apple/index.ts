@@ -41,6 +41,7 @@ export {
 // LAYOUT COMPONENTS (Interface Segregation)
 export {
   AppleSidebar,
+  AppleTopTabNavigation,
   AppleContentPanel,
   AppleSettingsPanel,
   AppleDashboardPanel,
@@ -49,7 +50,7 @@ export {
   AppleDetailPanel,
 } from './layouts';
 
-export type { AppleSidebarItem } from './layouts';
+export type { AppleSidebarItem, AppleTopTabItem } from './layouts';
 
 // SPECIALIZED COMPONENTS (Composition over Inheritance)
 export {

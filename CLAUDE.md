@@ -471,6 +471,36 @@ async serviceMethod(): Promise<Result<T, Error>> {
 - 🔄 **IN PROGRESS**: Dashboard, Menu Management, Settings
 - 📋 **PLANNED**: Detailed project plans available in `/prep/` folder
 
+### Settings - Table Management Enhancement (2025-10-08)
+**Status:** PLANNING COMPLETE - READY FOR IMPLEMENTATION
+**Location:** `/home/kira/Documents/GitHub/Food-Application/POS-App/prep/settings-table-management/`
+
+**Planning Documentation:**
+- 📄 `plan.md` - Master plan with architecture and objectives
+- 🎨 `wireframes.md` - Detailed ASCII wireframes for all modals and interactions
+- 💾 `data-structure.md` - TypeScript interfaces and data organization
+- 🔧 `design-fixes.md` - CRITICAL design issues to fix (emojis, theme compliance)
+- 📅 `implementation-phases.md` - 7-phase implementation roadmap (15-20 days)
+- 📱 `sidebar-collapsible.md` - Collapsible sidebar specification
+- ✅ `progress.md` - Real-time progress tracking
+
+**Key Features Planned:**
+- Full CRUD operations for tables and areas (Add/Edit/Delete modals)
+- Interactive floor plan editor with drag-and-drop
+- Collapsible sidebar (280px ↔ 64px with tooltips)
+- Proper MaterialCommunityIcons (removing all emojis)
+- Centralized data in `/src/data/tables/`
+- 100% theme compliance
+
+**CRITICAL Issues to Fix First (Phase 1):**
+- ❌ Remove ALL emojis from buttons and area names
+- ❌ Migrate embedded mock data to `/src/data/tables/`
+- ❌ Ensure 100% theme.colors usage (no hardcoded colors)
+- ❌ Add accessibility labels to all icons
+
+**Timeline:** 15-20 working days across 7 phases
+**Priority:** Design fixes (Phase 1) are CRITICAL and must complete first
+
 ### Mock Services (TEMPORARY)
 Mock implementations are active for UI development:
 - **Table Management**: `FixedMockTableApiClient.ts`

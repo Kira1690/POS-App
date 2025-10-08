@@ -11,6 +11,7 @@ import {
   SystemLogsSettings,
   HelpSupportSettings,
 } from './components';
+import TableManagementSettingsContainer from './components/tableManagement';
 import { SettingsCategory } from '@/types/settings.types';
 import { useTheme } from '@/hooks/useTheme';
 import {
@@ -54,6 +55,12 @@ export default function SettingsScreen() {
       label: 'Payment Configuration',
       icon: <Icon name="credit-card-outline" size={20} color={theme.colors.white} accessibilityLabel="Payment configuration" />,
       iconBackground: theme.colors.warning, // Fixed: was hardcoded '#FF9500'
+    },
+    {
+      id: 'table_management',
+      label: 'Table Management',
+      icon: <Icon name="table-furniture" size={20} color={theme.colors.white} accessibilityLabel="Table management" />,
+      iconBackground: theme.colors.success, // Green for table management
     },
     {
       id: 'integrations',
@@ -126,7 +133,7 @@ export default function SettingsScreen() {
     console.log('Navigate back to dashboard');
   };
 
-  // APPLE SETTINGS CONTENT RENDERING (unchanged)
+  // APPLE SETTINGS CONTENT RENDERING (with Table Management)
   const renderCategoryContent = () => {
     switch (activeCategory) {
       case 'restaurant_profile':
@@ -137,6 +144,8 @@ export default function SettingsScreen() {
         return <DeviceHardwareSettings onChangesDetected={setHasUnsavedChanges} />;
       case 'payment_config':
         return <PaymentConfigurationSettings onChangesDetected={setHasUnsavedChanges} />;
+      case 'table_management':
+        return <TableManagementSettingsContainer onChangesDetected={setHasUnsavedChanges} />;
       case 'integrations':
         return <IntegrationsSettings onChangesDetected={setHasUnsavedChanges} />;
       case 'security_backup':

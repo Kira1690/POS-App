@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { AppleCard } from '../primitives/AppleCard';
 import { borderRadius, spacing } from '@/design-system/theme/spacing';
+import { AppleTopTabNavigation, AppleTopTabItem } from './AppleTopTabNavigation';
 
 // SOLID PRINCIPLES IMPLEMENTATION:
 // - Single Responsibility: Only handles Apple content panel layout
@@ -21,6 +22,11 @@ interface AppleContentPanelProps {
   title?: string;
   subtitle?: string;
   headerActions?: React.ReactNode;
+
+  // TOP TAB NAVIGATION (NEW - for settings sub-sections)
+  topTabs?: AppleTopTabItem[];
+  activeTopTab?: string;
+  onTopTabChange?: (tabId: string) => void;
 
   // UNIVERSAL LAYOUT SYSTEM (reusable everywhere)
   scrollable?: boolean;
@@ -45,6 +51,9 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
   title,
   subtitle,
   headerActions,
+  topTabs,
+  activeTopTab,
+  onTopTabChange,
   scrollable = true,
   padding = 'large',
   backgroundLayer = 'surface',
@@ -133,6 +142,16 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
   const contentArea = (
     <View style={panelStyles.content}>
       {renderHeader()}
+
+      {/* TOP TAB NAVIGATION (conditional) */}
+      {topTabs && topTabs.length > 0 && activeTopTab && onTopTabChange && (
+        <AppleTopTabNavigation
+          tabs={topTabs}
+          activeTab={activeTopTab}
+          onTabChange={onTopTabChange}
+        />
+      )}
+
       {scrollable ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
