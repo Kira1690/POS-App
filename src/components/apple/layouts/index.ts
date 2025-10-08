@@ -5,6 +5,9 @@
 export { AppleSidebar } from './AppleSidebar';
 export type { AppleSidebarItem } from './AppleSidebar';
 
+export { AppleTopTabNavigation } from './AppleTopTabNavigation';
+export type { AppleTopTabItem } from './AppleTopTabNavigation';
+
 export {
   AppleContentPanel,
   AppleSettingsPanel,

@@ -306,10 +306,59 @@ export type SettingsCategory =
   | 'user_management'
   | 'device_hardware'
   | 'payment_config'
+  | 'table_management'
   | 'integrations'
   | 'security_backup'
   | 'system_logs'
   | 'help_support';
+
+// Table Management Sub-Tabs
+export type TableManagementTab =
+  | 'general'
+  | 'tables'
+  | 'floors'
+  | 'areas'
+  | 'advanced';
+
+export interface TableManagementGeneralSettings {
+  default_capacity: number;
+  table_number_prefix: string;
+  auto_assign_tables: boolean;
+  table_time_limits: number;
+  show_table_capacity: boolean;
+  color_code_by_status: boolean;
+  show_service_duration: boolean;
+  grid_columns_tablet: number;
+  grid_columns_mobile: number;
+  status_colors: {
+    available: string;
+    occupied: string;
+    reserved: string;
+    cleaning: string;
+  };
+}
+
+export interface TableManagementAdvancedSettings {
+  automation: {
+    auto_mark_cleaning_after_checkout: boolean;
+    cleaning_duration_estimate: number;
+    auto_clear_reservations_after: number;
+    notify_long_occupancy: boolean;
+    long_occupancy_threshold: number;
+  };
+  reservation_rules: {
+    allow_overlapping_reservations: boolean;
+    buffer_time_between_seatings: number;
+    maximum_advance_booking_days: number;
+    require_deposit_for_large_groups: boolean;
+    minimum_party_size_for_deposit: number;
+  };
+  integration: {
+    sync_with_pos: boolean;
+    realtime_status_updates: boolean;
+    kitchen_display_integration: boolean;
+  };
+}
 
 export interface SettingsContextType {
   // Current State
