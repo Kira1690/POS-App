@@ -10,6 +10,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 import { AppleCard, AppleButton } from '@/components/apple';
+import { Icon } from '@/components/common';
+import { getAreaStats } from '@/data/tables';
 
 interface AreasSettingsProps {
   onChangesDetected?: (hasChanges: boolean) => void;
@@ -18,37 +20,8 @@ interface AreasSettingsProps {
 const AreasSettings: React.FC<AreasSettingsProps> = ({ onChangesDetected }) => {
   const { theme } = useTheme();
 
-  // Mock sections data
-  const sections = [
-    {
-      id: '1',
-      name: '🍽️  MAIN DINING',
-      tables: 12,
-      capacity: 48,
-      available: 8,
-    },
-    {
-      id: '2',
-      name: '🥂  VIP LOUNGE',
-      tables: 4,
-      capacity: 16,
-      available: 2,
-    },
-    {
-      id: '3',
-      name: '🌳  PATIO',
-      tables: 8,
-      capacity: 32,
-      available: 5,
-    },
-    {
-      id: '4',
-      name: '🍸  BAR SEATING',
-      tables: 6,
-      capacity: 12,
-      available: 4,
-    },
-  ];
+  // Use centralized area statistics
+  const sections = getAreaStats();
 
   const styles = StyleSheet.create({
     container: {
@@ -63,10 +36,15 @@ const AreasSettings: React.FC<AreasSettingsProps> = ({ onChangesDetected }) => {
       borderRadius: borderRadius.lg as number,
     },
     sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: spacing.md,
+    },
+    sectionHeaderText: {
       ...typography.headlineSmall,
       fontWeight: '600',
       color: theme.colors.onSurface,
-      marginBottom: spacing.md,
     },
     sectionStats: {
       flexDirection: 'row',
@@ -90,7 +68,10 @@ const AreasSettings: React.FC<AreasSettingsProps> = ({ onChangesDetected }) => {
     <View style={styles.container}>
       {sections.map((section) => (
         <AppleCard key={section.id} layer="surface" size="large" style={styles.sectionCard}>
-          <Text style={styles.sectionHeader}>{section.name}</Text>
+          <View style={styles.sectionHeader}>
+            <Icon name={section.icon} size={24} color={theme.colors.primary} accessibilityLabel={`${section.name} icon`} />
+            <Text style={styles.sectionHeaderText}>{section.name}</Text>
+          </View>
 
           <View style={styles.sectionStats}>
             <Text style={styles.statText}>Tables: {section.tables}</Text>
@@ -126,9 +107,11 @@ const AreasSettings: React.FC<AreasSettingsProps> = ({ onChangesDetected }) => {
 
       <View style={styles.addButton}>
         <AppleButton
-          title="➕ Add New Section"
+          title="Add New Section"
           variant="primary"
           size="medium"
+          icon={<Icon name="plus" size={18} color={theme.colors.onPrimary} accessibilityLabel="Add new section icon" />}
+          iconPosition="left"
           onPress={() => {}}
           fullWidth
         />

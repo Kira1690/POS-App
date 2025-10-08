@@ -5,6 +5,9 @@
 export { AppleSidebar } from './AppleSidebar';
 export type { AppleSidebarItem } from './AppleSidebar';
 
+export { AppleSidebarCollapsible } from './AppleSidebarCollapsible';
+export type { AppleSidebarItem as AppleSidebarCollapsibleItem } from './AppleSidebarCollapsible';
+
 export { AppleTopTabNavigation } from './AppleTopTabNavigation';
 export type { AppleTopTabItem } from './AppleTopTabNavigation';
 

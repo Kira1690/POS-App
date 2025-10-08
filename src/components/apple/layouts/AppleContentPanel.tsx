@@ -63,14 +63,14 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
 }) => {
   const { theme, isDark } = useTheme();
 
-  // APPLE PADDING SYSTEM (from reference images generous spacing)
+  // APPLE PADDING SYSTEM (optimized for space utilization)
   const getPaddingValue = () => {
     switch (padding) {
       case 'none': return 0;
-      case 'small': return spacing.md; // 12px
-      case 'medium': return spacing.lg; // 16px
-      case 'large': return spacing.xl; // 20px
-      default: return spacing.xl;
+      case 'small': return spacing.sm; // 8px
+      case 'medium': return spacing.md; // 12px
+      case 'large': return spacing.lg; // 16px (reduced from 20px)
+      default: return spacing.lg;
     }
   };
 
@@ -86,8 +86,8 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
       padding: getPaddingValue(),
     },
     header: {
-      marginBottom: spacing.lg,
-      paddingBottom: spacing.md,
+      marginBottom: spacing.md,
+      paddingBottom: spacing.sm,
       borderBottomWidth: isDark ? 1 : 0,
       borderBottomColor: isDark ? theme.colors.layer2 : 'transparent',
     },

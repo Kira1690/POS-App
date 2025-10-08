@@ -15,7 +15,7 @@ import TableManagementSettingsContainer from './components/tableManagement';
 import { SettingsCategory } from '@/types/settings.types';
 import { useTheme } from '@/hooks/useTheme';
 import {
-  AppleSidebar,
+  AppleSidebarCollapsible,
   AppleSettingsPanel,
   AppleButton,
   ApplePill,
@@ -36,55 +36,55 @@ export default function SettingsScreen() {
       id: 'restaurant_profile',
       label: 'Restaurant Profile',
       icon: <Icon name="store" size={20} color={theme.colors.white} accessibilityLabel="Restaurant profile" />,
-      iconBackground: theme.colors.error, // Fixed: was hardcoded '#FF453A'
+      iconBackground: theme.colors.error,
     },
     {
       id: 'user_management',
       label: 'User Management',
       icon: <Icon name="account-group" size={20} color={theme.colors.white} accessibilityLabel="User management" />,
-      iconBackground: theme.colors.info, // Fixed: was hardcoded '#007AFF'
+      iconBackground: theme.colors.info,
     },
     {
       id: 'device_hardware',
       label: 'Device & Hardware',
       icon: <Icon name="devices" size={20} color={theme.colors.white} accessibilityLabel="Device and hardware" />,
-      iconBackground: theme.colors.success, // Fixed: was hardcoded '#32D74B'
+      iconBackground: theme.colors.success,
     },
     {
       id: 'payment_config',
       label: 'Payment Configuration',
       icon: <Icon name="credit-card-outline" size={20} color={theme.colors.white} accessibilityLabel="Payment configuration" />,
-      iconBackground: theme.colors.warning, // Fixed: was hardcoded '#FF9500'
+      iconBackground: theme.colors.warning,
     },
     {
       id: 'table_management',
       label: 'Table Management',
       icon: <Icon name="table-furniture" size={20} color={theme.colors.white} accessibilityLabel="Table management" />,
-      iconBackground: theme.colors.success, // Green for table management
+      iconBackground: theme.colors.success,
     },
     {
       id: 'integrations',
       label: 'Integrations',
       icon: <Icon name="link-variant" size={20} color={theme.colors.white} accessibilityLabel="Integrations" />,
-      iconBackground: theme.colors.purple, // Fixed: was hardcoded '#BF5AF2'
+      iconBackground: theme.colors.purple,
     },
     {
       id: 'security_backup',
       label: 'Security & Backup',
       icon: <Icon name="shield-lock-outline" size={20} color={theme.colors.white} accessibilityLabel="Security and backup" />,
-      iconBackground: theme.colors.cyan, // Fixed: was hardcoded '#64D2FF'
+      iconBackground: theme.colors.cyan,
     },
     {
       id: 'system_logs',
       label: 'System Logs',
       icon: <Icon name="chart-line" size={20} color={theme.colors.white} accessibilityLabel="System logs" />,
-      iconBackground: theme.colors.error, // Fixed: was hardcoded '#FF453A'
+      iconBackground: theme.colors.error,
     },
     {
       id: 'help_support',
       label: 'Help & Support',
       icon: <Icon name="help-circle-outline" size={20} color={theme.colors.white} accessibilityLabel="Help and support" />,
-      iconBackground: theme.colors.onSurfaceVariant, // Fixed: was hardcoded '#8E8E93'
+      iconBackground: theme.colors.onSurfaceVariant,
     },
   ];
 
@@ -194,55 +194,56 @@ export default function SettingsScreen() {
   )?.label || 'Settings';
 
   return (
-    <SafeAreaView style={{
-      flex: 1,
-      backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background // Apple layer 0 background
-    }}>
-      {/* APPLE MAIN LAYOUT (two-panel with generous spacing) */}
-      <View style={{
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
-        paddingHorizontal: 24, // Apple generous spacing
-        paddingTop: 24,
-        gap: 20, // Apple spacing between panels
-      }}>
+    <View style={{ flex: 1, backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background }}>
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* APPLE BREADCRUMB (moved to top for better space utilization) */}
+        <View style={{
+          paddingHorizontal: 8,
+          paddingVertical: 4,
+          backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+          borderBottomWidth: isDark ? 1 : 0,
+          borderBottomColor: isDark ? theme.colors.layer1 : 'transparent',
+        }}>
+          <ApplePill
+            text={`Dashboard › Settings › ${currentCategoryLabel}`}
+            variant="badge"
+            size="small"
+            color="neutral"
+          />
+        </View>
 
-        {/* APPLE SIDEBAR (using universal AppleSidebar component) */}
-        <AppleSidebar
-          items={sidebarItems}
-          title="Settings Categories"
-          searchable={true}
-          searchPlaceholder="Search settings..."
-          variant="settings"
-          width={280}
-        />
+        {/* APPLE MAIN LAYOUT (two-panel with minimal spacing for better space utilization) */}
+        <View style={{
+          flex: 1,
+          flexDirection: 'row',
+          backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+          paddingHorizontal: 6,
+          paddingTop: 4,
+          paddingBottom: 4,
+          gap: 8,
+        }}>
 
-        {/* APPLE CONTENT PANEL (using universal AppleSettingsPanel) */}
-        <AppleSettingsPanel
-          title="System Settings"
-          subtitle={currentCategoryLabel}
-          headerActions={headerActions}
-        >
-          {renderCategoryContent()}
-        </AppleSettingsPanel>
-      </View>
+          {/* APPLE COLLAPSIBLE SIDEBAR (Phase 1 implementation) */}
+          <AppleSidebarCollapsible
+            items={sidebarItems}
+            title="Settings Categories"
+            searchable={true}
+            searchPlaceholder="Search settings..."
+            defaultCollapsed={false}
+            showTooltips={true}
+          />
 
-      {/* APPLE BREADCRUMB (subtle bottom navigation) */}
-      <View style={{
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
-        borderTopWidth: isDark ? 1 : 0,
-        borderTopColor: isDark ? theme.colors.layer1 : 'transparent',
-      }}>
-        <ApplePill
-          text={`Dashboard › Settings › ${currentCategoryLabel}`}
-          variant="badge"
-          size="small"
-          color="neutral"
-        />
-      </View>
-    </SafeAreaView>
+          {/* APPLE CONTENT PANEL (using universal AppleSettingsPanel) */}
+          <AppleSettingsPanel
+            title="System Settings"
+            subtitle={currentCategoryLabel}
+            headerActions={headerActions}
+            scrollable={false}
+          >
+            {renderCategoryContent()}
+          </AppleSettingsPanel>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
