@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
@@ -65,7 +65,7 @@ const AreasSettings: React.FC<AreasSettingsProps> = ({ onChangesDetected }) => {
   });
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {sections.map((section) => (
         <AppleCard key={section.id} layer="surface" size="large" style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
@@ -116,7 +116,7 @@ const AreasSettings: React.FC<AreasSettingsProps> = ({ onChangesDetected }) => {
           fullWidth
         />
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

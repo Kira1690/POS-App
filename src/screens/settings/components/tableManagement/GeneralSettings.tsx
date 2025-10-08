@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Switch } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Switch, ScrollView } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { AppleCard, AppleButton } from '@/components/apple';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
@@ -99,7 +99,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ onChangesDetected }) 
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {/* Table Configuration */}
       <AppleCard layer="surface" size="large">
         <Text style={styles.sectionTitle}>Table Configuration</Text>
@@ -288,7 +288,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ onChangesDetected }) 
           onPress={handleSave}
         />
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
