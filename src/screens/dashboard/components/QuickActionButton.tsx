@@ -52,7 +52,7 @@ const QuickActionButton: React.FC<QuickActionButtonProps> = ({
   // Determine colors based on variant
   const getButtonStyle = (): ViewStyle => {
     const baseColor = backgroundColor || theme.colors.primary;
-    const textColor = color || (variant === 'filled' ? 'white' : baseColor);
+    const textColor = color || (variant === 'filled' ? theme.colors.onPrimary : baseColor);
 
     const baseStyle: ViewStyle = {
       ...styles.container,
@@ -69,7 +69,6 @@ const QuickActionButton: React.FC<QuickActionButtonProps> = ({
           ...baseStyle,
           backgroundColor: baseColor,
           borderColor: baseColor,
-          shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.1,
           shadowRadius: 4,

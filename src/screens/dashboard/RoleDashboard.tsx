@@ -81,7 +81,7 @@ const RoleDashboard: React.FC<RoleDashboardProps> = () => {
         return {
           type: 'staff',
           statusBarStyle: 'light-content' as const,
-          backgroundColor: '#28a745', // Professional green for staff
+          backgroundColor: theme.colors.success, // Professional green for staff
           canSwitch: false
         };
 
@@ -89,7 +89,7 @@ const RoleDashboard: React.FC<RoleDashboardProps> = () => {
         return {
           type: 'kitchen',
           statusBarStyle: 'light-content' as const,
-          backgroundColor: '#1A1D21', // Dark background for kitchen
+          backgroundColor: theme.colors.onSurface, // Dark background for kitchen
           canSwitch: false
         };
 
@@ -256,7 +256,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
     gap: spacing.sm,
   },
   switcherButton: {

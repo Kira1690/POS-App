@@ -31,14 +31,6 @@ import {
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
 
-// Staff theme colors
-const STAFF_THEME = {
-  primary: '#28a745',
-  primaryDark: '#1e7e34',
-  light: '#d4edda',
-  white: '#ffffff',
-};
-
 interface StaffDashboardProps {}
 
 const StaffDashboard: React.FC<StaffDashboardProps> = () => {
@@ -87,14 +79,14 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
   const quickActions = useMemo(() => staffData.quickActions, [staffData]);
 
   const renderHeader = () => (
-    <View style={[styles.header, { backgroundColor: STAFF_THEME.primary }]}>
+    <View style={[styles.header, { backgroundColor: theme.colors.success }]}>
       <View style={styles.headerLeft}>
         <MaterialIcons name="restaurant" size={24} color="white" />
         <Text style={styles.headerTitle}>
           🍽️ {staffData.restaurant.name} - Staff Dashboard
         </Text>
       </View>
-      
+
       <View style={styles.headerRight}>
         <Text style={styles.headerUser}>
           👥 {staffData.staff.name} ({staffData.staff.employeeId}) | {staffData.staff.role}
@@ -110,7 +102,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
           key={index}
           style={[
             styles.tabItem,
-            tab.active && { backgroundColor: STAFF_THEME.primary }
+            tab.active && { backgroundColor: theme.colors.success }
           ]}
           onPress={() => setActiveTab(tab.label)}
         >
@@ -150,7 +142,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
         <Text style={[styles.metricTitle, { color: theme.colors.onSurface }]}>
           My Orders Today
         </Text>
-        <Text style={[styles.metricValue, { color: STAFF_THEME.primary }]}>
+        <Text style={[styles.metricValue, { color: theme.colors.success }]}>
           {staffData.myOrders.count} Orders | {staffData.myOrders.totalValue} Total
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
@@ -230,7 +222,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
 
   const renderPerformanceIndicator = () => (
     <View style={styles.performanceContainer}>
-      <Text style={[styles.performanceText, { color: STAFF_THEME.primary }]}>
+      <Text style={[styles.performanceText, { color: theme.colors.success }]}>
         ⭐ Today's Performance: {staffData.performance.status} ({staffData.performance.rating})
       </Text>
     </View>

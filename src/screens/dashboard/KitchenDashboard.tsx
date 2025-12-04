@@ -109,7 +109,7 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
     <View style={[styles.header, { backgroundColor: KITCHEN_THEME.header }]}>
       <View style={styles.headerLeft}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <MaterialIcons name="access-time" size={24} color="white" />
+          <MaterialIcons name="access-time" size={24} color={theme.colors.onPrimary} />
           <Text style={styles.timeDisplay}>
             {currentTime.toLocaleTimeString('en-US', {
               hour: '2-digit',
@@ -121,7 +121,7 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
       
       <View style={styles.headerCenter}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <MaterialIcons name="restaurant" size={32} color="white" />
+          <MaterialIcons name="restaurant" size={32} color={theme.colors.onPrimary} />
           <Text style={styles.headerTitle}>
             KITCHEN DISPLAY SYSTEM
           </Text>
@@ -130,7 +130,7 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
       
       <View style={styles.headerRight}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <MaterialIcons name="person" size={20} color="white" />
+          <MaterialIcons name="person" size={20} color={theme.colors.onPrimary} />
           <Text style={styles.chefInfo}>
             {kitchenData.chef.name} ({kitchenData.chef.employeeId})
           </Text>
@@ -150,7 +150,7 @@ const KitchenDashboard: React.FC<KitchenDashboardProps> = () => {
           ]}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <MaterialIcons name="restaurant" size={16} color="white" />
+            <MaterialIcons name="restaurant" size={16} color={theme.colors.onPrimary} />
             <Text style={styles.stationText}>
               {station.name} ({station.count})
             </Text>

@@ -8,6 +8,7 @@ import {
   FlatList,
   TextInput,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 
 interface SystemLogsSettingsProps {
@@ -51,32 +52,35 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
     }
   };
 
-  const getLogIcon = (level: string) => {
+  const getLogIconProps = (level: string): { name: string; color: string } => {
     switch (level) {
-      case 'ERROR': return '🔴';
-      case 'WARNING': return '🟡';
-      case 'INFO': return '🔵';
-      default: return '⚪';
+      case 'ERROR': return { name: 'circle', color: theme.colors.error };
+      case 'WARNING': return { name: 'circle', color: theme.colors.warning };
+      case 'INFO': return { name: 'circle', color: theme.colors.primary };
+      default: return { name: 'circle', color: theme.colors.outline };
     }
   };
 
-  const renderLogItem = ({ item }: { item: any }) => (
-    <View style={styles.logItem}>
-      <View style={styles.logHeader}>
-        <View style={styles.logLevel}>
-          <Text style={styles.logIcon}>{getLogIcon(item.level)}</Text>
-          <Text style={[styles.logLevelText, { color: getLogLevelColor(item.level) }]}>
-            {item.level}
-          </Text>
+  const renderLogItem = ({ item }: { item: any }) => {
+    const iconProps = getLogIconProps(item.level);
+    return (
+      <View style={styles.logItem}>
+        <View style={styles.logHeader}>
+          <View style={styles.logLevel}>
+            <MaterialCommunityIcons name={iconProps.name} size={10} color={iconProps.color} />
+            <Text style={[styles.logLevelText, { color: getLogLevelColor(item.level) }]}>
+              {item.level}
+            </Text>
+          </View>
+          <Text style={styles.logTimestamp}>{item.timestamp}</Text>
         </View>
-        <Text style={styles.logTimestamp}>{item.timestamp}</Text>
+        <View style={styles.logContent}>
+          <Text style={styles.logCategory}>{item.category}</Text>
+          <Text style={styles.logMessage}>{item.message}</Text>
+        </View>
       </View>
-      <View style={styles.logContent}>
-        <Text style={styles.logCategory}>{item.category}</Text>
-        <Text style={styles.logMessage}>{item.message}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   // StyleSheet AFTER hooks/handlers, BEFORE return (REQUIRED per CLAUDE.md)
   const styles = StyleSheet.create({
@@ -97,22 +101,31 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
-    searchInput: {
-      backgroundColor: theme.colors.white,
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.inputBorder,
       borderRadius: 8,
       paddingHorizontal: 15,
       paddingVertical: 10,
-      fontSize: 14,
       marginBottom: 10,
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 14,
+      color: theme.colors.onSurface,
     },
     filterRow: {
       flexDirection: 'row',
       gap: 10,
     },
     filterButton: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.inputBorder,
       borderRadius: 8,
@@ -143,7 +156,7 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
     },
     statCard: {
       flex: 1,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: 8,
       padding: 12,
       alignItems: 'center',
@@ -151,15 +164,15 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
       borderColor: theme.colors.border,
     },
     errorStat: {
-      backgroundColor: '#FFEBEE',
+      backgroundColor: theme.colors.errorLight,
       borderColor: theme.colors.error,
     },
     warningStat: {
-      backgroundColor: '#FFF8E1',
+      backgroundColor: theme.colors.warningLight,
       borderColor: theme.colors.warning,
     },
     infoStat: {
-      backgroundColor: '#E3F2FD',
+      backgroundColor: theme.colors.primaryLight,
       borderColor: theme.colors.primary,
     },
     statNumber: {
@@ -196,6 +209,9 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
       gap: 10,
     },
     actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
       backgroundColor: theme.colors.primary,
       paddingHorizontal: 10,
       paddingVertical: 5,
@@ -212,7 +228,7 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
       flex: 1,
     },
     logItem: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: 6,
       padding: 12,
       marginBottom: 8,
@@ -229,9 +245,6 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-    },
-    logIcon: {
-      fontSize: 8,
     },
     logLevelText: {
       fontSize: 11,
@@ -293,10 +306,13 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
     },
     saveButton: {
       flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
       backgroundColor: theme.colors.success,
       paddingVertical: 12,
       borderRadius: 8,
-      alignItems: 'center',
     },
     saveButtonText: {
       color: theme.colors.white,
@@ -305,10 +321,13 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
     },
     downloadButton: {
       flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
       backgroundColor: theme.colors.primary,
       paddingVertical: 12,
       borderRadius: 8,
-      alignItems: 'center',
     },
     downloadButtonText: {
       color: theme.colors.white,
@@ -323,12 +342,21 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
 
       {/* Search and Filters */}
       <View style={styles.filtersSection}>
-        <TextInput
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="🔍 Search logs..."
-        />
+        <View style={styles.searchContainer}>
+          <MaterialCommunityIcons
+            name="magnify"
+            size={18}
+            color={theme.colors.onSurfaceVariant}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search logs..."
+            placeholderTextColor={theme.colors.onSurfaceVariant}
+          />
+        </View>
         <View style={styles.filterRow}>
           <TouchableOpacity style={styles.filterButton}>
             <Text style={styles.filterButtonText}>Level: {levelFilter} ▼</Text>
@@ -371,10 +399,12 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
           <Text style={styles.logsTitle}>Recent Logs ({filteredLogs.length})</Text>
           <View style={styles.logsActions}>
             <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>📤 Export</Text>
+              <MaterialCommunityIcons name="export" size={14} color={theme.colors.white} />
+              <Text style={styles.actionButtonText}>Export</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>🗑️ Clear</Text>
+              <MaterialCommunityIcons name="delete" size={14} color={theme.colors.white} />
+              <Text style={styles.actionButtonText}>Clear</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -415,10 +445,12 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
       {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>💾 Save Settings</Text>
+          <MaterialCommunityIcons name="content-save" size={18} color={theme.colors.white} />
+          <Text style={styles.saveButtonText}>Save Settings</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.downloadButton}>
-          <Text style={styles.downloadButtonText}>📥 Download All Logs</Text>
+          <MaterialCommunityIcons name="download" size={18} color={theme.colors.white} />
+          <Text style={styles.downloadButtonText}>Download All Logs</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

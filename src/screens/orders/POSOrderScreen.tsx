@@ -444,7 +444,6 @@ const styles = StyleSheet.create({
     width: CATEGORY_PANEL_WIDTH,
     padding: spacing.md,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(0,0,0,0.1)',
   },
   categoryTitle: {
     ...typography.titleMedium,
@@ -476,7 +475,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   searchInput: {
     flex: 1,
@@ -521,9 +519,7 @@ const styles = StyleSheet.create({
     alignItems: 'stretch', // Professional alignment
     justifyContent: 'space-between', // Professional layout
     borderWidth: 1, // Professional subtle border
-    borderColor: 'rgba(0,0,0,0.08)',
     elevation: 2,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, // More subtle shadow for grid
     shadowRadius: 3,

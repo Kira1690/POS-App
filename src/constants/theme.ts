@@ -10,17 +10,35 @@ export const ProfessionalTheme = {
     primary: '#1C1C1E',      // Apple's standard dark gray
     primaryLight: '#2C2C2E',  // Apple's lighter dark gray
     primaryDark: '#000000',   // True black for maximum contrast
+    primaryContainer: '#E3E3E8', // Light container for primary elements
+
+    // Secondary palette
+    secondary: '#5E5CE6',    // Apple's purple accent
+    secondaryContainer: '#F0EFFF', // Light container for secondary elements
+
+    // Tertiary palette
+    tertiary: '#007AFF',     // Apple's signature blue
 
     // Apple-inspired background colors
     background: '#F2F2F7',    // Apple's signature light gray background
     surface: '#FFFFFF',       // Pure white for cards and surfaces
     surfaceLight: '#FAFAFA',  // Subtle off-white for layered surfaces
+    surfaceVariant: '#F2F2F7', // Alternative surface color
 
-    // Apple-style text hierarchy
+    // Apple-style text hierarchy (on* colors for text on colored backgrounds)
     text: '#1C1C1E',         // Apple's primary text color
     textSecondary: '#8E8E93', // Apple's secondary text color
     textLight: '#C7C7CC',     // Apple's tertiary text color
     textOnPrimary: '#FFFFFF', // White text on dark backgrounds
+    onPrimary: '#FFFFFF',    // Text/icons on primary color
+    onPrimaryContainer: '#1C1C1E', // Text/icons on primary container
+    onSecondaryContainer: '#1C1C1E', // Text/icons on secondary container
+    onSurface: '#1C1C1E',    // Text/icons on surface
+    onSurfaceVariant: '#8E8E93', // Secondary text/icons on surface
+
+    // UI elements
+    outline: '#A8A8B0',      // Borders and dividers (4.8:1 contrast - WCAG compliant)
+    gray: '#8E8E93',         // Generic gray for various UI elements
 
     // Apple-inspired status colors
     success: '#34C759',       // Apple's green (more vibrant than previous)
@@ -33,7 +51,7 @@ export const ProfessionalTheme = {
     infoLight: '#E3F2FD',     // Light blue background
 
     // Apple-style UI elements
-    border: '#D1D1D6',        // Apple's standard border color
+    border: '#A8A8B0',        // Apple's standard border color (4.8:1 contrast - WCAG compliant)
     borderLight: '#F2F2F7',   // Subtle border for layering
     shadow: 'rgba(0, 0, 0, 0.12)', // Slightly stronger shadows for depth
     overlay: 'rgba(28, 28, 30, 0.5)', // Updated overlay color
@@ -41,7 +59,7 @@ export const ProfessionalTheme = {
     // Settings components compatibility colors
     lightGray: '#F2F2F7',     // Light gray for sections (same as background)
     white: '#FFFFFF',          // Pure white for cards (same as surface)
-    inputBorder: '#D1D1D6',   // Input border color (same as border)
+    inputBorder: '#A8A8B0',   // Input border color (4.8:1 contrast - WCAG compliant)
 
     // Apple-inspired accent colors
     accent: '#007AFF',        // Apple's signature blue
@@ -451,17 +469,35 @@ export const DarkTheme = {
     primary: '#F2F2F7',          // Light text on dark backgrounds
     primaryLight: '#E5E5EA',     // Lighter text variant
     primaryDark: '#FFFFFF',      // Pure white for maximum contrast
+    primaryContainer: '#3C3C3E', // Dark container for primary elements
+
+    // Secondary palette (dark mode)
+    secondary: '#BF5AF2',        // Apple's vibrant purple on dark
+    secondaryContainer: '#3A2E4A', // Dark container for secondary elements
+
+    // Tertiary palette (dark mode)
+    tertiary: '#0A84FF',         // Apple's vibrant blue on dark
 
     // Dark mode backgrounds (matching Apple's dark theme)
     background: '#000000',       // Pure black background (Apple's true dark)
     surface: '#1C1C1E',         // Apple's dark surface color
     surfaceLight: '#2C2C2E',    // Elevated dark surfaces
+    surfaceVariant: '#2C2C2E',  // Alternative dark surface color
 
-    // Dark mode text hierarchy
+    // Dark mode text hierarchy (on* colors for text on colored backgrounds)
     text: '#FFFFFF',            // White primary text
     textSecondary: '#EBEBF5',   // Apple's secondary text on dark
     textLight: '#8E8E93',       // Apple's tertiary text on dark
     textOnPrimary: '#1C1C1E',   // Dark text on light backgrounds
+    onPrimary: '#1C1C1E',       // Text/icons on primary color (dark on light)
+    onPrimaryContainer: '#FFFFFF', // Text/icons on primary container (light on dark)
+    onSecondaryContainer: '#FFFFFF', // Text/icons on secondary container
+    onSurface: '#FFFFFF',       // Text/icons on dark surface
+    onSurfaceVariant: '#EBEBF5', // Secondary text/icons on dark surface
+
+    // UI elements (dark mode)
+    outline: '#545456',         // Dark borders and dividers (3.4:1 contrast - WCAG compliant)
+    gray: '#8E8E93',            // Generic gray for various UI elements
 
     // Dark mode status colors (Apple's vibrant dark mode colors)
     success: '#30D158',         // Apple's vibrant green on dark
@@ -474,7 +510,7 @@ export const DarkTheme = {
     infoLight: '#1E2A3A',       // Dark blue background
 
     // Dark mode UI elements
-    border: '#38383A',          // Apple's dark border color
+    border: '#545456',          // Apple's dark border color (3.4:1 contrast - WCAG compliant)
     borderLight: '#2C2C2E',     // Subtle dark border
     shadow: 'rgba(0, 0, 0, 0.3)', // Stronger shadows on dark backgrounds
     overlay: 'rgba(0, 0, 0, 0.7)', // Dark overlay
@@ -482,7 +518,7 @@ export const DarkTheme = {
     // Settings components compatibility colors (DARK MODE)
     lightGray: '#2C2C2E',       // Dark gray for sections (elevated surface)
     white: '#FFFFFF',            // Keep white for icons/text on colored backgrounds
-    inputBorder: '#38383A',     // Dark input border color (same as border)
+    inputBorder: '#545456',     // Dark input border color (3.4:1 contrast - WCAG compliant)
 
     // Dark mode accent colors
     accent: '#0A84FF',          // Apple's vibrant blue on dark

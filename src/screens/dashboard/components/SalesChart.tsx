@@ -66,19 +66,19 @@ const SalesChart: React.FC<SalesChartProps> = ({
     switch (colorScheme) {
       case 'kitchen':
         return {
-          primary: '#fd7e14',
-          secondary: '#ffc107',
-          gradient: ['#fd7e14', '#ffc107'],
-          text: '#ffffff',
-          grid: 'rgba(255,255,255,0.2)'
+          primary: theme.colors.warning,
+          secondary: theme.colors.warningLight,
+          gradient: [theme.colors.warning, theme.colors.warningLight],
+          text: theme.colors.white,
+          grid: theme.colors.outline
         };
       case 'professional':
         return {
-          primary: '#1A1D21',
-          secondary: '#007bff', 
-          gradient: ['#007bff', '#28a745'],
+          primary: theme.colors.onSurface,
+          secondary: theme.colors.primary,
+          gradient: [theme.colors.primary, theme.colors.success],
           text: theme.colors.onSurface,
-          grid: 'rgba(0,0,0,0.1)'
+          grid: theme.colors.outline
         };
       default:
         return {
@@ -86,7 +86,7 @@ const SalesChart: React.FC<SalesChartProps> = ({
           secondary: theme.colors.secondary,
           gradient: [theme.colors.primary, theme.colors.secondary],
           text: theme.colors.onSurface,
-          grid: 'rgba(0,0,0,0.1)'
+          grid: theme.colors.outline
         };
     }
   };
@@ -205,7 +205,7 @@ const SalesChart: React.FC<SalesChartProps> = ({
           </Text>
           <Text style={[
             styles.legendChange,
-            { color: trend === 'up' ? '#28a745' : '#dc3545' }
+            { color: trend === 'up' ? theme.colors.success : theme.colors.error }
           ]}>
             {trend === 'up' ? '↗️' : '↘️'} {Math.abs(change).toFixed(1)}%
           </Text>

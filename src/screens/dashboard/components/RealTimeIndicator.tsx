@@ -66,21 +66,21 @@ const RealTimeIndicator: React.FC<RealTimeIndicatorProps> = ({
     switch (status) {
       case 'connected':
         return {
-          color: '#28a745',
+          color: theme.colors.success,
           icon: 'wifi',
           label: 'Live',
           description: 'Real-time updates active'
         };
       case 'connecting':
         return {
-          color: '#ffc107',
+          color: theme.colors.warning,
           icon: 'wifi-off',
           label: 'Connecting',
           description: 'Establishing connection'
         };
       case 'error':
         return {
-          color: '#dc3545',
+          color: theme.colors.error,
           icon: 'wifi-off',
           label: 'Error',
           description: 'Connection failed'
@@ -88,7 +88,7 @@ const RealTimeIndicator: React.FC<RealTimeIndicatorProps> = ({
       case 'disconnected':
       default:
         return {
-          color: '#6c757d',
+          color: theme.colors.onSurfaceVariant,
           icon: 'wifi-off',
           label: 'Offline',
           description: 'No real-time updates'
@@ -112,6 +112,72 @@ const RealTimeIndicator: React.FC<RealTimeIndicatorProps> = ({
   const statusConfig = getStatusConfig();
   const iconSize = size === 'small' ? 16 : size === 'large' ? 24 : 20;
   const isConnecting = status === 'connecting';
+
+  const styles = StyleSheet.create({
+    container: {
+      padding: spacing.md,
+      backgroundColor: theme.colors.surface,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    containerSmall: {
+      padding: spacing.sm,
+    },
+    containerMedium: {
+      padding: spacing.md,
+    },
+    containerLarge: {
+      padding: spacing.lg,
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    iconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: spacing.sm,
+    },
+    statusText: {
+      flex: 1,
+    },
+    statusLabel: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+    },
+    statusLabelSmall: {
+      ...typography.bodySmall,
+    },
+    statusLabelMedium: {
+      ...typography.bodyMedium,
+    },
+    statusLabelLarge: {
+      ...typography.bodyLarge,
+    },
+    statusDescription: {
+      ...typography.bodySmall,
+      marginTop: spacing.xs,
+    },
+    statusDescriptionSmall: {
+      ...typography.bodySmall,
+      fontSize: 10,
+    },
+    statusDescriptionMedium: {
+      ...typography.bodySmall,
+    },
+    statusDescriptionLarge: {
+      ...typography.bodyMedium,
+    },
+    timestamp: {
+      ...typography.bodySmall,
+      marginTop: spacing.sm,
+      fontStyle: 'italic',
+    },
+  });
 
   return (
     <View style={[
@@ -165,71 +231,5 @@ const RealTimeIndicator: React.FC<RealTimeIndicatorProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  containerSmall: {
-    padding: spacing.sm,
-  },
-  containerMedium: {
-    padding: spacing.md,
-  },
-  containerLarge: {
-    padding: spacing.lg,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.sm,
-  },
-  statusText: {
-    flex: 1,
-  },
-  statusLabel: {
-    ...typography.bodyMedium,
-    fontWeight: '700',
-  },
-  statusLabelSmall: {
-    ...typography.bodySmall,
-  },
-  statusLabelMedium: {
-    ...typography.bodyMedium,
-  },
-  statusLabelLarge: {
-    ...typography.bodyLarge,
-  },
-  statusDescription: {
-    ...typography.bodySmall,
-    marginTop: spacing.xs,
-  },
-  statusDescriptionSmall: {
-    ...typography.bodySmall,
-    fontSize: 10,
-  },
-  statusDescriptionMedium: {
-    ...typography.bodySmall,
-  },
-  statusDescriptionLarge: {
-    ...typography.bodyMedium,
-  },
-  timestamp: {
-    ...typography.bodySmall,
-    marginTop: spacing.sm,
-    fontStyle: 'italic',
-  },
-});
 
 export default memo(RealTimeIndicator);

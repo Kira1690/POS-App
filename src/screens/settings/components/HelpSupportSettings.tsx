@@ -8,6 +8,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 
 interface HelpSupportSettingsProps {
@@ -17,7 +18,8 @@ interface HelpSupportSettingsProps {
 const HELP_SECTIONS = [
   {
     id: 'getting_started',
-    title: '🚀 Getting Started',
+    title: 'Getting Started',
+    icon: 'rocket-launch',
     description: 'Learn the basics of using your POS system',
     items: [
       'Setting up your restaurant profile',
@@ -28,7 +30,8 @@ const HELP_SECTIONS = [
   },
   {
     id: 'user_guides',
-    title: '📖 User Guides',
+    title: 'User Guides',
+    icon: 'book-open-variant',
     description: 'Step-by-step instructions for common tasks',
     items: [
       'Staff management and permissions',
@@ -39,7 +42,8 @@ const HELP_SECTIONS = [
   },
   {
     id: 'troubleshooting',
-    title: '🔧 Troubleshooting',
+    title: 'Troubleshooting',
+    icon: 'wrench',
     description: 'Solutions to common problems',
     items: [
       'Payment processing issues',
@@ -50,7 +54,8 @@ const HELP_SECTIONS = [
   },
   {
     id: 'integrations',
-    title: '🔗 Integrations',
+    title: 'Integrations',
+    icon: 'link-variant',
     description: 'Connect with third-party services',
     items: [
       'Delivery platform setup',
@@ -64,28 +69,32 @@ const HELP_SECTIONS = [
 const SUPPORT_CONTACTS = [
   {
     type: 'phone',
-    label: '📞 Phone Support',
+    label: 'Phone Support',
+    icon: 'phone',
     value: '+1 (555) 123-HELP',
     description: 'Available 24/7 for urgent issues',
     action: () => Linking.openURL('tel:+15551234357'),
   },
   {
     type: 'email',
-    label: '📧 Email Support',
+    label: 'Email Support',
+    icon: 'email',
     value: 'support@possystem.com',
     description: 'Response within 24 hours',
     action: () => Linking.openURL('mailto:support@possystem.com'),
   },
   {
     type: 'chat',
-    label: '💬 Live Chat',
+    label: 'Live Chat',
+    icon: 'chat',
     value: 'Start Chat',
     description: 'Online Mon-Fri 9AM-6PM EST',
     action: () => Alert.alert('Live Chat', 'Opening live chat...'),
   },
   {
     type: 'remote',
-    label: '🖥️ Remote Support',
+    label: 'Remote Support',
+    icon: 'monitor',
     value: 'Request Session',
     description: 'Screen sharing assistance',
     action: () => Alert.alert('Remote Support', 'Requesting remote support session...'),
@@ -129,7 +138,10 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
       style={styles.helpSection}
       onPress={() => handleSectionPress(section.id)}
     >
-      <Text style={styles.sectionTitle}>{section.title}</Text>
+      <View style={styles.sectionTitleRow}>
+        <MaterialCommunityIcons name={section.icon} size={18} color={theme.colors.primary} />
+        <Text style={styles.sectionTitle}>{section.title}</Text>
+      </View>
       <Text style={styles.sectionDescription}>{section.description}</Text>
       <View style={styles.sectionItems}>
         {section.items.map((item: string, index: number) => (
@@ -146,7 +158,10 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
       style={styles.contactCard}
       onPress={contact.action}
     >
-      <Text style={styles.contactLabel}>{contact.label}</Text>
+      <View style={styles.contactLabelRow}>
+        <MaterialCommunityIcons name={contact.icon} size={16} color={theme.colors.primary} />
+        <Text style={styles.contactLabel}>{contact.label}</Text>
+      </View>
       <Text style={styles.contactValue}>{contact.value}</Text>
       <Text style={styles.contactDescription}>{contact.description}</Text>
     </TouchableOpacity>
@@ -185,16 +200,13 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
     quickAction: {
       flex: 1,
       minWidth: '45%',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: 8,
       padding: 15,
       alignItems: 'center',
       borderWidth: 1,
       borderColor: theme.colors.border,
-    },
-    quickActionIcon: {
-      fontSize: 24,
-      marginBottom: 8,
+      gap: 8,
     },
     quickActionText: {
       fontSize: 12,
@@ -203,18 +215,23 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
       textAlign: 'center',
     },
     helpSection: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: 8,
       padding: 15,
       marginBottom: 15,
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
+    sectionTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 5,
+    },
     sectionTitle: {
       fontSize: 14,
       fontWeight: 'bold',
       color: theme.colors.onSurface,
-      marginBottom: 5,
     },
     sectionDescription: {
       fontSize: 12,
@@ -242,17 +259,22 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
     contactCard: {
       flex: 1,
       minWidth: '45%',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: 8,
       padding: 15,
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
+    contactLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 5,
+    },
     contactLabel: {
       fontSize: 14,
       fontWeight: 'bold',
       color: theme.colors.onSurface,
-      marginBottom: 5,
     },
     contactValue: {
       fontSize: 13,
@@ -265,7 +287,7 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
       color: theme.colors.onSurfaceVariant,
     },
     systemInfo: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: 8,
       padding: 15,
       borderWidth: 1,
@@ -292,7 +314,10 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
       gap: 10,
     },
     legalLink: {
-      backgroundColor: theme.colors.white,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: theme.colors.surface,
       borderRadius: 8,
       padding: 12,
       borderWidth: 1,
@@ -314,19 +339,19 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
         <Text style={styles.sectionHeader}>Quick Actions</Text>
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.quickAction} onPress={handleSearchKnowledgeBase}>
-            <Text style={styles.quickActionIcon}>🔍</Text>
+            <MaterialCommunityIcons name="magnify" size={28} color={theme.colors.primary} />
             <Text style={styles.quickActionText}>Search Knowledge Base</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickAction} onPress={handleVideoTutorials}>
-            <Text style={styles.quickActionIcon}>🎥</Text>
+            <MaterialCommunityIcons name="video" size={28} color={theme.colors.primary} />
             <Text style={styles.quickActionText}>Video Tutorials</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickAction} onPress={handleSystemDiagnostics}>
-            <Text style={styles.quickActionIcon}>🔧</Text>
+            <MaterialCommunityIcons name="wrench" size={28} color={theme.colors.primary} />
             <Text style={styles.quickActionText}>System Diagnostics</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickAction} onPress={handleFeedback}>
-            <Text style={styles.quickActionIcon}>💭</Text>
+            <MaterialCommunityIcons name="comment-text" size={28} color={theme.colors.primary} />
             <Text style={styles.quickActionText}>Send Feedback</Text>
           </TouchableOpacity>
         </View>
@@ -378,16 +403,20 @@ export default function HelpSupportSettings({ onChangesDetected }: HelpSupportSe
         <Text style={styles.sectionHeader}>Legal</Text>
         <View style={styles.legalLinks}>
           <TouchableOpacity style={styles.legalLink}>
-            <Text style={styles.legalLinkText}>📄 Terms of Service</Text>
+            <MaterialCommunityIcons name="file-document" size={16} color={theme.colors.primary} />
+            <Text style={styles.legalLinkText}>Terms of Service</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.legalLink}>
-            <Text style={styles.legalLinkText}>🔒 Privacy Policy</Text>
+            <MaterialCommunityIcons name="lock" size={16} color={theme.colors.primary} />
+            <Text style={styles.legalLinkText}>Privacy Policy</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.legalLink}>
-            <Text style={styles.legalLinkText}>⚖️ Software License</Text>
+            <MaterialCommunityIcons name="scale-balance" size={16} color={theme.colors.primary} />
+            <Text style={styles.legalLinkText}>Software License</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.legalLink}>
-            <Text style={styles.legalLinkText}>🏢 About Company</Text>
+            <MaterialCommunityIcons name="office-building" size={16} color={theme.colors.primary} />
+            <Text style={styles.legalLinkText}>About Company</Text>
           </TouchableOpacity>
         </View>
       </View>
