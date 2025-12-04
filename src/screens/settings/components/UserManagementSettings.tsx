@@ -8,6 +8,7 @@ import {
   FlatList,
   Alert,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { UserProfile, UserPermission } from '@/types/settings.types';
 import { MockSettingsService } from '@/services/settings/MockSettingsService';
 import { useTheme } from '@/hooks/useTheme';
@@ -152,22 +153,31 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
     searchSection: {
       marginBottom: 20,
     },
-    searchInput: {
-      backgroundColor: theme.colors.white,
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.inputBorder,
       borderRadius: 8,
       paddingHorizontal: 15,
       paddingVertical: 10,
-      fontSize: 14,
       marginBottom: 10,
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 14,
+      color: theme.colors.onSurface,
     },
     filters: {
       flexDirection: 'row',
       gap: 10,
     },
     filterButton: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.inputBorder,
       borderRadius: 8,
@@ -199,7 +209,7 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
       flexDirection: 'row',
       alignItems: 'center',
       padding: 15,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.border,
       borderRadius: 8,
@@ -306,7 +316,7 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: 15,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
@@ -382,12 +392,21 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
 
       {/* Search and Filters */}
       <View style={styles.searchSection}>
-        <TextInput
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="🔍 Search users..."
-        />
+        <View style={styles.searchContainer}>
+          <MaterialCommunityIcons
+            name="magnify"
+            size={18}
+            color={theme.colors.onSurfaceVariant}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search users..."
+            placeholderTextColor={theme.colors.onSurfaceVariant}
+          />
+        </View>
         <View style={styles.filters}>
           <TouchableOpacity style={styles.filterButton}>
             <Text style={styles.filterButtonText}>All Roles ▼</Text>

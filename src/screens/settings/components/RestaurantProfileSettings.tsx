@@ -176,7 +176,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
       marginBottom: 5,
     },
     input: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.inputBorder,
       borderRadius: 4,
@@ -189,7 +189,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
       textAlign: 'center',
     },
     selectInput: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.inputBorder,
       borderRadius: 4,
@@ -220,7 +220,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
       gap: 10,
     },
     timeInput: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.inputBorder,
       borderRadius: 4,

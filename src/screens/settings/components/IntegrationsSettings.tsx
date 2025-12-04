@@ -202,7 +202,7 @@ export default function IntegrationsSettings({ onChangesDetected }: Integrations
     integrationCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: 8,
       padding: 15,
       marginBottom: 10,

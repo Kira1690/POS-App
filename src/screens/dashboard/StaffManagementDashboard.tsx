@@ -37,18 +37,6 @@ import {
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
 
-// Staff Management theme colors - professional blue palette
-const STAFF_MGMT_THEME = {
-  primary: '#007bff',
-  primaryDark: '#0056b3',
-  success: '#28a745',
-  warning: '#ffc107',
-  danger: '#dc3545',
-  info: '#17a2b8',
-  light: '#f8f9fa',
-  dark: '#343a40',
-};
-
 interface StaffManagementDashboardProps {}
 
 const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => {
@@ -115,12 +103,12 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
   ];
 
   const quickActions = [
-    { label: 'Add Staff', icon: 'person-add', color: STAFF_MGMT_THEME.success },
-    { label: 'Create Schedule', icon: 'event', color: STAFF_MGMT_THEME.primary },
-    { label: 'Assign Task', icon: 'assignment-add', color: STAFF_MGMT_THEME.info },
-    { label: 'Send Message', icon: 'message', color: STAFF_MGMT_THEME.warning },
-    { label: 'View Reports', icon: 'assessment', color: STAFF_MGMT_THEME.dark },
-    { label: 'Settings', icon: 'settings', color: '#6c757d' },
+    { label: 'Add Staff', icon: 'person-add', color: theme.colors.success },
+    { label: 'Create Schedule', icon: 'event', color: theme.colors.primary },
+    { label: 'Assign Task', icon: 'assignment-add', color: theme.colors.tertiary },
+    { label: 'Send Message', icon: 'message', color: theme.colors.warning },
+    { label: 'View Reports', icon: 'assessment', color: theme.colors.onSurface },
+    { label: 'Settings', icon: 'settings', color: theme.colors.onSurfaceVariant },
   ];
 
   const renderHeader = () => (
@@ -145,7 +133,7 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
         <TouchableOpacity style={styles.notificationBadge}>
           <MaterialIcons name="notifications" size={24} color={theme.colors.onPrimary} />
           {staffData.alerts.length > 0 && (
-            <View style={[styles.badge, { backgroundColor: STAFF_MGMT_THEME.danger }]}>
+            <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
               <Text style={styles.badgeText}>{staffData.alerts.length}</Text>
             </View>
           )}
@@ -161,7 +149,7 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
           key={index}
           style={[
             styles.navTab,
-            tab.active && { backgroundColor: STAFF_MGMT_THEME.primary }
+            tab.active && { backgroundColor: theme.colors.primary }
           ]}
           onPress={() => setActiveTab(tab.label)}
         >
@@ -191,7 +179,7 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
             Total Staff
           </Text>
         </View>
-        <Text style={[styles.metricValue, { color: STAFF_MGMT_THEME.primary }]}>
+        <Text style={[styles.metricValue, { color: theme.colors.primary }]}>
           {staffData.metrics.totalStaff}
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
@@ -207,7 +195,7 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
             Attendance
           </Text>
         </View>
-        <Text style={[styles.metricValue, { color: STAFF_MGMT_THEME.success }]}>
+        <Text style={[styles.metricValue, { color: theme.colors.success }]}>
           {((staffData.metrics.scheduledToday - staffData.metrics.absentToday) / staffData.metrics.scheduledToday * 100).toFixed(1)}%
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
@@ -223,7 +211,7 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
             Avg Rating
           </Text>
         </View>
-        <Text style={[styles.metricValue, { color: STAFF_MGMT_THEME.warning }]}>
+        <Text style={[styles.metricValue, { color: theme.colors.warning }]}>
           {staffData.metrics.averageRating.toFixed(1)}/5.0
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
@@ -239,7 +227,7 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
             Labor Cost
           </Text>
         </View>
-        <Text style={[styles.metricValue, { color: STAFF_MGMT_THEME.info }]}>
+        <Text style={[styles.metricValue, { color: theme.colors.tertiary }]}>
           ${staffData.metrics.laborCost.toFixed(2)}
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
@@ -311,7 +299,7 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
           Staff Alerts & Notifications
         </Text>
         <TouchableOpacity>
-          <Text style={[styles.viewAllText, { color: STAFF_MGMT_THEME.primary }]}>
+          <Text style={[styles.viewAllText, { color: theme.colors.primary }]}>
             View All →
           </Text>
         </TouchableOpacity>
@@ -380,13 +368,13 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
 
   const getStatusColor = (status: string, alpha: number = 1): string => {
     const colors: Record<string, string> = {
-      'on-duty': STAFF_MGMT_THEME.success,
-      'off-duty': '#6c757d',
-      'break': STAFF_MGMT_THEME.info,
-      'late': STAFF_MGMT_THEME.warning,
-      'absent': STAFF_MGMT_THEME.danger,
+      'on-duty': theme.colors.success,
+      'off-duty': theme.colors.onSurfaceVariant,
+      'break': theme.colors.tertiary,
+      'late': theme.colors.warning,
+      'absent': theme.colors.error,
     };
-    const color = colors[status] || '#6c757d';
+    const color = colors[status] || theme.colors.onSurfaceVariant;
     return alpha < 1 ? `${color}${Math.round(alpha * 255).toString(16).padStart(2, '0')}` : color;
   };
 
@@ -403,22 +391,22 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
 
   const getAlertColor = (severity: string): string => {
     const colors: Record<string, string> = {
-      'info': STAFF_MGMT_THEME.info,
-      'warning': STAFF_MGMT_THEME.warning,
-      'urgent': STAFF_MGMT_THEME.danger,
-      'critical': STAFF_MGMT_THEME.danger,
+      'info': theme.colors.tertiary,
+      'warning': theme.colors.warning,
+      'urgent': theme.colors.error,
+      'critical': theme.colors.error,
     };
-    return colors[severity] || STAFF_MGMT_THEME.info;
+    return colors[severity] || theme.colors.tertiary;
   };
 
   const getAlertBackgroundColor = (severity: string): string => {
     const colors: Record<string, string> = {
-      'info': '#d1ecf1',
-      'warning': '#fff3cd',
-      'urgent': '#f8d7da',
-      'critical': '#f5c6cb',
+      'info': theme.colors.primaryLight,
+      'warning': theme.colors.warningLight,
+      'urgent': theme.colors.errorLight,
+      'critical': theme.colors.errorLight,
     };
-    return colors[severity] || '#d1ecf1';
+    return colors[severity] || theme.colors.primaryLight;
   };
 
   const getAlertIcon = (severity: string): string => {

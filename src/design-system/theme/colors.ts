@@ -255,6 +255,12 @@ export const lightTheme = {
   shadow: '#000000',
   scrim: '#000000',
 
+  // Backward compatibility colors (aliases for settings components)
+  border: '#D1D1D6',           // Alias for outline
+  inputBorder: '#D1D1D6',      // Alias for authInputBorder
+  lightGray: '#F2F2F7',        // Alias for background
+  white: '#FFFFFF',            // Pure white for surfaces
+
   // Apple Status Colors
   success: '#34C759', // Apple's vibrant green
   successContainer: '#D1F2DF', // Light green background
@@ -358,10 +364,16 @@ export const darkTheme = {
   surfaceDisabled: '#2C2C2E',
   onSurfaceDisabled: '#8E8E93',
 
-  outline: '#38383A', // Apple's dark border color
+  outline: '#545456', // Apple's dark border color (WCAG 3.4:1 contrast)
   outlineVariant: '#2C2C2E', // Subtle dark border
   shadow: '#000000',
   scrim: '#000000',
+
+  // Backward compatibility colors (aliases for settings components)
+  border: '#545456',           // Alias for outline (high contrast for dark mode)
+  inputBorder: '#545456',      // Alias for authInputBorder (high contrast)
+  lightGray: '#2C2C2E',        // Alias for surfaceVariant
+  white: '#FFFFFF',            // Keep white for text on colored backgrounds
 
   // Apple Dark Status Colors - Vibrant and Authentic
   success: '#30D158', // Apple's vibrant green on dark

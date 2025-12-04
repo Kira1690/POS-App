@@ -147,7 +147,7 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
 
   // Render header with stats and controls
   const renderHeader = () => (
-    <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.header, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outline }]}>
       <View style={styles.headerTop}>
         <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>
           Kitchen Display
@@ -179,38 +179,38 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       
       {/* Order statistics - Professional kitchen status display */}
       <View style={styles.statsContainer}>
-        <View style={[styles.statItem, styles.pendingStatItem]}>
-          <Text style={[styles.statNumber, styles.pendingStatNumber]}>
+        <View style={[styles.statItem, { backgroundColor: theme.colors.warningLight, borderWidth: 1, borderColor: theme.colors.warning }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.warning }]}>
             {stats.pending}
           </Text>
-          <Text style={[styles.statLabel, styles.pendingStatLabel]}>
+          <Text style={[styles.statLabel, { color: theme.colors.warning }]}>
             Pending
           </Text>
         </View>
-        
-        <View style={[styles.statItem, styles.preparingStatItem]}>
-          <Text style={[styles.statNumber, styles.preparingStatNumber]}>
+
+        <View style={[styles.statItem, { backgroundColor: theme.colors.successLight }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.success }]}>
             {stats.preparing}
           </Text>
-          <Text style={[styles.statLabel, styles.preparingStatLabel]}>
+          <Text style={[styles.statLabel, { color: theme.colors.success }]}>
             Preparing
           </Text>
         </View>
-        
-        <View style={[styles.statItem, styles.readyStatItem]}>
-          <Text style={[styles.statNumber, styles.readyStatNumber]}>
+
+        <View style={[styles.statItem, { backgroundColor: theme.colors.primaryLight }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.primary }]}>
             {stats.ready}
           </Text>
-          <Text style={[styles.statLabel, styles.readyStatLabel]}>
+          <Text style={[styles.statLabel, { color: theme.colors.primary }]}>
             Ready
           </Text>
         </View>
-        
-        <View style={[styles.statItem, styles.totalStatItem]}>
-          <Text style={[styles.statNumber, styles.totalStatNumber]}>
+
+        <View style={[styles.statItem, { backgroundColor: theme.colors.infoLight }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.info }]}>
             {stats.total}
           </Text>
-          <Text style={[styles.statLabel, styles.totalStatLabel]}>
+          <Text style={[styles.statLabel, { color: theme.colors.info }]}>
             Total
           </Text>
         </View>
@@ -343,7 +343,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   headerTop: {
     flexDirection: 'row',
@@ -394,51 +393,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   
-  // Professional status-specific styling
-  pendingStatItem: {
-    backgroundColor: '#FFF3E0',
-    borderWidth: 1,
-    borderColor: '#F57C00',
-  },
-  pendingStatNumber: {
-    color: '#E65100',
-  },
-  pendingStatLabel: {
-    color: '#F57C00',
-  },
-  
-  preparingStatItem: {
-    backgroundColor: '#E8F5E8',
-  },
-  preparingStatNumber: {
-    color: '#2E7D32',
-  },
-  preparingStatLabel: {
-    color: '#388E3C',
-  },
-  
-  readyStatItem: {
-    backgroundColor: '#E3F2FD',
-  },
-  readyStatNumber: {
-    color: '#1565C0',
-  },
-  readyStatLabel: {
-    color: '#1976D2',
-  },
-  
-  totalStatItem: {
-    backgroundColor: '#F3E5F5',
-  },
-  totalStatNumber: {
-    color: '#6A1B9A',
-  },
-  totalStatLabel: {
-    color: '#8E24AA',
-  },
   filterContainer: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: 'transparent',
     borderRadius: borderRadius.full,
     padding: spacing.xs / 2,
   },

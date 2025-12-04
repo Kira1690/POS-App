@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgeText: {
-    color: 'white',
+    color: theme.colors.onPrimary,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -409,7 +409,6 @@ const styles = StyleSheet.create({
     width: 250,
     padding: spacing.md,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(0,0,0,0.1)',
   },
   navItem: {
     flexDirection: 'row',
@@ -439,7 +438,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
     minHeight: 150,
   },
   statsHeader: {
@@ -477,7 +475,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
     minHeight: 350,
   },
   ordersContainer: {
@@ -485,7 +482,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
     minHeight: 350,
   },
   ordersHeader: {
@@ -561,7 +557,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
     marginBottom: spacing.xl,
   },
   categoryChartContainer: {
@@ -589,7 +584,7 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   actionText: {
-    color: 'white',
+    color: theme.colors.onPrimary,
     ...typography.bodyMedium,
     fontWeight: '600',
     marginLeft: spacing.xs,
