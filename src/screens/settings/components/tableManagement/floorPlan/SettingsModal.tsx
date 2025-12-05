@@ -77,6 +77,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       alignItems: 'center',
     },
     modalContainer: {
+      flex: 1,  // Allow container to participate in flex layout
       width: '90%',
       maxWidth: 600,
       maxHeight: '85%',

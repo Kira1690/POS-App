@@ -11,6 +11,8 @@ export { default as FloorPlanGrid } from './FloorPlanGrid';
 export { default as FloorPlanZone } from './FloorPlanZone';
 export { default as TableVisual } from './TableVisual';
 export { default as TableGestureOverlay } from './TableGestureOverlay';
+export { default as ZoneGestureOverlay } from './ZoneGestureOverlay';
+export { default as ResizeHandles } from './ResizeHandles';
 export { default as TableShape } from './TableShape';
 export { default as ChairVisuals } from './ChairVisuals';
 export { default as TablePropertiesPanel } from './TablePropertiesPanel';
