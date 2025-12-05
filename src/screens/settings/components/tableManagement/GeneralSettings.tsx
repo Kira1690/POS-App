@@ -1,4 +1,8 @@
 /**
+ * @deprecated This component is deprecated and will be removed in a future version.
+ * Use SettingsModal from './floorPlan/SettingsModal' instead.
+ * The General settings are now integrated into the unified table management interface.
+ *
  * General Table Settings Component
  * Default configurations, display preferences, and status colors
  * Following SOLID principles and theme system

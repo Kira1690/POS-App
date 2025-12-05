@@ -1,4 +1,8 @@
 /**
+ * @deprecated This component is deprecated and will be removed in a future version.
+ * Use FloorPlanSettings which now provides a unified table management interface.
+ * Areas/Zones are now managed directly on the floor plan canvas.
+ *
  * Areas Settings Component
  * Section and area management for restaurant tables
  * Following SOLID principles and theme system

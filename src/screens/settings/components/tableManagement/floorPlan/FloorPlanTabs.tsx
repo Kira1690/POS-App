@@ -32,7 +32,23 @@ const FloorPlanTabs: React.FC<FloorPlanTabsProps> = ({
     },
     scrollContent: {
       flexDirection: 'row',
+      alignItems: 'center',
       gap: spacing.sm,
+    },
+    // App title (like Word, Figma, etc.)
+    appTitle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingRight: spacing.sm,
+      marginRight: spacing.sm,
+      borderRightWidth: 1,
+      borderRightColor: theme.colors.outline,
+    },
+    appTitleText: {
+      ...typography.titleMedium,
+      fontWeight: '600',
+      color: theme.colors.primary,
     },
     tab: {
       flexDirection: 'row',
@@ -91,6 +107,17 @@ const FloorPlanTabs: React.FC<FloorPlanTabsProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* App Title - like Word, Figma, etc. */}
+        <View style={styles.appTitle}>
+          <Icon
+            name="table-furniture"
+            size={20}
+            color={theme.colors.primary}
+            accessibilityLabel="Table Management"
+          />
+          <Text style={styles.appTitleText}>Table Management</Text>
+        </View>
+
         {floors.map(floor => {
           const isActive = floor.id === activeFloorId;
           return (

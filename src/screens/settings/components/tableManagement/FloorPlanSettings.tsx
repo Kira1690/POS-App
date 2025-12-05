@@ -1,27 +1,26 @@
 /**
  * Floor Plan Settings Component
- * Orchestrator for the modular floor plan editor
- * Refactored from 688 lines to <300 lines using modular architecture
+ * Unified table management application - single screen for all operations
+ * Desktop-style interface with fixed toolbar and scrollable canvas
  */
 
 import React, { useMemo, useCallback, useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing } from '@/design-system/theme/spacing';
-import { AppleButton } from '@/components/apple';
-import { Icon } from '@/components/common';
 import { MOCK_TABLES, MockTable } from '@/data/tables';
 import { MOCK_FLOORS, MOCK_TABLE_POSITIONS, getZonesByFloor } from '@/data/tables/mockFloorPlans';
-import { TableShape, TableSize, ZoneBounds } from '@/types/settings/table-management.types';
+import { TableShape, ZoneBounds } from '@/types/settings/table-management.types';
 
 // Floor plan modular components
 import {
   FloorPlanCanvas,
   FloorPlanToolbar,
   FloorPlanTabs,
-  TablePropertiesPanel,
+  PropertiesPanel,
   AddTableModal,
   AddZoneModal,
+  SettingsModal,
   useFloorPlanState,
 } from './floorPlan';
 import type { NewTableConfig, NewZoneConfig } from './floorPlan';
@@ -36,6 +35,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   // Modal visibility states
   const [showAddTableModal, setShowAddTableModal] = useState(false);
   const [showAddZoneModal, setShowAddZoneModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Pending position/bounds for new items
   const [pendingTablePosition, setPendingTablePosition] = useState<{ x: number; y: number } | null>(null);
@@ -164,13 +164,22 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     Alert.alert('Edit Table', 'Table editing modal would open here');
   }, []);
 
-  const handleCloseProperties = useCallback(() => {
+  const handleCloseSelection = useCallback(() => {
     setSelectedTable(null);
   }, [setSelectedTable]);
 
   const handleAddFloor = useCallback(() => {
     Alert.alert('Add Floor', 'Add new floor functionality would be implemented here');
   }, []);
+
+  // Toolbar action handlers
+  const handleSettingsPress = useCallback(() => {
+    setShowSettingsModal(true);
+  }, []);
+
+  const handleSettingsSave = useCallback(() => {
+    onChangesDetected?.(true);
+  }, [onChangesDetected]);
 
   const handleSaveLayout = useCallback(() => {
     Alert.alert('Success', 'Floor plan layout saved successfully!');
@@ -251,8 +260,6 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
 
   // Add zone modal confirm handler
   const handleAddZoneConfirm = useCallback((config: NewZoneConfig) => {
-    // Note: useFloorPlanState has addZone but we need to import it
-    // For now, show success and switch tool
     Alert.alert('Zone Added', `Zone "${config.name}" has been added to the floor plan.`);
     setShowAddZoneModal(false);
     setPendingZoneBounds(null);
@@ -281,7 +288,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
       paddingHorizontal: spacing.md,
       paddingTop: spacing.sm,
     },
-    // CONTENT AREA - Canvas scrolls, properties fixed
+    // CONTENT AREA - Canvas + Properties panel
     contentArea: {
       flex: 1,
       flexDirection: 'row',
@@ -297,19 +304,9 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
       padding: spacing.md,
     },
     propertiesColumn: {
-      width: 300,
+      width: 280,
       borderLeftWidth: 1,
       borderLeftColor: theme.colors.outline,
-      backgroundColor: theme.colors.surface,
-    },
-    // FIXED FOOTER - Always visible
-    fixedFooter: {
-      flexDirection: 'row',
-      gap: spacing.sm,
-      padding: spacing.md,
-      justifyContent: 'flex-end',
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.outline,
       backgroundColor: theme.colors.surface,
     },
   });
@@ -340,10 +337,14 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
           onZoomOut={zoomOut}
           onUndo={undo}
           onRedo={redo}
+          onSettingsPress={handleSettingsPress}
+          onImport={handleImportLayout}
+          onExport={handleExportLayout}
+          onSave={handleSaveLayout}
         />
       </View>
 
-      {/* CONTENT AREA - Canvas scrolls independently */}
+      {/* CONTENT AREA - Canvas scrolls, properties always visible */}
       <View style={styles.contentArea}>
         {/* Scrollable Canvas */}
         <View style={styles.canvasScrollContainer}>
@@ -373,48 +374,23 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
           </ScrollView>
         </View>
 
-        {/* Properties Panel - Fixed on right */}
-        {selectedTable && selectedTablePosition && (
-          <ScrollView style={styles.propertiesColumn}>
-            <TablePropertiesPanel
-              table={selectedTable}
-              position={selectedTablePosition}
-              onClose={handleCloseProperties}
-              onDuplicate={handleDuplicate}
-              onDelete={handleDelete}
-              onRotate={handleRotate}
-              onEdit={handleEdit}
-            />
-          </ScrollView>
-        )}
-      </View>
-
-      {/* FIXED FOOTER - Action buttons always visible */}
-      <View style={styles.fixedFooter}>
-        <AppleButton
-          title="Import"
-          variant="secondary"
-          size="medium"
-          icon={<Icon name="upload" size={18} color={theme.colors.onSurface} accessibilityLabel="Import layout" />}
-          iconPosition="left"
-          onPress={handleImportLayout}
-        />
-        <AppleButton
-          title="Export"
-          variant="secondary"
-          size="medium"
-          icon={<Icon name="download" size={18} color={theme.colors.onSurface} accessibilityLabel="Export layout" />}
-          iconPosition="left"
-          onPress={handleExportLayout}
-        />
-        <AppleButton
-          title="Save Layout"
-          variant="primary"
-          size="medium"
-          icon={<Icon name="content-save" size={18} color={theme.colors.onPrimary} accessibilityLabel="Save layout" />}
-          iconPosition="left"
-          onPress={handleSaveLayout}
-        />
+        {/* Properties Panel - Always visible (shows stats when nothing selected) */}
+        <View style={styles.propertiesColumn}>
+          <PropertiesPanel
+            selectedTable={selectedTable}
+            selectedTablePosition={selectedTablePosition}
+            selectedZone={null}
+            floor={currentFloor}
+            tables={allTables}
+            zones={currentZones}
+            tablePositions={currentTablePositions}
+            onCloseSelection={handleCloseSelection}
+            onDuplicateTable={handleDuplicate}
+            onDeleteTable={handleDelete}
+            onRotateTable={handleRotate}
+            onEditTable={handleEdit}
+          />
+        </View>
       </View>
 
       {/* Modals */}
@@ -436,6 +412,11 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
           onCancel={handleAddZoneCancel}
         />
       )}
+      <SettingsModal
+        visible={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onSave={handleSettingsSave}
+      />
     </View>
   );
 };
