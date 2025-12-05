@@ -1,21 +1,14 @@
 /**
  * Table Management Settings Container
- * Main container with tab navigation for table management settings
+ * Unified floor plan editor - no tabs, single application-like interface
  * Following SOLID principles and Apple design system
  */
 
-import React, { useState } from 'react';
-import { View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
-import { AppleTopTabNavigation, AppleTopTabItem } from '@/components/apple';
-import { TableManagementTab } from '@/types/settings.types';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
 
-// Tab components
-import GeneralSettings from './GeneralSettings';
-import TablesSettings from './TablesSettings';
+// Unified floor plan component
 import FloorPlanSettings from './FloorPlanSettings';
-import AreasSettings from './AreasSettings';
-import AdvancedSettings from './AdvancedSettings';
 
 interface TableManagementSettingsContainerProps {
   onChangesDetected?: (hasChanges: boolean) => void;
@@ -24,52 +17,17 @@ interface TableManagementSettingsContainerProps {
 const TableManagementSettingsContainer: React.FC<TableManagementSettingsContainerProps> = ({
   onChangesDetected
 }) => {
-  const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState<TableManagementTab>('general');
-
-  // Define tabs for top navigation
-  const tabs: AppleTopTabItem[] = [
-    { id: 'general', label: 'General' },
-    { id: 'tables', label: 'Tables' },
-    { id: 'floors', label: 'Floor Plan' },
-    { id: 'areas', label: 'Areas' },
-    { id: 'advanced', label: 'Advanced' },
-  ];
-
-  // Render active tab content
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'general':
-        return <GeneralSettings onChangesDetected={onChangesDetected} />;
-      case 'tables':
-        return <TablesSettings onChangesDetected={onChangesDetected} />;
-      case 'floors':
-        return <FloorPlanSettings onChangesDetected={onChangesDetected} />;
-      case 'areas':
-        return <AreasSettings onChangesDetected={onChangesDetected} />;
-      case 'advanced':
-        return <AdvancedSettings onChangesDetected={onChangesDetected} />;
-      default:
-        return <GeneralSettings onChangesDetected={onChangesDetected} />;
-    }
-  };
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+  });
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* Top Tab Navigation */}
-      <AppleTopTabNavigation
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(tabId) => setActiveTab(tabId as TableManagementTab)}
-      />
-
-      {/* Tab Content */}
-      {renderTabContent()}
+    <View style={styles.container}>
+      <FloorPlanSettings onChangesDetected={onChangesDetected} />
     </View>
   );
 };
 
 export default TableManagementSettingsContainer;
-
-// Export types for convenience
-export type { TableManagementTab };

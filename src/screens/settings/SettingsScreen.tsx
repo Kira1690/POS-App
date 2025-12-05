@@ -233,15 +233,23 @@ export default function SettingsScreen() {
             showTooltips={true}
           />
 
-          {/* APPLE CONTENT PANEL (using universal AppleSettingsPanel) */}
-          <AppleSettingsPanel
-            title="System Settings"
-            subtitle={currentCategoryLabel}
-            headerActions={headerActions}
-            scrollable={false}
-          >
-            {renderCategoryContent()}
-          </AppleSettingsPanel>
+          {/* CONTENT AREA - Table Management gets full space, others use AppleSettingsPanel */}
+          {activeCategory === 'table_management' ? (
+            // Table Management: Full-screen application-like interface (no header)
+            <View style={{ flex: 1, backgroundColor: theme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>
+              {renderCategoryContent()}
+            </View>
+          ) : (
+            // Other settings: Standard panel with header
+            <AppleSettingsPanel
+              title="System Settings"
+              subtitle={currentCategoryLabel}
+              headerActions={headerActions}
+              scrollable={false}
+            >
+              {renderCategoryContent()}
+            </AppleSettingsPanel>
+          )}
         </View>
       </SafeAreaView>
     </View>

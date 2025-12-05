@@ -1,4 +1,8 @@
 /**
+ * @deprecated This component is deprecated and will be removed in a future version.
+ * Use SettingsModal from './floorPlan/SettingsModal' instead.
+ * The Advanced settings are now integrated into the unified table management interface.
+ *
  * Advanced Table Settings Component
  * Automation rules, reservation settings, and danger zone
  * Following SOLID principles and theme system

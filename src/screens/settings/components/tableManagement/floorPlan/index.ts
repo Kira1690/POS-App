@@ -23,6 +23,10 @@ export { default as AddTableModal } from './AddTableModal';
 export type { NewTableConfig } from './AddTableModal';
 export { default as AddZoneModal } from './AddZoneModal';
 export type { NewZoneConfig } from './AddZoneModal';
+export { default as SettingsModal } from './SettingsModal';
+
+// Panels
+export { default as PropertiesPanel } from './PropertiesPanel';
 
 // Hooks
 export { useFloorPlanState } from './hooks/useFloorPlanState';

@@ -1,4 +1,8 @@
 /**
+ * @deprecated This component is deprecated and will be removed in a future version.
+ * Use FloorPlanSettings which now provides a unified table management interface.
+ * Tables are now managed directly on the floor plan canvas with the same modals.
+ *
  * Tables Settings Component
  * Complete table management with all modals integrated
  * Phase 2 - All wireframe features connected

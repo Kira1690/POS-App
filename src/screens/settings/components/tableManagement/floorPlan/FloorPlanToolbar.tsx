@@ -28,6 +28,11 @@ interface FloorPlanToolbarProps {
   onZoomOut: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  // New props for unified toolbar
+  onSettingsPress: () => void;
+  onImport: () => void;
+  onExport: () => void;
+  onSave: () => void;
 }
 
 interface ToolConfig {
@@ -68,6 +73,10 @@ const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = ({
   onZoomOut,
   onUndo,
   onRedo,
+  onSettingsPress,
+  onImport,
+  onExport,
+  onSave,
 }) => {
   const { theme } = useTheme();
 
@@ -82,7 +91,7 @@ const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.xs,
+      paddingHorizontal: spacing.sm,
       backgroundColor: theme.colors.surfaceContainerLow,
       borderRadius: borderRadius.md as number,
       marginBottom: spacing.sm,
@@ -178,6 +187,36 @@ const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = ({
     },
     buttonDisabled: {
       opacity: 0.4,
+    },
+    // Settings button
+    settingsButton: {
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: borderRadius.sm as number,
+      backgroundColor: theme.colors.surfaceContainerHigh,
+    },
+    // File operations group
+    fileGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    fileButton: {
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: borderRadius.sm as number,
+    },
+    saveButton: {
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: borderRadius.sm as number,
+      backgroundColor: theme.colors.primary,
     },
   });
 
@@ -293,6 +332,64 @@ const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = ({
             size={18}
             color={canRedo ? theme.colors.onSurface : theme.colors.outline}
             accessibilityLabel="Redo"
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.divider} />
+
+      {/* Settings */}
+      <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={onSettingsPress}
+        accessibilityLabel="Settings"
+      >
+        <Icon
+          name="cog"
+          size={18}
+          color={theme.colors.onSurface}
+          accessibilityLabel="Settings"
+        />
+      </TouchableOpacity>
+
+      <View style={styles.divider} />
+
+      {/* File operations */}
+      <View style={styles.fileGroup}>
+        <TouchableOpacity
+          style={styles.fileButton}
+          onPress={onImport}
+          accessibilityLabel="Import layout"
+        >
+          <Icon
+            name="upload"
+            size={18}
+            color={theme.colors.onSurface}
+            accessibilityLabel="Import"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.fileButton}
+          onPress={onExport}
+          accessibilityLabel="Export layout"
+        >
+          <Icon
+            name="download"
+            size={18}
+            color={theme.colors.onSurface}
+            accessibilityLabel="Export"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={onSave}
+          accessibilityLabel="Save layout"
+        >
+          <Icon
+            name="content-save"
+            size={18}
+            color={theme.colors.onPrimary}
+            accessibilityLabel="Save"
           />
         </TouchableOpacity>
       </View>
