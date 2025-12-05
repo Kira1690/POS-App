@@ -63,9 +63,13 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     zoomOut,
     moveTable,
     rotateTable,
+    resizeTable,
     deleteTable,
     duplicateTable,
     addTable,
+    selectZone,
+    moveZone,
+    resizeZone,
     undo,
     redo,
   } = useFloorPlanState({
@@ -100,6 +104,12 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   const selectedTable = useMemo(
     () => allTables.find(t => t.id === state.selectedTableId),
     [allTables, state.selectedTableId]
+  );
+
+  // Get selected zone data
+  const selectedZone = useMemo(
+    () => currentZones.find(z => z.id === state.selectedZoneId),
+    [currentZones, state.selectedZoneId]
   );
 
   // Handlers
@@ -137,6 +147,31 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     moveTable(tableId, x, y);
     onChangesDetected?.(true);
   }, [moveTable, onChangesDetected]);
+
+  const handleTableResize = useCallback((tableId: string, width: number, height: number) => {
+    resizeTable(tableId, width, height);
+    onChangesDetected?.(true);
+  }, [resizeTable, onChangesDetected]);
+
+  const handleZoneSelect = useCallback((zoneId: string) => {
+    if (state.activeTool === 'select') {
+      selectZone(zoneId === state.selectedZoneId ? null : zoneId);
+    }
+  }, [state.activeTool, state.selectedZoneId, selectZone]);
+
+  const handleZoneMove = useCallback((zoneId: string, x: number, y: number) => {
+    moveZone(zoneId, x, y);
+    onChangesDetected?.(true);
+  }, [moveZone, onChangesDetected]);
+
+  const handleZoneResize = useCallback((zoneId: string, width: number, height: number) => {
+    resizeZone(zoneId, width, height);
+    onChangesDetected?.(true);
+  }, [resizeZone, onChangesDetected]);
+
+  const handleCloseZoneSelection = useCallback(() => {
+    selectZone(null);
+  }, [selectZone]);
 
   const handleDuplicate = useCallback(() => {
     if (state.selectedTableId) {
@@ -360,6 +395,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
               tablePositions={currentTablePositions}
               tables={allTables}
               selectedTableId={state.selectedTableId}
+              selectedZoneId={state.selectedZoneId}
               gridEnabled={state.gridEnabled}
               snapToGrid={state.snapToGrid}
               showChairs={state.showChairs}
@@ -368,6 +404,10 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
               activeTool={state.activeTool}
               onTableSelect={handleTableSelect}
               onTableMove={handleTableMove}
+              onTableResize={handleTableResize}
+              onZoneSelect={handleZoneSelect}
+              onZoneMove={handleZoneMove}
+              onZoneResize={handleZoneResize}
               onCanvasClick={handleCanvasClick}
               onZoneDraw={handleZoneDraw}
             />
@@ -379,12 +419,12 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
           <PropertiesPanel
             selectedTable={selectedTable}
             selectedTablePosition={selectedTablePosition}
-            selectedZone={null}
+            selectedZone={selectedZone}
             floor={currentFloor}
             tables={allTables}
             zones={currentZones}
             tablePositions={currentTablePositions}
-            onCloseSelection={handleCloseSelection}
+            onCloseSelection={selectedZone ? handleCloseZoneSelection : handleCloseSelection}
             onDuplicateTable={handleDuplicate}
             onDeleteTable={handleDelete}
             onRotateTable={handleRotate}

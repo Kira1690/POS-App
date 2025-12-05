@@ -16,7 +16,11 @@ import {
 import { MockTable } from '@/data/tables';
 import TableShape from './TableShape';
 import ChairVisuals from './ChairVisuals';
-import { getTableCenter } from './utils/chairPositions';
+import {
+  getTableCenter,
+  getTableDimensions,
+  determineShapeFromAspectRatio,
+} from './utils/chairPositions';
 
 interface TableVisualProps {
   position: FloorPlanTablePosition;
@@ -60,13 +64,45 @@ const TableVisual: React.FC<TableVisualProps> = ({
 }) => {
   const { theme } = useTheme();
 
-  const tableShape = useMemo(() => mapShape(table.shape), [table.shape]);
+  const baseShape = useMemo(() => mapShape(table.shape), [table.shape]);
   const tableStatus = useMemo(() => mapStatus(table.status), [table.status]);
   const tableSize = TableSize.MEDIUM;
 
+  // Check if custom dimensions are provided (from resize)
+  const hasCustomDimensions = position.width !== undefined && position.height !== undefined;
+
+  // Get actual dimensions - use custom if provided, else default for shape/size
+  const actualDimensions = useMemo(() => {
+    if (hasCustomDimensions) {
+      return {
+        width: position.width!,
+        height: position.height!,
+        radius: Math.min(position.width!, position.height!) / 2,
+      };
+    }
+    return getTableDimensions(baseShape, tableSize);
+  }, [hasCustomDimensions, position.width, position.height, baseShape, tableSize]);
+
+  // Determine actual shape based on aspect ratio (shape morphing)
+  // Square → Rectangle when side-resized, Round → Oval when side-resized
+  const tableShape = useMemo(() => {
+    if (hasCustomDimensions) {
+      return determineShapeFromAspectRatio(
+        baseShape,
+        position.width!,
+        position.height!
+      );
+    }
+    return baseShape;
+  }, [hasCustomDimensions, baseShape, position.width, position.height]);
+
+  // Calculate table center point for positioning
   const tableCenter = useMemo(
-    () => getTableCenter(tableShape, tableSize),
-    [tableShape, tableSize]
+    () => ({
+      x: actualDimensions.width / 2,
+      y: actualDimensions.height / 2,
+    }),
+    [actualDimensions]
   );
 
   // Calculate position offset to center the table on the position point
@@ -86,6 +122,8 @@ const TableVisual: React.FC<TableVisualProps> = ({
           capacity={table.capacity}
           shape={tableShape}
           size={tableSize}
+          customWidth={hasCustomDimensions ? position.width : undefined}
+          customHeight={hasCustomDimensions ? position.height : undefined}
           rotation={position.rotation}
         />
       )}
@@ -100,6 +138,8 @@ const TableVisual: React.FC<TableVisualProps> = ({
         capacity={table.capacity}
         showNumber={true}
         showCapacity={true}
+        customWidth={hasCustomDimensions ? position.width : undefined}
+        customHeight={hasCustomDimensions ? position.height : undefined}
       />
     </G>
   );

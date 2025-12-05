@@ -1,11 +1,17 @@
 /**
  * ResizeHandles Component
  * Displays resize handles around a selected element for resizing
- * Uses PanResponder for drag gestures (no worklet issues)
+ * Uses react-native-gesture-handler for proper gesture coordination
  */
 
-import React, { useRef, useMemo, useCallback } from 'react';
-import { View, StyleSheet, PanResponder, GestureResponderEvent, PanResponderGestureState } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { StyleSheet } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  runOnJS,
+} from 'react-native-reanimated';
 import { useTheme } from '@/hooks/useTheme';
 
 interface ResizeHandlesProps {
@@ -18,6 +24,8 @@ interface ResizeHandlesProps {
   };
   /** Current zoom level */
   zoom: number;
+  /** Pan offset of the canvas */
+  panOffset?: { x: number; y: number };
   /** Minimum width constraint */
   minWidth?: number;
   /** Minimum height constraint */
@@ -34,12 +42,13 @@ interface ResizeHandlesProps {
 
 type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
-const HANDLE_SIZE = 12;
-const HANDLE_HIT_SLOP = 10;
+const HANDLE_SIZE = 14;
+const HANDLE_HIT_SLOP = 12;
 
 const ResizeHandles: React.FC<ResizeHandlesProps> = ({
   bounds,
   zoom,
+  panOffset = { x: 0, y: 0 },
   minWidth = 40,
   minHeight = 40,
   gridSize = 20,
@@ -48,95 +57,162 @@ const ResizeHandles: React.FC<ResizeHandlesProps> = ({
   onResizeEnd,
 }) => {
   const { theme } = useTheme();
-  const startBoundsRef = useRef(bounds);
 
-  // Snap value to grid if enabled
-  const snap = useCallback(
-    (value: number) => {
-      if (!snapToGrid) return value;
-      return Math.round(value / gridSize) * gridSize;
+  // Shared values for worklet-safe access
+  const zoomSV = useSharedValue(zoom);
+  const minWidthSV = useSharedValue(minWidth);
+  const minHeightSV = useSharedValue(minHeight);
+  const gridSizeSV = useSharedValue(gridSize);
+  const snapToGridSV = useSharedValue(snapToGrid);
+
+  // Start bounds captured when drag begins
+  const startX = useSharedValue(bounds.x);
+  const startY = useSharedValue(bounds.y);
+  const startWidth = useSharedValue(bounds.width);
+  const startHeight = useSharedValue(bounds.height);
+
+  // Current bounds (for visual updates during drag)
+  const currentX = useSharedValue(bounds.x);
+  const currentY = useSharedValue(bounds.y);
+  const currentWidth = useSharedValue(bounds.width);
+  const currentHeight = useSharedValue(bounds.height);
+
+  // Update shared values when props change
+  React.useEffect(() => {
+    zoomSV.value = zoom;
+  }, [zoom, zoomSV]);
+
+  React.useEffect(() => {
+    minWidthSV.value = minWidth;
+    minHeightSV.value = minHeight;
+  }, [minWidth, minHeight, minWidthSV, minHeightSV]);
+
+  React.useEffect(() => {
+    gridSizeSV.value = gridSize;
+    snapToGridSV.value = snapToGrid;
+  }, [gridSize, snapToGrid, gridSizeSV, snapToGridSV]);
+
+  // Update current bounds when props change (external updates)
+  React.useEffect(() => {
+    currentX.value = bounds.x;
+    currentY.value = bounds.y;
+    currentWidth.value = bounds.width;
+    currentHeight.value = bounds.height;
+  }, [bounds, currentX, currentY, currentWidth, currentHeight]);
+
+  // Snap helper function (worklet)
+  const snapValue = useCallback((value: number, shouldSnap: boolean, grid: number) => {
+    'worklet';
+    if (!shouldSnap) return value;
+    return Math.round(value / grid) * grid;
+  }, []);
+
+  // Callback to update parent state
+  const handleResizeUpdate = useCallback(
+    (x: number, y: number, width: number, height: number) => {
+      onResize({ x, y, width, height });
     },
-    [snapToGrid, gridSize]
+    [onResize]
   );
 
-  // Create a resize handler for a specific handle position
-  const createResizeHandler = useCallback(
-    (position: HandlePosition) => {
-      return PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: () => {
-          startBoundsRef.current = { ...bounds };
-        },
-        onPanResponderMove: (_: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-          const dx = gestureState.dx / zoom;
-          const dy = gestureState.dy / zoom;
-          const start = startBoundsRef.current;
+  const handleResizeComplete = useCallback(() => {
+    onResizeEnd?.();
+  }, [onResizeEnd]);
 
-          let newX = start.x;
-          let newY = start.y;
-          let newWidth = start.width;
-          let newHeight = start.height;
+  // Create gesture for a specific handle position
+  const createHandleGesture = useCallback(
+    (position: HandlePosition) => {
+      return Gesture.Pan()
+        .minDistance(1)
+        .onStart(() => {
+          'worklet';
+          // Capture current bounds at drag start
+          startX.value = currentX.value;
+          startY.value = currentY.value;
+          startWidth.value = currentWidth.value;
+          startHeight.value = currentHeight.value;
+        })
+        .onUpdate((event) => {
+          'worklet';
+          const dx = event.translationX / zoomSV.value;
+          const dy = event.translationY / zoomSV.value;
+
+          let newX = startX.value;
+          let newY = startY.value;
+          let newWidth = startWidth.value;
+          let newHeight = startHeight.value;
 
           // Update bounds based on handle position
           switch (position) {
             case 'nw':
-              newX = snap(start.x + dx);
-              newY = snap(start.y + dy);
-              newWidth = Math.max(minWidth, start.width - dx);
-              newHeight = Math.max(minHeight, start.height - dy);
+              newX = snapValue(startX.value + dx, snapToGridSV.value, gridSizeSV.value);
+              newY = snapValue(startY.value + dy, snapToGridSV.value, gridSizeSV.value);
+              newWidth = Math.max(minWidthSV.value, startWidth.value - dx);
+              newHeight = Math.max(minHeightSV.value, startHeight.value - dy);
               break;
             case 'n':
-              newY = snap(start.y + dy);
-              newHeight = Math.max(minHeight, start.height - dy);
+              newY = snapValue(startY.value + dy, snapToGridSV.value, gridSizeSV.value);
+              newHeight = Math.max(minHeightSV.value, startHeight.value - dy);
               break;
             case 'ne':
-              newY = snap(start.y + dy);
-              newWidth = Math.max(minWidth, start.width + dx);
-              newHeight = Math.max(minHeight, start.height - dy);
+              newY = snapValue(startY.value + dy, snapToGridSV.value, gridSizeSV.value);
+              newWidth = Math.max(minWidthSV.value, startWidth.value + dx);
+              newHeight = Math.max(minHeightSV.value, startHeight.value - dy);
               break;
             case 'e':
-              newWidth = Math.max(minWidth, snap(start.width + dx));
+              newWidth = Math.max(minWidthSV.value, snapValue(startWidth.value + dx, snapToGridSV.value, gridSizeSV.value));
               break;
             case 'se':
-              newWidth = Math.max(minWidth, snap(start.width + dx));
-              newHeight = Math.max(minHeight, snap(start.height + dy));
+              newWidth = Math.max(minWidthSV.value, snapValue(startWidth.value + dx, snapToGridSV.value, gridSizeSV.value));
+              newHeight = Math.max(minHeightSV.value, snapValue(startHeight.value + dy, snapToGridSV.value, gridSizeSV.value));
               break;
             case 's':
-              newHeight = Math.max(minHeight, snap(start.height + dy));
+              newHeight = Math.max(minHeightSV.value, snapValue(startHeight.value + dy, snapToGridSV.value, gridSizeSV.value));
               break;
             case 'sw':
-              newX = snap(start.x + dx);
-              newWidth = Math.max(minWidth, start.width - dx);
-              newHeight = Math.max(minHeight, snap(start.height + dy));
+              newX = snapValue(startX.value + dx, snapToGridSV.value, gridSizeSV.value);
+              newWidth = Math.max(minWidthSV.value, startWidth.value - dx);
+              newHeight = Math.max(minHeightSV.value, snapValue(startHeight.value + dy, snapToGridSV.value, gridSizeSV.value));
               break;
             case 'w':
-              newX = snap(start.x + dx);
-              newWidth = Math.max(minWidth, start.width - dx);
+              newX = snapValue(startX.value + dx, snapToGridSV.value, gridSizeSV.value);
+              newWidth = Math.max(minWidthSV.value, startWidth.value - dx);
               break;
           }
 
-          onResize({ x: newX, y: newY, width: newWidth, height: newHeight });
-        },
-        onPanResponderRelease: () => {
-          onResizeEnd?.();
-        },
-      });
+          // Update shared values for visual feedback
+          currentX.value = newX;
+          currentY.value = newY;
+          currentWidth.value = newWidth;
+          currentHeight.value = newHeight;
+
+          // Call parent callback
+          runOnJS(handleResizeUpdate)(newX, newY, newWidth, newHeight);
+        })
+        .onEnd(() => {
+          'worklet';
+          runOnJS(handleResizeComplete)();
+        });
     },
-    [bounds, zoom, minWidth, minHeight, snap, onResize, onResizeEnd]
+    [
+      startX, startY, startWidth, startHeight,
+      currentX, currentY, currentWidth, currentHeight,
+      zoomSV, minWidthSV, minHeightSV, gridSizeSV, snapToGridSV,
+      snapValue, handleResizeUpdate, handleResizeComplete
+    ]
   );
 
-  // Create pan responders for each handle
-  const handles = useMemo(() => {
+  // Memoize handle gestures
+  const handleGestures = useMemo(() => {
     const positions: HandlePosition[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
     return positions.map((position) => ({
       position,
-      panResponder: createResizeHandler(position),
+      gesture: createHandleGesture(position),
     }));
-  }, [createResizeHandler]);
+  }, [createHandleGesture]);
 
-  // Calculate handle positions
-  const getHandleStyle = useCallback(
+  // Calculate handle position (considers zoom but NOT pan - handles are in transformed container)
+  const getHandlePosition = useCallback(
     (position: HandlePosition) => {
       const halfSize = HANDLE_SIZE / 2;
       const x = bounds.x * zoom;
@@ -187,6 +263,63 @@ const ResizeHandles: React.FC<ResizeHandlesProps> = ({
     [bounds, zoom]
   );
 
+  // Animated style for each handle (updates during drag)
+  const createAnimatedHandleStyle = useCallback(
+    (position: HandlePosition) => {
+      return useAnimatedStyle(() => {
+        const halfSize = HANDLE_SIZE / 2;
+        const x = currentX.value * zoomSV.value;
+        const y = currentY.value * zoomSV.value;
+        const width = currentWidth.value * zoomSV.value;
+        const height = currentHeight.value * zoomSV.value;
+
+        let left = 0;
+        let top = 0;
+
+        switch (position) {
+          case 'nw':
+            left = x - halfSize;
+            top = y - halfSize;
+            break;
+          case 'n':
+            left = x + width / 2 - halfSize;
+            top = y - halfSize;
+            break;
+          case 'ne':
+            left = x + width - halfSize;
+            top = y - halfSize;
+            break;
+          case 'e':
+            left = x + width - halfSize;
+            top = y + height / 2 - halfSize;
+            break;
+          case 'se':
+            left = x + width - halfSize;
+            top = y + height - halfSize;
+            break;
+          case 's':
+            left = x + width / 2 - halfSize;
+            top = y + height - halfSize;
+            break;
+          case 'sw':
+            left = x - halfSize;
+            top = y + height - halfSize;
+            break;
+          case 'w':
+            left = x - halfSize;
+            top = y + height / 2 - halfSize;
+            break;
+        }
+
+        return { left, top };
+      });
+    },
+    [currentX, currentY, currentWidth, currentHeight, zoomSV]
+  );
+
+  const isCorner = (position: HandlePosition) =>
+    ['nw', 'ne', 'se', 'sw'].includes(position);
+
   const styles = StyleSheet.create({
     handle: {
       position: 'absolute',
@@ -196,29 +329,43 @@ const ResizeHandles: React.FC<ResizeHandlesProps> = ({
       borderRadius: HANDLE_SIZE / 2,
       borderWidth: 2,
       borderColor: theme.colors.surface,
+      // Ensure handles are above other elements
+      zIndex: 1000,
+      elevation: 10,
     },
     cornerHandle: {
-      // Corner handles are squares
-      borderRadius: 2,
+      borderRadius: 3,
     },
   });
 
-  const isCorner = (position: HandlePosition) =>
-    ['nw', 'ne', 'se', 'sw'].includes(position);
+  // Render individual handle component
+  const ResizeHandle: React.FC<{ position: HandlePosition; gesture: ReturnType<typeof Gesture.Pan> }> =
+    React.memo(({ position, gesture }) => {
+      const animatedStyle = createAnimatedHandleStyle(position);
+
+      return (
+        <GestureDetector gesture={gesture}>
+          <Animated.View
+            style={[
+              styles.handle,
+              isCorner(position) && styles.cornerHandle,
+              animatedStyle,
+            ]}
+            hitSlop={{
+              top: HANDLE_HIT_SLOP,
+              bottom: HANDLE_HIT_SLOP,
+              left: HANDLE_HIT_SLOP,
+              right: HANDLE_HIT_SLOP,
+            }}
+          />
+        </GestureDetector>
+      );
+    });
 
   return (
     <>
-      {handles.map(({ position, panResponder }) => (
-        <View
-          key={position}
-          style={[
-            styles.handle,
-            isCorner(position) && styles.cornerHandle,
-            getHandleStyle(position),
-          ]}
-          hitSlop={{ top: HANDLE_HIT_SLOP, bottom: HANDLE_HIT_SLOP, left: HANDLE_HIT_SLOP, right: HANDLE_HIT_SLOP }}
-          {...panResponder.panHandlers}
-        />
+      {handleGestures.map(({ position, gesture }) => (
+        <ResizeHandle key={position} position={position} gesture={gesture} />
       ))}
     </>
   );

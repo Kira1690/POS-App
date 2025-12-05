@@ -486,6 +486,8 @@ export interface FloorPlanTablePosition {
   x: number;
   y: number;
   rotation: number;
+  width?: number;   // Custom width override (center-based)
+  height?: number;  // Custom height override (center-based)
   grid_x?: number;
   grid_y?: number;
 }
@@ -551,6 +553,7 @@ export type FloorPlanAction =
   | 'table_deleted'
   | 'table_rotated'
   | 'table_duplicated'
+  | 'table_resized'
   | 'zone_added'
   | 'zone_deleted'
   | 'zone_resized'
@@ -608,10 +611,13 @@ export type FloorPlanReducerAction =
   | { type: 'TOGGLE_SNAP' }
   | { type: 'TOGGLE_CHAIRS' }
   | { type: 'UPDATE_TABLE_POSITION'; payload: { tableId: string; position: Partial<FloorPlanTablePosition> } }
+  | { type: 'RESIZE_TABLE'; payload: { tableId: string; width: number; height: number } }
   | { type: 'ADD_TABLE'; payload: FloorPlanTablePosition }
   | { type: 'DELETE_TABLE'; payload: string }
   | { type: 'ADD_ZONE'; payload: FloorZone }
   | { type: 'UPDATE_ZONE'; payload: { zoneId: string; zone: Partial<FloorZone> } }
+  | { type: 'MOVE_ZONE'; payload: { zoneId: string; x: number; y: number } }
+  | { type: 'RESIZE_ZONE'; payload: { zoneId: string; width: number; height: number } }
   | { type: 'DELETE_ZONE'; payload: string }
   | { type: 'LOAD_FLOOR_PLAN'; payload: FloorPlanExportData }
   | { type: 'MARK_SAVED' }
