@@ -187,3 +187,115 @@ None currently.
 - All components created with proper TypeScript types
 - All components use theme.colors (no hardcoded colors)
 - All components use MaterialCommunityIcons (no emojis)
+
+---
+
+## Bug Fix Session 01 (2025-12-05) - REVERTED
+
+**Status:** All changes reverted and stashed
+**Documentation:** See `bug-fixes-session-01.md` for full details
+
+### Issues Investigated
+
+| # | Bug | Root Cause Found |
+|---|-----|------------------|
+| 1 | App crashes on table selection | Reanimated worklet accessing JS variables |
+| 2 | Settings modal content invisible | `flex: 0` on modalContainer |
+| 3 | Resize handles not appearing | Cascade from crash + missing position update |
+| 4 | Zone drag/resize not working | No ZoneGestureOverlay component exists |
+
+### Attempted Fixes (All Reverted)
+
+1. Convert JS variables to useSharedValue - partial success
+2. Complete simplification (remove Reanimated) - broke move mode
+3. Add PanResponder for drag - introduced new issues
+4. Simplify ResizeHandle with PanResponder - handles visible but resize broken
+5. Fix handleTableResize position update - system unstable
+
+### Files Modified (Before Revert)
+
+| File | LOC Change |
+|------|------------|
+| `TableGestureOverlay.tsx` | -101 lines |
+| `ResizeHandle.tsx` | -82 lines |
+| `FloorPlanCanvas.tsx` | -36 lines |
+| `SettingsModal.tsx` | ~0 (style only) |
+
+**Total:** ~220 lines modified
+
+### Key Learnings
+
+1. **Reanimated worklets** cannot access JS variables - must use shared values
+2. **Coordinate systems** differ: tables (center-based) vs resize bounds (top-left)
+3. **Incremental fixes** needed - too many changes at once caused regressions
+
+### Next Steps (For Future Session)
+
+1. ~~Fix worklet issue by converting ALL variables to shared values (including `zoom`)~~ DONE
+2. ~~Test each fix individually before moving to next~~ DONE
+3. ~~Add `ZoneGestureOverlay` component for zone selection~~ DONE
+4. ~~Keep original Reanimated code for performance~~ DONE
+
+---
+
+## Bug Fix Session 02 (2025-12-05) - COMPLETED
+
+**Status:** All fixes implemented successfully
+
+### Fixes Implemented
+
+| # | Issue | Fix Applied |
+|---|-------|-------------|
+| 1 | App crashes on table selection | Converted JS variables to shared values in worklet |
+| 2 | Settings modal content not visible | Added `flex: 1` to modalContainer |
+| 3 | Resize handles not appearing | Created new ResizeHandles component |
+| 4 | Zone drag/resize not working | Created ZoneGestureOverlay component |
+
+### Files Created
+
+- `ResizeHandles.tsx` - New component for resize handles (~200 lines)
+- `ZoneGestureOverlay.tsx` - New component for zone selection/drag (~190 lines)
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `TableGestureOverlay.tsx` | Added `zoomSV`, `overlayWidthSV`, `overlayHeightSV` shared values |
+| `SettingsModal.tsx` | Added `flex: 1` to modalContainer style |
+| `FloorPlanCanvas.tsx` | Integrated ResizeHandles & ZoneGestureOverlay, added handlers |
+| `index.ts` | Added exports for new components |
+
+### Key Changes in TableGestureOverlay.tsx
+
+```typescript
+// Before: JS variables in worklet (CRASH)
+const overlayWidth = totalSpace.width + 20;
+const animatedStyle = useAnimatedStyle(() => {
+  'worklet';
+  return {
+    transform: [
+      { translateX: translateX.value * zoom - overlayWidth / 2 }, // CRASH!
+    ],
+  };
+});
+
+// After: Shared values for worklet access
+const overlayWidthSV = useSharedValue(totalSpace.width + 20);
+const zoomSV = useSharedValue(zoom);
+const animatedStyle = useAnimatedStyle(() => {
+  'worklet';
+  return {
+    transform: [
+      { translateX: translateX.value * zoomSV.value - overlayWidthSV.value / 2 },
+    ],
+  };
+});
+```
+
+### Total Lines Added
+
+- `ResizeHandles.tsx`: ~200 lines
+- `ZoneGestureOverlay.tsx`: ~190 lines
+- Changes to existing files: ~100 lines
+
+**Total:** ~490 new lines of code

@@ -1,6 +1,6 @@
 /**
- * TableGestureOverlay Component
- * Transparent overlay for handling table selection and dragging
+ * ZoneGestureOverlay Component
+ * Transparent overlay for handling zone selection and dragging
  * Uses mode-based gestures: Select mode (tap only) vs Move mode (drag only)
  */
 
@@ -15,81 +15,50 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
-import { FloorPlanTablePosition, TableSize, TableShape } from '@/types/settings/table-management.types';
-import { MockTable } from '@/data/tables';
-import { getTotalTableSpace } from './utils/chairPositions';
+import { FloorZone } from '@/types/settings/table-management.types';
 
-interface TableGestureOverlayProps {
-  position: FloorPlanTablePosition;
-  table: MockTable;
+interface ZoneGestureOverlayProps {
+  zone: FloorZone;
   isSelected: boolean;
   gridSize: number;
   snapToGrid: boolean;
   zoom: number;
-  panOffset: { x: number; y: number };
   mode: 'select' | 'move';
   onSelect: () => void;
   onMove: (x: number, y: number) => void;
 }
 
-/**
- * Map string shape to enum
- */
-const mapShape = (shape?: string): TableShape => {
-  const shapeMap: Record<string, TableShape> = {
-    round: TableShape.ROUND,
-    square: TableShape.SQUARE,
-    rectangle: TableShape.RECTANGLE,
-    oval: TableShape.OVAL,
-  };
-  return shapeMap[shape?.toLowerCase() || 'round'] || TableShape.ROUND;
-};
-
-const TableGestureOverlay: React.FC<TableGestureOverlayProps> = ({
-  position,
-  table,
+const ZoneGestureOverlay: React.FC<ZoneGestureOverlayProps> = ({
+  zone,
   isSelected,
   gridSize,
   snapToGrid,
   zoom,
-  panOffset,
   mode,
   onSelect,
   onMove,
 }) => {
   const { theme } = useTheme();
 
-  // Get table dimensions
-  const tableShape = useMemo(() => mapShape(table.shape), [table.shape]);
-  const tableSize = TableSize.MEDIUM;
-  const totalSpace = useMemo(() => getTotalTableSpace(tableShape, tableSize), [tableShape, tableSize]);
-
-  // Shared values for overlay dimensions (MUST be shared values for worklet access)
-  const overlayWidthSV = useSharedValue(totalSpace.width + 20);
-  const overlayHeightSV = useSharedValue(totalSpace.height + 20);
+  // Shared values for worklet-safe access
   const zoomSV = useSharedValue(zoom);
 
   // Reanimated shared values for 60fps performance
-  const translateX = useSharedValue(position.x);
-  const translateY = useSharedValue(position.y);
-  const startX = useSharedValue(position.x);
-  const startY = useSharedValue(position.y);
+  const translateX = useSharedValue(zone.bounds.x);
+  const translateY = useSharedValue(zone.bounds.y);
+  const startX = useSharedValue(zone.bounds.x);
+  const startY = useSharedValue(zone.bounds.y);
 
   // Update shared values when props change
-  React.useEffect(() => {
-    overlayWidthSV.value = totalSpace.width + 20;
-    overlayHeightSV.value = totalSpace.height + 20;
-  }, [totalSpace.width, totalSpace.height, overlayWidthSV, overlayHeightSV]);
-
   React.useEffect(() => {
     zoomSV.value = zoom;
   }, [zoom, zoomSV]);
 
   // Update position when props change (external updates)
   React.useEffect(() => {
-    translateX.value = position.x;
-    translateY.value = position.y;
-  }, [position.x, position.y, translateX, translateY]);
+    translateX.value = zone.bounds.x;
+    translateY.value = zone.bounds.y;
+  }, [zone.bounds.x, zone.bounds.y, translateX, translateY]);
 
   // Haptic feedback callbacks
   const triggerLightHaptic = useCallback(() => {
@@ -132,7 +101,7 @@ const TableGestureOverlay: React.FC<TableGestureOverlayProps> = ({
     () =>
       Gesture.Pan()
         .enabled(mode === 'move')
-        .minDistance(5) // Very small threshold for immediate response
+        .minDistance(5)
         .onStart(() => {
           'worklet';
           startX.value = translateX.value;
@@ -182,41 +151,35 @@ const TableGestureOverlay: React.FC<TableGestureOverlayProps> = ({
     [tapGesture, panGesture]
   );
 
-  // Animated style for smooth 60fps transforms (uses shared values only)
+  // Animated style for smooth 60fps transforms
   const animatedStyle = useAnimatedStyle(() => {
     'worklet';
     return {
       transform: [
-        { translateX: translateX.value * zoomSV.value - overlayWidthSV.value / 2 },
-        { translateY: translateY.value * zoomSV.value - overlayHeightSV.value / 2 },
+        { translateX: translateX.value * zoomSV.value },
+        { translateY: translateY.value * zoomSV.value },
       ],
     };
   });
 
-  // Compute overlay dimensions for styles (non-worklet usage)
-  const overlayWidth = totalSpace.width + 20;
-  const overlayHeight = totalSpace.height + 20;
-
   const styles = StyleSheet.create({
     overlay: {
       position: 'absolute',
-      width: overlayWidth,
-      height: overlayHeight,
-      borderRadius: 8,
-      // Debug: uncomment to see the overlay
-      // backgroundColor: 'rgba(255, 0, 0, 0.2)',
+      width: zone.bounds.width,
+      height: zone.bounds.height,
+      borderRadius: 4,
     },
     selected: {
       borderWidth: 3,
-      borderColor: theme.colors.primary,
+      borderColor: theme.colors.secondary,
       borderStyle: 'dashed',
-      backgroundColor: 'rgba(0, 122, 255, 0.1)',
+      backgroundColor: 'rgba(0, 200, 100, 0.15)',
     },
     moveMode: {
-      // Visual indicator for move mode - show grab affordance
-      backgroundColor: 'rgba(0, 122, 255, 0.05)',
+      // Visual indicator for move mode
+      backgroundColor: 'rgba(0, 200, 100, 0.08)',
       borderWidth: 2,
-      borderColor: theme.colors.primary,
+      borderColor: theme.colors.secondary,
       borderStyle: 'dotted',
     },
   });
@@ -230,7 +193,7 @@ const TableGestureOverlay: React.FC<TableGestureOverlayProps> = ({
           mode === 'move' && styles.moveMode,
           isSelected && styles.selected,
         ]}
-        accessibilityLabel={`Table ${table.number}`}
+        accessibilityLabel={`Zone ${zone.name}`}
         accessibilityHint={mode === 'move' ? 'Drag to move' : 'Tap to select'}
         accessibilityRole="button"
       />
@@ -238,4 +201,4 @@ const TableGestureOverlay: React.FC<TableGestureOverlayProps> = ({
   );
 };
 
-export default React.memo(TableGestureOverlay);
+export default React.memo(ZoneGestureOverlay);

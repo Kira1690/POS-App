@@ -26,6 +26,10 @@ import FloorPlanGrid from './FloorPlanGrid';
 import FloorPlanZone from './FloorPlanZone';
 import TableVisual from './TableVisual';
 import TableGestureOverlay from './TableGestureOverlay';
+import ZoneGestureOverlay from './ZoneGestureOverlay';
+import ResizeHandles from './ResizeHandles';
+import { getTotalTableSpace } from './utils/chairPositions';
+import { TableSize, TableShape } from '@/types/settings/table-management.types';
 
 interface FloorPlanCanvasProps {
   floor: Floor;
@@ -42,7 +46,10 @@ interface FloorPlanCanvasProps {
   activeTool?: string;
   onTableSelect: (tableId: string) => void;
   onTableMove: (tableId: string, x: number, y: number) => void;
+  onTableResize?: (tableId: string, width: number, height: number) => void;
   onZoneSelect?: (zoneId: string) => void;
+  onZoneMove?: (zoneId: string, x: number, y: number) => void;
+  onZoneResize?: (zoneId: string, width: number, height: number) => void;
   onZoomChange?: (zoom: number) => void;
   onPanChange?: (pan: { x: number; y: number }) => void;
   onCanvasClick?: (x: number, y: number) => void;
@@ -68,7 +75,10 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
   activeTool = 'select',
   onTableSelect,
   onTableMove,
+  onTableResize,
   onZoneSelect,
+  onZoneMove,
+  onZoneResize,
   onZoomChange,
   onPanChange,
   onCanvasClick,
@@ -151,6 +161,89 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
       }
     },
     [onZoneDraw]
+  );
+
+  // Map shape string to TableShape enum
+  const mapShape = useCallback((shape?: string): TableShape => {
+    const shapeMap: Record<string, TableShape> = {
+      round: TableShape.ROUND,
+      square: TableShape.SQUARE,
+      rectangle: TableShape.RECTANGLE,
+      oval: TableShape.OVAL,
+    };
+    return shapeMap[shape?.toLowerCase() || 'round'] || TableShape.ROUND;
+  }, []);
+
+  // Get bounds for selected table (convert center-based to top-left bounds)
+  const getSelectedTableBounds = useMemo(() => {
+    if (!selectedTableId) return null;
+
+    const position = tablePositions.find(p => p.table_id === selectedTableId);
+    const table = position ? getTableById(position.table_id) : null;
+
+    if (!position || !table) return null;
+
+    const shape = mapShape(table.shape);
+    const totalSpace = getTotalTableSpace(shape, TableSize.MEDIUM);
+
+    // Convert from center-based to top-left bounds
+    return {
+      x: position.x - totalSpace.width / 2,
+      y: position.y - totalSpace.height / 2,
+      width: totalSpace.width,
+      height: totalSpace.height,
+    };
+  }, [selectedTableId, tablePositions, getTableById, mapShape]);
+
+  // Handle table resize (convert from top-left bounds back to center position)
+  const handleTableResize = useCallback(
+    (bounds: { x: number; y: number; width: number; height: number }) => {
+      if (!selectedTableId || !onTableResize) return;
+
+      // Calculate new center position from bounds
+      const newCenterX = bounds.x + bounds.width / 2;
+      const newCenterY = bounds.y + bounds.height / 2;
+
+      // Update position first (center-based)
+      onTableMove(selectedTableId, newCenterX, newCenterY);
+
+      // Update size
+      onTableResize(selectedTableId, bounds.width, bounds.height);
+    },
+    [selectedTableId, onTableMove, onTableResize]
+  );
+
+  // Get bounds for selected zone
+  const getSelectedZoneBounds = useMemo(() => {
+    if (!selectedZoneId) return null;
+
+    const zone = zones.find(z => z.id === selectedZoneId);
+    if (!zone) return null;
+
+    return {
+      x: zone.bounds.x,
+      y: zone.bounds.y,
+      width: zone.bounds.width,
+      height: zone.bounds.height,
+    };
+  }, [selectedZoneId, zones]);
+
+  // Handle zone resize
+  const handleZoneResize = useCallback(
+    (bounds: { x: number; y: number; width: number; height: number }) => {
+      if (!selectedZoneId) return;
+
+      // Update position if zone was moved
+      if (onZoneMove) {
+        onZoneMove(selectedZoneId, bounds.x, bounds.y);
+      }
+
+      // Update size
+      if (onZoneResize) {
+        onZoneResize(selectedZoneId, bounds.width, bounds.height);
+      }
+    },
+    [selectedZoneId, onZoneMove, onZoneResize]
   );
 
   // Canvas-level gestures (pinch zoom + two-finger pan)
@@ -325,6 +418,45 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
                   />
                 );
               })}
+
+              {/* Resize Handles for selected table */}
+              {selectedTableId && getSelectedTableBounds && (
+                <ResizeHandles
+                  bounds={getSelectedTableBounds}
+                  zoom={zoom}
+                  gridSize={floor.grid_size}
+                  snapToGrid={snapToGrid}
+                  onResize={handleTableResize}
+                />
+              )}
+
+              {/* Zone Gesture Overlays */}
+              {zones.map(zone => (
+                <ZoneGestureOverlay
+                  key={`zone-overlay-${zone.id}`}
+                  zone={zone}
+                  isSelected={selectedZoneId === zone.id}
+                  gridSize={floor.grid_size}
+                  snapToGrid={snapToGrid}
+                  zoom={zoom}
+                  mode={activeTool === 'move' ? 'move' : 'select'}
+                  onSelect={() => onZoneSelect?.(zone.id)}
+                  onMove={(x, y) => onZoneMove?.(zone.id, x, y)}
+                />
+              ))}
+
+              {/* Resize Handles for selected zone */}
+              {selectedZoneId && getSelectedZoneBounds && (
+                <ResizeHandles
+                  bounds={getSelectedZoneBounds}
+                  zoom={zoom}
+                  gridSize={floor.grid_size}
+                  snapToGrid={snapToGrid}
+                  minWidth={50}
+                  minHeight={50}
+                  onResize={handleZoneResize}
+                />
+              )}
             </View>
           )}
         </Animated.View>
