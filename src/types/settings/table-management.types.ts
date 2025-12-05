@@ -414,3 +414,206 @@ export interface TableUpdate {
   restaurantId: string;
   metadata?: Record<string, unknown>;
 }
+
+// ==================== FLOOR PLAN TYPES ====================
+
+/**
+ * Zone types for floor plan
+ */
+export type ZoneType =
+  | 'kitchen'
+  | 'bar'
+  | 'entrance'
+  | 'restroom'
+  | 'storage'
+  | 'vip'
+  | 'outdoor'
+  | 'custom';
+
+/**
+ * Zone bounds (position and size)
+ */
+export interface ZoneBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Floor/Level entity for multi-floor support
+ */
+export interface Floor {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  display_order: number;
+  is_active: boolean;
+  is_default: boolean;
+  canvas_width: number;
+  canvas_height: number;
+  grid_size: number;
+  grid_enabled: boolean;
+  background_color?: string;
+  background_image_url?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+/**
+ * Enhanced zone for floor plan
+ */
+export interface FloorZone {
+  id: string;
+  floor_id: string;
+  name: string;
+  type: ZoneType;
+  bounds: ZoneBounds;
+  color: string;
+  icon: string;
+  is_seating_area: boolean;
+  opacity: number;
+  is_locked: boolean;
+  display_order: number;
+}
+
+/**
+ * Table position on floor plan canvas
+ */
+export interface FloorPlanTablePosition {
+  table_id: string;
+  floor_id: string;
+  x: number;
+  y: number;
+  rotation: number;
+  grid_x?: number;
+  grid_y?: number;
+}
+
+/**
+ * Individual chair position around a table
+ */
+export interface ChairPosition {
+  index: number;
+  angle: number;
+  distance: number;
+  x: number;
+  y: number;
+}
+
+/**
+ * Chair configuration for a table
+ */
+export interface ChairConfig {
+  capacity: number;
+  shape: TableShape;
+  size: TableSize;
+  positions: ChairPosition[];
+}
+
+/**
+ * Tool types for floor plan editor
+ */
+export type FloorPlanTool =
+  | 'select'
+  | 'move'
+  | 'add_table'
+  | 'add_zone'
+  | 'delete'
+  | 'duplicate'
+  | 'rotate'
+  | 'pan';
+
+/**
+ * Floor plan canvas state
+ */
+export interface FloorPlanCanvasState {
+  activeFloorId: string;
+  selectedTableId: string | null;
+  selectedZoneId: string | null;
+  activeTool: FloorPlanTool;
+  zoom: number;
+  pan: { x: number; y: number };
+  gridEnabled: boolean;
+  snapToGrid: boolean;
+  showChairs: boolean;
+  showTableNumbers: boolean;
+  showCapacity: boolean;
+  hasUnsavedChanges: boolean;
+}
+
+/**
+ * Action types for history tracking
+ */
+export type FloorPlanAction =
+  | 'table_moved'
+  | 'table_added'
+  | 'table_deleted'
+  | 'table_rotated'
+  | 'table_duplicated'
+  | 'zone_added'
+  | 'zone_deleted'
+  | 'zone_resized'
+  | 'zone_moved'
+  | 'bulk_change';
+
+/**
+ * Snapshot of floor plan state for undo/redo
+ */
+export interface FloorPlanSnapshot {
+  tables: FloorPlanTablePosition[];
+  zones: FloorZone[];
+}
+
+/**
+ * History entry for undo/redo
+ */
+export interface FloorPlanHistoryEntry {
+  id: string;
+  timestamp: Date;
+  action: FloorPlanAction;
+  description: string;
+  before: FloorPlanSnapshot;
+  after: FloorPlanSnapshot;
+}
+
+/**
+ * Floor plan export data format
+ */
+export interface FloorPlanExportData {
+  version: string;
+  exported_at: string;
+  restaurant_id: string;
+  floors: Floor[];
+  tables: FloorPlanTablePosition[];
+  zones: FloorZone[];
+  settings: {
+    grid_size: number;
+    snap_to_grid: boolean;
+    show_chairs: boolean;
+  };
+}
+
+/**
+ * Floor plan reducer action types
+ */
+export type FloorPlanReducerAction =
+  | { type: 'SELECT_FLOOR'; payload: string }
+  | { type: 'SELECT_TABLE'; payload: string | null }
+  | { type: 'SELECT_ZONE'; payload: string | null }
+  | { type: 'SET_TOOL'; payload: FloorPlanTool }
+  | { type: 'SET_ZOOM'; payload: number }
+  | { type: 'SET_PAN'; payload: { x: number; y: number } }
+  | { type: 'TOGGLE_GRID' }
+  | { type: 'TOGGLE_SNAP' }
+  | { type: 'TOGGLE_CHAIRS' }
+  | { type: 'UPDATE_TABLE_POSITION'; payload: { tableId: string; position: Partial<FloorPlanTablePosition> } }
+  | { type: 'ADD_TABLE'; payload: FloorPlanTablePosition }
+  | { type: 'DELETE_TABLE'; payload: string }
+  | { type: 'ADD_ZONE'; payload: FloorZone }
+  | { type: 'UPDATE_ZONE'; payload: { zoneId: string; zone: Partial<FloorZone> } }
+  | { type: 'DELETE_ZONE'; payload: string }
+  | { type: 'LOAD_FLOOR_PLAN'; payload: FloorPlanExportData }
+  | { type: 'MARK_SAVED' }
+  | { type: 'UNDO' }
+  | { type: 'REDO' };

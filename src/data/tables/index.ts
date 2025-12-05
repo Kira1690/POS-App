@@ -9,5 +9,8 @@ export * from './mockTables';
 // Area data and types
 export * from './mockAreas';
 
+// Floor plan data and types
+export * from './mockFloorPlans';
+
 // Helper utilities
 export * from './tableHelpers';
