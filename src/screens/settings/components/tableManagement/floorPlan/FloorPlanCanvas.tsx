@@ -183,15 +183,26 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
 
     if (!position || !table) return null;
 
-    const shape = mapShape(table.shape);
-    const totalSpace = getTotalTableSpace(shape, TableSize.MEDIUM);
+    // Use custom dimensions if set, otherwise calculate from shape/size
+    let width: number;
+    let height: number;
+
+    if (position.width !== undefined && position.height !== undefined) {
+      width = position.width;
+      height = position.height;
+    } else {
+      const shape = mapShape(table.shape);
+      const totalSpace = getTotalTableSpace(shape, TableSize.MEDIUM);
+      width = totalSpace.width;
+      height = totalSpace.height;
+    }
 
     // Convert from center-based to top-left bounds
     return {
-      x: position.x - totalSpace.width / 2,
-      y: position.y - totalSpace.height / 2,
-      width: totalSpace.width,
-      height: totalSpace.height,
+      x: position.x - width / 2,
+      y: position.y - height / 2,
+      width,
+      height,
     };
   }, [selectedTableId, tablePositions, getTableById, mapShape]);
 
@@ -424,6 +435,7 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
                 <ResizeHandles
                   bounds={getSelectedTableBounds}
                   zoom={zoom}
+                  panOffset={panOffset}
                   gridSize={floor.grid_size}
                   snapToGrid={snapToGrid}
                   onResize={handleTableResize}
@@ -450,6 +462,7 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
                 <ResizeHandles
                   bounds={getSelectedZoneBounds}
                   zoom={zoom}
+                  panOffset={panOffset}
                   gridSize={floor.grid_size}
                   snapToGrid={snapToGrid}
                   minWidth={50}

@@ -7,7 +7,12 @@ import React, { useMemo } from 'react';
 import { G, Circle } from 'react-native-svg';
 import { useTheme } from '@/hooks/useTheme';
 import { TableShape, TableSize } from '@/types/settings/table-management.types';
-import { calculateChairPositions, CHAIR_CONSTANTS, getTableCenter } from './utils/chairPositions';
+import {
+  calculateChairPositions,
+  calculateChairPositionsWithDimensions,
+  CHAIR_CONSTANTS,
+  getTableCenter,
+} from './utils/chairPositions';
 
 interface ChairVisualsProps {
   capacity: number;
@@ -15,6 +20,10 @@ interface ChairVisualsProps {
   size: TableSize;
   visible?: boolean;
   rotation?: number;
+  /** Custom width from resize operation - overrides size-based dimensions */
+  customWidth?: number;
+  /** Custom height from resize operation - overrides size-based dimensions */
+  customHeight?: number;
 }
 
 const ChairVisuals: React.FC<ChairVisualsProps> = ({
@@ -23,17 +32,32 @@ const ChairVisuals: React.FC<ChairVisualsProps> = ({
   size,
   visible = true,
   rotation = 0,
+  customWidth,
+  customHeight,
 }) => {
   const { theme } = useTheme();
 
-  // Calculate chair positions
-  const chairPositions = useMemo(
-    () => calculateChairPositions(capacity, shape, size),
-    [capacity, shape, size]
-  );
+  // Check if custom dimensions are provided
+  const hasCustomDimensions = customWidth !== undefined && customHeight !== undefined;
 
-  // Get table center for rotation origin
-  const tableCenter = useMemo(() => getTableCenter(shape, size), [shape, size]);
+  // Calculate chair positions - use custom dimensions if provided
+  const chairPositions = useMemo(() => {
+    if (hasCustomDimensions) {
+      return calculateChairPositionsWithDimensions(capacity, shape, customWidth!, customHeight!);
+    }
+    return calculateChairPositions(capacity, shape, size);
+  }, [capacity, shape, size, hasCustomDimensions, customWidth, customHeight]);
+
+  // Get table center for rotation origin - use custom dimensions if provided
+  const tableCenter = useMemo(() => {
+    if (hasCustomDimensions) {
+      return {
+        x: customWidth! / 2,
+        y: customHeight! / 2,
+      };
+    }
+    return getTableCenter(shape, size);
+  }, [shape, size, hasCustomDimensions, customWidth, customHeight]);
 
   if (!visible || capacity <= 0) {
     return null;

@@ -18,6 +18,10 @@ interface TableShapeProps {
   capacity?: number;
   showNumber?: boolean;
   showCapacity?: boolean;
+  /** Custom width from resize operation - overrides size-based dimensions */
+  customWidth?: number;
+  /** Custom height from resize operation - overrides size-based dimensions */
+  customHeight?: number;
 }
 
 /**
@@ -47,11 +51,24 @@ const TableShape: React.FC<TableShapeProps> = ({
   capacity,
   showNumber = true,
   showCapacity = true,
+  customWidth,
+  customHeight,
 }) => {
   const { theme } = useTheme();
 
   const statusColor = useMemo(() => getStatusColor(status, theme), [status, theme]);
-  const dimensions = useMemo(() => getTableDimensions(shape, size), [shape, size]);
+
+  // Use custom dimensions if provided, otherwise fall back to default
+  const dimensions = useMemo(() => {
+    if (customWidth !== undefined && customHeight !== undefined) {
+      return {
+        width: customWidth,
+        height: customHeight,
+        radius: Math.min(customWidth, customHeight) / 2,
+      };
+    }
+    return getTableDimensions(shape, size);
+  }, [shape, size, customWidth, customHeight]);
 
   const strokeColor = isSelected ? theme.colors.primary : statusColor;
   const strokeWidth = isSelected ? 4 : 2;

@@ -61,6 +61,51 @@ export const getTableDimensions = (
 };
 
 /**
+ * Determine shape based on aspect ratio for dynamic resizing
+ * Morphs square↔rectangle and round↔oval based on dimensions
+ */
+export const determineShapeFromAspectRatio = (
+  originalShape: TableShape,
+  width: number,
+  height: number
+): TableShape => {
+  const aspectRatio = width / height;
+  const isSquareAspect = Math.abs(1 - aspectRatio) < 0.15; // 15% tolerance
+
+  switch (originalShape) {
+    case TableShapeEnum.SQUARE:
+    case TableShapeEnum.RECTANGLE:
+      return isSquareAspect ? TableShapeEnum.SQUARE : TableShapeEnum.RECTANGLE;
+    case TableShapeEnum.ROUND:
+    case TableShapeEnum.OVAL:
+      return isSquareAspect ? TableShapeEnum.ROUND : TableShapeEnum.OVAL;
+    default:
+      return originalShape;
+  }
+};
+
+/**
+ * Get table dimensions with custom override support
+ */
+export const getTableDimensionsWithOverride = (
+  shape: TableShape,
+  size: TableSize,
+  customWidth?: number,
+  customHeight?: number
+): { width: number; height: number; radius: number } => {
+  // If custom dimensions provided, use them
+  if (customWidth !== undefined && customHeight !== undefined) {
+    return {
+      width: customWidth,
+      height: customHeight,
+      radius: Math.min(customWidth, customHeight) / 2,
+    };
+  }
+  // Otherwise fall back to default dimensions
+  return getTableDimensions(shape, size);
+};
+
+/**
  * Get table center point
  */
 export const getTableCenter = (
@@ -323,6 +368,72 @@ export const calculateChairPositions = (
     default:
       return calculateRoundTableChairs(capacity, dims.radius);
   }
+};
+
+/**
+ * Calculate chair positions with custom dimensions
+ * Used when table has been resized and has custom width/height
+ */
+export const calculateChairPositionsWithDimensions = (
+  capacity: number,
+  shape: TableShape,
+  width: number,
+  height: number
+): ChairPosition[] => {
+  if (capacity <= 0) {
+    return [];
+  }
+
+  const radius = Math.min(width, height) / 2;
+
+  switch (shape) {
+    case TableShapeEnum.ROUND:
+      return calculateRoundTableChairs(capacity, radius);
+
+    case TableShapeEnum.OVAL:
+      // For oval, use average of width/height for chair distance
+      return calculateOvalTableChairs(capacity, width, height);
+
+    case TableShapeEnum.SQUARE:
+      return calculateSquareTableChairs(capacity, width);
+
+    case TableShapeEnum.RECTANGLE:
+      return calculateRectangleTableChairs(capacity, width, height);
+
+    default:
+      return calculateRoundTableChairs(capacity, radius);
+  }
+};
+
+/**
+ * Calculate chair positions around an oval table
+ */
+const calculateOvalTableChairs = (
+  capacity: number,
+  tableWidth: number,
+  tableHeight: number
+): ChairPosition[] => {
+  const positions: ChairPosition[] = [];
+  const chairOffsetX = tableWidth / 2 + CHAIR_CONSTANTS.offset + CHAIR_CONSTANTS.radius;
+  const chairOffsetY = tableHeight / 2 + CHAIR_CONSTANTS.offset + CHAIR_CONSTANTS.radius;
+  const angleStep = 360 / capacity;
+  const startAngle = -90; // Start from top
+
+  for (let i = 0; i < capacity; i++) {
+    const angle = startAngle + i * angleStep;
+    const radians = toRadians(angle);
+
+    // Use elliptical formula for chair positioning
+    positions.push({
+      index: i,
+      angle,
+      distance: Math.max(chairOffsetX, chairOffsetY),
+      x: Math.cos(radians) * chairOffsetX,
+      y: Math.sin(radians) * chairOffsetY,
+    });
+  }
+
+  return positions;
 };
 
 /**

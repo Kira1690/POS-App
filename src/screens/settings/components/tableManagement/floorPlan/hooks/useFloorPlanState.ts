@@ -151,6 +151,20 @@ const floorPlanReducer = (
       };
     }
 
+    case 'RESIZE_TABLE': {
+      const { tableId, width, height } = action.payload;
+      return {
+        ...state,
+        tablePositions: state.tablePositions.map(pos =>
+          pos.table_id === tableId ? { ...pos, width, height } : pos
+        ),
+        canvas: {
+          ...state.canvas,
+          hasUnsavedChanges: true,
+        },
+      };
+    }
+
     case 'ADD_TABLE':
       return {
         ...state,
@@ -194,6 +208,38 @@ const floorPlanReducer = (
       return {
         ...state,
         zones: state.zones.map(z => (z.id === zoneId ? { ...z, ...zone } : z)),
+        canvas: {
+          ...state.canvas,
+          hasUnsavedChanges: true,
+        },
+      };
+    }
+
+    case 'MOVE_ZONE': {
+      const { zoneId, x, y } = action.payload;
+      return {
+        ...state,
+        zones: state.zones.map(z =>
+          z.id === zoneId
+            ? { ...z, bounds: { ...z.bounds, x, y } }
+            : z
+        ),
+        canvas: {
+          ...state.canvas,
+          hasUnsavedChanges: true,
+        },
+      };
+    }
+
+    case 'RESIZE_ZONE': {
+      const { zoneId, width, height } = action.payload;
+      return {
+        ...state,
+        zones: state.zones.map(z =>
+          z.id === zoneId
+            ? { ...z, bounds: { ...z.bounds, width, height } }
+            : z
+        ),
         canvas: {
           ...state.canvas,
           hasUnsavedChanges: true,
@@ -462,6 +508,57 @@ export const useFloorPlanState = (options: UseFloorPlanStateOptions) => {
     [state.tablePositions, addTable]
   );
 
+  const resizeTable = useCallback(
+    (tableId: string, width: number, height: number) => {
+      const beforeSnapshot = createSnapshot();
+      dispatch({ type: 'RESIZE_TABLE', payload: { tableId, width, height } });
+
+      const afterSnapshot: FloorPlanSnapshot = {
+        tables: state.tablePositions.map(p =>
+          p.table_id === tableId ? { ...p, width, height } : p
+        ),
+        zones: state.zones,
+      };
+      pushHistory('table_resized', `Resized table ${tableId}`, beforeSnapshot, afterSnapshot);
+      onChangesDetected?.(true);
+    },
+    [createSnapshot, state.tablePositions, state.zones, pushHistory, onChangesDetected]
+  );
+
+  const moveZone = useCallback(
+    (zoneId: string, x: number, y: number) => {
+      const beforeSnapshot = createSnapshot();
+      dispatch({ type: 'MOVE_ZONE', payload: { zoneId, x, y } });
+
+      const afterSnapshot: FloorPlanSnapshot = {
+        tables: state.tablePositions,
+        zones: state.zones.map(z =>
+          z.id === zoneId ? { ...z, bounds: { ...z.bounds, x, y } } : z
+        ),
+      };
+      pushHistory('zone_moved', `Moved zone ${zoneId}`, beforeSnapshot, afterSnapshot);
+      onChangesDetected?.(true);
+    },
+    [createSnapshot, state.tablePositions, state.zones, pushHistory, onChangesDetected]
+  );
+
+  const resizeZone = useCallback(
+    (zoneId: string, width: number, height: number) => {
+      const beforeSnapshot = createSnapshot();
+      dispatch({ type: 'RESIZE_ZONE', payload: { zoneId, width, height } });
+
+      const afterSnapshot: FloorPlanSnapshot = {
+        tables: state.tablePositions,
+        zones: state.zones.map(z =>
+          z.id === zoneId ? { ...z, bounds: { ...z.bounds, width, height } } : z
+        ),
+      };
+      pushHistory('zone_resized', `Resized zone ${zoneId}`, beforeSnapshot, afterSnapshot);
+      onChangesDetected?.(true);
+    },
+    [createSnapshot, state.tablePositions, state.zones, pushHistory, onChangesDetected]
+  );
+
   // Exposed state with simplified interface
   const exposedState = useMemo(() => ({
     activeFloorId: state.canvas.activeFloorId,
@@ -512,12 +609,15 @@ export const useFloorPlanState = (options: UseFloorPlanStateOptions) => {
     setSelectedTable: selectTable,
     moveTable,
     rotateTable,
+    resizeTable,
     duplicateTable,
     deleteTable,
     addTable,
 
     // Zone actions
     selectZone,
+    moveZone,
+    resizeZone,
 
     // Tool actions
     setActiveTool: setTool,
