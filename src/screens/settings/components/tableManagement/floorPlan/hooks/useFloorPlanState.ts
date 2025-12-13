@@ -559,6 +559,36 @@ export const useFloorPlanState = (options: UseFloorPlanStateOptions) => {
     [createSnapshot, state.tablePositions, state.zones, pushHistory, onChangesDetected]
   );
 
+  const addZone = useCallback(
+    (zone: FloorZone) => {
+      const beforeSnapshot = createSnapshot();
+      dispatch({ type: 'ADD_ZONE', payload: zone });
+
+      const afterSnapshot: FloorPlanSnapshot = {
+        tables: state.tablePositions,
+        zones: [...state.zones, zone],
+      };
+      pushHistory('zone_added', `Added zone ${zone.name}`, beforeSnapshot, afterSnapshot);
+      onChangesDetected?.(true);
+    },
+    [createSnapshot, state.tablePositions, state.zones, pushHistory, onChangesDetected]
+  );
+
+  const deleteZone = useCallback(
+    (zoneId: string) => {
+      const beforeSnapshot = createSnapshot();
+      dispatch({ type: 'DELETE_ZONE', payload: zoneId });
+
+      const afterSnapshot: FloorPlanSnapshot = {
+        tables: state.tablePositions,
+        zones: state.zones.filter(z => z.id !== zoneId),
+      };
+      pushHistory('zone_deleted', `Deleted zone ${zoneId}`, beforeSnapshot, afterSnapshot);
+      onChangesDetected?.(true);
+    },
+    [createSnapshot, state.tablePositions, state.zones, pushHistory, onChangesDetected]
+  );
+
   // Exposed state with simplified interface
   const exposedState = useMemo(() => ({
     activeFloorId: state.canvas.activeFloorId,
@@ -618,6 +648,8 @@ export const useFloorPlanState = (options: UseFloorPlanStateOptions) => {
     selectZone,
     moveZone,
     resizeZone,
+    addZone,
+    deleteZone,
 
     // Tool actions
     setActiveTool: setTool,

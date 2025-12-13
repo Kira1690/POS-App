@@ -24,7 +24,7 @@ import { ZoneType, ZoneBounds } from '@/types/settings/table-management.types';
 
 interface AddZoneModalProps {
   visible: boolean;
-  bounds: ZoneBounds;
+  position: { x: number; y: number };
   floorId: string;
   onConfirm: (zoneConfig: NewZoneConfig) => void;
   onCancel: () => void;
@@ -38,6 +38,14 @@ export interface NewZoneConfig {
   isSeatingArea: boolean;
   icon: string;
 }
+
+// Default zone size presets
+const ZONE_SIZE_PRESETS = [
+  { label: 'Small', width: 150, height: 100 },
+  { label: 'Medium', width: 200, height: 150 },
+  { label: 'Large', width: 300, height: 200 },
+  { label: 'Custom', width: 0, height: 0 },
+];
 
 interface ZoneTypeOption {
   value: ZoneType;
@@ -57,7 +65,7 @@ const ZONE_TYPE_OPTIONS: ZoneTypeOption[] = [
 
 const AddZoneModal: React.FC<AddZoneModalProps> = ({
   visible,
-  bounds,
+  position,
   floorId,
   onConfirm,
   onCancel,
@@ -69,14 +77,32 @@ const AddZoneModal: React.FC<AddZoneModalProps> = ({
   const [selectedType, setSelectedType] = useState<ZoneType>('custom');
   const [isSeatingArea, setIsSeatingArea] = useState(true);
 
+  // Size state
+  const [selectedSizePreset, setSelectedSizePreset] = useState(1); // Default to Medium
+  const [zoneWidth, setZoneWidth] = useState(200);
+  const [zoneHeight, setZoneHeight] = useState(150);
+
   // Reset form when modal opens
   React.useEffect(() => {
     if (visible) {
       setZoneName('');
       setSelectedType('custom');
       setIsSeatingArea(true);
+      setSelectedSizePreset(1); // Medium
+      setZoneWidth(200);
+      setZoneHeight(150);
     }
   }, [visible]);
+
+  // Handle size preset selection
+  const handleSizePresetSelect = useCallback((index: number) => {
+    setSelectedSizePreset(index);
+    const preset = ZONE_SIZE_PRESETS[index];
+    if (preset.width > 0 && preset.height > 0) {
+      setZoneWidth(preset.width);
+      setZoneHeight(preset.height);
+    }
+  }, []);
 
   // Update name when type changes (for convenience)
   const handleTypeSelect = useCallback((type: ZoneType) => {
@@ -95,6 +121,13 @@ const AddZoneModal: React.FC<AddZoneModalProps> = ({
 
   const handleConfirm = useCallback(() => {
     const selectedOption = ZONE_TYPE_OPTIONS.find(o => o.value === selectedType);
+    // Build bounds from position + size
+    const bounds: ZoneBounds = {
+      x: position.x,
+      y: position.y,
+      width: zoneWidth,
+      height: zoneHeight,
+    };
     const config: NewZoneConfig = {
       name: zoneName.trim() || selectedOption?.label || 'New Zone',
       type: selectedType,
@@ -104,7 +137,7 @@ const AddZoneModal: React.FC<AddZoneModalProps> = ({
       icon: selectedOption?.icon || 'shape',
     };
     onConfirm(config);
-  }, [zoneName, selectedType, bounds, floorId, isSeatingArea, onConfirm]);
+  }, [zoneName, selectedType, position, zoneWidth, zoneHeight, floorId, isSeatingArea, onConfirm]);
 
   const handleCancel = useCallback(() => {
     setZoneName('');
@@ -205,28 +238,77 @@ const AddZoneModal: React.FC<AddZoneModalProps> = ({
       color: theme.colors.onSurfaceVariant,
       marginTop: spacing.xs,
     },
-    boundsInfo: {
+    sizePresets: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
       gap: spacing.sm,
+      marginBottom: spacing.md,
     },
-    boundsItem: {
+    sizePresetButton: {
       flex: 1,
-      minWidth: 80,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.xs,
+      borderRadius: borderRadius.sm as number,
+      borderWidth: 2,
+      borderColor: theme.colors.outline,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+    },
+    sizePresetButtonSelected: {
+      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.primaryContainer,
+    },
+    sizePresetLabel: {
+      ...typography.labelSmall,
+      color: theme.colors.onSurface,
+    },
+    sizePresetLabelSelected: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    sizeInputsRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    sizeInputContainer: {
+      flex: 1,
+    },
+    sizeInputLabel: {
+      ...typography.labelSmall,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: spacing.xs,
+    },
+    sizeInput: {
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: borderRadius.sm as number,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      ...typography.bodyMedium,
+      color: theme.colors.onSurface,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      textAlign: 'center',
+    },
+    positionInfo: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.sm,
+    },
+    positionItem: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
       backgroundColor: theme.colors.surfaceVariant,
       borderRadius: borderRadius.sm as number,
     },
-    boundsLabel: {
-      ...typography.labelMedium,
+    positionLabel: {
+      ...typography.labelSmall,
       color: theme.colors.onSurfaceVariant,
     },
-    boundsValue: {
-      ...typography.bodyMedium,
+    positionValue: {
+      ...typography.labelSmall,
       fontWeight: '600',
       color: theme.colors.onSurface,
     },
@@ -341,25 +423,80 @@ const AddZoneModal: React.FC<AddZoneModalProps> = ({
                 </View>
               </View>
 
-              {/* Bounds Info */}
+              {/* Zone Size */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Zone Bounds</Text>
-                <View style={styles.boundsInfo}>
-                  <View style={styles.boundsItem}>
-                    <Text style={styles.boundsLabel}>X:</Text>
-                    <Text style={styles.boundsValue}>{Math.round(bounds.x)}</Text>
+                <Text style={styles.sectionTitle}>Zone Size</Text>
+                {/* Size Presets */}
+                <View style={styles.sizePresets}>
+                  {ZONE_SIZE_PRESETS.map((preset, index) => {
+                    const isSelected = selectedSizePreset === index;
+                    return (
+                      <TouchableOpacity
+                        key={preset.label}
+                        style={[
+                          styles.sizePresetButton,
+                          isSelected && styles.sizePresetButtonSelected,
+                        ]}
+                        onPress={() => handleSizePresetSelect(index)}
+                        accessibilityLabel={`${preset.label} size preset`}
+                        accessibilityState={{ selected: isSelected }}
+                      >
+                        <Text
+                          style={[
+                            styles.sizePresetLabel,
+                            isSelected && styles.sizePresetLabelSelected,
+                          ]}
+                        >
+                          {preset.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                {/* Width/Height Inputs */}
+                <View style={styles.sizeInputsRow}>
+                  <View style={styles.sizeInputContainer}>
+                    <Text style={styles.sizeInputLabel}>Width</Text>
+                    <TextInput
+                      style={styles.sizeInput}
+                      value={String(zoneWidth)}
+                      onChangeText={(text) => {
+                        const num = parseInt(text, 10);
+                        if (!isNaN(num) && num > 0) {
+                          setZoneWidth(num);
+                          setSelectedSizePreset(3); // Switch to Custom
+                        }
+                      }}
+                      keyboardType="numeric"
+                      accessibilityLabel="Zone width"
+                    />
                   </View>
-                  <View style={styles.boundsItem}>
-                    <Text style={styles.boundsLabel}>Y:</Text>
-                    <Text style={styles.boundsValue}>{Math.round(bounds.y)}</Text>
+                  <View style={styles.sizeInputContainer}>
+                    <Text style={styles.sizeInputLabel}>Height</Text>
+                    <TextInput
+                      style={styles.sizeInput}
+                      value={String(zoneHeight)}
+                      onChangeText={(text) => {
+                        const num = parseInt(text, 10);
+                        if (!isNaN(num) && num > 0) {
+                          setZoneHeight(num);
+                          setSelectedSizePreset(3); // Switch to Custom
+                        }
+                      }}
+                      keyboardType="numeric"
+                      accessibilityLabel="Zone height"
+                    />
                   </View>
-                  <View style={styles.boundsItem}>
-                    <Text style={styles.boundsLabel}>W:</Text>
-                    <Text style={styles.boundsValue}>{Math.round(bounds.width)}</Text>
+                </View>
+                {/* Position Info (read-only) */}
+                <View style={styles.positionInfo}>
+                  <View style={styles.positionItem}>
+                    <Text style={styles.positionLabel}>Position X:</Text>
+                    <Text style={styles.positionValue}>{Math.round(position.x)}</Text>
                   </View>
-                  <View style={styles.boundsItem}>
-                    <Text style={styles.boundsLabel}>H:</Text>
-                    <Text style={styles.boundsValue}>{Math.round(bounds.height)}</Text>
+                  <View style={styles.positionItem}>
+                    <Text style={styles.positionLabel}>Position Y:</Text>
+                    <Text style={styles.positionValue}>{Math.round(position.y)}</Text>
                   </View>
                 </View>
               </View>

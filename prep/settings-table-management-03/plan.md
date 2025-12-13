@@ -1,8 +1,8 @@
 # Table Management Floor Plan Enhancement - settings-table-management-03
 
 **Project:** POS Settings - Table Management Floor Plan Canvas
-**Created:** 2025-12-04
-**Total Duration:** ~23 working days (7 phases)
+**Developer:** 1 (Full-stack)
+**Total Duration:** ~26 working days (7 phases + bug fixes)
 
 ---
 

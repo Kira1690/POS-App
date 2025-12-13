@@ -9,8 +9,8 @@ import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing } from '@/design-system/theme/spacing';
 import { MOCK_TABLES, MockTable } from '@/data/tables';
-import { MOCK_FLOORS, MOCK_TABLE_POSITIONS, getZonesByFloor } from '@/data/tables/mockFloorPlans';
-import { TableShape, ZoneBounds } from '@/types/settings/table-management.types';
+import { MOCK_FLOORS, MOCK_TABLE_POSITIONS, MOCK_ZONES } from '@/data/tables/mockFloorPlans';
+import { FloorZone, ZoneType, TableShape } from '@/types/settings/table-management.types';
 
 // Floor plan modular components
 import {
@@ -37,9 +37,9 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   const [showAddZoneModal, setShowAddZoneModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  // Pending position/bounds for new items
+  // Pending position for new items
   const [pendingTablePosition, setPendingTablePosition] = useState<{ x: number; y: number } | null>(null);
-  const [pendingZoneBounds, setPendingZoneBounds] = useState<ZoneBounds | null>(null);
+  const [pendingZonePosition, setPendingZonePosition] = useState<{ x: number; y: number } | null>(null);
 
   // Track locally added tables (since MOCK_TABLES is static)
   const [addedTables, setAddedTables] = useState<MockTable[]>([]);
@@ -70,10 +70,12 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     selectZone,
     moveZone,
     resizeZone,
+    addZone,
     undo,
     redo,
   } = useFloorPlanState({
     floors: MOCK_FLOORS,
+    zones: MOCK_ZONES,
     initialTablePositions: MOCK_TABLE_POSITIONS,
   });
 
@@ -83,10 +85,10 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     [state.activeFloorId]
   );
 
-  // Get zones for current floor
+  // Get zones for current floor from state
   const currentZones = useMemo(
-    () => getZonesByFloor(state.activeFloorId),
-    [state.activeFloorId]
+    () => state.zones.filter(z => z.floor_id === state.activeFloorId),
+    [state.zones, state.activeFloorId]
   );
 
   // Get table positions for current floor
@@ -237,10 +239,10 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     }
   }, [state.activeTool]);
 
-  // Zone draw handler for adding zones
-  const handleZoneDraw = useCallback((bounds: { x: number; y: number; width: number; height: number }) => {
+  // Zone click handler for adding zones (same as table - tap to add)
+  const handleZoneClick = useCallback((x: number, y: number) => {
     if (state.activeTool === 'add_zone') {
-      setPendingZoneBounds(bounds);
+      setPendingZonePosition({ x, y });
       setShowAddZoneModal(true);
     }
   }, [state.activeTool]);
@@ -293,19 +295,52 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     setPendingTablePosition(null);
   }, []);
 
+  // Helper to get zone color by type
+  const getZoneColorByType = (type: ZoneType): string => {
+    const colorMap: Record<ZoneType, string> = {
+      kitchen: 'outline',
+      bar: 'info',
+      entrance: 'outline',
+      vip: 'warning',
+      outdoor: 'success',
+      storage: 'outline',
+      restroom: 'outline',
+      custom: 'primary',
+    };
+    return colorMap[type] || 'primary';
+  };
+
   // Add zone modal confirm handler
   const handleAddZoneConfirm = useCallback((config: NewZoneConfig) => {
-    Alert.alert('Zone Added', `Zone "${config.name}" has been added to the floor plan.`);
+    // Create new zone object
+    const newZone: FloorZone = {
+      id: `zone-${Date.now()}`,
+      floor_id: state.activeFloorId,
+      name: config.name,
+      type: config.type,
+      bounds: config.bounds,
+      color: getZoneColorByType(config.type),
+      icon: config.icon,
+      is_seating_area: config.isSeatingArea,
+      opacity: 0.2,
+      is_locked: false,
+      display_order: currentZones.length + 1,
+    };
+
+    // Add to state
+    addZone(newZone);
+
+    // Close modal and reset state
     setShowAddZoneModal(false);
-    setPendingZoneBounds(null);
+    setPendingZonePosition(null);
     setActiveTool('select');
     onChangesDetected?.(true);
-  }, [setActiveTool, onChangesDetected]);
+  }, [state.activeFloorId, currentZones.length, addZone, setActiveTool, onChangesDetected]);
 
   // Add zone modal cancel handler
   const handleAddZoneCancel = useCallback(() => {
     setShowAddZoneModal(false);
-    setPendingZoneBounds(null);
+    setPendingZonePosition(null);
   }, []);
 
   // Disable scroll when in move mode to allow table dragging
@@ -409,7 +444,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
               onZoneMove={handleZoneMove}
               onZoneResize={handleZoneResize}
               onCanvasClick={handleCanvasClick}
-              onZoneDraw={handleZoneDraw}
+              onZoneClick={handleZoneClick}
             />
           </ScrollView>
         </View>
@@ -443,10 +478,10 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
           onCancel={handleAddTableCancel}
         />
       )}
-      {pendingZoneBounds && (
+      {pendingZonePosition && (
         <AddZoneModal
           visible={showAddZoneModal}
-          bounds={pendingZoneBounds}
+          position={pendingZonePosition}
           floorId={state.activeFloorId}
           onConfirm={handleAddZoneConfirm}
           onCancel={handleAddZoneCancel}
