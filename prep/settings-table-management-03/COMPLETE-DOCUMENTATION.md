@@ -1,8 +1,8 @@
 # Table Management Floor Plan - Complete Documentation
 
 **Project:** settings-table-management-03
-**Date Created:** 2025-12-04
-**Last Updated:** 2025-12-05
+**Developer:** 1 (Full-stack)
+**Duration:** ~26 working days (7 phases + bug fixes)
 
 ---
 
@@ -66,8 +66,10 @@ Interactive floor plan editor for restaurant table management with drag-and-drop
 
 | Category | LOC |
 |----------|-----|
-| floorPlan/ folder | 6,540 |
-| tableManagement/ total | 13,485 |
+| floorPlan/ folder | 7,175 |
+| tableManagement/ total | 14,195 |
+
+*LOC = Lines of Code (TypeScript/TSX source files only, excluding docs/config)*
 
 ---
 

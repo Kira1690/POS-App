@@ -23,6 +23,7 @@ interface ZoneGestureOverlayProps {
   gridSize: number;
   snapToGrid: boolean;
   zoom: number;
+  panOffset: { x: number; y: number };
   mode: 'select' | 'move';
   onSelect: () => void;
   onMove: (x: number, y: number) => void;
@@ -34,13 +35,16 @@ const ZoneGestureOverlay: React.FC<ZoneGestureOverlayProps> = ({
   gridSize,
   snapToGrid,
   zoom,
+  panOffset,
   mode,
   onSelect,
   onMove,
 }) => {
   const { theme } = useTheme();
 
-  // Shared values for worklet-safe access
+  // Shared values for overlay dimensions (MUST be shared values for worklet access)
+  const overlayWidthSV = useSharedValue(zone.bounds.width);
+  const overlayHeightSV = useSharedValue(zone.bounds.height);
   const zoomSV = useSharedValue(zoom);
 
   // Reanimated shared values for 60fps performance
@@ -50,6 +54,11 @@ const ZoneGestureOverlay: React.FC<ZoneGestureOverlayProps> = ({
   const startY = useSharedValue(zone.bounds.y);
 
   // Update shared values when props change
+  React.useEffect(() => {
+    overlayWidthSV.value = zone.bounds.width;
+    overlayHeightSV.value = zone.bounds.height;
+  }, [zone.bounds.width, zone.bounds.height, overlayWidthSV, overlayHeightSV]);
+
   React.useEffect(() => {
     zoomSV.value = zoom;
   }, [zoom, zoomSV]);
@@ -151,7 +160,8 @@ const ZoneGestureOverlay: React.FC<ZoneGestureOverlayProps> = ({
     [tapGesture, panGesture]
   );
 
-  // Animated style for smooth 60fps transforms
+  // Animated style for smooth 60fps transforms (uses shared values only)
+  // Zone bounds are top-left based, so we position directly without centering offset
   const animatedStyle = useAnimatedStyle(() => {
     'worklet';
     return {
@@ -159,14 +169,14 @@ const ZoneGestureOverlay: React.FC<ZoneGestureOverlayProps> = ({
         { translateX: translateX.value * zoomSV.value },
         { translateY: translateY.value * zoomSV.value },
       ],
+      width: overlayWidthSV.value,
+      height: overlayHeightSV.value,
     };
   });
 
   const styles = StyleSheet.create({
     overlay: {
       position: 'absolute',
-      width: zone.bounds.width,
-      height: zone.bounds.height,
       borderRadius: 4,
     },
     selected: {

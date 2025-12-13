@@ -53,6 +53,7 @@ interface FloorPlanCanvasProps {
   onZoomChange?: (zoom: number) => void;
   onPanChange?: (pan: { x: number; y: number }) => void;
   onCanvasClick?: (x: number, y: number) => void;
+  onZoneClick?: (x: number, y: number) => void;
   onZoneDraw?: (bounds: { x: number; y: number; width: number; height: number }) => void;
 }
 
@@ -82,6 +83,7 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
   onZoomChange,
   onPanChange,
   onCanvasClick,
+  onZoneClick,
   onZoneDraw,
 }) => {
   const { theme } = useTheme();
@@ -139,13 +141,16 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
 
   const handleCanvasClick = useCallback(
     (x: number, y: number) => {
+      const adjustedX = (x - panOffset.x) / zoom;
+      const adjustedY = (y - panOffset.y) / zoom;
+
       if (activeTool === 'add_table' && onCanvasClick) {
-        const adjustedX = (x - panOffset.x) / zoom;
-        const adjustedY = (y - panOffset.y) / zoom;
         onCanvasClick(adjustedX, adjustedY);
+      } else if (activeTool === 'add_zone' && onZoneClick) {
+        onZoneClick(adjustedX, adjustedY);
       }
     },
-    [activeTool, onCanvasClick, panOffset.x, panOffset.y, zoom]
+    [activeTool, onCanvasClick, onZoneClick, panOffset.x, panOffset.y, zoom]
   );
 
   const handleZoneDrawComplete = useCallback(
@@ -283,9 +288,9 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
       runOnJS(handlePanComplete)(translateX.value, translateY.value);
     });
 
-  // Tap gesture for add_table mode
+  // Tap gesture for add_table and add_zone modes
   const tapGesture = Gesture.Tap()
-    .enabled(activeTool === 'add_table')
+    .enabled(activeTool === 'add_table' || activeTool === 'add_zone')
     .onEnd((event) => {
       runOnJS(handleCanvasClick)(event.x, event.y);
     });
@@ -320,15 +325,13 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
 
   // Combine canvas gestures based on active tool
   const canvasGestures = useMemo(() => {
-    if (activeTool === 'add_zone') {
-      return Gesture.Race(zoneDrawGesture, Gesture.Simultaneous(pinchGesture, canvasPanGesture));
-    }
-    if (activeTool === 'add_table') {
+    if (activeTool === 'add_zone' || activeTool === 'add_table') {
+      // Both add modes use TAP gesture for click-to-add
       return Gesture.Race(tapGesture, Gesture.Simultaneous(pinchGesture, canvasPanGesture));
     }
     // Select mode - only zoom/pan on canvas level, table gestures handled by overlay
     return Gesture.Simultaneous(pinchGesture, canvasPanGesture);
-  }, [activeTool, pinchGesture, canvasPanGesture, tapGesture, zoneDrawGesture]);
+  }, [activeTool, pinchGesture, canvasPanGesture, tapGesture]);
 
   // Animated style for canvas transform
   const animatedContainerStyle = useAnimatedStyle(() => ({
@@ -451,6 +454,7 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
                   gridSize={floor.grid_size}
                   snapToGrid={snapToGrid}
                   zoom={zoom}
+                  panOffset={panOffset}
                   mode={activeTool === 'move' ? 'move' : 'select'}
                   onSelect={() => onZoneSelect?.(zone.id)}
                   onMove={(x, y) => onZoneMove?.(zone.id, x, y)}
