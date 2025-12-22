@@ -13,6 +13,7 @@ import {
 // Import the new dashboard navigator
 import { DashboardNavigator } from './DashboardNavigator';
 import { DashboardProvider } from '@/context/dashboard/DashboardContext';
+import { FloorPlanProvider } from '@/context/floorPlan';
 import TableManagementScreen from '@/screens/tables/TableManagementScreen';
 // Direct imports for order screens
 import POSOrderScreen from '@/screens/orders/POSOrderScreen';
@@ -147,6 +148,7 @@ export const MainNavigator: React.FC = () => {
   const { theme } = useTheme();
 
   return (
+    <FloorPlanProvider>
     <Tab.Navigator
       initialRouteName="Orders"
       screenOptions={({ route }) => ({
@@ -218,5 +220,6 @@ export const MainNavigator: React.FC = () => {
         options={{ title: 'Settings', headerShown: false }}
       />
     </Tab.Navigator>
+    </FloorPlanProvider>
   );
 };

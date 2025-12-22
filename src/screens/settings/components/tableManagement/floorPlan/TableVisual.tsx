@@ -27,6 +27,8 @@ interface TableVisualProps {
   table: MockTable;
   isSelected?: boolean;
   showChairs?: boolean;
+  /** Override the table status (used in Dashboard view mode) */
+  statusOverride?: TableStatus;
 }
 
 /**
@@ -61,11 +63,16 @@ const TableVisual: React.FC<TableVisualProps> = ({
   table,
   isSelected = false,
   showChairs = true,
+  statusOverride,
 }) => {
   const { theme } = useTheme();
 
   const baseShape = useMemo(() => mapShape(table.shape), [table.shape]);
-  const tableStatus = useMemo(() => mapStatus(table.status), [table.status]);
+  // Use status override if provided (for Dashboard view mode), otherwise use table's own status
+  const tableStatus = useMemo(
+    () => statusOverride ?? mapStatus(table.status),
+    [statusOverride, table.status]
+  );
   const tableSize = TableSize.MEDIUM;
 
   // Check if custom dimensions are provided (from resize)

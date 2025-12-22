@@ -20,6 +20,7 @@ import {
   Floor,
   FloorZone,
   FloorPlanTablePosition,
+  TableStatus,
 } from '@/types/settings/table-management.types';
 import { MockTable } from '@/data/tables';
 import FloorPlanGrid from './FloorPlanGrid';
@@ -44,6 +45,10 @@ interface FloorPlanCanvasProps {
   zoom: number;
   panOffset: { x: number; y: number };
   activeTool?: string;
+  /** Canvas mode: 'edit' for Settings, 'view' for Dashboard (default: 'edit') */
+  mode?: 'edit' | 'view';
+  /** Map of table_id to status for status color override (used in view mode) */
+  tableStatusMap?: Record<string, TableStatus>;
   onTableSelect: (tableId: string) => void;
   onTableMove: (tableId: string, x: number, y: number) => void;
   onTableResize?: (tableId: string, width: number, height: number) => void;
@@ -74,6 +79,8 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
   zoom,
   panOffset,
   activeTool = 'select',
+  mode = 'edit',
+  tableStatusMap,
   onTableSelect,
   onTableMove,
   onTableResize,
@@ -86,6 +93,7 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
   onZoneClick,
   onZoneDraw,
 }) => {
+  const isViewMode = mode === 'view';
   const { theme } = useTheme();
 
   // Animated values for canvas transform (zoom/pan)
@@ -323,15 +331,19 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
       );
     });
 
-  // Combine canvas gestures based on active tool
+  // Combine canvas gestures based on mode and active tool
   const canvasGestures = useMemo(() => {
+    // View mode: Allow navigation gestures (zoom/pan) but not editing
+    if (isViewMode) {
+      return Gesture.Simultaneous(pinchGesture, canvasPanGesture);
+    }
     if (activeTool === 'add_zone' || activeTool === 'add_table') {
       // Both add modes use TAP gesture for click-to-add
       return Gesture.Race(tapGesture, Gesture.Simultaneous(pinchGesture, canvasPanGesture));
     }
     // Select mode - only zoom/pan on canvas level, table gestures handled by overlay
     return Gesture.Simultaneous(pinchGesture, canvasPanGesture);
-  }, [activeTool, pinchGesture, canvasPanGesture, tapGesture]);
+  }, [isViewMode, activeTool, pinchGesture, canvasPanGesture, tapGesture]);
 
   // Animated style for canvas transform
   const animatedContainerStyle = useAnimatedStyle(() => ({
@@ -359,6 +371,89 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
     },
   });
 
+  // VIEW MODE: Return simple View wrapper (no gesture handler) to allow parent ScrollView to work
+  if (isViewMode) {
+    return (
+      <View style={styles.wrapper}>
+        <View style={styles.canvasContainer}>
+          {/* Layer 1: SVG Visual Layer */}
+          <Svg
+            width={floor.canvas_width}
+            height={floor.canvas_height}
+            viewBox={`0 0 ${floor.canvas_width} ${floor.canvas_height}`}
+            pointerEvents="none"
+          >
+            {/* Grid */}
+            <FloorPlanGrid
+              width={floor.canvas_width}
+              height={floor.canvas_height}
+              gridSize={floor.grid_size}
+              visible={gridEnabled}
+            />
+
+            {/* Zones */}
+            <G>
+              {zones.map(zone => (
+                <FloorPlanZone
+                  key={zone.id}
+                  zone={zone}
+                  isSelected={selectedZoneId === zone.id}
+                  onPress={() => onZoneSelect?.(zone.id)}
+                />
+              ))}
+            </G>
+
+            {/* Tables (visual only) */}
+            <G>
+              {tablePositions.map(position => {
+                const table = getTableById(position.table_id);
+                if (!table) return null;
+
+                const statusOverride = tableStatusMap?.[position.table_id];
+
+                return (
+                  <TableVisual
+                    key={position.table_id}
+                    position={position}
+                    table={table}
+                    isSelected={selectedTableId === position.table_id}
+                    showChairs={showChairs}
+                    statusOverride={statusOverride}
+                  />
+                );
+              })}
+            </G>
+          </Svg>
+
+          {/* View Mode: Simple TouchableOpacity overlay for table selection */}
+          <View style={styles.gestureOverlayContainer}>
+            {tablePositions.map(position => {
+              const table = getTableById(position.table_id);
+              if (!table) return null;
+
+              return (
+                <TableGestureOverlay
+                  key={`view-overlay-${position.table_id}`}
+                  position={position}
+                  table={table}
+                  isSelected={selectedTableId === position.table_id}
+                  gridSize={floor.grid_size}
+                  snapToGrid={false}
+                  zoom={1} // Fixed zoom - parent wrapper handles scale
+                  panOffset={{ x: 0, y: 0 }} // Fixed pan - parent ScrollView handles pan
+                  mode="select"
+                  onSelect={() => onTableSelect(position.table_id)}
+                  onMove={() => {}} // No-op in view mode
+                />
+              );
+            })}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // EDIT MODE: Full gesture handler with pinch/pan/tap gestures
   return (
     <GestureHandlerRootView style={styles.wrapper}>
       <GestureDetector gesture={canvasGestures}>
@@ -396,6 +491,9 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
                 const table = getTableById(position.table_id);
                 if (!table) return null;
 
+                // Get status override for view mode (Dashboard)
+                const statusOverride = tableStatusMap?.[position.table_id];
+
                 return (
                   <TableVisual
                     key={position.table_id}
@@ -403,13 +501,14 @@ const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
                     table={table}
                     isSelected={selectedTableId === position.table_id}
                     showChairs={showChairs}
+                    statusOverride={statusOverride}
                   />
                 );
               })}
             </G>
           </Svg>
 
-          {/* Layer 2: Gesture Overlay (handles touch) */}
+          {/* Layer 2: Gesture Overlay (handles touch) - Edit mode only for full gestures */}
           {(activeTool === 'select' || activeTool === 'move') && (
             <View style={styles.gestureOverlayContainer}>
               {tablePositions.map(position => {

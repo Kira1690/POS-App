@@ -1,17 +1,14 @@
 /**
- * Tables Dashboard - Visual floor plan management and table operations according to wireframes
- * Features: Interactive restaurant layout, color-coded status, table details panel, section management
+ * Tables Dashboard - Visual floor plan management and table operations
+ * Features: Interactive restaurant layout, color-coded status, table details panel
+ * Uses shared FloorPlanCanvas from Settings for consistent floor plan display
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -20,204 +17,29 @@ import {
   AppleCard,
   AppleButton,
   AppleStatusPill,
-  AppleInteractive,
 } from '@/components/apple';
 import {
   TABLES_DASHBOARD_DATA,
   Table,
-  TableSection,
-  getTablesByStatus,
-  getTablesBySection,
-  getLongestWaitingTable,
+  getTableById as getTableByIdFromDashboard,
 } from '@/data/dashboard/tablesDashboard';
+import { DashboardFloorPlanViewer } from './components';
+import { useFloorPlan } from '@/context/floorPlan';
+import { MOCK_TABLES } from '@/data/tables';
+import { TableStatus } from '@/types/settings/table-management.types';
 
-const { width } = Dimensions.get('window');
-const FLOOR_PLAN_WIDTH = width - 32; // Account for padding
-const FLOOR_PLAN_HEIGHT = 400;
-
-interface TableComponentProps {
-  table: Table;
-  isSelected: boolean;
-  onPress: (table: Table) => void;
-  scale: number;
-}
-
-const TableComponent: React.FC<TableComponentProps> = ({ table, isSelected, onPress, scale }) => {
-  const { theme } = useTheme();
-
-  const getStatusColor = (status: Table['status']) => {
-    return theme.colors.statusColors[status as keyof typeof theme.colors.statusColors] || theme.colors.outline;
+/**
+ * Map string status to TableStatus enum for floor plan
+ */
+const mapStringToStatus = (status: string): TableStatus => {
+  const statusMap: Record<string, TableStatus> = {
+    available: TableStatus.AVAILABLE,
+    occupied: TableStatus.OCCUPIED,
+    reserved: TableStatus.RESERVED,
+    cleaning: TableStatus.CLEANING,
+    out_of_service: TableStatus.OUT_OF_SERVICE,
   };
-
-  const getTextColorForStatus = (status: Table['status']) => {
-    // Use high contrast colors for table text based on status
-    switch (status) {
-      case 'occupied':
-        return theme.colors.onError; // High contrast on error/red background
-      case 'available':
-        return theme.colors.onSurface; // Dark text on light green background
-      case 'cleaning':
-        return theme.colors.onSurface; // Dark text on light yellow background
-      case 'reserved':
-        return theme.colors.onPrimary; // White text on blue background
-      default:
-        return theme.colors.onSurface; // Safe default
-    }
-  };
-
-  const getTableShape = () => {
-    const size = table.capacity <= 2 ? 40 : table.capacity <= 4 ? 50 : 60;
-    const scaledSize = size * scale;
-
-    const baseStyle = {
-      width: scaledSize,
-      height: scaledSize,
-      backgroundColor: getStatusColor(table.status),
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-      borderWidth: isSelected ? 3 : 1,
-      borderColor: isSelected ? theme.colors.primary : theme.colors.outline,
-      position: 'absolute' as const,
-      left: table.position.x * scale,
-      top: table.position.y * scale,
-    };
-
-    if (table.shape === 'round') {
-      return {
-        ...baseStyle,
-        borderRadius: scaledSize / 2,
-      };
-    } else if (table.shape === 'rectangle') {
-      return {
-        ...baseStyle,
-        width: scaledSize * 1.5,
-        borderRadius: theme.borderRadius.sm,
-      };
-    } else {
-      return {
-        ...baseStyle,
-        borderRadius: theme.borderRadius.sm,
-      };
-    }
-  };
-
-  return (
-    <TouchableOpacity
-      style={getTableShape()}
-      onPress={() => onPress(table)}
-      activeOpacity={0.7}
-    >
-      <Text style={{
-        fontSize: 12 * scale,
-        fontWeight: '600',
-        color: getTextColorForStatus(table.status),
-        textAlign: 'center',
-      }}>
-        {table.number}
-      </Text>
-      {table.capacity && (
-        <Text style={{
-          fontSize: 8 * scale,
-          color: getTextColorForStatus(table.status),
-          textAlign: 'center',
-        }}>
-          ({table.capacity})
-        </Text>
-      )}
-    </TouchableOpacity>
-  );
-};
-
-interface FloorPlanProps {
-  selectedTable: Table | null;
-  onTableSelect: (table: Table) => void;
-}
-
-const FloorPlan: React.FC<FloorPlanProps> = ({ selectedTable, onTableSelect }) => {
-  const { theme } = useTheme();
-
-  // Calculate scale to fit floor plan
-  const scale = Math.min(FLOOR_PLAN_WIDTH / 800, FLOOR_PLAN_HEIGHT / 500);
-
-  const styles = {
-    container: {
-      width: FLOOR_PLAN_WIDTH,
-      height: FLOOR_PLAN_HEIGHT,
-      backgroundColor: theme.colors.surfaceVariant,
-      borderRadius: theme.borderRadius.lg,
-      position: 'relative' as const,
-      overflow: 'hidden' as const,
-    },
-    specialArea: {
-      position: 'absolute' as const,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.md,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-      borderWidth: 1,
-      borderColor: theme.colors.outline,
-    },
-    specialAreaText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: theme.colors.onSurface,
-    },
-  };
-
-  const { floorPlan } = TABLES_DASHBOARD_DATA;
-  const allTables = floorPlan.sections.flatMap(section => section.tables);
-
-  return (
-    <View style={styles.container}>
-      {/* Special Areas */}
-      <View style={[
-        styles.specialArea,
-        {
-          left: floorPlan.specialAreas.kitchen.x * scale,
-          top: floorPlan.specialAreas.kitchen.y * scale,
-          width: floorPlan.specialAreas.kitchen.width * scale,
-          height: floorPlan.specialAreas.kitchen.height * scale,
-        }
-      ]}>
-        <Text style={styles.specialAreaText}>Kitchen</Text>
-      </View>
-
-      <View style={[
-        styles.specialArea,
-        {
-          left: floorPlan.specialAreas.bar.x * scale,
-          top: floorPlan.specialAreas.bar.y * scale,
-          width: floorPlan.specialAreas.bar.width * scale,
-          height: floorPlan.specialAreas.bar.height * scale,
-        }
-      ]}>
-        <Text style={styles.specialAreaText}>Bar</Text>
-      </View>
-
-      <View style={[
-        styles.specialArea,
-        {
-          left: floorPlan.specialAreas.entrance.x * scale,
-          top: floorPlan.specialAreas.entrance.y * scale,
-          width: floorPlan.specialAreas.entrance.width * scale,
-          height: floorPlan.specialAreas.entrance.height * scale,
-        }
-      ]}>
-        <Text style={styles.specialAreaText}>Entrance</Text>
-      </View>
-
-      {/* Tables */}
-      {allTables.map((table) => (
-        <TableComponent
-          key={table.id}
-          table={table}
-          isSelected={selectedTable?.id === table.id}
-          onPress={onTableSelect}
-          scale={scale}
-        />
-      ))}
-    </View>
-  );
+  return statusMap[status.toLowerCase()] || TableStatus.AVAILABLE;
 };
 
 interface TableDetailsProps {
@@ -368,7 +190,7 @@ const TableDetails: React.FC<TableDetailsProps> = ({ table, onClose, onAction })
                 <Text style={styles.label}>Special Requests:</Text>
                 {table.currentOrder.specialRequests.map((request, index) => (
                   <Text key={index} style={[styles.value, { fontStyle: 'italic' }]}>
-                    • {request}
+                    - {request}
                   </Text>
                 ))}
               </View>
@@ -401,7 +223,7 @@ const TableDetails: React.FC<TableDetailsProps> = ({ table, onClose, onAction })
                 <Text style={styles.label}>Special Requests:</Text>
                 {table.reservationInfo.specialRequests.map((request, index) => (
                   <Text key={index} style={[styles.value, { fontStyle: 'italic' }]}>
-                    • {request}
+                    - {request}
                   </Text>
                 ))}
               </View>
@@ -440,31 +262,47 @@ const TableDetails: React.FC<TableDetailsProps> = ({ table, onClose, onAction })
 };
 
 const TablesDashboard: React.FC = () => {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const [data, setData] = useState(TABLES_DASHBOARD_DATA);
-  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Build status map from mock data for floor plan coloring
+  const tableStatusMap = useMemo(() => {
+    const statusMap: Record<string, TableStatus> = {};
+    MOCK_TABLES.forEach(table => {
+      statusMap[table.id] = mapStringToStatus(table.status);
+    });
+    return statusMap;
+  }, []);
+
+  // Get selected table data for details panel
+  const selectedTable = useMemo(() => {
+    if (!selectedTableId) return null;
+    // Try to find in dashboard data first (has order info)
+    const allTables = data.floorPlan.sections.flatMap(section => section.tables);
+    return allTables.find(t => t.id === selectedTableId) || null;
+  }, [selectedTableId, data]);
+
   // Handle refresh
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
       setData({ ...TABLES_DASHBOARD_DATA, lastUpdated: new Date().toISOString() });
       setRefreshing(false);
     }, 1000);
-  };
+  }, []);
 
-  // Handle table selection
-  const handleTableSelect = (table: Table) => {
-    setSelectedTable(table.id === selectedTable?.id ? null : table);
-  };
+  // Handle table selection from floor plan
+  const handleTableSelect = useCallback((tableId: string | null) => {
+    setSelectedTableId(tableId);
+  }, []);
 
   // Handle table actions
-  const handleTableAction = (action: string, table: Table) => {
+  const handleTableAction = useCallback((action: string, table: Table) => {
     Alert.alert('Table Action', `Action: ${action} for Table ${table.number}`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Confirm', onPress: () => {
-        // Update table status based on action
         let newStatus = table.status;
         switch (action) {
           case 'cleaning':
@@ -499,15 +337,15 @@ const TablesDashboard: React.FC = () => {
           ...data,
           floorPlan: { ...data.floorPlan, sections: updatedSections }
         });
-        setSelectedTable(null);
+        setSelectedTableId(null);
       }}
     ]);
-  };
+  }, [data]);
 
   const styles = {
     container: {
       flex: 1,
-      backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+      backgroundColor: theme.colors.background,
     },
     summaryContainer: {
       flexDirection: 'row' as const,
@@ -555,14 +393,18 @@ const TablesDashboard: React.FC = () => {
       fontSize: 12,
       color: theme.colors.onSurface,
     },
+    floorPlanContainer: {
+      height: 500,
+      marginBottom: 16,
+    },
   };
 
-  // Status legend
+  // Status legend - maps to theme colors
   const statusLegend = [
-    { status: 'occupied', color: theme.colors.statusColors.occupied, label: 'Occupied' },
-    { status: 'available', color: theme.colors.statusColors.available, label: 'Available' },
-    { status: 'cleaning', color: theme.colors.statusColors.cleaning, label: 'Cleaning' },
-    { status: 'reserved', color: theme.colors.statusColors.reserved, label: 'Reserved' },
+    { status: 'occupied', color: theme.colors.error, label: 'Occupied' },
+    { status: 'available', color: theme.colors.success, label: 'Available' },
+    { status: 'cleaning', color: theme.colors.warning, label: 'Cleaning' },
+    { status: 'reserved', color: theme.colors.info, label: 'Reserved' },
   ];
 
   // Header actions
@@ -587,16 +429,8 @@ const TablesDashboard: React.FC = () => {
     <View style={styles.container}>
       <AppleDashboardPanel
         title="Tables Dashboard"
-        subtitle={`${data.summary.occupied}/${data.summary.total} Tables Occupied • ${data.floorPlan.sections.length} Sections`}
+        subtitle={`${data.summary.occupied}/${data.summary.total} Tables Occupied`}
         headerActions={headerActions}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-          />
-        }
       >
         {/* Table Status Summary */}
         <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
@@ -637,25 +471,19 @@ const TablesDashboard: React.FC = () => {
           </View>
         </AppleCard>
 
-        {/* Floor Plan */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>Restaurant Floor Plan</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={true}
-            contentContainerStyle={{ alignItems: 'center', paddingVertical: 16 }}
-          >
-            <FloorPlan
-              selectedTable={selectedTable}
-              onTableSelect={handleTableSelect}
-            />
-          </ScrollView>
+        {/* Floor Plan - Shared with Settings */}
+        <AppleCard layer="surface" size="large" style={styles.floorPlanContainer}>
+          <DashboardFloorPlanViewer
+            selectedTableId={selectedTableId}
+            onTableSelect={handleTableSelect}
+            tableStatusMap={tableStatusMap}
+          />
         </AppleCard>
 
         {/* Table Details */}
         <TableDetails
           table={selectedTable}
-          onClose={() => setSelectedTable(null)}
+          onClose={() => setSelectedTableId(null)}
           onAction={handleTableAction}
         />
       </AppleDashboardPanel>

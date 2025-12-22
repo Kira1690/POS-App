@@ -20,10 +20,12 @@ import {
   PropertiesPanel,
   AddTableModal,
   AddZoneModal,
+  AddFloorModal,
   SettingsModal,
   useFloorPlanState,
 } from './floorPlan';
-import type { NewTableConfig, NewZoneConfig } from './floorPlan';
+import type { NewTableConfig, NewZoneConfig, NewFloorConfig } from './floorPlan';
+import { Floor } from '@/types/settings/table-management.types';
 
 interface FloorPlanSettingsProps {
   onChangesDetected?: (hasChanges: boolean) => void;
@@ -35,6 +37,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   // Modal visibility states
   const [showAddTableModal, setShowAddTableModal] = useState(false);
   const [showAddZoneModal, setShowAddZoneModal] = useState(false);
+  const [showAddFloorModal, setShowAddFloorModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Pending position for new items
@@ -67,6 +70,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     deleteTable,
     duplicateTable,
     addTable,
+    addFloor,
     selectZone,
     moveZone,
     resizeZone,
@@ -79,10 +83,10 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     initialTablePositions: MOCK_TABLE_POSITIONS,
   });
 
-  // Get current floor data
+  // Get current floor data (from state which includes dynamically added floors)
   const currentFloor = useMemo(
-    () => MOCK_FLOORS.find(f => f.id === state.activeFloorId) || MOCK_FLOORS[0],
-    [state.activeFloorId]
+    () => state.floors.find(f => f.id === state.activeFloorId) || state.floors[0],
+    [state.floors, state.activeFloorId]
   );
 
   // Get zones for current floor from state
@@ -206,7 +210,34 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   }, [setSelectedTable]);
 
   const handleAddFloor = useCallback(() => {
-    Alert.alert('Add Floor', 'Add new floor functionality would be implemented here');
+    setShowAddFloorModal(true);
+  }, []);
+
+  // Add floor modal confirm handler
+  const handleAddFloorConfirm = useCallback((config: NewFloorConfig) => {
+    const newFloor: Floor = {
+      id: `floor-${Date.now()}`,
+      restaurant_id: 'rest_001',
+      name: config.name,
+      display_order: state.floors.length + 1,
+      is_active: true,
+      is_default: false,
+      canvas_width: config.canvas_width,
+      canvas_height: config.canvas_height,
+      grid_size: config.grid_size,
+      grid_enabled: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    addFloor(newFloor);
+    setShowAddFloorModal(false);
+    onChangesDetected?.(true);
+  }, [state.floors.length, addFloor, onChangesDetected]);
+
+  // Add floor modal cancel handler
+  const handleAddFloorCancel = useCallback(() => {
+    setShowAddFloorModal(false);
   }, []);
 
   // Toolbar action handlers
@@ -369,8 +400,12 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     canvasScroll: {
       flex: 1,
     },
+    horizontalScrollContent: {
+      flexGrow: 1,
+    },
     canvasContent: {
       minHeight: 600,
+      minWidth: currentFloor?.canvas_width || 1200,
       padding: spacing.md,
     },
     propertiesColumn: {
@@ -386,7 +421,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
       {/* FIXED HEADER - Tabs and Toolbar always visible */}
       <View style={styles.fixedHeader}>
         <FloorPlanTabs
-          floors={MOCK_FLOORS}
+          floors={state.floors}
           activeFloorId={state.activeFloorId}
           onFloorSelect={handleFloorSelect}
           onAddFloor={handleAddFloor}
@@ -416,36 +451,44 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
 
       {/* CONTENT AREA - Canvas scrolls, properties always visible */}
       <View style={styles.contentArea}>
-        {/* Scrollable Canvas */}
+        {/* Scrollable Canvas - Nested ScrollViews for horizontal + vertical */}
         <View style={styles.canvasScrollContainer}>
           <ScrollView
-            style={styles.canvasScroll}
-            contentContainerStyle={styles.canvasContent}
+            horizontal
+            showsHorizontalScrollIndicator={true}
             scrollEnabled={scrollEnabled}
-            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            contentContainerStyle={styles.horizontalScrollContent}
           >
-            <FloorPlanCanvas
-              floor={currentFloor}
-              zones={currentZones}
-              tablePositions={currentTablePositions}
-              tables={allTables}
-              selectedTableId={state.selectedTableId}
-              selectedZoneId={state.selectedZoneId}
-              gridEnabled={state.gridEnabled}
-              snapToGrid={state.snapToGrid}
-              showChairs={state.showChairs}
-              zoom={state.zoom}
-              panOffset={state.panOffset}
-              activeTool={state.activeTool}
-              onTableSelect={handleTableSelect}
-              onTableMove={handleTableMove}
-              onTableResize={handleTableResize}
-              onZoneSelect={handleZoneSelect}
-              onZoneMove={handleZoneMove}
-              onZoneResize={handleZoneResize}
-              onCanvasClick={handleCanvasClick}
-              onZoneClick={handleZoneClick}
-            />
+            <ScrollView
+              showsVerticalScrollIndicator={true}
+              scrollEnabled={scrollEnabled}
+              nestedScrollEnabled={true}
+              contentContainerStyle={styles.canvasContent}
+            >
+              <FloorPlanCanvas
+                floor={currentFloor}
+                zones={currentZones}
+                tablePositions={currentTablePositions}
+                tables={allTables}
+                selectedTableId={state.selectedTableId}
+                selectedZoneId={state.selectedZoneId}
+                gridEnabled={state.gridEnabled}
+                snapToGrid={state.snapToGrid}
+                showChairs={state.showChairs}
+                zoom={state.zoom}
+                panOffset={state.panOffset}
+                activeTool={state.activeTool}
+                onTableSelect={handleTableSelect}
+                onTableMove={handleTableMove}
+                onTableResize={handleTableResize}
+                onZoneSelect={handleZoneSelect}
+                onZoneMove={handleZoneMove}
+                onZoneResize={handleZoneResize}
+                onCanvasClick={handleCanvasClick}
+                onZoneClick={handleZoneClick}
+              />
+            </ScrollView>
           </ScrollView>
         </View>
 
@@ -491,6 +534,11 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
         visible={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         onSave={handleSettingsSave}
+      />
+      <AddFloorModal
+        visible={showAddFloorModal}
+        onConfirm={handleAddFloorConfirm}
+        onCancel={handleAddFloorCancel}
       />
     </View>
   );
