@@ -25,6 +25,8 @@ export { default as AddTableModal } from './AddTableModal';
 export type { NewTableConfig } from './AddTableModal';
 export { default as AddZoneModal } from './AddZoneModal';
 export type { NewZoneConfig } from './AddZoneModal';
+export { default as AddFloorModal } from './AddFloorModal';
+export type { NewFloorConfig } from './AddFloorModal';
 export { default as SettingsModal } from './SettingsModal';
 
 // Panels

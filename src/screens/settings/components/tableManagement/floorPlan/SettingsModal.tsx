@@ -77,7 +77,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       alignItems: 'center',
     },
     modalContainer: {
-      flex: 1,  // Allow container to participate in flex layout
       width: '90%',
       maxWidth: 600,
       maxHeight: '85%',
@@ -134,7 +133,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       fontWeight: '600',
     },
     content: {
-      flex: 1,
       padding: spacing.lg,
     },
     section: {
@@ -221,7 +219,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   });
 
   const renderGeneralSettings = () => (
-    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.content}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled
+    >
       {/* Table Configuration */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Table Configuration</Text>
@@ -335,7 +338,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   );
 
   const renderAdvancedSettings = () => (
-    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.content}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled
+    >
       {/* Auto-Status Management */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Auto-Status Management</Text>
@@ -499,13 +507,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             title="Reset Tables"
             variant="destructive"
             size="small"
-            onPress={() => {}}
+            onPress={() => { }}
           />
           <AppleButton
             title="Clear Reservations"
             variant="destructive"
             size="small"
-            onPress={() => {}}
+            onPress={() => { }}
           />
         </View>
       </View>
@@ -521,55 +529,55 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerTitle}>
-              <Icon name="cog" size={24} color={theme.colors.primary} accessibilityLabel="Settings" />
-              <Text style={styles.headerTitleText}>Settings</Text>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.headerTitle}>
+                <Icon name="cog" size={24} color={theme.colors.primary} accessibilityLabel="Settings" />
+                <Text style={styles.headerTitleText}>Settings</Text>
+              </View>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Icon name="close" size={24} color={theme.colors.onSurfaceVariant} accessibilityLabel="Close" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Icon name="close" size={24} color={theme.colors.onSurfaceVariant} accessibilityLabel="Close" />
-            </TouchableOpacity>
-          </View>
 
-          {/* Tab Bar */}
-          <View style={styles.tabBar}>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'general' && styles.tabActive]}
-              onPress={() => setActiveTab('general')}
-            >
-              <Text style={[styles.tabText, activeTab === 'general' && styles.tabTextActive]}>
-                General
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'advanced' && styles.tabActive]}
-              onPress={() => setActiveTab('advanced')}
-            >
-              <Text style={[styles.tabText, activeTab === 'advanced' && styles.tabTextActive]}>
-                Advanced
-              </Text>
-            </TouchableOpacity>
-          </View>
+            {/* Tab Bar */}
+            <View style={styles.tabBar}>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'general' && styles.tabActive]}
+                onPress={() => setActiveTab('general')}
+              >
+                <Text style={[styles.tabText, activeTab === 'general' && styles.tabTextActive]}>
+                  General
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'advanced' && styles.tabActive]}
+                onPress={() => setActiveTab('advanced')}
+              >
+                <Text style={[styles.tabText, activeTab === 'advanced' && styles.tabTextActive]}>
+                  Advanced
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Content */}
-          {activeTab === 'general' ? renderGeneralSettings() : renderAdvancedSettings()}
+            {/* Content */}
+            {activeTab === 'general' ? renderGeneralSettings() : renderAdvancedSettings()}
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <AppleButton
-              title="Cancel"
-              variant="secondary"
-              size="medium"
-              onPress={onClose}
-            />
-            <AppleButton
-              title="Save Changes"
-              variant="primary"
-              size="medium"
-              onPress={handleSave}
-            />
-          </View>
+            {/* Footer */}
+            <View style={styles.footer}>
+              <AppleButton
+                title="Cancel"
+                variant="secondary"
+                size="medium"
+                onPress={onClose}
+              />
+              <AppleButton
+                title="Save Changes"
+                variant="primary"
+                size="medium"
+                onPress={handleSave}
+              />
+            </View>
         </Pressable>
       </Pressable>
     </Modal>

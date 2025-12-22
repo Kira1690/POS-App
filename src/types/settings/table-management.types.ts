@@ -619,6 +619,9 @@ export type FloorPlanReducerAction =
   | { type: 'MOVE_ZONE'; payload: { zoneId: string; x: number; y: number } }
   | { type: 'RESIZE_ZONE'; payload: { zoneId: string; width: number; height: number } }
   | { type: 'DELETE_ZONE'; payload: string }
+  | { type: 'ADD_FLOOR'; payload: Floor }
+  | { type: 'UPDATE_FLOOR'; payload: { floorId: string; floor: Partial<Floor> } }
+  | { type: 'DELETE_FLOOR'; payload: string }
   | { type: 'LOAD_FLOOR_PLAN'; payload: FloorPlanExportData }
   | { type: 'MARK_SAVED' }
   | { type: 'UNDO' }
