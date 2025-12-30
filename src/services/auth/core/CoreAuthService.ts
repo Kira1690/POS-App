@@ -1,15 +1,21 @@
 /**
  * Core Auth Service - Simple, focused authentication operations
  * Under 150 lines, single responsibility for core auth
+ *
+ * Now includes AsyncStorage persistence for session management.
+ * When backend is ready, remove dummy logic and use authApiClient fully.
  */
 
 import { authApiClient } from '@/services/api/authApiClient';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User, Restaurant } from '@/types';
 import { RegisterUserRequest } from '@/interfaces';
 import { findUserByCredentials, generateDummyTokens, DUMMY_RESTAURANTS } from '@/constants/dummyData';
+import { authStorageService } from '@/services/storage';
 
 export class CoreAuthService {
-  
+  // Flag to use local storage vs API (set to false when backend is ready)
+  private useLocalStorage = true;
+
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
       // Check for dummy credentials first
@@ -46,25 +52,36 @@ export class CoreAuthService {
         };
 
         const tokens = generateDummyTokens(dummyUser);
-        
+
+        // Convert expiresIn (seconds) to expiresAt (timestamp)
+        const expiresAt = Math.floor(Date.now() / 1000) + tokens.expiresIn;
+
+        const loginResponse: LoginResponse = {
+          user: userData,
+          restaurant: restaurantData,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt,
+        };
+
+        // Persist session to AsyncStorage for auto-login
+        await authStorageService.saveSession(loginResponse);
+
         console.log('[DUMMY AUTH] Login successful:', {
           userId: userData.id,
           role: userData.role,
           restaurant: restaurantData.name,
         });
 
-        return {
-          user: userData,
-          restaurant: restaurantData,
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          expiresIn: tokens.expiresIn,
-        };
+        return loginResponse;
       }
 
       // If not dummy credentials, proceed with real API call
       const response = await authApiClient.login(credentials);
-      
+
+      // Persist session from API response
+      await authStorageService.saveSession(response);
+
       if (__DEV__) {
         console.log('Login successful:', {
           userId: response.user.id,
@@ -72,7 +89,7 @@ export class CoreAuthService {
           restaurant: response.restaurant?.name,
         });
       }
-      
+
       return response;
     } catch (error: any) {
       console.error('Login failed:', error.message);
@@ -82,8 +99,17 @@ export class CoreAuthService {
 
   async logout(): Promise<void> {
     try {
-      await authApiClient.logout();
-      
+      // Clear stored session first
+      await authStorageService.clearSession();
+
+      // Then call API logout (may fail if no backend, but that's ok)
+      try {
+        await authApiClient.logout();
+      } catch (apiError) {
+        // Ignore API errors during logout - session is already cleared locally
+        console.log('[Auth] API logout skipped (local storage cleared)');
+      }
+
       if (__DEV__) {
         console.log('Logout successful');
       }
@@ -122,6 +148,15 @@ export class CoreAuthService {
 
   async validateToken(): Promise<boolean> {
     try {
+      // First check local storage for valid session
+      if (this.useLocalStorage) {
+        const hasValidSession = await authStorageService.hasValidSession();
+        if (hasValidSession) {
+          return true;
+        }
+      }
+
+      // Fall back to API validation
       return await authApiClient.validateToken();
     } catch (error: any) {
       console.error('Token validation failed:', error.message);
@@ -131,6 +166,15 @@ export class CoreAuthService {
 
   async isAuthenticated(): Promise<boolean> {
     try {
+      // First check local storage for valid session
+      if (this.useLocalStorage) {
+        const hasValidSession = await authStorageService.hasValidSession();
+        if (hasValidSession) {
+          return true;
+        }
+      }
+
+      // Fall back to API check
       return await authApiClient.isAuthenticated();
     } catch (error: any) {
       return false;

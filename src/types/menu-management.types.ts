@@ -42,6 +42,8 @@ export interface CreateCategoryRequest {
   description?: string;
   sort_order?: number;
   is_active?: boolean;
+  color?: string;
+  icon?: string;
 }
 
 export interface UpdateCategoryRequest {
@@ -49,6 +51,8 @@ export interface UpdateCategoryRequest {
   description?: string;
   sort_order?: number;
   is_active?: boolean;
+  color?: string;
+  icon?: string;
 }
 
 export interface CreateMenuItemRequest {
@@ -62,6 +66,8 @@ export interface CreateMenuItemRequest {
   preparation_time_minutes?: number;
   dietary_info?: string[];
   ingredients?: string[];
+  /** IDs of modifier groups to assign to this item */
+  modifier_group_ids?: string[];
 }
 
 export interface UpdateMenuItemRequest {
@@ -74,6 +80,8 @@ export interface UpdateMenuItemRequest {
   dietary_info?: string[];
   ingredients?: string[];
   category_id?: string;
+  /** IDs of modifier groups to assign to this item */
+  modifier_group_ids?: string[];
 }
 
 export interface BulkMenuOperation {

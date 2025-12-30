@@ -12,6 +12,7 @@ import {
   HelpSupportSettings,
 } from './components';
 import TableManagementSettingsContainer from './components/tableManagement';
+import MenuManagementSettingsContainer from './components/menuManagement';
 import { SettingsCategory } from '@/types/settings.types';
 import { useTheme } from '@/hooks/useTheme';
 import {
@@ -61,6 +62,12 @@ export default function SettingsScreen() {
       label: 'Table Management',
       icon: <Icon name="table-furniture" size={20} color={theme.colors.white} accessibilityLabel="Table management" />,
       iconBackground: theme.colors.success,
+    },
+    {
+      id: 'menu_management',
+      label: 'Menu Management',
+      icon: <Icon name="silverware-fork-knife" size={20} color={theme.colors.white} accessibilityLabel="Menu management" />,
+      iconBackground: theme.colors.warning,
     },
     {
       id: 'integrations',
@@ -146,6 +153,8 @@ export default function SettingsScreen() {
         return <PaymentConfigurationSettings onChangesDetected={setHasUnsavedChanges} />;
       case 'table_management':
         return <TableManagementSettingsContainer onChangesDetected={setHasUnsavedChanges} />;
+      case 'menu_management':
+        return <MenuManagementSettingsContainer onChangesDetected={setHasUnsavedChanges} />;
       case 'integrations':
         return <IntegrationsSettings onChangesDetected={setHasUnsavedChanges} />;
       case 'security_backup':
@@ -233,9 +242,9 @@ export default function SettingsScreen() {
             showTooltips={true}
           />
 
-          {/* CONTENT AREA - Table Management gets full space, others use AppleSettingsPanel */}
-          {activeCategory === 'table_management' ? (
-            // Table Management: Full-screen application-like interface (no header)
+          {/* CONTENT AREA - Table/Menu Management get full space, others use AppleSettingsPanel */}
+          {activeCategory === 'table_management' || activeCategory === 'menu_management' ? (
+            // Full-screen application-like interface (no header)
             <View style={{ flex: 1, backgroundColor: theme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>
               {renderCategoryContent()}
             </View>
