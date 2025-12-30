@@ -1,39 +1,42 @@
-import { 
-  LoginRequest, 
-  LoginResponse, 
+import {
+  LoginRequest,
+  LoginResponse,
   RefreshTokenResponse,
   User,
   Restaurant,
-  UserRole 
+  UserRole
 } from '@/types';
-import { 
+import {
   IAuthService,
   RegisterUserRequest,
-  UpdateProfileRequest, 
+  UpdateProfileRequest,
   UpdatePasswordRequest
 } from '@/interfaces';
 import { SessionInfo } from '@/types/api.types';
-import { 
-  DUMMY_CREDENTIALS, 
-  DUMMY_RESTAURANTS, 
+import {
+  DUMMY_CREDENTIALS,
+  DUMMY_RESTAURANTS,
   findUserByCredentials,
   getRestaurantsForSuperadmin,
   generateDummyTokens,
   DummyUser
 } from '@/constants/dummyData';
+import { authStorageService, AuthSession } from '@/services/storage';
 
 // TODO: Remove this dummy service when backend is integrated
 export class DummyAuthService implements IAuthService {
   private currentUser: DummyUser | null = null;
+  private cachedSession: AuthSession | null = null;
+  private isInitialized = false;
 
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const { identifier, password, isStaffLogin } = credentials;
-    
+
     const user = findUserByCredentials(identifier, password, isStaffLogin);
-    
+
     if (!user) {
       throw new Error('Invalid credentials. Please check your login details.');
     }
@@ -65,59 +68,85 @@ export class DummyAuthService implements IAuthService {
       is_active: true,
     };
 
-    return {
+    // Convert expiresIn (seconds) to expiresAt (timestamp)
+    const expiresAt = Math.floor(Date.now() / 1000) + tokens.expiresIn;
+
+    const loginResponse: LoginResponse = {
       user: userData,
       restaurant,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      expiresIn: tokens.expiresIn,
+      expiresAt,
     };
+
+    // Persist session to AsyncStorage for auto-login
+    await authStorageService.saveSession(loginResponse);
+    this.cachedSession = await authStorageService.getSession();
+
+    return loginResponse;
   }
 
   async logout(): Promise<void> {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
     this.currentUser = null;
+    this.cachedSession = null;
+
+    // Clear persisted session from AsyncStorage
+    await authStorageService.clearSession();
   }
 
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     if (!this.currentUser) {
       throw new Error('No active session');
     }
 
     const tokens = generateDummyTokens(this.currentUser);
-    
+
+    // Convert expiresIn (seconds) to expiresAt (timestamp)
+    const expiresAt = Math.floor(Date.now() / 1000) + tokens.expiresIn;
+
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      expiresIn: tokens.expiresIn,
+      expiresAt,
     };
   }
 
   async getProfile(): Promise<User> {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    if (!this.currentUser) {
-      throw new Error('User not authenticated');
+
+    // First check in-memory user
+    if (this.currentUser) {
+      return {
+        id: this.currentUser.id,
+        first_name: this.currentUser.name.split(' ')[0] || this.currentUser.name,
+        last_name: this.currentUser.name.split(' ')[1] || '',
+        email: this.currentUser.email || '',
+        phone_number: '+1234567890', // Mock phone number
+        role: this.currentUser.role,
+        employee_id: this.currentUser.employeeId,
+        default_restaurant_id: this.currentUser.restaurantId,
+        is_active: this.currentUser.isActive,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
     }
 
-    return {
-      id: this.currentUser.id,
-      first_name: this.currentUser.name.split(' ')[0] || this.currentUser.name,
-      last_name: this.currentUser.name.split(' ')[1] || '',
-      email: this.currentUser.email || '',
-      phone_number: '+1234567890', // Mock phone number
-      role: this.currentUser.role,
-      employee_id: this.currentUser.employeeId,
-      default_restaurant_id: this.currentUser.restaurantId,
-      is_active: this.currentUser.isActive,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    // Then check cached session from storage
+    if (!this.cachedSession) {
+      this.cachedSession = await authStorageService.getSession();
+    }
+
+    if (this.cachedSession) {
+      return this.cachedSession.user;
+    }
+
+    throw new Error('User not authenticated');
   }
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
@@ -175,15 +204,38 @@ export class DummyAuthService implements IAuthService {
 
   async validateToken(): Promise<boolean> {
     try {
-      await this.getProfile();
-      return true;
+      // Check for valid stored session
+      const hasValidSession = await authStorageService.hasValidSession();
+      if (hasValidSession) {
+        return true;
+      }
+
+      // Fallback to checking in-memory user
+      if (this.currentUser) {
+        return true;
+      }
+
+      return false;
     } catch (error) {
       return false;
     }
   }
 
   async isAuthenticated(): Promise<boolean> {
-    return this.currentUser !== null;
+    // First check in-memory user
+    if (this.currentUser !== null) {
+      return true;
+    }
+
+    // Then check if we have a valid stored session
+    const hasValidSession = await authStorageService.hasValidSession();
+
+    if (hasValidSession && !this.cachedSession) {
+      // Load session into memory
+      this.cachedSession = await authStorageService.getSession();
+    }
+
+    return hasValidSession;
   }
 
   async register(userData: RegisterUserRequest): Promise<User> {

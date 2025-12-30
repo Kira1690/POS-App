@@ -307,6 +307,7 @@ export type SettingsCategory =
   | 'device_hardware'
   | 'payment_config'
   | 'table_management'
+  | 'menu_management'
   | 'integrations'
   | 'security_backup'
   | 'system_logs'

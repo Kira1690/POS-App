@@ -37,10 +37,10 @@ export class MockMenuManagementService {
       created_at: '2025-07-20T00:00:00Z',
       updated_at: '2025-09-23T10:30:00Z',
       stats: {
-        itemCount: 12,
-        todayRevenue: 1250.50,
-        avgPrice: 8.75,
-        popularItems: ['Coffee', 'Fresh Juice', 'Smoothie'],
+        itemCount: 2, // Actual items: Fresh Coffee, Fresh Orange Juice
+        todayRevenue: 0,
+        avgPrice: 5.38,
+        popularItems: ['Coffee', 'Fresh Juice'],
         lastUpdated: '2025-09-23T10:30:00Z',
       },
     },
@@ -54,10 +54,10 @@ export class MockMenuManagementService {
       created_at: '2025-07-20T00:00:00Z',
       updated_at: '2025-09-23T09:15:00Z',
       stats: {
-        itemCount: 18,
-        todayRevenue: 2890.75,
-        avgPrice: 16.50,
-        popularItems: ['Fried Rice', 'Chow Mein', 'Sweet & Sour'],
+        itemCount: 1, // Actual items: Chicken Fried Rice
+        todayRevenue: 0,
+        avgPrice: 14.75,
+        popularItems: ['Fried Rice'],
         lastUpdated: '2025-09-23T09:15:00Z',
       },
     },
@@ -71,9 +71,9 @@ export class MockMenuManagementService {
       created_at: '2025-07-20T00:00:00Z',
       updated_at: '2025-09-22T16:45:00Z',
       stats: {
-        itemCount: 22,
+        itemCount: 0, // No items yet
         todayRevenue: 0,
-        avgPrice: 18.25,
+        avgPrice: 0,
         popularItems: [],
         lastUpdated: '2025-09-22T16:45:00Z',
       },
@@ -88,10 +88,10 @@ export class MockMenuManagementService {
       created_at: '2025-07-20T00:00:00Z',
       updated_at: '2025-09-23T11:20:00Z',
       stats: {
-        itemCount: 16,
-        todayRevenue: 1850.25,
-        avgPrice: 14.75,
-        popularItems: ['Dal Tadka', 'Paneer Butter', 'Veggie Curry'],
+        itemCount: 0, // No items yet
+        todayRevenue: 0,
+        avgPrice: 0,
+        popularItems: [],
         lastUpdated: '2025-09-23T11:20:00Z',
       },
     },
@@ -105,10 +105,10 @@ export class MockMenuManagementService {
       created_at: '2025-07-20T00:00:00Z',
       updated_at: '2025-09-23T12:00:00Z',
       stats: {
-        itemCount: 8,
-        todayRevenue: 420.75,
-        avgPrice: 7.25,
-        popularItems: ['Ice Cream', 'Chocolate Cake', 'Fruit Salad'],
+        itemCount: 0, // No items yet
+        todayRevenue: 0,
+        avgPrice: 0,
+        popularItems: [],
         lastUpdated: '2025-09-23T12:00:00Z',
       },
     },

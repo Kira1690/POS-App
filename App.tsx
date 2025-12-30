@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import { RootNavigator } from '@/navigation';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { AuthProvider } from '@/context/auth';
+import { MenuProvider } from '@/context/menu';
 
 export default function App() {
   return (
@@ -15,10 +16,12 @@ export default function App() {
       <SafeAreaProvider>
         <ThemeProvider>
           <AuthProvider>
-            <NavigationContainer>
-              <RootNavigator />
-              <StatusBar style="auto" />
-            </NavigationContainer>
+            <MenuProvider>
+              <NavigationContainer>
+                <RootNavigator />
+                <StatusBar style="auto" />
+              </NavigationContainer>
+            </MenuProvider>
           </AuthProvider>
         </ThemeProvider>
       </SafeAreaProvider>

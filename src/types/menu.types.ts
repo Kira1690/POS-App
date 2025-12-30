@@ -6,6 +6,8 @@ export interface MenuCategory extends BaseEntity {
   description?: string;
   sort_order: number;
   is_active: boolean;
+  color?: string;
+  icon?: string;
 }
 
 export interface MenuItem extends BaseEntity {

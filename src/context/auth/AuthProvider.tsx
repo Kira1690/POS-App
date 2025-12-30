@@ -8,6 +8,7 @@ import { AuthServiceClass } from '@/services/auth';
 import { IAuthService, IAuthContext, UpdateProfileRequest } from '@/interfaces';
 import { User, UserRole, Restaurant, LoginRequest } from '@/types';
 import { showToast } from '@/utils/toast';
+import { authStorageService } from '@/services/storage';
 import AuthContext from './AuthContext';
 import { authReducer, initialAuthState } from './AuthReducer';
 import { createAuthActions } from './AuthActions';
@@ -30,24 +31,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   const authServiceToUse = injectedAuthService || defaultAuthService;
   const actions = createAuthActions(authServiceToUse, dispatch);
 
-  // Initialize auth on app start
+  // Initialize auth on app start - restore full session from storage
   const initializeAuth = useCallback(async () => {
     dispatch({ type: 'AUTH_INITIALIZE_START' });
-    
+
     try {
+      // Debug: Check what's in storage
+      const storedSession = await authStorageService.getSession();
+      console.log('[Auth Init] Stored session:', storedSession ? {
+        hasUser: !!storedSession.user,
+        hasRestaurant: !!storedSession.restaurant,
+        expiresAt: storedSession.expiresAt,
+        isExpired: new Date(storedSession.expiresAt) < new Date(),
+      } : 'No session found');
+
       const isAuthenticated = await authServiceToUse.isAuthenticated();
-      
+      console.log('[Auth Init] isAuthenticated:', isAuthenticated);
+
       if (isAuthenticated) {
-        const user = await authServiceToUse.getProfile();
-        dispatch({ 
-          type: 'AUTH_INITIALIZE_SUCCESS', 
-          payload: { user } 
-        });
+        // Get full session including restaurant from storage
+        const session = await authStorageService.getSession();
+
+        if (session) {
+          console.log('[Auth Init] Restoring session for user:', session.user?.email);
+          dispatch({
+            type: 'AUTH_INITIALIZE_SUCCESS',
+            payload: {
+              user: session.user,
+              restaurant: session.restaurant
+            }
+          });
+        } else {
+          // Session validation passed but data missing - fallback to separate fetches
+          console.log('[Auth Init] Session missing, falling back to profile fetch');
+          const user = await authServiceToUse.getProfile();
+          const restaurant = await authStorageService.getRestaurant();
+          dispatch({
+            type: 'AUTH_INITIALIZE_SUCCESS',
+            payload: { user, restaurant: restaurant ?? undefined }
+          });
+        }
       } else {
+        console.log('[Auth Init] Not authenticated, showing login');
         dispatch({ type: 'AUTH_INITIALIZE_FAILURE' });
       }
     } catch (error: any) {
-      console.error('Auth initialization failed:', error.message);
+      console.error('[Auth Init] Failed:', error.message);
       dispatch({ type: 'AUTH_INITIALIZE_FAILURE' });
     }
   }, [authServiceToUse]);
