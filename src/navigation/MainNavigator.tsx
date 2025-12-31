@@ -20,15 +20,21 @@ import POSOrderScreen from '@/screens/orders/POSOrderScreen';
 import OrderManagementScreen from '@/screens/orders/OrderManagementScreen';
 import OrderDetailsScreen from '@/screens/orders/OrderDetailsScreen';
 import KitchenDisplayScreen from '@/screens/orders/KitchenDisplayScreen';
+// Enhanced ordering screen
+import OrderingScreen from '@/screens/orders/OrderingScreen';
 // Direct imports for payment screens
 import PaymentProcessingScreen from '@/screens/payment/PaymentProcessingScreen';
 import PaymentConfirmationScreen from '@/screens/payment/PaymentConfirmationScreen';
+// Billing screens
+import BillScreen from '@/screens/billing/BillScreen';
 // Import actual Settings screen
 import SettingsScreen from '@/screens/settings/SettingsScreen';
 import { TableProvider } from '@/context/table';
-import { OrderProvider } from '@/context/order';
+import { OrderProvider, EnhancedOrderProvider } from '@/context/order';
 import { OrderManagementProvider } from '@/context/orderManagement';
 import { PaymentProvider } from '@/context/payment';
+import { BillSplitProvider } from '@/context/billing';
+import { EnhancedKitchenProvider } from '@/context/kitchen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const TablesStack = createStackNavigator<TablesStackParamList>();
@@ -60,59 +66,71 @@ const TablesStackNavigator = () => (
 // Orders Stack Navigator - Professional order management
 const OrdersStackNavigator = () => (
   <PaymentProvider>
-    <OrderProvider>
-      <OrderManagementProvider>
-        <OrdersStack.Navigator
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <OrdersStack.Screen 
-            name="OrderManagement" 
-            component={OrderManagementScreen} 
-          />
-          <OrdersStack.Screen 
-            name="OrderDetails" 
-            component={OrderDetailsScreen}
-          />
-          <OrdersStack.Screen 
-            name="POSOrder" 
-            component={POSOrderScreen}
-          />
-          <OrdersStack.Screen 
-            name="PaymentProcessing" 
-            component={PaymentProcessingScreen}
-          />
-          <OrdersStack.Screen 
-            name="PaymentConfirmation" 
-            component={PaymentConfirmationScreen}
-          />
-        </OrdersStack.Navigator>
-      </OrderManagementProvider>
-    </OrderProvider>
+    <EnhancedOrderProvider>
+      <BillSplitProvider>
+        <OrderManagementProvider>
+          <OrdersStack.Navigator
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <OrdersStack.Screen
+              name="OrderManagement"
+              component={OrderManagementScreen}
+            />
+            <OrdersStack.Screen
+              name="OrderDetails"
+              component={OrderDetailsScreen}
+            />
+            <OrdersStack.Screen
+              name="POSOrder"
+              component={POSOrderScreen}
+            />
+            <OrdersStack.Screen
+              name="Ordering"
+              component={OrderingScreen}
+            />
+            <OrdersStack.Screen
+              name="Bill"
+              component={BillScreen}
+            />
+            <OrdersStack.Screen
+              name="PaymentProcessing"
+              component={PaymentProcessingScreen}
+            />
+            <OrdersStack.Screen
+              name="PaymentConfirmation"
+              component={PaymentConfirmationScreen}
+            />
+          </OrdersStack.Navigator>
+        </OrderManagementProvider>
+      </BillSplitProvider>
+    </EnhancedOrderProvider>
   </PaymentProvider>
 );
 
 // Kitchen Stack Navigator - Kitchen operations
 const KitchenStackNavigator = () => (
-  <OrderProvider>
-    <OrderManagementProvider>
-      <KitchenStack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <KitchenStack.Screen 
-          name="KitchenDisplay" 
-          component={KitchenDisplayScreen} 
-        />
-        <KitchenStack.Screen 
-          name="OrderDetails" 
-          component={OrderDetailsScreen}
-        />
-      </KitchenStack.Navigator>
-    </OrderManagementProvider>
-  </OrderProvider>
+  <EnhancedOrderProvider>
+    <EnhancedKitchenProvider>
+      <OrderManagementProvider>
+        <KitchenStack.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <KitchenStack.Screen
+            name="KitchenDisplay"
+            component={KitchenDisplayScreen}
+          />
+          <KitchenStack.Screen
+            name="OrderDetails"
+            component={OrderDetailsScreen}
+          />
+        </KitchenStack.Navigator>
+      </OrderManagementProvider>
+    </EnhancedKitchenProvider>
+  </EnhancedOrderProvider>
 );
 
 // Dashboard with Provider wrapper

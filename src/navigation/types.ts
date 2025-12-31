@@ -77,20 +77,54 @@ export type OrdersStackParamList = {
       notes?: string;
     };
   };
+  // Enhanced ordering screen with 3-panel layout
+  Ordering: {
+    tableId: string;
+    tableName: string;
+    guestCount?: number;
+    existingOrderId?: string;
+  };
+  // Bill screen with splitting options
+  Bill: {
+    orderId: string;
+  };
+  // Bill split screen
+  BillSplit: {
+    orderId: string;
+    splitType: 'equal' | 'by_items' | 'by_payment_method';
+    guestCount?: number;
+  };
   PaymentProcessing: {
     order: any;
     orderId: string;
+    splitId?: string;
+    guestIndex?: number;
   };
   PaymentConfirmation: {
     payment: any;
     order: any;
     orderId: string;
+    splitId?: string;
+  };
+  // Receipt screen
+  Receipt: {
+    orderId: string;
+    paymentId: string;
+    receiptId?: string;
   };
 };
 
 // Kitchen operations stack
 export type KitchenStackParamList = {
   KitchenDisplay: undefined;
+  // Enhanced Kanban-style kitchen display
+  KitchenKanban: {
+    station?: 'hot_kitchen' | 'cold_kitchen' | 'grill' | 'desserts' | 'beverages' | 'bar';
+  };
+  // Ticket details view
+  TicketDetails: {
+    ticketId: string;
+  };
   OrderDetails: {
     orderId: string;
   };
@@ -106,3 +140,13 @@ declare global {
 export type OrderDetailsScreenParams = OrdersStackParamList['OrderDetails'];
 export type POSOrderScreenParams = OrdersStackParamList['POSOrder'];
 export type TablePOSOrderScreenParams = TablesStackParamList['POSOrder'];
+
+// Enhanced Order Management screen params
+export type OrderingScreenParams = OrdersStackParamList['Ordering'];
+export type BillScreenParams = OrdersStackParamList['Bill'];
+export type BillSplitScreenParams = OrdersStackParamList['BillSplit'];
+export type ReceiptScreenParams = OrdersStackParamList['Receipt'];
+
+// Kitchen screen params
+export type KitchenKanbanScreenParams = KitchenStackParamList['KitchenKanban'];
+export type TicketDetailsScreenParams = KitchenStackParamList['TicketDetails'];

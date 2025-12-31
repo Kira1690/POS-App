@@ -1,0 +1,500 @@
+/**
+ * EnhancedKitchenContext - Ticket-based kitchen display management
+ * Provides real-time ticket updates, filtering, and station management
+ */
+
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  useEffect,
+  useRef,
+  ReactNode,
+  useMemo,
+} from 'react';
+import {
+  kitchenReducer,
+  initialKitchenState,
+  KitchenState,
+  KitchenAction,
+} from './kitchenReducer';
+import {
+  KitchenTicket,
+  TicketStatus,
+  KitchenStation,
+  DEFAULT_STATION_CONFIGS,
+} from '@/types/kitchen-ticket.types';
+import { kitchenStorageService } from '@/services/storage';
+import { ticketRoutingService } from '@/services/kitchen/TicketRoutingService';
+
+// ============== CONTEXT VALUE TYPE ==============
+
+export interface EnhancedKitchenContextValue {
+  // State
+  state: KitchenState;
+
+  // Actions
+  loadTickets: () => Promise<void>;
+  refreshTickets: () => Promise<void>;
+  addTicket: (ticket: KitchenTicket) => void;
+  addTickets: (tickets: KitchenTicket[]) => void;
+  updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
+  updateItemStatus: (ticketId: string, itemId: string, status: string) => Promise<void>;
+  removeTicket: (ticketId: string) => Promise<void>;
+  bumpTicket: (ticketId: string) => Promise<void>;
+  recallTicket: (ticketId: string) => Promise<void>;
+
+  // Filters
+  setSelectedStation: (station: KitchenStation | 'all') => void;
+  setSelectedStatus: (status: TicketStatus | 'active' | 'all') => void;
+  setSearchQuery: (query: string) => void;
+  toggleAllergenFilter: () => void;
+  toggleOverdueFilter: () => void;
+  clearFilters: () => void;
+
+  // View settings
+  setViewMode: (mode: 'kanban' | 'list' | 'grid') => void;
+  setSortBy: (sortBy: 'time' | 'priority' | 'table') => void;
+  setAutoRefresh: (enabled: boolean) => void;
+
+  // Selection
+  selectTicket: (ticketId: string | null) => void;
+
+  // Computed values
+  filteredTickets: KitchenTicket[];
+  sortedTickets: KitchenTicket[];
+  selectedTicket: KitchenTicket | null;
+}
+
+// ============== CONTEXT ==============
+
+const EnhancedKitchenContext = createContext<EnhancedKitchenContextValue | undefined>(undefined);
+
+// ============== PROVIDER ==============
+
+interface EnhancedKitchenProviderProps {
+  children: ReactNode;
+}
+
+export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = ({ children }) => {
+  const [state, dispatch] = useReducer(kitchenReducer, initialKitchenState);
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load tickets from storage
+  const loadTickets = useCallback(async () => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+
+      await kitchenStorageService.initialize();
+      const tickets = await kitchenStorageService.getActiveTickets();
+      const stationConfigs = await kitchenStorageService.getStationConfigs();
+
+      dispatch({ type: 'SET_TICKETS', payload: tickets });
+      dispatch({ type: 'SET_STATION_CONFIGS', payload: stationConfigs || DEFAULT_STATION_CONFIGS });
+      dispatch({ type: 'SET_ERROR', payload: null });
+    } catch (error) {
+      console.error('[EnhancedKitchenContext] Load error:', error);
+      dispatch({ type: 'SET_ERROR', payload: String(error) });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, []);
+
+  // Refresh tickets
+  const refreshTickets = useCallback(async () => {
+    try {
+      dispatch({ type: 'SET_REFRESHING', payload: true });
+
+      const tickets = await kitchenStorageService.getActiveTickets();
+      dispatch({ type: 'SET_TICKETS', payload: tickets });
+      dispatch({ type: 'MARK_TICKETS_OVERDUE' });
+    } catch (error) {
+      console.error('[EnhancedKitchenContext] Refresh error:', error);
+    } finally {
+      dispatch({ type: 'SET_REFRESHING', payload: false });
+    }
+  }, []);
+
+  // Add single ticket
+  const addTicket = useCallback(async (ticket: KitchenTicket) => {
+    try {
+      await kitchenStorageService.saveTicket(ticket);
+      dispatch({ type: 'ADD_TICKET', payload: ticket });
+    } catch (error) {
+      console.error('[EnhancedKitchenContext] Add ticket error:', error);
+      dispatch({ type: 'SET_ERROR', payload: String(error) });
+    }
+  }, []);
+
+  // Add multiple tickets
+  const addTickets = useCallback(async (tickets: KitchenTicket[]) => {
+    try {
+      await Promise.all(tickets.map((t) => kitchenStorageService.saveTicket(t)));
+      dispatch({ type: 'ADD_TICKETS', payload: tickets });
+    } catch (error) {
+      console.error('[EnhancedKitchenContext] Add tickets error:', error);
+      dispatch({ type: 'SET_ERROR', payload: String(error) });
+    }
+  }, []);
+
+  // Update ticket status
+  const updateTicketStatus = useCallback(
+    async (ticketId: string, status: TicketStatus) => {
+      try {
+        const ticket = state.tickets.find((t) => t.id === ticketId);
+        if (!ticket) return;
+
+        const now = new Date();
+        const updates: Partial<KitchenTicket> = {
+          status,
+          updatedAt: now.toISOString(),
+        };
+
+        if (status === 'preparing' && !ticket.startedAt) {
+          updates.startedAt = now.toISOString();
+        }
+        if (status === 'ready' && !ticket.completedAt) {
+          updates.completedAt = now.toISOString();
+        }
+        if (status === 'served' && !ticket.servedAt) {
+          updates.servedAt = now.toISOString();
+        }
+
+        await kitchenStorageService.updateTicket(ticketId, updates);
+        dispatch({ type: 'UPDATE_TICKET_STATUS', payload: { ticketId, status } });
+      } catch (error) {
+        console.error('[EnhancedKitchenContext] Update status error:', error);
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+      }
+    },
+    [state.tickets]
+  );
+
+  // Update item status within a ticket
+  const updateItemStatus = useCallback(
+    async (ticketId: string, itemId: string, status: string) => {
+      try {
+        const ticket = state.tickets.find((t) => t.id === ticketId);
+        if (!ticket) return;
+
+        const updatedItems = ticket.items.map((item) =>
+          item.id === itemId ? { ...item, status: status as any } : item
+        );
+
+        await kitchenStorageService.updateTicket(ticketId, { items: updatedItems });
+        dispatch({ type: 'UPDATE_ITEM_STATUS', payload: { ticketId, itemId, status } });
+      } catch (error) {
+        console.error('[EnhancedKitchenContext] Update item status error:', error);
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+      }
+    },
+    [state.tickets]
+  );
+
+  // Remove ticket
+  const removeTicket = useCallback(async (ticketId: string) => {
+    try {
+      await kitchenStorageService.deleteTicket(ticketId);
+      dispatch({ type: 'REMOVE_TICKET', payload: ticketId });
+    } catch (error) {
+      console.error('[EnhancedKitchenContext] Remove ticket error:', error);
+      dispatch({ type: 'SET_ERROR', payload: String(error) });
+    }
+  }, []);
+
+  // Bump ticket (advance to next status)
+  const bumpTicket = useCallback(
+    async (ticketId: string) => {
+      const ticket = state.tickets.find((t) => t.id === ticketId);
+      if (!ticket) return;
+
+      const statusFlow: Record<TicketStatus, TicketStatus | null> = {
+        pending: 'preparing',
+        preparing: 'ready',
+        ready: 'served',
+        served: null,
+        cancelled: null,
+      };
+
+      const nextStatus = statusFlow[ticket.status];
+      if (nextStatus) {
+        await updateTicketStatus(ticketId, nextStatus);
+      }
+    },
+    [state.tickets, updateTicketStatus]
+  );
+
+  // Recall ticket (go back to previous status)
+  const recallTicket = useCallback(
+    async (ticketId: string) => {
+      const ticket = state.tickets.find((t) => t.id === ticketId);
+      if (!ticket) return;
+
+      const statusFlow: Record<TicketStatus, TicketStatus | null> = {
+        pending: null,
+        preparing: 'pending',
+        ready: 'preparing',
+        served: 'ready',
+        cancelled: null,
+      };
+
+      const prevStatus = statusFlow[ticket.status];
+      if (prevStatus) {
+        await updateTicketStatus(ticketId, prevStatus);
+      }
+    },
+    [state.tickets, updateTicketStatus]
+  );
+
+  // Filter setters
+  const setSelectedStation = useCallback((station: KitchenStation | 'all') => {
+    dispatch({ type: 'SET_SELECTED_STATION', payload: station });
+  }, []);
+
+  const setSelectedStatus = useCallback((status: TicketStatus | 'active' | 'all') => {
+    dispatch({ type: 'SET_SELECTED_STATUS', payload: status });
+  }, []);
+
+  const setSearchQuery = useCallback((query: string) => {
+    dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
+  }, []);
+
+  const toggleAllergenFilter = useCallback(() => {
+    dispatch({ type: 'TOGGLE_ALLERGEN_FILTER' });
+  }, []);
+
+  const toggleOverdueFilter = useCallback(() => {
+    dispatch({ type: 'TOGGLE_OVERDUE_FILTER' });
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    dispatch({ type: 'CLEAR_FILTERS' });
+  }, []);
+
+  // View settings
+  const setViewMode = useCallback((mode: 'kanban' | 'list' | 'grid') => {
+    dispatch({ type: 'SET_VIEW_MODE', payload: mode });
+  }, []);
+
+  const setSortBy = useCallback((sortBy: 'time' | 'priority' | 'table') => {
+    dispatch({ type: 'SET_SORT_BY', payload: sortBy });
+  }, []);
+
+  const setAutoRefresh = useCallback((enabled: boolean) => {
+    dispatch({ type: 'SET_AUTO_REFRESH', payload: enabled });
+  }, []);
+
+  // Selection
+  const selectTicket = useCallback((ticketId: string | null) => {
+    dispatch({ type: 'SET_SELECTED_TICKET', payload: ticketId });
+  }, []);
+
+  // Computed: filtered tickets
+  const filteredTickets = useMemo(() => {
+    let tickets = [...state.tickets];
+
+    // Filter by station
+    if (state.selectedStation !== 'all') {
+      tickets = tickets.filter((t) => t.station === state.selectedStation);
+    }
+
+    // Filter by status
+    if (state.selectedStatus === 'active') {
+      tickets = tickets.filter(
+        (t) => t.status !== 'served' && t.status !== 'cancelled'
+      );
+    } else if (state.selectedStatus !== 'all') {
+      tickets = tickets.filter((t) => t.status === state.selectedStatus);
+    }
+
+    // Filter by search query
+    if (state.searchQuery) {
+      const query = state.searchQuery.toLowerCase();
+      tickets = tickets.filter(
+        (t) =>
+          t.orderNumber.toLowerCase().includes(query) ||
+          t.tableName.toLowerCase().includes(query) ||
+          t.items.some((item) => item.name.toLowerCase().includes(query))
+      );
+    }
+
+    // Filter by allergens
+    if (state.showOnlyAllergens) {
+      tickets = tickets.filter((t) => t.hasAllergens);
+    }
+
+    // Filter by overdue
+    if (state.showOnlyOverdue) {
+      tickets = tickets.filter((t) => t.isOverdue);
+    }
+
+    return tickets;
+  }, [
+    state.tickets,
+    state.selectedStation,
+    state.selectedStatus,
+    state.searchQuery,
+    state.showOnlyAllergens,
+    state.showOnlyOverdue,
+  ]);
+
+  // Computed: sorted tickets
+  const sortedTickets = useMemo(() => {
+    const tickets = [...filteredTickets];
+
+    switch (state.sortBy) {
+      case 'priority':
+        return ticketRoutingService.sortTicketsByPriority(tickets);
+
+      case 'time':
+        return tickets.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+
+      case 'table':
+        return tickets.sort((a, b) => a.tableName.localeCompare(b.tableName));
+
+      default:
+        return tickets;
+    }
+  }, [filteredTickets, state.sortBy]);
+
+  // Computed: selected ticket
+  const selectedTicket = useMemo(() => {
+    if (!state.selectedTicketId) return null;
+    return state.tickets.find((t) => t.id === state.selectedTicketId) || null;
+  }, [state.tickets, state.selectedTicketId]);
+
+  // Initialize on mount
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
+
+  // Auto-refresh
+  useEffect(() => {
+    if (state.autoRefresh) {
+      intervalRef.current = setInterval(() => {
+        refreshTickets();
+      }, state.refreshInterval);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [state.autoRefresh, state.refreshInterval, refreshTickets]);
+
+  // Mark overdue tickets periodically
+  useEffect(() => {
+    const overdueCheck = setInterval(() => {
+      dispatch({ type: 'MARK_TICKETS_OVERDUE' });
+    }, 60000); // Check every minute
+
+    return () => clearInterval(overdueCheck);
+  }, []);
+
+  // Context value
+  const contextValue: EnhancedKitchenContextValue = {
+    state,
+    loadTickets,
+    refreshTickets,
+    addTicket,
+    addTickets,
+    updateTicketStatus,
+    updateItemStatus,
+    removeTicket,
+    bumpTicket,
+    recallTicket,
+    setSelectedStation,
+    setSelectedStatus,
+    setSearchQuery,
+    toggleAllergenFilter,
+    toggleOverdueFilter,
+    clearFilters,
+    setViewMode,
+    setSortBy,
+    setAutoRefresh,
+    selectTicket,
+    filteredTickets,
+    sortedTickets,
+    selectedTicket,
+  };
+
+  return (
+    <EnhancedKitchenContext.Provider value={contextValue}>
+      {children}
+    </EnhancedKitchenContext.Provider>
+  );
+};
+
+// ============== HOOKS ==============
+
+export const useEnhancedKitchen = (): EnhancedKitchenContextValue => {
+  const context = useContext(EnhancedKitchenContext);
+  if (context === undefined) {
+    throw new Error('useEnhancedKitchen must be used within an EnhancedKitchenProvider');
+  }
+  return context;
+};
+
+// Convenience hooks
+export const useKitchenTickets = () => {
+  const { state, sortedTickets, filteredTickets } = useEnhancedKitchen();
+  return {
+    tickets: state.tickets,
+    sortedTickets,
+    filteredTickets,
+    ticketsByStation: state.ticketsByStation,
+    ticketsByStatus: state.ticketsByStatus,
+    stats: state.stats,
+    isLoading: state.isLoading,
+  };
+};
+
+export const useKitchenFilters = () => {
+  const {
+    state,
+    setSelectedStation,
+    setSelectedStatus,
+    setSearchQuery,
+    toggleAllergenFilter,
+    toggleOverdueFilter,
+    clearFilters,
+  } = useEnhancedKitchen();
+
+  return {
+    selectedStation: state.selectedStation,
+    selectedStatus: state.selectedStatus,
+    searchQuery: state.searchQuery,
+    showOnlyAllergens: state.showOnlyAllergens,
+    showOnlyOverdue: state.showOnlyOverdue,
+    setSelectedStation,
+    setSelectedStatus,
+    setSearchQuery,
+    toggleAllergenFilter,
+    toggleOverdueFilter,
+    clearFilters,
+  };
+};
+
+export const useKitchenActions = () => {
+  const {
+    updateTicketStatus,
+    updateItemStatus,
+    bumpTicket,
+    recallTicket,
+    refreshTickets,
+  } = useEnhancedKitchen();
+
+  return {
+    updateTicketStatus,
+    updateItemStatus,
+    bumpTicket,
+    recallTicket,
+    refreshTickets,
+  };
+};
