@@ -25,6 +25,30 @@ export const STORAGE_KEYS = {
 
   // Settings keys
   SETTINGS_PREFERENCES: '@pos_settings_preferences',
+
+  // Order Management keys
+  ORDERS: '@pos_orders',
+  ACTIVE_ORDERS: '@pos_active_orders',
+  ORDER_HISTORY: '@pos_order_history',
+  ORDER_DRAFTS: '@pos_order_drafts',
+  ORDER_LAST_SYNC: '@pos_order_last_sync',
+
+  // Kitchen Ticket keys
+  KITCHEN_TICKETS: '@pos_kitchen_tickets',
+  KITCHEN_STATION_CONFIG: '@pos_kitchen_station_config',
+  KITCHEN_LAST_SYNC: '@pos_kitchen_last_sync',
+
+  // Payment keys
+  PENDING_PAYMENTS: '@pos_pending_payments',
+  PAYMENT_HISTORY: '@pos_payment_history',
+  SPLIT_BILLS: '@pos_split_bills',
+  RECEIPTS: '@pos_receipts',
+  PAYMENT_LAST_SYNC: '@pos_payment_last_sync',
+
+  // Sync Queue keys
+  SYNC_QUEUE: '@pos_sync_queue',
+  LAST_SYNC_TIME: '@pos_last_sync_time',
+  SYNC_ERRORS: '@pos_sync_errors',
 } as const;
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];

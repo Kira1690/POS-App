@@ -22,3 +22,17 @@ export {
   menuStorageService,
   type MenuStorageData,
 } from './MenuStorageService';
+
+// Order Management Storage Services
+export { orderStorageService } from './OrderStorageService';
+export { kitchenStorageService } from './KitchenStorageService';
+export { paymentStorageService } from './PaymentStorageService';
+export {
+  syncQueueService,
+  type SyncQueueItem,
+  type SyncEntityType,
+  type SyncOperationType,
+  type SyncItemStatus,
+  type SyncError,
+  type SyncStats,
+} from './SyncQueueService';
