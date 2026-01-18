@@ -20,15 +20,17 @@ interface OrderStatusBadgeProps {
 
 const getStatusConfig = (status: OrderStatus, theme: any) => {
   // Defensive: fallback if theme or theme.colors.status doesn't exist
+  // Using distinct colors for each status - matching theme.ts and colors.ts
+  // CONFIRMED=Green, PREPARING=Purple, READY=Cyan for easy visual distinction
   const statusColors = theme?.colors?.status || {
-    pending: { bg: '#FFF8E1', text: '#E65100', border: '#FFB74D' },
-    confirmed: { bg: '#E8F5E9', text: '#2E7D32', border: '#81C784' },
-    preparing: { bg: '#E3F2FD', text: '#1565C0', border: '#64B5F6' },
-    ready: { bg: '#F3E5F5', text: '#7B1FA2', border: '#BA68C8' },
-    served: { bg: '#E0F7FA', text: '#00838F', border: '#4DD0E1' },
-    cancelled: { bg: '#FFEBEE', text: '#C62828', border: '#EF9A9A' },
-    paid: { bg: '#E8F5E9', text: '#1B5E20', border: '#66BB6A' },
-    completed: { bg: '#E8F5E9', text: '#1B5E20', border: '#66BB6A' },
+    pending: { bg: '#FFF3E0', text: '#E65100', border: '#FF9800' },      // Orange - waiting
+    confirmed: { bg: '#E8F5E9', text: '#2E7D32', border: '#4CAF50' },    // GREEN - accepted (distinct from Ready)
+    preparing: { bg: '#F3E5F5', text: '#7B1FA2', border: '#AB47BC' },    // Purple - cooking
+    ready: { bg: '#E1F5FE', text: '#0277BD', border: '#03A9F4' },        // Cyan - ready to serve
+    served: { bg: '#F5F5F5', text: '#616161', border: '#9E9E9E' },       // Gray - delivered
+    cancelled: { bg: '#FFEBEE', text: '#C62828', border: '#EF5350' },    // Red - cancelled
+    paid: { bg: '#E8F5E9', text: '#2E7D32', border: '#66BB6A' },         // Green - paid
+    completed: { bg: '#E8F5E9', text: '#2E7D32', border: '#66BB6A' },    // Green - done
   };
 
   switch (status) {
@@ -93,6 +95,30 @@ const getStatusConfig = (status: OrderStatus, theme: any) => {
         },
       };
     default:
+      // Handle 'paid' and 'completed' statuses from UnifiedOrderStatus
+      if (status === 'paid' || status === 'completed') {
+        return {
+          label: 'Paid',
+          icon: 'check-circle' as const,
+          colors: {
+            background: statusColors.paid.bg,
+            text: statusColors.paid.text,
+            border: statusColors.paid.border,
+          },
+        };
+      }
+      // Handle 'draft' status from UnifiedOrderStatus
+      if (status === 'draft') {
+        return {
+          label: 'Draft',
+          icon: 'edit' as const,
+          colors: {
+            background: statusColors.pending.bg,
+            text: statusColors.pending.text,
+            border: statusColors.pending.border,
+          },
+        };
+      }
       return {
         label: 'Unknown',
         icon: 'help-outline' as const,

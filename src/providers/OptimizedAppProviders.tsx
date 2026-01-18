@@ -4,19 +4,28 @@
  * Implements proper provider composition for better performance
  */
 
+/**
+ * Optimized App Providers - Clean unified provider tree
+ *
+ * UNIFIED ORDER SYSTEM:
+ * - UnifiedOrderProvider is the SINGLE source of truth for all order state
+ * - No more duplicate order contexts (legacy OrderContext, EnhancedOrderContext removed)
+ * - Kitchen updates flow through unified order events
+ * - Clear data resets BOTH storage AND context state
+ */
+
 import React, { memo, useEffect } from 'react';
 import { AuthProvider } from '@/context/auth/AuthProvider';
 import { TableProvider } from '@/context/table/TableProvider';
-import { EnhancedOrderProvider } from '@/context/order/EnhancedOrderContext';
+import { UnifiedOrderProvider } from '@/context/unified-order';
 import { BillSplitProvider } from '@/context/billing/BillSplitContext';
 import { PaymentProvider } from '@/context/payment/PaymentProvider';
 import { EnhancedKitchenProvider } from '@/context/kitchen';
 import {
-  orderStorageService,
-  kitchenStorageService,
   tableStorageService,
   paymentStorageService,
   syncQueueService,
+  unifiedOrderStorageService,
 } from '@/services/storage';
 
 interface AppProvidersProps {
@@ -56,37 +65,37 @@ const BusinessStateProviders = memo<{ children: React.ReactNode }>(({ children }
 BusinessStateProviders.displayName = 'BusinessStateProviders';
 
 /**
- * Order Management Providers - Further memoized grouping
- * Prevents table changes from affecting payment/kitchen contexts
- * Uses EnhancedOrderProvider for kitchen ticket creation and modifier support
+ * Order Management Providers - Unified order system
+ *
+ * UNIFIED ORDER SYSTEM:
+ * - UnifiedOrderProvider: SINGLE source of truth for all order state
+ * - Status flow: draft -> confirmed -> preparing -> ready -> served -> paid
+ * - Kitchen updates flow through unified order events
  */
 const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children }) => {
-  // Initialize ALL storage services on mount for data persistence
+  // Initialize storage services on mount
   useEffect(() => {
     const initializeAllStorage = async () => {
       const restaurantId = 'rest_001'; // Default restaurant ID
 
       try {
-        // Initialize all storage services in parallel
+        // Initialize storage services in parallel
         await Promise.all([
-          orderStorageService.initialize(),
-          kitchenStorageService.initialize(),
+          unifiedOrderStorageService.initialize(),
           tableStorageService.initialize(restaurantId),
           paymentStorageService.initialize(),
           syncQueueService.initialize(),
         ]);
 
         if (__DEV__) {
-          console.log('[OptimizedAppProviders] All storage services initialized:');
-          console.log('  - orderStorageService: ready');
-          console.log('  - kitchenStorageService: ready');
+          console.log('[OptimizedAppProviders] Storage services initialized:');
+          console.log('  - unifiedOrderStorageService: ready');
           console.log('  - tableStorageService: ready');
           console.log('  - paymentStorageService: ready');
           console.log('  - syncQueueService: ready');
         }
       } catch (error) {
         console.error('[OptimizedAppProviders] Storage initialization failed:', error);
-        // Log which service failed if possible
         if (error instanceof Error) {
           console.error('  Error details:', error.message);
         }
@@ -97,13 +106,13 @@ const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children
   }, []);
 
   return (
-    <EnhancedOrderProvider>
+    <UnifiedOrderProvider>
       <BillSplitProvider>
         <TransactionProviders>
           {children}
         </TransactionProviders>
       </BillSplitProvider>
-    </EnhancedOrderProvider>
+    </UnifiedOrderProvider>
   );
 });
 
@@ -171,7 +180,15 @@ export const analyzeProviderPerformance = () => {
     console.log('✅ AuthProvider: Top-level, changes rarely');
     console.log('✅ BusinessStateProviders: Memoized, isolated from auth changes');
     console.log('✅ OrderManagementProviders: Memoized, isolated from table changes');
+    console.log('   └─ UnifiedOrderProvider: NEW single source of truth for orders');
+    console.log('   └─ EnhancedOrderProvider: Legacy (backwards compatibility)');
     console.log('✅ TransactionProviders: Memoized, isolated from order changes');
+    console.log('');
+    console.log('UNIFIED ORDER SYSTEM:');
+    console.log('- Status flow: draft → confirmed → preparing → ready → served → paid');
+    console.log('- Kitchen is the ONLY source of status updates (except payment)');
+    console.log('- Payment button appears ONLY after status is "served"');
+    console.log('- Clear data resets BOTH storage AND context state via SYSTEM_RESET event');
     console.log('');
     console.log('Performance Benefits:');
     console.log('- Auth changes don\'t recreate business providers');

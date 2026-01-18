@@ -58,9 +58,10 @@ export interface PaymentContextInterface extends PaymentContextState {
   
   // Error Management
   clearError: () => void;
-  
+
   // State Reset
   resetPaymentState: () => void;
+  resetProcessingStatus: () => void;
 }
 
 // Create Payment Context
@@ -87,6 +88,7 @@ export const usePaymentProcessing = () => {
     isLoading: context.isLoading,
     error: context.error,
     clearError: context.clearError,
+    resetProcessingStatus: context.resetProcessingStatus,
   };
 };
 

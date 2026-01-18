@@ -14,8 +14,9 @@ import {
 import { OrderStatus, PaymentStatus } from '@/types/common.types';
 import { IOrderService } from '@/interfaces/services/order.interface';
 import { menuStorageService } from '@/services/storage/MenuStorageService';
-import { orderStorageService } from '@/services/storage/OrderStorageService';
+import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
 import { ExtendedOrder, ExtendedOrderStatus } from '@/types/order-extended.types';
+import { UnifiedOrder, UnifiedOrderStatus } from '@/types/unified-order.types';
 
 export class OrderService implements IOrderService {
   async createOrder(orderData: CreateOrderRequest): Promise<Order> {
@@ -405,24 +406,19 @@ class MockOrderService extends OrderService {
     // Use Map for guaranteed deduplication by ID
     const ordersMap = new Map<string, Order>();
 
-    // PRODUCTION MODE: Load ONLY from AsyncStorage (no mock data)
+    // PRODUCTION MODE: Load from unified storage (single source of truth)
     try {
-      await orderStorageService.initialize();
-      const [activeOrders, historyOrders] = await Promise.all([
-        orderStorageService.getActiveOrders(),
-        orderStorageService.getOrderHistory(),
-      ]);
+      await unifiedOrderStorageService.initialize();
+      const allStorageOrders = await unifiedOrderStorageService.getAllOrders();
 
-      const allStorageOrders = [...activeOrders, ...historyOrders];
-
-      // Convert and add to map (overwrites mock if same ID - storage has fresher data)
-      allStorageOrders.forEach(extOrder => {
-        const converted = this.convertExtendedOrderToOrder(extOrder);
+      // Convert and add to map
+      allStorageOrders.forEach(unifiedOrder => {
+        const converted = this.convertUnifiedOrderToOrder(unifiedOrder);
         ordersMap.set(converted.id, converted);
       });
 
       if (__DEV__) {
-        console.log(`[OrderService] Loaded ${ordersMap.size} orders from AsyncStorage`);
+        console.log(`[OrderService] Loaded ${ordersMap.size} orders from unified storage`);
       }
     } catch (error) {
       console.error('[OrderService] Error loading orders from storage:', error);
@@ -520,6 +516,81 @@ class MockOrderService extends OrderService {
       ready_at: extOrder.readyAt,
       served_at: extOrder.servedAt,
       paid_at: extOrder.paidAt,
+    };
+  }
+
+  /**
+   * Convert UnifiedOrder (camelCase) to Order (snake_case)
+   */
+  private convertUnifiedOrderToOrder(unifiedOrder: UnifiedOrder): Order {
+    // Map UnifiedOrderStatus to OrderStatus
+    const statusMap: Record<UnifiedOrderStatus, OrderStatus> = {
+      'draft': OrderStatus.PENDING,
+      'confirmed': OrderStatus.CONFIRMED,
+      'preparing': OrderStatus.PREPARING,
+      'ready': OrderStatus.READY,
+      'served': OrderStatus.SERVED,
+      'paid': OrderStatus.SERVED,
+      'cancelled': OrderStatus.CANCELLED,
+    };
+
+    // Convert items
+    const orderItems = (unifiedOrder.items || []).map((item) => ({
+      id: item.id,
+      order_id: unifiedOrder.id,
+      menu_item_id: item.menuItemId,
+      menu_item: {
+        id: item.menuItemId,
+        name: item.name,
+        price: item.basePrice,
+        description: item.description || '',
+        category_id: item.categoryId,
+        restaurant_id: unifiedOrder.restaurantId,
+        is_available: true,
+        created_at: item.addedAt,
+        updated_at: item.modifiedAt || item.addedAt,
+      },
+      quantity: item.quantity,
+      unit_price: item.basePrice,
+      total_price: item.itemTotal,
+      special_instructions: item.specialInstructions,
+      status: this.convertItemStatus(item.itemStatus),
+      modifiers: (item.selectedModifiers || []).flatMap(mod =>
+        (mod.options || []).map(opt => ({
+          id: opt.optionId,
+          name: opt.optionName,
+          price: opt.priceAdjustment,
+          category: mod.groupName,
+        }))
+      ),
+    }));
+
+    return {
+      id: unifiedOrder.id,
+      restaurant_id: unifiedOrder.restaurantId,
+      table_id: unifiedOrder.tableId,
+      table_number: unifiedOrder.tableName,
+      staff_id: unifiedOrder.createdBy || '',
+      created_by: unifiedOrder.createdBy || '',
+      order_number: unifiedOrder.orderNumber,
+      status: statusMap[unifiedOrder.status] || OrderStatus.PENDING,
+      payment_status: this.convertPaymentStatus(unifiedOrder.paymentStatus),
+      items: orderItems,
+      subtotal: unifiedOrder.subtotal,
+      tax_amount: unifiedOrder.taxAmount,
+      discount_amount: unifiedOrder.discountAmount,
+      total_amount: unifiedOrder.totalAmount,
+      special_instructions: unifiedOrder.specialInstructions,
+      kitchen_notes: undefined,
+      estimated_prep_time: unifiedOrder.estimatedPrepTime,
+      actual_prep_time: unifiedOrder.actualPrepTime,
+      created_at: unifiedOrder.createdAt,
+      updated_at: unifiedOrder.updatedAt,
+      submitted_at: unifiedOrder.submittedAt,
+      preparing_at: unifiedOrder.preparingAt,
+      ready_at: unifiedOrder.readyAt,
+      served_at: unifiedOrder.servedAt,
+      paid_at: unifiedOrder.paidAt,
     };
   }
 

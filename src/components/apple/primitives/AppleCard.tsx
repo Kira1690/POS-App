@@ -56,8 +56,14 @@ export const AppleCard: React.FC<AppleCardProps> = ({
         default: return theme.colors.layer1;
       }
     }
-    // Light theme fallback
-    return theme.colors.surface;
+    // Light theme - proper layer mapping
+    switch (layer) {
+      case 'background': return theme.colors.background; // Apple's light gray (#F2F2F7)
+      case 'surface': return theme.colors.surface; // Pure white (#FFFFFF)
+      case 'surfaceVariant': return theme.colors.surfaceVariant; // Alternative (#F2F2F7)
+      case 'surfaceElevated': return theme.colors.surfaceLight; // Elevated (#FAFAFA)
+      default: return theme.colors.surface;
+    }
   };
 
   // UNIVERSAL SIZING SYSTEM (Interface Segregation)

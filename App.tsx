@@ -7,7 +7,7 @@ import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 import { RootNavigator } from '@/navigation';
 import { ThemeProvider } from '@/providers/ThemeProvider';
-import { AuthProvider } from '@/context/auth';
+import { OptimizedAppProviders } from '@/providers/OptimizedAppProviders';
 import { MenuProvider } from '@/context/menu';
 
 // Toast configuration with 'warning' type support
@@ -54,14 +54,14 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AuthProvider>
+          <OptimizedAppProviders>
             <MenuProvider>
               <NavigationContainer>
                 <RootNavigator />
                 <StatusBar style="auto" />
               </NavigationContainer>
             </MenuProvider>
-          </AuthProvider>
+          </OptimizedAppProviders>
         </ThemeProvider>
       </SafeAreaProvider>
       <Toast config={toastConfig} />

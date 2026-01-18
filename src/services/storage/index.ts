@@ -31,9 +31,16 @@ export {
   type FloorPlanPosition,
 } from './TableStorageService';
 
-// Order Management Storage Services
-export { orderStorageService } from './OrderStorageService';
+// Order Storage - Unified single source of truth
+export { unifiedOrderStorageService } from './UnifiedOrderStorageService';
+
+// Kitchen Storage - Ticket management
 export { kitchenStorageService } from './KitchenStorageService';
+
+// Legacy Order Storage (for kitchen sync)
+export { orderStorageService } from './OrderStorageService';
+
+// Payment & Sync Services
 export { paymentStorageService } from './PaymentStorageService';
 export {
   syncQueueService,

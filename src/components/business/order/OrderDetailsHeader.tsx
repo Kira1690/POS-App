@@ -1,19 +1,20 @@
 /**
  * Order Details Header - Focused on order header information and basic actions
  * Follows Single Responsibility Principle - handles header display only
+ * Supports both UnifiedOrder and legacy Order types
  */
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Order } from '@/types/order.types';
+import { AnyOrder, getOrderNumber } from '@/utils/orderFormatHelpers';
 import OrderStatusBadge from './OrderStatusBadge';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 
 interface OrderDetailsHeaderProps {
-  order: Order;
+  order: AnyOrder;
   onBack: () => void;
   onMenuPress?: () => void;
 }
@@ -25,6 +26,20 @@ export const OrderDetailsHeader: React.FC<OrderDetailsHeaderProps> = ({
 }) => {
   const { theme } = useTheme();
 
+  // Guard against undefined order
+  if (!order) {
+    return (
+      <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <MaterialIcons name="arrow-back" size={24} color={theme.colors.onSurface} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>
+          Order Details
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
       <TouchableOpacity
@@ -33,14 +48,14 @@ export const OrderDetailsHeader: React.FC<OrderDetailsHeaderProps> = ({
       >
         <MaterialIcons name="arrow-back" size={24} color={theme.colors.onSurface} />
       </TouchableOpacity>
-      
+
       <View style={styles.headerContent}>
         <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>
-          {order.order_number}
+          {getOrderNumber(order)}
         </Text>
         <OrderStatusBadge status={order.status} size="small" />
       </View>
-      
+
       {onMenuPress && (
         <TouchableOpacity
           style={styles.menuButton}

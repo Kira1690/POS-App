@@ -19,14 +19,28 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '@/hooks/useTheme';
 import { OrdersStackParamList } from '@/navigation/types';
 import { useBillSplit } from '@/context/billing';
-import { useEnhancedOrder } from '@/context/order';
-import { ExtendedOrderItem } from '@/types/order-extended.types';
+import { useUnifiedOrder, useUnifiedBilling } from '@/context/unified-order';
+import { UnifiedOrder, UnifiedOrderItem, canAcceptPayment } from '@/types/unified-order.types';
+import { ExtendedOrder, ExtendedOrderItem } from '@/types/order-extended.types';
+
+// Adapter to convert UnifiedOrder to ExtendedOrder for BillSplitContext compatibility
+const toExtendedOrder = (order: UnifiedOrder): ExtendedOrder => {
+  return {
+    ...order,
+    status: order.status as any, // Status enums are compatible
+    paymentStatus: order.paymentStatus as any,
+    items: order.items.map(item => ({
+      ...item,
+      status: item.itemStatus as any,
+    })) as ExtendedOrderItem[],
+  } as ExtendedOrder;
+};
 
 type BillScreenNavigationProp = StackNavigationProp<OrdersStackParamList, 'Bill'>;
 type BillScreenRouteProp = RouteProp<OrdersStackParamList, 'Bill'>;
 
 interface BillItemRowProps {
-  item: ExtendedOrderItem;
+  item: UnifiedOrderItem;
   formatPrice: (price: number) => string;
 }
 
@@ -103,21 +117,30 @@ export const BillScreen: React.FC = () => {
   const route = useRoute<BillScreenRouteProp>();
   const { orderId } = route.params;
 
-  const { state: orderState, selectors } = useEnhancedOrder();
+  // Use unified order context
+  const { orders, getOrderById, processPayment, canProcessPayment } = useUnifiedOrder();
   const { setOrder, setSplitType, setGuestCount, state: billState } = useBillSplit();
 
   const [tipPercentage, setTipPercentage] = useState(0);
+  const [isPaymentBlocked, setIsPaymentBlocked] = useState(false);
 
-  // Find the order
+  // Find the order using unified context
   const order = useMemo(
-    () => orderState.orders.find((o) => o.id === orderId) || null,
-    [orderState.orders, orderId]
+    () => orders.find((o) => o.id === orderId) || null,
+    [orders, orderId]
   );
+
+  // Check if payment is allowed (order must be served)
+  const canPay = useMemo(() => {
+    if (!order) return false;
+    return canAcceptPayment(order);
+  }, [order]);
 
   // Initialize bill with order data
   useEffect(() => {
     if (order) {
-      setOrder(order, order.items);
+      const extendedOrder = toExtendedOrder(order);
+      setOrder(extendedOrder, extendedOrder.items);
     }
   }, [order, setOrder]);
 
@@ -337,11 +360,21 @@ export const BillScreen: React.FC = () => {
   const handlePayFull = useCallback(() => {
     if (!order) return;
 
+    // Enforce payment restriction - order must be served first
+    if (!canPay) {
+      Alert.alert(
+        'Cannot Process Payment',
+        `This order is currently "${order.status}". Payment can only be processed after the order has been served to the customer.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     navigation.navigate('PaymentProcessing', {
       orderId,
       order,
     });
-  }, [navigation, orderId, order]);
+  }, [navigation, orderId, order, canPay]);
 
   const handleBack = useCallback(() => {
     navigation.goBack();
@@ -547,13 +580,48 @@ export const BillScreen: React.FC = () => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.payButton} onPress={handlePayFull}>
+        {/* Payment Status Indicator */}
+        {!canPay && (
+          <View style={{
+            backgroundColor: theme.colors.warningContainer,
+            padding: theme.spacing.sm,
+            borderRadius: theme.borderRadius.sm,
+            marginBottom: theme.spacing.sm,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <MaterialCommunityIcons
+              name="alert-circle"
+              size={20}
+              color={theme.colors.warning}
+              style={{ marginRight: theme.spacing.xs }}
+            />
+            <Text style={{
+              ...theme.typography.body2,
+              color: theme.colors.warning,
+              flex: 1,
+            }}>
+              Order status: {order?.status?.toUpperCase()}. Payment available after order is SERVED.
+            </Text>
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={[
+            styles.payButton,
+            !canPay && { backgroundColor: theme.colors.onSurfaceVariant, opacity: 0.6 }
+          ]}
+          onPress={handlePayFull}
+          disabled={!canPay}
+        >
           <MaterialCommunityIcons
-            name="cash"
+            name={canPay ? "cash" : "lock"}
             size={24}
             color={theme.colors.onPrimary}
           />
-          <Text style={styles.payButtonText}>Pay {formatPrice(total)}</Text>
+          <Text style={styles.payButtonText}>
+            {canPay ? `Pay ${formatPrice(total)}` : 'Awaiting Service'}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

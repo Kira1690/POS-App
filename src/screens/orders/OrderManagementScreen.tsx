@@ -15,10 +15,11 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useOrderManagement } from '@/context/orderManagement';
+import { useUnifiedOrderManagement, useUnifiedOrder } from '@/context/unified-order';
+import { UnifiedPaymentStatus } from '@/types/unified-order.types';
 import { useTable } from '@/context/table';
 import { useTheme } from '@/hooks/useTheme';
-import { Order } from '@/types/order.types';
+import { UnifiedOrder, UnifiedOrderStatus } from '@/types/unified-order.types';
 import { Table } from '@/types/table.types';
 import { OrderStatus, PaymentStatus } from '@/types/common.types';
 import { OrderListItem, OrderStatusBadge } from '@/components/business/order';
@@ -42,14 +43,16 @@ interface OrderManagementScreenProps {
   route?: any;
 }
 
-const statusFilters: Array<{ value: OrderStatus | 'ALL'; label: string; count?: number }> = [
-  { value: 'ALL', label: 'All Orders' },
-  { value: OrderStatus.PENDING, label: 'Pending' },
-  { value: OrderStatus.CONFIRMED, label: 'Confirmed' },
-  { value: OrderStatus.PREPARING, label: 'Preparing' },
-  { value: OrderStatus.READY, label: 'Ready' },
-  { value: OrderStatus.SERVED, label: 'Served' },
-  { value: OrderStatus.CANCELLED, label: 'Cancelled' },
+const statusFilters: Array<{ value: UnifiedOrderStatus | 'all' | 'active'; label: string; count?: number }> = [
+  { value: 'all', label: 'All Orders' },
+  { value: 'active', label: 'Active' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'preparing', label: 'Preparing' },
+  { value: 'ready', label: 'Ready' },
+  { value: 'served', label: 'Served' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'cancelled', label: 'Cancelled' },
 ];
 
 const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigation }) => {
@@ -59,16 +62,18 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     filteredOrders,
     searchQuery,
     statusFilter,
-    paymentFilter,
     isLoading,
     loadOrders,
-    selectOrder,
-    updateOrderStatus,
+    setSelectedOrderId,
     cancelOrder,
     setSearchQuery,
     setStatusFilter,
-    setPaymentFilter,
-  } = useOrderManagement();
+    setPaymentStatusFilter,
+  } = useUnifiedOrderManagement();
+
+  // Get payment filter from context state
+  const { state: orderState } = useUnifiedOrder();
+  const paymentFilter = orderState.paymentStatusFilter;
 
   const { state: tableState, selectTable, refreshTables } = useTable();
 
@@ -131,40 +136,30 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   }, [selectTable, navigation]);
 
   // Handle order item press
-  const handleOrderPress = useCallback((order: Order) => {
-    selectOrder(order);
+  const handleOrderPress = useCallback((order: UnifiedOrder) => {
+    setSelectedOrderId(order.id);
     navigation?.navigate('OrderDetails', { orderId: order.id });
-  }, [selectOrder, navigation]);
+  }, [setSelectedOrderId, navigation]);
 
   // Handle order status update
-  const handleStatusUpdate = useCallback(async (order: Order) => {
-    const nextStatus = getNextStatus(order.status);
-    if (!nextStatus) return;
-
-    try {
-      await updateOrderStatus(order.id, nextStatus);
-      showToast({
-        type: 'success',
-        title: 'Status Updated',
-        message: `Order ${order.order_number} status updated to ${nextStatus}`,
-      });
-    } catch (error) {
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to update order status',
-      });
-    }
-  }, [updateOrderStatus]);
+  // NOTE: In unified system, kitchen is the ONLY source of status updates
+  // This function is for display purposes only - actual status updates happen in Kitchen
+  const handleStatusUpdate = useCallback(async (order: UnifiedOrder) => {
+    showToast({
+      type: 'info',
+      title: 'Kitchen Only',
+      message: 'Status updates are managed from the Kitchen Display',
+    });
+  }, []);
 
   // Handle order cancellation
-  const handleOrderCancel = useCallback(async (order: Order) => {
+  const handleOrderCancel = useCallback(async (order: UnifiedOrder) => {
     try {
       await cancelOrder(order.id, 'Cancelled from order management');
       showToast({
         type: 'success',
         title: 'Order Cancelled',
-        message: `Order ${order.order_number} has been cancelled`,
+        message: `Order ${order.orderNumber} has been cancelled`,
       });
     } catch (error) {
       showToast({
@@ -176,20 +171,31 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   }, [cancelOrder]);
 
   // Handle payment processing - Restaurant workflow
-  const handleProcessPayment = useCallback(async (order: Order) => {
+  // Payment only available for served orders in unified system
+  const handleProcessPayment = useCallback(async (order: UnifiedOrder) => {
+    // Check if order can accept payment (must be served status)
+    if (order.status !== 'served') {
+      showToast({
+        type: 'warning',
+        title: 'Not Ready for Payment',
+        message: 'Order must be served before payment can be processed',
+      });
+      return;
+    }
+
     try {
       // Navigate to payment processing screen with full order object
       navigation?.navigate('PaymentProcessing', {
         orderId: order.id,
-        order: order, // Pass the full order object for PaymentProcessingScreen
-        orderTotal: order.total_amount,
-        tableNumber: order.table_number || 'N/A'
+        order: order,
+        orderTotal: order.totalAmount,
+        tableNumber: order.tableName || 'N/A'
       });
 
       showToast({
         type: 'info',
         title: 'Payment Processing',
-        message: `Processing payment for Order ${order.order_number}`,
+        message: `Processing payment for Order ${order.orderNumber}`,
       });
     } catch (error) {
       showToast({
@@ -200,31 +206,38 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     }
   }, [navigation]);
 
-  // Get next status for quick status updates
-  const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
-    switch (currentStatus) {
-      case OrderStatus.PENDING:
-        return OrderStatus.CONFIRMED;
-      case OrderStatus.CONFIRMED:
-        return OrderStatus.PREPARING;
-      case OrderStatus.PREPARING:
-        return OrderStatus.READY;
-      case OrderStatus.READY:
-        return OrderStatus.SERVED;
-      default:
-        return null;
-    }
-  };
-
   // Get order counts for each status
   const getStatusCounts = () => {
     return statusFilters.map(filter => ({
       ...filter,
-      count: filter.value === 'ALL' 
-        ? orders.length 
-        : orders.filter(order => order.status === filter.value).length,
+      count: filter.value === 'all'
+        ? orders.length
+        : filter.value === 'active'
+          ? orders.filter(o => !['paid', 'cancelled'].includes(o.status)).length
+          : orders.filter(order => order.status === filter.value).length,
     }));
   };
+
+  // Convert UnifiedOrder to Order format for OrderListItem compatibility
+  const toOrderFormat = (order: UnifiedOrder): any => ({
+    id: order.id,
+    order_number: order.orderNumber,
+    table_id: order.tableId,
+    table_number: order.tableName,
+    status: order.status as any,
+    payment_status: order.paymentStatus === 'paid' ? PaymentStatus.COMPLETED : PaymentStatus.PENDING,
+    total_amount: order.totalAmount,
+    created_at: order.createdAt,
+    updated_at: order.updatedAt,
+    items: order.items.map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.basePrice,
+      total: item.itemTotal,
+    })),
+    special_instructions: order.specialInstructions,
+  });
 
   // Search bar component
   const renderSearchBar = () => (
@@ -258,11 +271,11 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     </AppleCard>
   );
 
-  // Payment filter options
-  const paymentFilters: Array<{ value: 'ALL' | 'PAID' | 'UNPAID'; label: string; count: number }> = [
-    { value: 'ALL', label: 'All', count: orders.length },
-    { value: 'PAID', label: 'Paid', count: orders.filter(o => o.payment_status === PaymentStatus.COMPLETED).length },
-    { value: 'UNPAID', label: 'Unpaid', count: orders.filter(o => o.payment_status !== PaymentStatus.COMPLETED).length },
+  // Payment filter options - Using context types
+  const paymentFilters: Array<{ value: UnifiedPaymentStatus | 'all'; label: string; count: number; icon: string }> = [
+    { value: 'all', label: 'All', count: orders.length, icon: 'list' },
+    { value: 'paid', label: 'Paid', count: orders.filter(o => o.paymentStatus === 'paid').length, icon: 'check-circle' },
+    { value: 'pending', label: 'Unpaid', count: orders.filter(o => o.paymentStatus !== 'paid').length, icon: 'schedule' },
   ];
 
   // Filter chips - always visible, compact horizontal layout
@@ -358,7 +371,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
             {paymentFilters.map((filter) => (
               <AppleInteractive
                 key={filter.value}
-                onPress={() => setPaymentFilter(filter.value)}
+                onPress={() => setPaymentStatusFilter(filter.value)}
                 feedbackType="scale"
                 style={{ marginRight: 6 }}
               >
@@ -370,16 +383,16 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
                     paddingVertical: 6,
                     borderRadius: 8,
                     backgroundColor: paymentFilter === filter.value
-                      ? (filter.value === 'PAID' ? theme.colors.success : theme.colors.primary)
+                      ? (filter.value === 'paid' ? theme.colors.success : theme.colors.primary)
                       : theme.colors.surfaceLight,
                     borderWidth: 1,
                     borderColor: paymentFilter === filter.value
-                      ? (filter.value === 'PAID' ? theme.colors.success : theme.colors.primary)
+                      ? (filter.value === 'paid' ? theme.colors.success : theme.colors.primary)
                       : theme.colors.outline,
                   }}
                 >
                   <MaterialIcons
-                    name={filter.value === 'PAID' ? 'check-circle' : filter.value === 'UNPAID' ? 'schedule' : 'list'}
+                    name={filter.icon as any}
                     size={14}
                     color={paymentFilter === filter.value
                       ? theme.colors.onPrimary
@@ -424,23 +437,26 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   };
 
   // Render order item
-  const renderOrderItem = ({ item }: { item: Order }) => (
-    <OrderListItem
-      order={item}
-      onPress={handleOrderPress}
-      onViewDetails={handleOrderPress}
-      onPrintKOT={(order) => {
-        showToast({
-          type: 'info',
-          title: 'Print KOT',
-          message: `Printing KOT for ${order.order_number}`,
-        });
-      }}
-      onUpdateStatus={handleStatusUpdate}
-      onProcessPayment={handleProcessPayment} // New payment handler
-      showActions={true}
-    />
-  );
+  const renderOrderItem = ({ item }: { item: UnifiedOrder }) => {
+    const orderFormatted = toOrderFormat(item);
+    return (
+      <OrderListItem
+        order={orderFormatted}
+        onPress={() => handleOrderPress(item)}
+        onViewDetails={() => handleOrderPress(item)}
+        onPrintKOT={() => {
+          showToast({
+            type: 'info',
+            title: 'Print KOT',
+            message: `Printing KOT for ${item.orderNumber}`,
+          });
+        }}
+        onUpdateStatus={() => handleStatusUpdate(item)}
+        onProcessPayment={() => handleProcessPayment(item)}
+        showActions={true}
+      />
+    );
+  };
 
   // APPLE EMPTY STATE (using universal components)
   const renderEmptyState = () => (
@@ -466,13 +482,13 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
         lineHeight: 24,
         paddingHorizontal: 32
       }}>
-        {searchQuery || statusFilter !== 'ALL'
+        {searchQuery || statusFilter !== 'all'
           ? 'Try adjusting your search or filter criteria'
           : 'Orders will appear here when customers place them'
         }
       </Text>
 
-      {(searchQuery || statusFilter !== 'ALL') && (
+      {(searchQuery || statusFilter !== 'all') && (
         <View style={{ marginTop: 20, flexDirection: 'row', gap: 12 }}>
           {searchQuery && (
             <AppleButton
@@ -482,12 +498,12 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
               onPress={() => setSearchQuery('')}
             />
           )}
-          {statusFilter !== 'ALL' && (
+          {statusFilter !== 'all' && (
             <AppleButton
               title="Show All"
               variant="primary"
               size="medium"
-              onPress={() => setStatusFilter('ALL')}
+              onPress={() => setStatusFilter('all')}
             />
           )}
         </View>

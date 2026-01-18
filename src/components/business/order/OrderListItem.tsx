@@ -1,75 +1,37 @@
 /**
- * OrderListItem - Professional order row display component
- * Shows order information with professional styling and action buttons
+ * OrderListItem - Professional order card display component
+ * Follows Apple/Google design guidelines with consistent theming
+ * Matches KitchenOrderCard design patterns for homogeneous UX
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Order } from '@/types/order.types';
 import { OrderStatus, PaymentStatus } from '@/types/common.types';
 import { useTheme } from '@/hooks/useTheme';
-import { typography } from '@/design-system/theme/typography';
-import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import OrderStatusBadge from './OrderStatusBadge';
 import { formatCurrency } from '@/utils/currency';
 import { formatTimeAgo, formatTime } from '@/utils/date';
-
-const { width } = Dimensions.get('window');
-const isTablet = width >= 768;
+import {
+  AnyOrder,
+  getOrderNumber,
+  getTableId,
+  getCreatedAt,
+  getOrderTotals,
+  getSpecialInstructions,
+  getOrderTimestamps,
+} from '@/utils/orderFormatHelpers';
 
 interface OrderListItemProps {
-  order: Order;
-  onPress?: (order: Order) => void;
-  onViewDetails?: (order: Order) => void;
-  onPrintKOT?: (order: Order) => void;
-  onUpdateStatus?: (order: Order) => void;
-  onProcessPayment?: (order: Order) => void; // New payment functionality
+  order: AnyOrder;
+  onPress?: (order: AnyOrder) => void;
+  onViewDetails?: (order: AnyOrder) => void;
+  onPrintKOT?: (order: AnyOrder) => void;
+  onUpdateStatus?: (order: AnyOrder) => void;
+  onProcessPayment?: (order: AnyOrder) => void;
   showActions?: boolean;
   style?: any;
 }
-
-const getOrderPriorityColor = (order: Order, theme: any) => {
-  const elapsedMinutes = Math.floor(
-    (Date.now() - new Date(order.created_at).getTime()) / (1000 * 60)
-  );
-  const estimatedTime = order.estimated_prep_time || 15;
-
-  // Defensive: fallback if theme or theme.colors.priority doesn't exist
-  const priority = theme?.colors?.priority || {
-    urgent: '#D32F2F',
-    high: '#F57C00',
-    normal: '#1976D2',
-    low: '#388E3C',
-  };
-
-  if (elapsedMinutes > estimatedTime + 10) {
-    return priority.urgent;
-  } else if (elapsedMinutes > estimatedTime) {
-    return priority.high;
-  } else if (elapsedMinutes > estimatedTime * 0.8) {
-    return priority.normal;
-  }
-
-  return priority.low;
-};
-
-const getCardStatusStyles = (status: OrderStatus, theme: any) => {
-  // Defensive: check if theme or theme.colors.status exists
-  if (!theme?.colors?.status) {
-    return {}; // Return empty object if status colors not available
-  }
-
-  const statusColors = theme.colors.status;
-  const statusKey = status.toLowerCase() as keyof typeof statusColors;
-  const colors = statusColors[statusKey] || statusColors.pending;
-
-  return {
-    backgroundColor: colors.bg,
-    borderLeftColor: colors.border,
-    borderLeftWidth: 4,
-  };
-};
 
 const OrderListItem: React.FC<OrderListItemProps> = ({
   order,
@@ -81,186 +43,335 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
   showActions = true,
   style,
 }) => {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
-  // Defensive: ensure theme is valid before using
+  // Defensive: ensure theme is valid
   if (!theme || !theme.colors) {
-    console.error('[OrderListItem] Invalid theme object:', theme);
-    return null; // Don't render if theme is broken
+    return null;
   }
 
-  const priorityColor = getOrderPriorityColor(order, theme);
-  const cardStatusStyles = getCardStatusStyles(order.status, theme);
-
-  const handlePress = () => {
-    if (onPress) {
-      onPress(order);
-    } else if (onViewDetails) {
-      onViewDetails(order);
+  // Get status colors from theme (Single Source of Truth)
+  const getStatusColors = () => {
+    const statusColors = theme.colors.status;
+    if (!statusColors) {
+      return { bg: theme.colors.surfaceLight, text: theme.colors.onSurface, border: theme.colors.outline };
     }
+    const statusKey = order.status.toLowerCase() as keyof typeof statusColors;
+    return statusColors[statusKey] || statusColors.pending;
   };
 
-  const containerStyle = [
-    styles.container,
-    {
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.outline,
+  const statusColors = getStatusColors();
+
+  // Get order properties
+  const orderNumber = getOrderNumber(order);
+  const tableId = getTableId(order);
+  const createdAt = getCreatedAt(order);
+  const totals = getOrderTotals(order);
+  const specialInstructions = getSpecialInstructions(order);
+  const timestamps = getOrderTimestamps(order);
+  const itemCount = order.items?.length ?? 0;
+  const paymentStatus = (order as any).paymentStatus ?? (order as any).payment_status;
+
+  const handlePress = () => {
+    if (onPress) onPress(order);
+    else if (onViewDetails) onViewDetails(order);
+  };
+
+  // Get elapsed time
+  const getElapsedTime = () => {
+    const elapsedMinutes = Math.floor(
+      (Date.now() - new Date(createdAt).getTime()) / (1000 * 60)
+    );
+    if (elapsedMinutes < 1) return 'Just now';
+    return `${elapsedMinutes}m ago`;
+  };
+
+  // Get status label
+  const getStatusLabel = () => {
+    const status = order.status.toLowerCase();
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  // Dynamic styles using theme - Following Apple/Google design guidelines
+  const styles = StyleSheet.create({
+    // Card container - consistent with KitchenOrderCard
+    container: {
+      backgroundColor: theme.colors.surface, // Always surface color for card
+      borderRadius: theme.borderRadius.lg,
+      marginVertical: theme.spacing.xs,
+      marginHorizontal: theme.spacing.sm,
+      borderWidth: 2,
+      borderColor: statusColors.border, // Status color only on border
+      overflow: 'hidden',
+      // Apple-style shadow
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.3 : 0.1,
+      shadowRadius: 8,
+      elevation: 3,
     },
-    cardStatusStyles, // Apply status-based card styling
-    style,
-  ];
+    // Status banner at top - matches KitchenOrderCard pattern
+    statusBanner: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      backgroundColor: statusColors.bg,
+    },
+    statusText: {
+      fontSize: 11,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      color: statusColors.text,
+    },
+    elapsedTime: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: statusColors.text,
+    },
+    // Content area
+    content: {
+      padding: theme.spacing.md,
+    },
+    // Header row with order info and badge
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: theme.spacing.sm,
+    },
+    orderInfo: {
+      flex: 1,
+    },
+    orderNumber: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: theme.colors.onSurface,
+      marginBottom: 2,
+    },
+    tableInfo: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: theme.colors.onSurfaceVariant,
+    },
+    // Badge area
+    badgeContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+    },
+    paidBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.sm,
+      backgroundColor: theme.colors.status?.paid?.bg,
+      gap: 2,
+    },
+    paidBadgeText: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: theme.colors.status?.paid?.text,
+    },
+    // Details row
+    detailsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing.sm,
+    },
+    detailsLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    detailItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: theme.spacing.md,
+    },
+    detailText: {
+      fontSize: 13,
+      color: theme.colors.onSurfaceVariant,
+      marginLeft: 4,
+    },
+    totalAmount: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: theme.colors.primary,
+    },
+    // Instructions section
+    instructionsContainer: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingTop: theme.spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.outline,
+    },
+    instructionsText: {
+      fontSize: 13,
+      flex: 1,
+      fontStyle: 'italic',
+      color: theme.colors.onSurfaceVariant,
+      marginLeft: theme.spacing.xs,
+    },
+    // Actions container - buttons on RIGHT side (Apple/Google guideline)
+    actionsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end', // Right aligned
+      alignItems: 'center',
+      paddingTop: theme.spacing.sm,
+      marginTop: theme.spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.outline,
+      gap: theme.spacing.sm,
+    },
+    // Action button - consistent styling
+    actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+    },
+    actionButtonPrimary: {
+      backgroundColor: theme.colors.primary,
+    },
+    actionButtonSecondary: {
+      backgroundColor: theme.colors.primaryContainer,
+    },
+    actionButtonTertiary: {
+      backgroundColor: theme.colors.surfaceLight,
+    },
+    actionText: {
+      fontSize: 13,
+      fontWeight: '600',
+      marginLeft: theme.spacing.xs,
+    },
+    // Timing row for active orders
+    timingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingTop: theme.spacing.sm,
+      marginTop: theme.spacing.xs,
+    },
+    timingText: {
+      fontSize: 12,
+      fontWeight: '600',
+      marginLeft: theme.spacing.xs,
+      color: theme.colors.warning,
+    },
+  });
 
   return (
     <TouchableOpacity
-      style={containerStyle}
+      style={[styles.container, style]}
       onPress={handlePress}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
-      {/* Priority indicator line */}
-      <View style={[styles.priorityLine, { backgroundColor: priorityColor }]} />
-      
+      {/* Status Banner - Consistent with KitchenOrderCard */}
+      <View style={styles.statusBanner}>
+        <Text style={styles.statusText}>{getStatusLabel()}</Text>
+        <Text style={styles.elapsedTime}>{getElapsedTime()}</Text>
+      </View>
+
       <View style={styles.content}>
-        {/* Header row */}
+        {/* Header Row */}
         <View style={styles.headerRow}>
           <View style={styles.orderInfo}>
-            <Text style={[styles.orderNumber, { color: theme.colors.onSurface }]}>
-              {order.order_number}
-            </Text>
-            {order.table_id && (
-              <Text style={[styles.tableInfo, { color: theme.colors.onSurfaceVariant }]}>
-                Table {order.table_id}
-              </Text>
+            <Text style={styles.orderNumber}>{orderNumber}</Text>
+            {tableId && (
+              <Text style={styles.tableInfo}>Table {tableId}</Text>
             )}
           </View>
 
-          <View style={styles.badgeRow}>
-            {/* Paid badge */}
-            {order.payment_status === PaymentStatus.COMPLETED && (
-              <View style={[styles.paidBadge, { backgroundColor: theme.colors.successContainer }]}>
-                <MaterialIcons name="check-circle" size={12} color={theme.colors.success} />
-                <Text style={[styles.paidBadgeText, { color: theme.colors.success }]}>Paid</Text>
+          <View style={styles.badgeContainer}>
+            {paymentStatus === PaymentStatus.COMPLETED && (
+              <View style={styles.paidBadge}>
+                <MaterialIcons name="check-circle" size={10} color={theme.colors.status?.paid?.text} />
+                <Text style={styles.paidBadgeText}>PAID</Text>
               </View>
             )}
             <OrderStatusBadge status={order.status} size="small" />
           </View>
         </View>
 
-        {/* Order details row */}
+        {/* Details Row */}
         <View style={styles.detailsRow}>
-          <View style={styles.orderDetails}>
-            <Text style={[styles.itemCount, { color: theme.colors.onSurfaceVariant }]}>
-              {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
-            </Text>
-            <Text style={[styles.orderTime, { color: theme.colors.onSurfaceVariant }]}>
-              {formatTimeAgo(order.created_at)}
-            </Text>
+          <View style={styles.detailsLeft}>
+            <View style={styles.detailItem}>
+              <MaterialIcons name="restaurant-menu" size={14} color={theme.colors.onSurfaceVariant} />
+              <Text style={styles.detailText}>
+                {itemCount} {itemCount === 1 ? 'item' : 'items'}
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <MaterialIcons name="schedule" size={14} color={theme.colors.onSurfaceVariant} />
+              <Text style={styles.detailText}>{formatTimeAgo(createdAt)}</Text>
+            </View>
           </View>
-          
-          <Text style={[styles.totalAmount, { color: theme.colors.primary }]}>
-            {formatCurrency(order.total_amount)}
-          </Text>
+          <Text style={styles.totalAmount}>{formatCurrency(totals.totalAmount)}</Text>
         </View>
 
-        {/* Special instructions */}
-        {order.special_instructions && (
-          <View style={styles.instructionsRow}>
-            <MaterialIcons 
-              name="note" 
-              size={14} 
-              color={theme.colors.onSurfaceVariant} 
-              style={styles.noteIcon}
-            />
-            <Text 
-              style={[styles.instructions, { color: theme.colors.onSurfaceVariant }]}
-              numberOfLines={2}
-            >
-              {order.special_instructions}
+        {/* Special Instructions */}
+        {specialInstructions && (
+          <View style={styles.instructionsContainer}>
+            <MaterialIcons name="note" size={14} color={theme.colors.onSurfaceVariant} />
+            <Text style={styles.instructionsText} numberOfLines={2}>
+              {specialInstructions}
             </Text>
           </View>
         )}
 
-        {/* Action buttons */}
+        {/* Action Buttons - Right Aligned */}
         {showActions && (
-          <View style={styles.actionsRow}>
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: theme.colors.primaryContainer }]}
-              onPress={() => onViewDetails && onViewDetails(order)}
-            >
-              <MaterialIcons 
-                name="visibility" 
-                size={16} 
-                color={theme.colors.onPrimaryContainer} 
-              />
-              <Text style={[styles.actionText, { color: theme.colors.onPrimaryContainer }]}>
-                View
-              </Text>
-            </TouchableOpacity>
-
-            {/* Payment Button - Only show for unpaid orders ready for payment */}
-            {(order.status === OrderStatus.READY || order.status === OrderStatus.SERVED) &&
-             order.payment_status !== PaymentStatus.COMPLETED &&
-             onProcessPayment && (
+          <View style={styles.actionsContainer}>
+            {/* Print Button - Show for non-completed orders */}
+            {order.status !== OrderStatus.SERVED && order.status !== OrderStatus.CANCELLED && onPrintKOT && (
               <TouchableOpacity
-                style={[styles.actionButton, styles.paymentButton, { backgroundColor: theme.colors.primary }]}
-                onPress={() => onProcessPayment(order)}
+                style={[styles.actionButton, styles.actionButtonTertiary]}
+                onPress={() => onPrintKOT(order)}
               >
-                <MaterialIcons
-                  name="payment"
-                  size={16}
-                  color={theme.colors.onPrimary}
-                />
-                <Text style={[styles.actionText, { color: theme.colors.onPrimary }]}>
-                  Payment
-                </Text>
+                <MaterialIcons name="print" size={16} color={theme.colors.onSurface} />
+                <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>Print</Text>
               </TouchableOpacity>
             )}
 
-            {order.status !== OrderStatus.SERVED && order.status !== OrderStatus.CANCELLED && (
-              <>
-                <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: theme.colors.secondaryContainer }]}
-                  onPress={() => onPrintKOT && onPrintKOT(order)}
-                >
-                  <MaterialIcons 
-                    name="print" 
-                    size={16} 
-                    color={theme.colors.onSecondaryContainer} 
-                  />
-                  <Text style={[styles.actionText, { color: theme.colors.onSecondaryContainer }]}>
-                    Print
-                  </Text>
-                </TouchableOpacity>
+            {/* View Button */}
+            <TouchableOpacity
+              style={[styles.actionButton, styles.actionButtonSecondary]}
+              onPress={() => onViewDetails && onViewDetails(order)}
+            >
+              <MaterialIcons name="visibility" size={16} color={theme.colors.onPrimaryContainer} />
+              <Text style={[styles.actionText, { color: theme.colors.onPrimaryContainer }]}>View</Text>
+            </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: theme.colors.tertiaryContainer }]}
-                  onPress={() => onUpdateStatus && onUpdateStatus(order)}
-                >
-                  <MaterialIcons 
-                    name="update" 
-                    size={16} 
-                    color={theme.colors.onTertiaryContainer} 
-                  />
-                  <Text style={[styles.actionText, { color: theme.colors.onTertiaryContainer }]}>
-                    Update
-                  </Text>
-                </TouchableOpacity>
-              </>
+            {/* Payment Button - Only for ready/served unpaid orders */}
+            {(order.status === OrderStatus.READY || order.status === OrderStatus.SERVED) &&
+             paymentStatus !== PaymentStatus.COMPLETED &&
+             onProcessPayment && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.actionButtonPrimary]}
+                onPress={() => onProcessPayment(order)}
+              >
+                <MaterialIcons name="payment" size={16} color={theme.colors.onPrimary} />
+                <Text style={[styles.actionText, { color: theme.colors.onPrimary }]}>Pay</Text>
+              </TouchableOpacity>
             )}
           </View>
         )}
 
-        {/* Timing information for active orders */}
+        {/* Timing Info for Active Orders */}
         {(order.status === OrderStatus.PREPARING || order.status === OrderStatus.READY) && (
           <View style={styles.timingRow}>
-            <MaterialIcons 
-              name="schedule" 
-              size={14} 
-              color={priorityColor} 
-            />
-            <Text style={[styles.timingText, { color: priorityColor }]}>
-              {order.status === OrderStatus.PREPARING 
-                ? `Cooking for ${formatTimeAgo(order.preparing_at || order.created_at)}`
-                : `Ready since ${formatTime(order.ready_at || order.created_at)}`
+            <MaterialIcons name="timer" size={14} color={theme.colors.warning} />
+            <Text style={styles.timingText}>
+              {order.status === OrderStatus.PREPARING
+                ? `Cooking: ${formatTimeAgo(timestamps.preparingAt || createdAt)}`
+                : `Ready: ${formatTime(timestamps.readyAt || createdAt)}`
               }
             </Text>
           </View>
@@ -269,146 +380,5 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: borderRadius.lg,
-    marginVertical: spacing.xs,
-    marginHorizontal: spacing.sm,
-    borderWidth: 1,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  priorityLine: {
-    height: 3,
-    width: '100%',
-  },
-  content: {
-    padding: spacing.md,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  orderInfo: {
-    flex: 1,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  paidBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs / 2,
-    borderRadius: borderRadius.sm,
-    gap: 2,
-  },
-  paidBadgeText: {
-    ...typography.labelSmall,
-    fontWeight: '600',
-  },
-  orderNumber: {
-    ...typography.titleMedium,
-    fontWeight: '700',
-    marginBottom: spacing.xs / 2,
-  },
-  tableInfo: {
-    ...typography.bodySmall,
-    fontWeight: '500',
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  orderDetails: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  itemCount: {
-    ...typography.bodyMedium,
-    marginRight: spacing.md,
-  },
-  orderTime: {
-    ...typography.bodySmall,
-  },
-  totalAmount: {
-    ...typography.titleMedium,
-    fontWeight: '700',
-  },
-  instructionsRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
-  },
-  noteIcon: {
-    marginRight: spacing.xs,
-    marginTop: 2,
-  },
-  instructions: {
-    ...typography.bodySmall,
-    flex: 1,
-    fontStyle: 'italic',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    marginLeft: spacing.xs,
-  },
-  paymentButton: {
-    // Prominent payment button styling
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  actionText: {
-    ...typography.labelSmall,
-    fontWeight: '600',
-    marginLeft: spacing.xs / 2,
-  },
-  timingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
-  },
-  timingText: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    marginLeft: spacing.xs,
-  },
-});
 
 export default OrderListItem;

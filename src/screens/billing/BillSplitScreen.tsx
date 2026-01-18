@@ -22,7 +22,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '@/hooks/useTheme';
 import { OrdersStackParamList } from '@/navigation/types';
-import { useEnhancedOrder } from '@/context/order';
+import { useUnifiedOrder } from '@/context/unified-order';
 import { useBillSplit } from '@/context/billing';
 import { SplitType, GuestSplit, BillItem, PaymentMethodSplit } from '@/types/billing.types';
 import {
@@ -40,7 +40,7 @@ export const BillSplitScreen: React.FC = () => {
   const route = useRoute<BillSplitRouteProp>();
   const { orderId, splitType: initialSplitType, guestCount: initialGuestCount } = route.params;
 
-  const { state: orderState } = useEnhancedOrder();
+  const { orders } = useUnifiedOrder();
   const { state: billState, setSplitType, setGuestCount } = useBillSplit();
 
   // Local state
@@ -52,8 +52,8 @@ export const BillSplitScreen: React.FC = () => {
 
   // Find the order
   const order = useMemo(
-    () => orderState.orders.find((o) => o.id === orderId) || null,
-    [orderState.orders, orderId]
+    () => orders.find((o) => o.id === orderId) || null,
+    [orders, orderId]
   );
 
   // Calculate bill items from order

@@ -21,34 +21,35 @@ interface KitchenOrderCardProps {
   style?: any;
 }
 
-const getPriorityColors = (priority: KitchenOrder['priority'], elapsedTime?: number) => {
-  // Enhance colors based on elapsed time for better kitchen urgency indication
-  const isOverdue = elapsedTime && elapsedTime > 20; // More than 20 minutes
-  
+const getPriorityColors = (priority: KitchenOrder['priority'], elapsedTime: number | undefined, theme: any) => {
+  // Use theme status colors for professional Apple/Google style
+  const statusColors = theme?.colors?.status;
+  const priorityColors = theme?.colors?.priority;
+
   switch (priority) {
     case 'URGENT':
       return {
-        background: isOverdue ? '#FFCDD2' : '#FFEBEE', // Darker if overdue
-        border: isOverdue ? '#B71C1C' : '#D32F2F',
-        text: isOverdue ? '#B71C1C' : '#D32F2F',
+        background: statusColors?.cancelled?.bg || theme.colors.errorContainer,
+        border: priorityColors?.urgent || theme.colors.error,
+        text: priorityColors?.urgent || theme.colors.error,
       };
     case 'HIGH':
       return {
-        background: isOverdue ? '#FFE0B2' : '#FFF3E0',
-        border: isOverdue ? '#E65100' : '#F57C00',
-        text: isOverdue ? '#E65100' : '#F57C00',
+        background: statusColors?.pending?.bg || theme.colors.warningContainer,
+        border: priorityColors?.high || theme.colors.warning,
+        text: priorityColors?.high || theme.colors.warning,
       };
     case 'NORMAL':
       return {
-        background: isOverdue ? '#BBDEFB' : '#E3F2FD',
-        border: isOverdue ? '#0D47A1' : '#1976D2',
-        text: isOverdue ? '#0D47A1' : '#1976D2',
+        background: statusColors?.confirmed?.bg || theme.colors.primaryContainer,
+        border: priorityColors?.normal || theme.colors.primary,
+        text: priorityColors?.normal || theme.colors.primary,
       };
     default: // LOW
       return {
-        background: isOverdue ? '#C8E6C9' : '#E8F5E8',
-        border: isOverdue ? '#1B5E20' : '#388E3C',
-        text: isOverdue ? '#1B5E20' : '#388E3C',
+        background: statusColors?.served?.bg || theme.colors.surfaceVariant,
+        border: priorityColors?.low || theme.colors.onSurfaceVariant,
+        text: priorityColors?.low || theme.colors.onSurfaceVariant,
       };
   }
 };
@@ -80,8 +81,21 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
   style,
 }) => {
   const { theme } = useTheme();
-  const priorityColors = getPriorityColors(order.priority, order.elapsed_time);
+  const priorityColors = getPriorityColors(order.priority, order.elapsed_time, theme);
   const statusActions = getStatusActions(order.items[0]?.status || 'confirmed');
+
+  // Helper to get item status color from theme
+  const getItemStatusColor = (status?: string) => {
+    const statusColors = theme?.colors?.status;
+    switch (status) {
+      case 'ready':
+        return statusColors?.ready?.border || theme.colors.success;
+      case 'preparing':
+        return statusColors?.preparing?.border || theme.colors.warning;
+      default:
+        return theme.colors.onSurfaceVariant;
+    }
+  };
 
   const containerStyle = [
     styles.container,
@@ -151,8 +165,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
             {/* Status indicator for individual items */}
             {item.status && (
               <View style={[styles.itemStatusDot, {
-                backgroundColor: item.status === 'ready' ? '#4CAF50' : 
-                                item.status === 'preparing' ? '#FF9800' : '#9E9E9E'
+                backgroundColor: getItemStatusColor(item.status)
               }]} />
             )}
           </View>
@@ -160,14 +173,14 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
         
         {order.items.length > (compact ? 2 : 3) && (
           <Text style={[styles.moreItems, { color: theme.colors.onSurfaceVariant }]}>
-            +{order.items.length - (compact ? 2 : 3)} more items
+            + {order.items.length - (compact ? 2 : 3)} more items
           </Text>
         )}
       </View>
 
       {/* Special instructions */}
       {order.special_instructions && !compact && (
-        <View style={styles.instructionsContainer}>
+        <View style={[styles.instructionsContainer, { borderTopColor: theme.colors.outline }]}>
           <MaterialIcons 
             name="note" 
             size={14} 
@@ -346,7 +359,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: spacing.xs / 2,
     textAlign: 'center',
-    color: '#666',
   },
   instructionsContainer: {
     flexDirection: 'row',
@@ -355,7 +367,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
     marginTop: spacing.xs / 2,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
   },
   instructions: {
     ...typography.bodySmall,
@@ -377,10 +388,11 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end', // Right aligned - Apple/Google design guideline
     paddingHorizontal: spacing.sm,
     paddingBottom: spacing.sm,
     marginTop: spacing.xs,
+    gap: spacing.sm,
   },
   actionButton: {
     flexDirection: 'row',
@@ -388,7 +400,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
-    marginHorizontal: spacing.xs,
   },
   actionText: {
     ...typography.labelMedium,

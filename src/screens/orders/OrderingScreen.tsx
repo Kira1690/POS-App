@@ -17,10 +17,10 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '@/hooks/useTheme';
 import { OrdersStackParamList } from '@/navigation/types';
-import { useEnhancedOrder } from '@/context/order';
+import { useUnifiedOrder, useUnifiedCart } from '@/context/unified-order';
 import { MenuItemExtended } from '@/types/menu-management-extended.types';
 import { MenuCategory } from '@/types/menu.types';
-import { SelectedModifier, getStationForCategory } from '@/types/order-extended.types';
+import { SelectedModifier, getStationForCategory } from '@/types/unified-order.types';
 
 // Components
 import { CategorySidebar } from './components/CategorySidebar';
@@ -129,14 +129,22 @@ export const OrderingScreen: React.FC = () => {
 
   const { tableId, tableName, guestCount } = route.params;
 
-  // Context hooks
+  // Context hooks - using unified order system
   const {
     state,
-    actions,
-    cart,
-    cartTotal,
+    setSelectedTable,
+    submitToKitchen,
     isSubmitting,
-  } = useEnhancedOrder();
+  } = useUnifiedOrder();
+
+  const {
+    items: cart,
+    subtotal: cartTotal,
+    addItem: addToCart,
+    updateQuantity: updateCartItemQuantity,
+    removeItem: removeFromCart,
+    clear: clearCart,
+  } = useUnifiedCart();
 
   // Local state
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -147,7 +155,7 @@ export const OrderingScreen: React.FC = () => {
   // Initialize order when screen mounts
   useEffect(() => {
     // Create order for the table
-    actions.setSelectedTable({
+    setSelectedTable({
       id: tableId,
       table_number: tableName,
       capacity: guestCount || 4,
@@ -156,7 +164,7 @@ export const OrderingScreen: React.FC = () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
-  }, [tableId, tableName, guestCount, actions]);
+  }, [tableId, tableName, guestCount, setSelectedTable]);
 
   const styles = StyleSheet.create({
     container: {
@@ -229,39 +237,38 @@ export const OrderingScreen: React.FC = () => {
       setIsModifierModalVisible(true);
     } else {
       // Add directly to cart with no modifiers
-      const station = getStationForCategory(item.category_id);
-      actions.addToCart(item, [], 1);
+      addToCart(item, [], 1);
     }
-  }, [actions]);
+  }, [addToCart]);
 
   // Handler for adding item with modifiers
   const handleAddToCart = useCallback(
     (item: MenuItemExtended, modifiers: SelectedModifier[], quantity: number, notes?: string) => {
-      actions.addToCart(item, modifiers, quantity, notes);
+      addToCart(item, modifiers, quantity, notes);
       setSelectedItem(null);
       setIsModifierModalVisible(false);
     },
-    [actions]
+    [addToCart]
   );
 
   // Handler for updating cart item quantity
   const handleUpdateQuantity = useCallback(
     (itemId: string, quantity: number) => {
       if (quantity <= 0) {
-        actions.removeFromCart(itemId);
+        removeFromCart(itemId);
       } else {
-        actions.updateCartItemQuantity(itemId, quantity);
+        updateCartItemQuantity(itemId, quantity);
       }
     },
-    [actions]
+    [removeFromCart, updateCartItemQuantity]
   );
 
   // Handler for removing item from cart
   const handleRemoveItem = useCallback(
     (itemId: string) => {
-      actions.removeFromCart(itemId);
+      removeFromCart(itemId);
     },
-    [actions]
+    [removeFromCart]
   );
 
   // Handler for editing cart item
@@ -284,11 +291,11 @@ export const OrderingScreen: React.FC = () => {
         {
           text: 'Clear',
           style: 'destructive',
-          onPress: () => actions.clearCart(),
+          onPress: () => clearCart(),
         },
       ]
     );
-  }, [actions]);
+  }, [clearCart]);
 
   // Handler for send to kitchen button
   const handleSendToKitchen = useCallback(() => {
@@ -299,7 +306,7 @@ export const OrderingScreen: React.FC = () => {
   // Handler for confirming send to kitchen
   const handleConfirmSend = useCallback(async () => {
     try {
-      const result = await actions.submitOrderToKitchen();
+      const result = await submitToKitchen();
       setIsSendModalVisible(false);
 
       if (result.success) {
@@ -320,7 +327,7 @@ export const OrderingScreen: React.FC = () => {
       setIsSendModalVisible(false);
       Alert.alert('Error', 'An unexpected error occurred');
     }
-  }, [actions, navigation]);
+  }, [submitToKitchen, navigation]);
 
   // Handler for back button
   const handleBack = useCallback(() => {

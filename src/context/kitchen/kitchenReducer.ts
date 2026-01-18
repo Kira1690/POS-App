@@ -42,6 +42,7 @@ export interface KitchenState {
     pendingCount: number;
     preparingCount: number;
     readyCount: number;
+    servedCount: number;  // History count for "All" tab
     overdueCount: number;
     allergenCount: number;
     avgPrepTime: number;
@@ -94,6 +95,7 @@ export const initialKitchenState: KitchenState = {
     pendingCount: 0,
     preparingCount: 0,
     readyCount: 0,
+    servedCount: 0,
     overdueCount: 0,
     allergenCount: 0,
     avgPrepTime: 0,
@@ -191,6 +193,7 @@ const calculateStats = (tickets: KitchenTicket[]) => {
   const pendingCount = tickets.filter((t) => t.status === 'pending').length;
   const preparingCount = tickets.filter((t) => t.status === 'preparing').length;
   const readyCount = tickets.filter((t) => t.status === 'ready').length;
+  const servedCount = tickets.filter((t) => t.status === 'served').length;
   const overdueCount = activeTickets.filter((t) => t.isOverdue).length;
   const allergenCount = activeTickets.filter((t) => t.hasAllergens).length;
 
@@ -208,6 +211,7 @@ const calculateStats = (tickets: KitchenTicket[]) => {
     pendingCount,
     preparingCount,
     readyCount,
+    servedCount,
     overdueCount,
     allergenCount,
     avgPrepTime: Math.round(avgPrepTime),

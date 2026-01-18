@@ -1,20 +1,21 @@
 /**
  * OrderTimeline - Professional order progress display component
  * Shows visual timeline of order progress with timestamps
+ * Supports both UnifiedOrder and legacy Order types
  */
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Order } from '@/types/order.types';
 import { OrderStatus } from '@/types/common.types';
 import { useTheme } from '@/hooks/useTheme';
 import { typography } from '@/design-system/theme/typography';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { formatTime } from '@/utils/date';
+import { AnyOrder, getOrderTimestamps } from '@/utils/orderFormatHelpers';
 
 interface OrderTimelineProps {
-  order: Order;
+  order: AnyOrder;
   style?: any;
 }
 
@@ -27,15 +28,16 @@ interface TimelineStep {
   active: boolean;
 }
 
-const getTimelineSteps = (order: Order): TimelineStep[] => {
+const getTimelineSteps = (order: AnyOrder): TimelineStep[] => {
   const currentStatusIndex = getStatusIndex(order.status);
-  
+  const timestamps = getOrderTimestamps(order);
+
   return [
     {
       status: OrderStatus.PENDING,
       label: 'Order Placed',
       icon: 'receipt',
-      timestamp: order.created_at,
+      timestamp: timestamps.createdAt,
       completed: true,
       active: currentStatusIndex === 0,
     },
@@ -43,7 +45,7 @@ const getTimelineSteps = (order: Order): TimelineStep[] => {
       status: OrderStatus.CONFIRMED,
       label: 'Confirmed',
       icon: 'check-circle',
-      timestamp: order.submitted_at,
+      timestamp: timestamps.submittedAt,
       completed: currentStatusIndex >= 1,
       active: currentStatusIndex === 1,
     },
@@ -51,7 +53,7 @@ const getTimelineSteps = (order: Order): TimelineStep[] => {
       status: OrderStatus.PREPARING,
       label: 'Preparing',
       icon: 'restaurant',
-      timestamp: order.preparing_at,
+      timestamp: timestamps.preparingAt,
       completed: currentStatusIndex >= 2,
       active: currentStatusIndex === 2,
     },
@@ -59,7 +61,7 @@ const getTimelineSteps = (order: Order): TimelineStep[] => {
       status: OrderStatus.READY,
       label: 'Ready',
       icon: 'notifications',
-      timestamp: order.ready_at,
+      timestamp: timestamps.readyAt,
       completed: currentStatusIndex >= 3,
       active: currentStatusIndex === 3,
     },
@@ -67,7 +69,7 @@ const getTimelineSteps = (order: Order): TimelineStep[] => {
       status: OrderStatus.SERVED,
       label: 'Served',
       icon: 'done-all',
-      timestamp: order.served_at,
+      timestamp: timestamps.servedAt,
       completed: currentStatusIndex >= 4,
       active: currentStatusIndex === 4,
     },
@@ -87,23 +89,36 @@ const getStatusIndex = (status: OrderStatus): number => {
 
 const OrderTimeline: React.FC<OrderTimelineProps> = ({ order, style }) => {
   const { theme } = useTheme();
+
+  // Guard against undefined order
+  if (!order) {
+    return (
+      <View style={[styles.container, style]}>
+        <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+          No order data
+        </Text>
+      </View>
+    );
+  }
+
   const steps = getTimelineSteps(order);
+  const timestamps = getOrderTimestamps(order);
 
   // Special handling for cancelled orders
   if (order.status === OrderStatus.CANCELLED) {
     return (
       <View style={[styles.container, style]}>
         <View style={styles.cancelledContainer}>
-          <MaterialIcons 
-            name="cancel" 
-            size={24} 
-            color={theme.colors.error} 
+          <MaterialIcons
+            name="cancel"
+            size={24}
+            color={theme.colors.error}
           />
           <Text style={[styles.cancelledText, { color: theme.colors.error }]}>
             Order Cancelled
           </Text>
           <Text style={[styles.cancelledTime, { color: theme.colors.onSurfaceVariant }]}>
-            {formatTime(order.updated_at)}
+            {formatTime(timestamps.updatedAt || timestamps.createdAt)}
           </Text>
         </View>
       </View>

@@ -3,10 +3,10 @@
  * Layout composition, navigation, and data loading only
  */
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useOrderManagement } from '@/context/orderManagement';
+import { useUnifiedOrderManagement } from '@/context/unified-order';
 import { useTheme } from '@/hooks/useTheme';
 import { OrderStatus } from '@/types/common.types';
 import {
@@ -32,13 +32,18 @@ interface OrderDetailsScreenProps {
 const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const {
-    selectedOrder,
+    orders,
+    selectedOrderId,
     updateOrderStatus,
     cancelOrder,
-    isLoadingDetails,
-  } = useOrderManagement();
+    isLoading: isLoadingDetails,
+  } = useUnifiedOrderManagement();
 
-  const order = selectedOrder;
+  // Get selected order from orders list
+  const order = useMemo(() => {
+    const orderId = route?.params?.orderId || selectedOrderId;
+    return orders.find((o) => o.id === orderId) || null;
+  }, [orders, route?.params?.orderId, selectedOrderId]);
 
   useEffect(() => {
     if (!order) {

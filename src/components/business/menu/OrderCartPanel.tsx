@@ -22,19 +22,18 @@ import {
 } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { ExtendedOrderItem } from '@/types/order-extended.types';
-import { ExtendedOrder } from '@/types/order-extended.types';
+import { UnifiedOrderItem, UnifiedOrder } from '@/types/unified-order.types';
 import { Table } from '@/types/table.types';
-import { useCart } from '@/context/order';
+import { useUnifiedCart } from '@/context/unified-order';
 import { formatPrice } from '@/utils/currency';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { touchTargets, iconSizes, dividers, elevations } from '@/design-system/theme/layout';
 
 interface OrderCartPanelProps {
-  cart: ExtendedOrderItem[];
+  cart: UnifiedOrderItem[];
   cartTotal: number;
   cartItemCount: number;
-  currentOrder: ExtendedOrder | null;
+  currentOrder: UnifiedOrder | null;
   table: Table;
   taxRate?: number; // Tax rate from context/settings (single source of truth)
 }
@@ -51,7 +50,7 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
   taxRate = DEFAULT_TAX_RATE,
 }) => {
   const theme = useTheme();
-  const { updateCartItemQuantity, removeFromCart, clearCart } = useCart();
+  const { updateQuantity: updateCartItemQuantity, removeItem: removeFromCart, clear: clearCart } = useUnifiedCart();
 
   // Calculate totals with tax (using provided tax rate as single source of truth)
   const calculations = useMemo(() => {
@@ -67,7 +66,7 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
     };
   }, [cartTotal, taxRate]);
 
-  const renderCartItem = ({ item }: { item: ExtendedOrderItem }) => (
+  const renderCartItem = ({ item }: { item: UnifiedOrderItem }) => (
     <Surface
       style={[
         styles.cartItem,

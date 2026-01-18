@@ -1,6 +1,7 @@
 /**
  * PaymentSummary
  * Professional order summary with tip calculation for payment processing
+ * Supports both UnifiedOrder and legacy Order types
  */
 
 import React from 'react';
@@ -15,12 +16,42 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { usePaymentConfiguration } from '@/context/payment';
 import { Order, OrderItem } from '@/types/order.types';
+import { UnifiedOrder, UnifiedOrderItem } from '@/types/unified-order.types';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 import { formatCurrency } from '@/utils/currency';
 
+// Support both unified and legacy order types
+type AnyOrder = Order | UnifiedOrder;
+type AnyOrderItem = OrderItem | UnifiedOrderItem;
+
+// Helper to get item name from either format
+const getItemName = (item: AnyOrderItem): string => {
+  if ('name' in item && typeof item.name === 'string') {
+    return item.name;
+  }
+  if ('menu_item' in item && item.menu_item?.name) {
+    return item.menu_item.name;
+  }
+  return 'Unknown Item';
+};
+
+// Helper to get item price from either format
+const getItemPrice = (item: AnyOrderItem): number => {
+  if ('itemTotal' in item) return item.itemTotal;
+  if ('total_price' in item) return item.total_price;
+  return 0;
+};
+
+// Helper to get order totals from either format
+const getOrderTotals = (order: AnyOrder) => ({
+  subtotal: (order as any).subtotal ?? 0,
+  taxAmount: (order as UnifiedOrder).taxAmount ?? (order as Order).tax_amount ?? 0,
+  specialInstructions: (order as UnifiedOrder).specialInstructions ?? (order as Order).special_instructions,
+});
+
 interface PaymentSummaryProps {
-  order: Order;
+  order: AnyOrder;
   tipAmount: number;
   tipPercentage: number;
   onTipCalculation: (percentage: number, amount?: number) => void;
@@ -35,9 +66,26 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   const { theme } = useTheme();
   const { defaultTipRates, taxRate } = usePaymentConfiguration();
 
+  // Guard against undefined order
+  if (!order) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          Order Summary
+        </Text>
+        <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>
+          No order data available
+        </Text>
+      </View>
+    );
+  }
+
+  // Get order totals using helper (supports both formats)
+  const orderTotals = getOrderTotals(order);
+
   // Calculate totals
-  const subtotal = order.subtotal || 0;
-  const tax = order.tax_amount || subtotal * taxRate;
+  const subtotal = orderTotals.subtotal;
+  const tax = orderTotals.taxAmount || subtotal * taxRate;
   const total = subtotal + tax + tipAmount;
 
   // Render order items
@@ -46,28 +94,28 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       <Text style={[styles.sectionSubtitle, { color: theme.colors.onSurface }]}>
         Order Items
       </Text>
-      
-      {order.items.map((item: OrderItem, index: number) => (
+
+      {(order.items || []).map((item: AnyOrderItem, index: number) => (
         <View key={item.id || index} style={styles.orderItem}>
           <View style={styles.itemInfo}>
             <Text style={[styles.itemQuantity, { color: theme.colors.primary }]}>
               {item.quantity}×
             </Text>
             <Text style={[styles.itemName, { color: theme.colors.onSurface }]}>
-              {item.menu_item.name}
+              {getItemName(item)}
             </Text>
           </View>
           <Text style={[styles.itemPrice, { color: theme.colors.onSurface }]}>
-            {formatCurrency(item.total_price)}
+            {formatCurrency(getItemPrice(item))}
           </Text>
         </View>
       ))}
-      
-      {order.special_instructions && (
+
+      {orderTotals.specialInstructions && (
         <View style={styles.specialInstructions}>
           <MaterialIcons name="note" size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.instructionsText, { color: theme.colors.onSurfaceVariant }]}>
-            {order.special_instructions}
+            {orderTotals.specialInstructions}
           </Text>
         </View>
       )}
@@ -268,6 +316,11 @@ const styles = StyleSheet.create({
     ...typography.titleLarge,
     fontWeight: '700',
     marginBottom: spacing.md,
+  },
+  emptyText: {
+    ...typography.bodyMedium,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
   },
   sectionSubtitle: {
     ...typography.titleMedium,

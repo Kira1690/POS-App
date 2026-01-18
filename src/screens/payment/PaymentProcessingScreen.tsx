@@ -51,14 +51,15 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
   route 
 }) => {
   const { theme } = useTheme();
-  const { 
-    processCardPayment, 
-    processCashPayment, 
+  const {
+    processCardPayment,
+    processCashPayment,
     processSplitPayment,
     processingStatus,
     isLoading,
     error,
     clearError,
+    resetProcessingStatus,
   } = usePaymentProcessing();
 
   const {
@@ -77,6 +78,11 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
   // Get order from route params
   const order = route?.params?.order;
   const orderId = route?.params?.orderId || order?.id;
+
+  // Reset processing status on mount to clear any previous FAILED status
+  useEffect(() => {
+    resetProcessingStatus();
+  }, [resetProcessingStatus]);
 
   useEffect(() => {
     if (!order && !orderId) {

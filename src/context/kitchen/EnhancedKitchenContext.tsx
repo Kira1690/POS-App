@@ -25,9 +25,11 @@ import {
   KitchenStation,
   DEFAULT_STATION_CONFIGS,
 } from '@/types/kitchen-ticket.types';
-import { kitchenStorageService, orderStorageService } from '@/services/storage';
+import { kitchenStorageService, orderStorageService, unifiedOrderStorageService } from '@/services/storage';
 import { ticketRoutingService } from '@/services/kitchen/TicketRoutingService';
 import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
+import { UnifiedOrderItem } from '@/types/unified-order.types';
+import { generateTicketId } from '@/types/kitchen-ticket.types';
 
 // ============== CONTEXT VALUE TYPE ==============
 
@@ -83,13 +85,14 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load tickets from storage
+  // Load tickets from storage - loads ALL tickets (including history)
   const loadTickets = useCallback(async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
 
       await kitchenStorageService.initialize();
-      const tickets = await kitchenStorageService.getActiveTickets();
+      // Get ALL tickets (including served/completed) for history in "All" tab
+      const tickets = await kitchenStorageService.getTickets();
       const stationConfigs = await kitchenStorageService.getStationConfigs();
 
       dispatch({ type: 'SET_TICKETS', payload: tickets });
@@ -103,12 +106,13 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
     }
   }, []);
 
-  // Refresh tickets
+  // Refresh tickets - loads ALL tickets (including history)
   const refreshTickets = useCallback(async () => {
     try {
       dispatch({ type: 'SET_REFRESHING', payload: true });
 
-      const tickets = await kitchenStorageService.getActiveTickets();
+      // Get ALL tickets (including served/completed) for history in "All" tab
+      const tickets = await kitchenStorageService.getTickets();
       dispatch({ type: 'SET_TICKETS', payload: tickets });
       dispatch({ type: 'MARK_TICKETS_OVERDUE' });
     } catch (error) {
@@ -422,6 +426,106 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
   useEffect(() => {
     loadTickets();
   }, [loadTickets]);
+
+  // Subscribe to ORDER_CREATED events to create kitchen tickets
+  useEffect(() => {
+    const unsubscribeOrderCreated = orderEventEmitter.subscribe(
+      'ORDER_CREATED',
+      async (orderId: string, data: { orderNumber?: string; tableId?: string; tableName?: string; items?: UnifiedOrderItem[] }) => {
+        if (__DEV__) {
+          console.log('[EnhancedKitchenContext] Received ORDER_CREATED:', orderId, data);
+        }
+
+        try {
+          // Get the full order from storage
+          const order = await unifiedOrderStorageService.getOrder(orderId);
+          if (!order) {
+            console.error('[EnhancedKitchenContext] Order not found:', orderId);
+            return;
+          }
+
+          // Group items by kitchen station
+          const itemsByStation = new Map<KitchenStation, UnifiedOrderItem[]>();
+          for (const item of order.items) {
+            const station = item.kitchenStation || 'hot_kitchen';
+            if (!itemsByStation.has(station)) {
+              itemsByStation.set(station, []);
+            }
+            itemsByStation.get(station)!.push(item);
+          }
+
+          // Create a ticket for each station that has items
+          const createdTickets: KitchenTicket[] = [];
+          const now = new Date().toISOString();
+
+          for (const [station, items] of itemsByStation.entries()) {
+            if (items.length === 0) continue;
+
+            const ticketId = generateTicketId();
+            const estimatedPrepTime = Math.max(...items.map(i => i.estimatedPrepTime || 10));
+
+            const ticket: KitchenTicket = {
+              id: ticketId,
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              tableId: order.tableId,
+              tableName: order.tableName,
+              station,
+              items: items.map(item => ({
+                id: item.id,
+                menuItemId: item.menuItemId,
+                name: item.name,
+                quantity: item.quantity,
+                modifiers: item.selectedModifiers?.map(m => ({
+                  id: m.id,
+                  name: m.name,
+                  price: m.price,
+                })) || [],
+                modifiersDisplay: item.selectedModifiers?.map(m => m.name).join(', ') || '',
+                specialInstructions: item.specialInstructions,
+                status: 'pending',
+                allergens: item.allergens || [],
+              })),
+              status: 'pending',
+              priority: 'normal',
+              createdAt: now,
+              updatedAt: now,
+              estimatedPrepTime,
+              hasAllergens: items.some(i => (i.allergens?.length || 0) > 0),
+              isOverdue: false,
+            };
+
+            // Save ticket to storage
+            await kitchenStorageService.saveTicket(ticket);
+            createdTickets.push(ticket);
+
+            if (__DEV__) {
+              console.log(`[EnhancedKitchenContext] Created ticket for station ${station}:`, ticketId);
+            }
+          }
+
+          // Update context state with new tickets
+          if (createdTickets.length > 0) {
+            dispatch({ type: 'ADD_TICKETS', payload: createdTickets });
+            console.log(`[EnhancedKitchenContext] ✅ Created ${createdTickets.length} tickets for order ${order.orderNumber}`);
+          }
+        } catch (error) {
+          console.error('[EnhancedKitchenContext] Failed to create tickets:', error);
+        }
+      }
+    );
+
+    // Subscribe to SYSTEM_RESET to clear tickets
+    const unsubscribeReset = orderEventEmitter.subscribe('SYSTEM_RESET', () => {
+      console.log('[EnhancedKitchenContext] System reset - clearing tickets');
+      dispatch({ type: 'SET_TICKETS', payload: [] });
+    });
+
+    return () => {
+      unsubscribeOrderCreated();
+      unsubscribeReset();
+    };
+  }, []);
 
   // Auto-refresh
   useEffect(() => {
