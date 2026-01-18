@@ -4,13 +4,12 @@
  */
 
 import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
-import { 
-  OrderItem, 
-  Order, 
-  OrderItemStatus, 
-  OrderFilterOptions, 
-  OrderManagementState,
-  KitchenOrder 
+import {
+  OrderItem,
+  Order,
+  OrderItemStatus,
+  OrderFilterOptions,
+  OrderManagementState
 } from '@/types/order.types';
 import { OrderStatus, TableStatus } from '@/types/common.types';
 import { Table } from '@/types/table.types';
@@ -48,11 +47,7 @@ export interface OrderContextState {
   filteredOrders: Order[];
   searchQuery: string;
   statusFilter: OrderStatus | 'ALL';
-  
-  // Kitchen operations
-  kitchenOrders: KitchenOrder[];
-  activeKitchenOrders: KitchenOrder[];
-  
+
   // Loading states
   isLoadingOrders: boolean;
   isLoadingOrderDetails: boolean;
@@ -80,11 +75,7 @@ interface OrderContextActions {
   
   // Order item management
   updateOrderItemStatus: (orderId: string, itemId: string, status: OrderItemStatus) => Promise<void>;
-  
-  // Kitchen operations
-  loadKitchenOrders: () => Promise<void>;
-  updateKitchenOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
-  
+
   // Search and filtering
   setSearchQuery: (query: string) => void;
   setStatusFilter: (status: OrderStatus | 'ALL') => void;
@@ -124,10 +115,7 @@ type OrderAction =
   | { type: 'SELECT_ORDER_FOR_MANAGEMENT'; payload: { order: Order | null } }
   | { type: 'UPDATE_ORDER_IN_LIST'; payload: { order: Order } }
   | { type: 'REMOVE_ORDER_FROM_LIST'; payload: { orderId: string } }
-  
-  // Kitchen operations actions
-  | { type: 'LOAD_KITCHEN_ORDERS_SUCCESS'; payload: { kitchenOrders: KitchenOrder[] } }
-  
+
   // Search and filtering actions
   | { type: 'SET_SEARCH_QUERY'; payload: { query: string } }
   | { type: 'SET_STATUS_FILTER'; payload: { status: OrderStatus | 'ALL' } }
@@ -155,11 +143,7 @@ const initialState: OrderContextState = {
   filteredOrders: [],
   searchQuery: '',
   statusFilter: 'ALL',
-  
-  // Kitchen operations
-  kitchenOrders: [],
-  activeKitchenOrders: [],
-  
+
   // Loading states
   isLoadingOrders: false,
   isLoadingOrderDetails: false,
@@ -398,23 +382,12 @@ function orderReducer(state: OrderContextState, action: OrderAction): OrderConte
         ...state,
         orders: updatedOrders,
         filteredOrders,
-        selectedOrderForManagement: state.selectedOrderForManagement?.id === action.payload.orderId 
-          ? null 
+        selectedOrderForManagement: state.selectedOrderForManagement?.id === action.payload.orderId
+          ? null
           : state.selectedOrderForManagement,
       };
     }
-    
-    case 'LOAD_KITCHEN_ORDERS_SUCCESS': {
-      const activeOrders = action.payload.kitchenOrders.filter(order => 
-        ['pending', 'preparing'].includes(order.items[0]?.status || '')
-      );
-      return {
-        ...state,
-        kitchenOrders: action.payload.kitchenOrders,
-        activeKitchenOrders: activeOrders,
-      };
-    }
-    
+
     case 'SET_SEARCH_QUERY': {
       const filteredOrders = applyFilters(state.orders, action.payload.query, state.statusFilter);
       return {
@@ -573,38 +546,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
       setError(`Failed to update order item status: ${error}`);
     }
   }, [setError]);
-  
-  const loadKitchenOrders = useCallback(async () => {
-    try {
-      const orders = await orderServiceInstance.getCurrentOrders();
-      // Convert orders to kitchen orders format
-      const kitchenOrders: KitchenOrder[] = orders.map(order => ({
-        id: order.id,
-        order_number: order.order_number,
-        table_number: order.table_id || 'N/A',
-        items: order.items,
-        created_at: order.created_at,
-        estimated_prep_time: order.estimated_prep_time || 15,
-        elapsed_time: Math.floor((Date.now() - new Date(order.created_at).getTime()) / (1000 * 60)),
-        priority: 'NORMAL',
-        special_instructions: order.special_instructions,
-        kitchen_notes: order.kitchen_notes,
-      }));
-      dispatch({ type: 'LOAD_KITCHEN_ORDERS_SUCCESS', payload: { kitchenOrders } });
-    } catch (error) {
-      setError(`Failed to load kitchen orders: ${error}`);
-    }
-  }, [orderServiceInstance, setError]);
-  
-  const updateKitchenOrderStatus = useCallback(async (orderId: string, status: OrderStatus) => {
-    try {
-      await updateOrderStatusManagement(orderId, status);
-      await loadKitchenOrders(); // Refresh kitchen orders
-    } catch (error) {
-      setError(`Failed to update kitchen order status: ${error}`);
-    }
-  }, [updateOrderStatusManagement, loadKitchenOrders, setError]);
-  
+
   const submitOrderToKitchen = useCallback(async () => {
     if (!state.currentOrder || state.cart.length === 0) {
       setError('No order to submit');
@@ -677,11 +619,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     updateOrderStatusManagement,
     cancelOrder,
     updateOrderItemStatus,
-    
-    // Kitchen operations
-    loadKitchenOrders,
-    updateKitchenOrderStatus,
-    
+
     // Search and filtering
     setSearchQuery,
     setStatusFilter,
@@ -724,17 +662,5 @@ export const useOrderManagement = () => {
     cancelOrder: context.cancelOrder,
     setSearchQuery: context.setSearchQuery,
     setStatusFilter: context.setStatusFilter,
-  };
-};
-
-// Convenience hook for kitchen operations
-export const useKitchen = () => {
-  const context = useOrder();
-  return {
-    kitchenOrders: context.kitchenOrders,
-    activeKitchenOrders: context.activeKitchenOrders,
-    loadKitchenOrders: context.loadKitchenOrders,
-    updateOrderStatus: context.updateKitchenOrderStatus,
-    updateItemStatus: context.updateOrderItemStatus,
   };
 };

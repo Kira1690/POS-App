@@ -137,6 +137,7 @@ export interface IMenuContextActions {
   removeModifierOption: (optionId: string) => Promise<void>;
   assignModifierToItems: (groupId: string, itemIds: string[]) => Promise<void>;
   unassignModifierFromItems: (groupId: string, itemIds: string[]) => Promise<void>;
+  assignModifiersToMenuItem: (menuItemId: string, modifierGroupIds: string[]) => Promise<void>;
 
   // Combo CRUD
   createCombo: (data: CreateComboRequest) => Promise<ComboDeal>;

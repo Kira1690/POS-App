@@ -7,7 +7,7 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 import { OrderManagementProvider, useOrderManagement } from '@/context/orderManagement/OrderManagementContext';
-import { KitchenProvider, useKitchen } from '@/context/kitchen/KitchenContext';
+import { EnhancedKitchenProvider, useEnhancedKitchen } from '@/context/kitchen';
 import { CartProvider, useCart } from '@/context/cart/CartContext';
 import { OrderBusinessLogicProvider, useOrderBusinessLogic } from '@/context/orderBusinessLogic/OrderBusinessLogicContext';
 import { initializeServices, serviceContainer } from '@/services/core';
@@ -101,11 +101,11 @@ describe('Context Integration Tests', () => {
 
   describe('KitchenContext Integration', () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <KitchenProvider>{children}</KitchenProvider>
+      <EnhancedKitchenProvider>{children}</EnhancedKitchenProvider>
     );
 
     test('should properly use dependency injection for kitchen operations', () => {
-      const { result } = renderHook(() => useKitchen(), { wrapper });
+      const { result } = renderHook(() => useEnhancedKitchen(), { wrapper });
 
       expect(result.current).toBeDefined();
       expect(result.current.kitchenOrders).toEqual([]);
@@ -115,7 +115,7 @@ describe('Context Integration Tests', () => {
     });
 
     test('should handle kitchen-specific operations only', () => {
-      const { result } = renderHook(() => useKitchen(), { wrapper });
+      const { result } = renderHook(() => useEnhancedKitchen(), { wrapper });
 
       // Kitchen-specific operations
       const kitchenOperations = [
@@ -133,7 +133,7 @@ describe('Context Integration Tests', () => {
     });
 
     test('should manage notifications independently', async () => {
-      const { result } = renderHook(() => useKitchen(), { wrapper });
+      const { result } = renderHook(() => useEnhancedKitchen(), { wrapper });
 
       act(() => {
         result.current.addNotification({
@@ -284,20 +284,20 @@ describe('Context Integration Tests', () => {
   describe('Context Composition and Interaction', () => {
     const CompositeWrapper = ({ children }: { children: React.ReactNode }) => (
       <OrderManagementProvider>
-        <KitchenProvider>
+        <EnhancedKitchenProvider>
           <CartProvider>
             <OrderBusinessLogicProvider>
               {children}
             </OrderBusinessLogicProvider>
           </CartProvider>
-        </KitchenProvider>
+        </EnhancedKitchenProvider>
       </OrderManagementProvider>
     );
 
     test('should allow multiple contexts to coexist without conflicts', () => {
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useKitchen(),
+        kitchen: useEnhancedKitchen(),
         cart: useCart(),
         businessLogic: useOrderBusinessLogic(),
       }), { wrapper: CompositeWrapper });
@@ -312,7 +312,7 @@ describe('Context Integration Tests', () => {
     test('should maintain independent state across contexts', () => {
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useKitchen(),
+        kitchen: useEnhancedKitchen(),
       }), { wrapper: CompositeWrapper });
 
       // States should be independent
@@ -325,19 +325,19 @@ describe('Context Integration Tests', () => {
     test('contexts should follow Single Responsibility Principle', () => {
       const CompositeWrapper = ({ children }: { children: React.ReactNode }) => (
         <OrderManagementProvider>
-          <KitchenProvider>
+          <EnhancedKitchenProvider>
             <CartProvider>
               <OrderBusinessLogicProvider>
                 {children}
               </OrderBusinessLogicProvider>
             </CartProvider>
-          </KitchenProvider>
+          </EnhancedKitchenProvider>
         </OrderManagementProvider>
       );
 
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useKitchen(),
+        kitchen: useEnhancedKitchen(),
         cart: useCart(),
         businessLogic: useOrderBusinessLogic(),
       }), { wrapper: CompositeWrapper });

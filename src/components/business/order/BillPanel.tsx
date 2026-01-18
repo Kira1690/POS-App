@@ -27,6 +27,7 @@ interface BillItem {
   price: number;
   notes?: string;
   category?: string;
+  hasModifiers?: boolean; // Indicates if item has editable modifiers
 }
 
 interface BillPanelProps {
@@ -47,6 +48,7 @@ interface BillPanelProps {
   onSendToKitchen: () => void; // Renamed from onPayment - proper restaurant workflow
   onDiscount: () => void;
   onSplit: () => void;
+  onEditItemModifiers?: (itemId: string) => void; // Optional: Edit modifiers for cart item
   isProcessing?: boolean;
 }
 
@@ -71,6 +73,7 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
   onSendToKitchen,
   onDiscount,
   onSplit,
+  onEditItemModifiers,
   isProcessing = false,
 }) => {
   const { theme } = useTheme();
@@ -86,6 +89,12 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
   const handleRemoveItem = useCallback((itemId: string) => {
     onItemRemove(itemId);
   }, [onItemRemove]);
+
+  const handleEditModifiers = useCallback((itemId: string) => {
+    if (onEditItemModifiers) {
+      onEditItemModifiers(itemId);
+    }
+  }, [onEditItemModifiers]);
 
   // Render bill header with order info
   const renderBillHeader = () => (
@@ -115,21 +124,33 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
         <Text style={[styles.itemName, { color: theme.colors.onSurface }]} numberOfLines={2}>
           {item.name}
         </Text>
-        <TouchableOpacity
-          onPress={() => handleRemoveItem(item.id)}
-          style={styles.removeButton}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <MaterialIcons name="close" size={16} color={theme.colors.error} />
-        </TouchableOpacity>
+        <View style={styles.itemActions}>
+          {/* Edit modifiers button - shown if item has modifiers and callback provided */}
+          {item.hasModifiers && onEditItemModifiers && (
+            <TouchableOpacity
+              onPress={() => handleEditModifiers(item.id)}
+              style={[styles.editButton, { backgroundColor: theme.colors.primaryContainer }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <MaterialIcons name="edit" size={14} color={theme.colors.primary} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            onPress={() => handleRemoveItem(item.id)}
+            style={styles.removeButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <MaterialIcons name="close" size={16} color={theme.colors.error} />
+          </TouchableOpacity>
+        </View>
       </View>
-      
+
       {item.notes && (
         <Text style={[styles.itemNotes, { color: theme.colors.onSurfaceVariant }]}>
           Note: {item.notes}
         </Text>
       )}
-      
+
       <View style={styles.itemDetails}>
         <View style={styles.quantityControls}>
           <TouchableOpacity
@@ -138,11 +159,11 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
           >
             <MaterialIcons name="remove" size={16} color={theme.colors.onSurfaceVariant} />
           </TouchableOpacity>
-          
+
           <Text style={[styles.quantityText, { color: theme.colors.onSurface }]}>
             {item.quantity}
           </Text>
-          
+
           <TouchableOpacity
             onPress={() => handleQuantityChange(item.id, 1)}
             style={[styles.quantityButton, { backgroundColor: theme.colors.surfaceVariant }]}
@@ -150,7 +171,7 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
             <MaterialIcons name="add" size={16} color={theme.colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.priceInfo}>
           <Text style={[styles.unitPrice, { color: theme.colors.onSurfaceVariant }]}>
             {formatCurrency(item.price)} each
@@ -359,6 +380,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
     marginRight: spacing.sm,
+  },
+  itemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  editButton: {
+    padding: spacing.xs,
+    borderRadius: borderRadius.sm,
   },
   removeButton: {
     padding: spacing.xs / 2,

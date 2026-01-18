@@ -1,5 +1,5 @@
 // Legacy exports (for backward compatibility)
-export { OrderProvider, useOrder, useOrderManagement, useKitchen } from './OrderContext';
+export { OrderProvider, useOrder, useOrderManagement } from './OrderContext';
 export type { OrderContextValue, OrderContextState } from './OrderContext';
 
 // Enhanced Order Context exports

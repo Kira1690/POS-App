@@ -1,18 +1,21 @@
 import { apiClient } from '@/services/api/apiClient';
 import { API_ENDPOINTS } from '@/constants';
-import { 
-  Order, 
-  CreateOrderRequest, 
+import {
+  Order,
+  CreateOrderRequest,
   UpdateOrderStatusRequest,
   UpdateOrderItemStatusRequest,
   OrderFilterOptions,
   CancelOrderRequest,
   OrderItemStatus,
   KitchenOrder,
-  PaginatedResponse 
+  PaginatedResponse
 } from '@/types/order.types';
-import { OrderStatus } from '@/types/common.types';
+import { OrderStatus, PaymentStatus } from '@/types/common.types';
 import { IOrderService } from '@/interfaces/services/order.interface';
+import { menuStorageService } from '@/services/storage/MenuStorageService';
+import { orderStorageService } from '@/services/storage/OrderStorageService';
+import { ExtendedOrder, ExtendedOrderStatus } from '@/types/order-extended.types';
 
 export class OrderService implements IOrderService {
   async createOrder(orderData: CreateOrderRequest): Promise<Order> {
@@ -297,73 +300,248 @@ export class OrderService implements IOrderService {
 }
 
 // Create mock implementation for development
+// This mock service mirrors how the real API would work:
+// - Receives order request with menu_item_ids
+// - Looks up menu item details from storage (like backend would from database)
+// - Returns complete order with full menu item data
 class MockOrderService extends OrderService {
-  private mockOrders: Order[] = [];
-  
+  // NOTE: For production, this service reads ONLY from AsyncStorage
+  // No mock data is generated - all data comes from user actions
+  private mockOrders: Order[] = []; // Legacy array, no longer used in production
+
   async createOrder(orderData: CreateOrderRequest): Promise<Order> {
+    const orderId = `mock_order_${Date.now()}`;
+    const orderNumber = `ORD-${String(Date.now()).slice(-6)}`;
+
+    // Look up menu items from storage (mirrors backend behavior)
+    // This is how the real API would work - look up items by ID from database
+    const menuItemIds = orderData.items.map(item => item.menu_item_id);
+    const menuItemsMap = await menuStorageService.getMenuItemsByIds(menuItemIds);
+
+    if (__DEV__) {
+      console.log(`[MockOrderService] Looking up ${menuItemIds.length} menu items, found ${menuItemsMap.size}`);
+    }
+
+    // Create order items with real menu data
+    const orderItems = orderData.items.map((item, index) => {
+      const menuItem = menuItemsMap.get(item.menu_item_id);
+
+      // Use real menu item data if found, otherwise use fallback
+      const itemName = menuItem?.name || `Unknown Item (${item.menu_item_id})`;
+      const itemPrice = menuItem?.price || 0;
+      const itemDescription = menuItem?.description || '';
+      const categoryId = menuItem?.category_id || 'unknown';
+
+      return {
+        id: `item_${orderId}_${index}`,
+        order_id: orderId,
+        menu_item_id: item.menu_item_id,
+        menu_item: {
+          id: item.menu_item_id,
+          name: itemName,
+          price: itemPrice,
+          description: itemDescription,
+          category_id: categoryId,
+          restaurant_id: 'rest_001',
+          is_available: menuItem?.is_available ?? true,
+          created_at: menuItem?.created_at || new Date().toISOString(),
+          updated_at: menuItem?.updated_at || new Date().toISOString(),
+        },
+        quantity: item.quantity,
+        unit_price: itemPrice,
+        total_price: itemPrice * item.quantity,
+        special_instructions: item.special_instructions,
+        status: OrderItemStatus.PENDING,
+        modifiers: item.modifiers || [],
+      };
+    });
+
+    // Calculate totals
+    const subtotal = orderItems.reduce((sum, item) => sum + item.total_price, 0);
+    const taxAmount = subtotal * 0.0825; // 8.25% tax
+    const totalAmount = subtotal + taxAmount;
+
     const mockOrder: Order = {
-      id: `mock_order_${Date.now()}`,
+      id: orderId,
       restaurant_id: 'rest_001',
       table_id: orderData.table_id,
       staff_id: 'current_user',
       created_by: 'current_user',
-      order_number: `ORD-${String(Date.now()).slice(-6)}`,
+      order_number: orderNumber,
       status: OrderStatus.PENDING,
-      items: orderData.items.map((item, index) => ({
-        id: `item_${index}`,
-        order_id: `mock_order_${Date.now()}`,
-        menu_item_id: item.menu_item_id,
-        menu_item: {
-          id: item.menu_item_id,
-          name: `Menu Item ${index + 1}`,
-          price: 10.99,
-          description: 'Mock menu item',
-          category_id: 'cat_1',
-          restaurant_id: 'rest_001',
-          is_available: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        quantity: item.quantity,
-        unit_price: 10.99,
-        total_price: 10.99 * item.quantity,
-        special_instructions: item.special_instructions,
-        status: OrderItemStatus.PENDING,
-        modifiers: [],
-      })),
-      subtotal: 0,
-      tax_amount: 0,
+      items: orderItems,
+      subtotal,
+      tax_amount: taxAmount,
       discount_amount: 0,
-      total_amount: 0,
+      total_amount: totalAmount,
+      special_instructions: orderData.special_instructions,
+      kitchen_notes: orderData.kitchen_notes,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    
-    // Calculate totals
-    mockOrder.subtotal = mockOrder.items.reduce((sum, item) => sum + item.total_price, 0);
-    mockOrder.tax_amount = mockOrder.subtotal * 0.1;
-    mockOrder.total_amount = mockOrder.subtotal + mockOrder.tax_amount;
-    
-    this.mockOrders.push(mockOrder);
-    console.log('Mock: Created order', mockOrder);
+
+    // PRODUCTION MODE: Do NOT add to in-memory array
+    // Order will be saved to AsyncStorage by EnhancedOrderContext
+    // this.mockOrders.push(mockOrder); // REMOVED for production
+
+    if (__DEV__) {
+      console.log('[OrderService] Created order:', {
+        id: mockOrder.id,
+        orderNumber: mockOrder.order_number,
+        itemCount: mockOrder.items.length,
+        itemNames: mockOrder.items.map(i => i.menu_item.name),
+        total: mockOrder.total_amount,
+      });
+    }
+
     return mockOrder;
   }
   
   async getOrders(): Promise<PaginatedResponse<Order>> {
-    console.log('Mock: Getting orders', this.mockOrders);
+    if (__DEV__) {
+      console.log('[OrderService] Getting orders from AsyncStorage');
+    }
+
+    // Use Map for guaranteed deduplication by ID
+    const ordersMap = new Map<string, Order>();
+
+    // PRODUCTION MODE: Load ONLY from AsyncStorage (no mock data)
+    try {
+      await orderStorageService.initialize();
+      const [activeOrders, historyOrders] = await Promise.all([
+        orderStorageService.getActiveOrders(),
+        orderStorageService.getOrderHistory(),
+      ]);
+
+      const allStorageOrders = [...activeOrders, ...historyOrders];
+
+      // Convert and add to map (overwrites mock if same ID - storage has fresher data)
+      allStorageOrders.forEach(extOrder => {
+        const converted = this.convertExtendedOrderToOrder(extOrder);
+        ordersMap.set(converted.id, converted);
+      });
+
+      if (__DEV__) {
+        console.log(`[OrderService] Loaded ${ordersMap.size} orders from AsyncStorage`);
+      }
+    } catch (error) {
+      console.error('[OrderService] Error loading orders from storage:', error);
+    }
+
+    // 3. Convert Map to array and sort (no accumulation - fresh array each call!)
+    const sortedOrders = Array.from(ordersMap.values()).sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
     return {
       success: true,
-      data: this.mockOrders,
+      data: sortedOrders,
       message: 'Success',
       pagination: {
         page: 1,
         limit: 10,
-        total: this.mockOrders.length,
-        totalPages: 1,
+        total: sortedOrders.length,
+        totalPages: Math.ceil(sortedOrders.length / 10),
         hasNext: false,
         hasPrevious: false,
       },
     };
+  }
+
+  /**
+   * Convert ExtendedOrder (camelCase) to Order (snake_case)
+   */
+  private convertExtendedOrderToOrder(extOrder: ExtendedOrder): Order {
+    // Map ExtendedOrderStatus to OrderStatus
+    const statusMap: Record<ExtendedOrderStatus, OrderStatus> = {
+      'draft': OrderStatus.PENDING,
+      'confirmed': OrderStatus.CONFIRMED,
+      'preparing': OrderStatus.PREPARING,
+      'ready': OrderStatus.READY,
+      'served': OrderStatus.SERVED,
+      'paid': OrderStatus.SERVED,
+      'cancelled': OrderStatus.CANCELLED,
+    };
+
+    // Convert items
+    const orderItems = (extOrder.items || []).map((item, index) => ({
+      id: item.id,
+      order_id: extOrder.id,
+      menu_item_id: item.menuItemId,
+      menu_item: {
+        id: item.menuItemId,
+        name: item.name,
+        price: item.basePrice,
+        description: item.description || '',
+        category_id: item.categoryId,
+        restaurant_id: extOrder.restaurantId,
+        is_available: true,
+        created_at: item.addedAt,
+        updated_at: item.modifiedAt || item.addedAt,
+      },
+      quantity: item.quantity,
+      unit_price: item.basePrice,
+      total_price: item.itemTotal,
+      special_instructions: item.specialInstructions,
+      status: this.convertItemStatus(item.status),
+      modifiers: (item.selectedModifiers || []).flatMap(mod =>
+        (mod.options || []).map(opt => ({
+          id: opt.optionId,
+          name: opt.optionName,
+          price: opt.priceAdjustment,
+          category: mod.groupName,
+        }))
+      ),
+    }));
+
+    return {
+      id: extOrder.id,
+      restaurant_id: extOrder.restaurantId,
+      table_id: extOrder.tableId,
+      table_number: extOrder.tableName,
+      staff_id: extOrder.createdBy,
+      created_by: extOrder.createdBy,
+      order_number: extOrder.orderNumber,
+      status: statusMap[extOrder.status] || OrderStatus.PENDING,
+      payment_status: this.convertPaymentStatus(extOrder.paymentStatus),
+      items: orderItems,
+      subtotal: extOrder.subtotal,
+      tax_amount: extOrder.taxAmount,
+      discount_amount: extOrder.discountAmount,
+      total_amount: extOrder.totalAmount,
+      special_instructions: extOrder.specialInstructions,
+      kitchen_notes: undefined,
+      estimated_prep_time: extOrder.estimatedPrepTime,
+      actual_prep_time: extOrder.actualPrepTime,
+      created_at: extOrder.createdAt,
+      updated_at: extOrder.updatedAt,
+      submitted_at: extOrder.submittedAt,
+      preparing_at: extOrder.preparingAt,
+      ready_at: extOrder.readyAt,
+      served_at: extOrder.servedAt,
+      paid_at: extOrder.paidAt,
+    };
+  }
+
+  private convertItemStatus(status: string): OrderItemStatus {
+    const statusMap: Record<string, OrderItemStatus> = {
+      'pending': OrderItemStatus.PENDING,
+      'preparing': OrderItemStatus.PREPARING,
+      'ready': OrderItemStatus.READY,
+      'served': OrderItemStatus.SERVED,
+      'cancelled': OrderItemStatus.CANCELLED,
+    };
+    return statusMap[status] || OrderItemStatus.PENDING;
+  }
+
+  private convertPaymentStatus(status: string): PaymentStatus {
+    const statusMap: Record<string, PaymentStatus> = {
+      'pending': PaymentStatus.PENDING,
+      'partial': PaymentStatus.PENDING,
+      'paid': PaymentStatus.COMPLETED,
+      'refunded': PaymentStatus.REFUNDED,
+    };
+    return statusMap[status] || PaymentStatus.PENDING;
   }
   
   async getCurrentOrders(): Promise<Order[]> {

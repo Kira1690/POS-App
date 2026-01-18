@@ -197,6 +197,32 @@ class MenuStorageService {
     await this.saveMenuItems(filtered);
   }
 
+  /**
+   * Get a single menu item by ID
+   * This is used by order services to look up menu item details
+   */
+  async getMenuItemById(id: string): Promise<MenuItemExtended | null> {
+    const items = await this.getMenuItems();
+    return items.find((i) => i.id === id) || null;
+  }
+
+  /**
+   * Get multiple menu items by IDs
+   * Efficient batch lookup for order creation
+   */
+  async getMenuItemsByIds(ids: string[]): Promise<Map<string, MenuItemExtended>> {
+    const items = await this.getMenuItems();
+    const itemMap = new Map<string, MenuItemExtended>();
+
+    for (const item of items) {
+      if (ids.includes(item.id)) {
+        itemMap.set(item.id, item);
+      }
+    }
+
+    return itemMap;
+  }
+
   // ============== MODIFIER GROUPS ==============
 
   /**
@@ -296,6 +322,178 @@ class MenuStorageService {
     const combos = await this.getCombos();
     const filtered = combos.filter((c) => c.id !== id);
     await this.saveCombos(filtered);
+  }
+
+  // ============== MODIFIER ASSIGNMENTS ==============
+
+  /**
+   * Get modifier assignments for a menu item
+   * Extracts from the menu item's modifier_assignments array
+   */
+  async getModifierAssignments(menuItemId: string): Promise<any[]> {
+    const items = await this.getMenuItems();
+    const item = items.find((i) => i.id === menuItemId);
+    return item?.modifier_assignments || [];
+  }
+
+  /**
+   * Get populated modifier groups for a menu item
+   * Returns full ModifierGroup objects based on assignments
+   */
+  async getModifiersForMenuItem(menuItemId: string): Promise<ModifierGroup[]> {
+    const items = await this.getMenuItems();
+    const item = items.find((i) => i.id === menuItemId);
+
+    if (!item || !item.modifier_assignments || item.modifier_assignments.length === 0) {
+      return [];
+    }
+
+    const allModifierGroups = await this.getModifierGroups();
+
+    // Map assignments to full modifier groups
+    const modifiers = item.modifier_assignments
+      .map((assignment) => {
+        const group = allModifierGroups.find((g) => g.id === assignment.modifier_group_id);
+        return group;
+      })
+      .filter((g): g is ModifierGroup => g !== undefined);
+
+    return modifiers;
+  }
+
+  /**
+   * Assign modifier groups to a menu item
+   * Replaces existing assignments with new ones
+   */
+  async assignModifiersToMenuItem(
+    menuItemId: string,
+    modifierGroupIds: string[]
+  ): Promise<void> {
+    const items = await this.getMenuItems();
+    const itemIndex = items.findIndex((i) => i.id === menuItemId);
+
+    if (itemIndex === -1) {
+      throw new Error(`Menu item with ID ${menuItemId} not found`);
+    }
+
+    // Create new assignments
+    const newAssignments = modifierGroupIds.map((groupId, index) => ({
+      id: `assignment_${menuItemId}_${groupId}_${Date.now()}`,
+      menu_item_id: menuItemId,
+      modifier_group_id: groupId,
+      sort_order: index,
+      created_at: new Date().toISOString(),
+    }));
+
+    // Update the menu item
+    items[itemIndex] = {
+      ...items[itemIndex],
+      modifier_assignments: newAssignments,
+    };
+
+    await this.saveMenuItems(items);
+  }
+
+  /**
+   * Add a modifier group to a menu item
+   * Appends to existing assignments
+   */
+  async addModifierToMenuItem(
+    menuItemId: string,
+    modifierGroupId: string
+  ): Promise<void> {
+    const items = await this.getMenuItems();
+    const itemIndex = items.findIndex((i) => i.id === menuItemId);
+
+    if (itemIndex === -1) {
+      throw new Error(`Menu item with ID ${menuItemId} not found`);
+    }
+
+    const item = items[itemIndex];
+    const existingAssignments = item.modifier_assignments || [];
+
+    // Check if already assigned
+    const alreadyAssigned = existingAssignments.some(
+      (a) => a.modifier_group_id === modifierGroupId
+    );
+
+    if (alreadyAssigned) {
+      return; // Already assigned, do nothing
+    }
+
+    // Create new assignment
+    const newAssignment = {
+      id: `assignment_${menuItemId}_${modifierGroupId}_${Date.now()}`,
+      menu_item_id: menuItemId,
+      modifier_group_id: modifierGroupId,
+      sort_order: existingAssignments.length,
+      created_at: new Date().toISOString(),
+    };
+
+    // Update the menu item
+    items[itemIndex] = {
+      ...items[itemIndex],
+      modifier_assignments: [...existingAssignments, newAssignment],
+    };
+
+    await this.saveMenuItems(items);
+  }
+
+  /**
+   * Remove a modifier group from a menu item
+   */
+  async removeModifierFromMenuItem(
+    menuItemId: string,
+    modifierGroupId: string
+  ): Promise<void> {
+    const items = await this.getMenuItems();
+    const itemIndex = items.findIndex((i) => i.id === menuItemId);
+
+    if (itemIndex === -1) {
+      throw new Error(`Menu item with ID ${menuItemId} not found`);
+    }
+
+    const item = items[itemIndex];
+    const existingAssignments = item.modifier_assignments || [];
+
+    // Filter out the assignment
+    const updatedAssignments = existingAssignments.filter(
+      (a) => a.modifier_group_id !== modifierGroupId
+    );
+
+    // Reorder sort_order
+    const reorderedAssignments = updatedAssignments.map((a, index) => ({
+      ...a,
+      sort_order: index,
+    }));
+
+    // Update the menu item
+    items[itemIndex] = {
+      ...items[itemIndex],
+      modifier_assignments: reorderedAssignments,
+    };
+
+    await this.saveMenuItems(items);
+  }
+
+  /**
+   * Clear all modifier assignments from a menu item
+   */
+  async clearModifierAssignments(menuItemId: string): Promise<void> {
+    const items = await this.getMenuItems();
+    const itemIndex = items.findIndex((i) => i.id === menuItemId);
+
+    if (itemIndex === -1) {
+      throw new Error(`Menu item with ID ${menuItemId} not found`);
+    }
+
+    // Update the menu item
+    items[itemIndex] = {
+      ...items[itemIndex],
+      modifier_assignments: [],
+    };
+
+    await this.saveMenuItems(items);
   }
 
   // ============== UTILITIES ==============

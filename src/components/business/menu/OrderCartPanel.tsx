@@ -22,21 +22,25 @@ import {
 } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { CartItem } from '@/context/order/OrderContext';
-import { Order } from '@/types/order.types';
+import { ExtendedOrderItem } from '@/types/order-extended.types';
+import { ExtendedOrder } from '@/types/order-extended.types';
 import { Table } from '@/types/table.types';
-import { useOrder } from '@/context/order/OrderContext';
+import { useCart } from '@/context/order';
+import { formatPrice } from '@/utils/currency';
+import { spacing, borderRadius } from '@/design-system/theme/spacing';
+import { touchTargets, iconSizes, dividers, elevations } from '@/design-system/theme/layout';
 
 interface OrderCartPanelProps {
-  cart: CartItem[];
+  cart: ExtendedOrderItem[];
   cartTotal: number;
   cartItemCount: number;
-  currentOrder: Order | null;
+  currentOrder: ExtendedOrder | null;
   table: Table;
+  taxRate?: number; // Tax rate from context/settings (single source of truth)
 }
 
-// Tax rate configuration (should come from restaurant settings)
-const TAX_RATE = 0.0825; // 8.25% standard restaurant tax
+// Default tax rate fallback (only used if not provided via props)
+const DEFAULT_TAX_RATE = 0.0825; // 8.25% standard restaurant tax
 
 export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
   cart,
@@ -44,26 +48,27 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
   cartItemCount,
   currentOrder,
   table,
+  taxRate = DEFAULT_TAX_RATE,
 }) => {
   const theme = useTheme();
-  const { updateCartItem, removeFromCart, clearCart } = useOrder();
+  const { updateCartItemQuantity, removeFromCart, clearCart } = useCart();
 
-  // Calculate totals with tax
+  // Calculate totals with tax (using provided tax rate as single source of truth)
   const calculations = useMemo(() => {
     const subtotal = cartTotal;
-    const taxAmount = subtotal * TAX_RATE;
+    const taxAmount = subtotal * taxRate;
     const total = subtotal + taxAmount;
-    
+
     return {
       subtotal,
       taxAmount,
       total,
-      taxPercentage: TAX_RATE * 100,
+      taxPercentage: taxRate * 100,
     };
-  }, [cartTotal]);
+  }, [cartTotal, taxRate]);
 
-  const renderCartItem = ({ item }: { item: CartItem }) => (
-    <Surface 
+  const renderCartItem = ({ item }: { item: ExtendedOrderItem }) => (
+    <Surface
       style={[
         styles.cartItem,
         { backgroundColor: theme.colors.surfaceVariant }
@@ -72,7 +77,7 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
     >
       <View style={styles.cartItemHeader}>
         <View style={styles.cartItemInfo}>
-          <Text 
+          <Text
             variant="titleSmall"
             style={[
               styles.cartItemName,
@@ -81,16 +86,51 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
           >
             {item.name}
           </Text>
-          
-          {item.notes && (
-            <Text 
+
+          {/* Display Modifiers */}
+          {item.selectedModifiers && item.selectedModifiers.length > 0 && (
+            <View style={styles.modifiersList}>
+              {item.selectedModifiers.map((modifier, modIndex) => (
+                <View key={modIndex} style={styles.modifierGroup}>
+                  {(modifier.options || []).map((option, optIndex) => (
+                    <View key={optIndex} style={styles.modifierOption}>
+                      <Text
+                        variant="bodySmall"
+                        style={[
+                          styles.modifierText,
+                          { color: theme.colors.onSurfaceVariant }
+                        ]}
+                      >
+                        • {option.optionName}
+                        {option.quantity > 1 && ` x${option.quantity}`}
+                      </Text>
+                      {option.priceAdjustment !== 0 && (
+                        <Text
+                          variant="bodySmall"
+                          style={[
+                            styles.modifierPrice,
+                            { color: theme.colors.outline }
+                          ]}
+                        >
+                          +{formatPrice(option.totalPrice)}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {item.specialInstructions && (
+            <Text
               variant="bodySmall"
               style={[
                 styles.cartItemNotes,
-                { color: theme.colors.onSurfaceVariant + 'CC' }
+                { color: theme.colors.outline }
               ]}
             >
-              Note: {item.notes}
+              Note: {item.specialInstructions}
             </Text>
           )}
         </View>
@@ -113,16 +153,16 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
               styles.quantityButton,
               { backgroundColor: theme.colors.primary }
             ]}
-            onPress={() => updateCartItem(item.id, item.quantity - 1)}
+            onPress={() => updateCartItemQuantity(item.id, item.quantity - 1)}
           >
-            <MaterialIcons 
+            <MaterialIcons
               name="remove"
               size={16}
               color={theme.colors.onPrimary}
             />
           </TouchableOpacity>
-          
-          <Text 
+
+          <Text
             variant="titleMedium"
             style={[
               styles.quantityText,
@@ -131,15 +171,15 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
           >
             {item.quantity}
           </Text>
-          
+
           <TouchableOpacity
             style={[
               styles.quantityButton,
               { backgroundColor: theme.colors.primary }
             ]}
-            onPress={() => updateCartItem(item.id, item.quantity + 1)}
+            onPress={() => updateCartItemQuantity(item.id, item.quantity + 1)}
           >
-            <MaterialIcons 
+            <MaterialIcons
               name="add"
               size={16}
               color={theme.colors.onPrimary}
@@ -149,23 +189,24 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
 
         {/* Item Total */}
         <View style={styles.itemTotalContainer}>
-          <Text 
+          <Text
             variant="bodySmall"
             style={[
               styles.itemPrice,
-              { color: theme.colors.onSurfaceVariant + 'CC' }
+              { color: theme.colors.outline }
             ]}
           >
-            ₹{item.price.toFixed(2)} each
+            {formatPrice(item.basePrice)} base
+            {item.modifierTotal > 0 && ` + ${formatPrice(item.modifierTotal)} mods`}
           </Text>
-          <Text 
+          <Text
             variant="titleMedium"
             style={[
               styles.itemTotal,
               { color: theme.colors.onSurfaceVariant }
             ]}
           >
-            ₹{(item.price * item.quantity).toFixed(2)}
+            {formatPrice(item.itemTotal)}
           </Text>
         </View>
       </View>
@@ -207,7 +248,7 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
             { color: theme.colors.onPrimaryContainer }
           ]}
         >
-          ₹{calculations.subtotal.toFixed(2)}
+          {formatPrice(calculations.subtotal)}
         </Text>
       </View>
       
@@ -228,13 +269,13 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
             { color: theme.colors.onPrimaryContainer }
           ]}
         >
-          ₹{calculations.taxAmount.toFixed(2)}
+          {formatPrice(calculations.taxAmount)}
         </Text>
       </View>
       
       <Divider style={[
         styles.summaryDivider,
-        { backgroundColor: theme.colors.onPrimaryContainer + '40' }
+        { backgroundColor: theme.colors.outline }
       ]} />
       
       <View style={styles.summaryRow}>
@@ -254,7 +295,7 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
             { color: theme.colors.onPrimaryContainer }
           ]}
         >
-          ₹{calculations.total.toFixed(2)}
+          {formatPrice(calculations.total)}
         </Text>
       </View>
     </Surface>
@@ -347,11 +388,11 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
       >
         Your cart is empty
       </Text>
-      <Text 
+      <Text
         variant="bodyMedium"
         style={[
           styles.emptyCartDescription,
-          { color: theme.colors.onSurface + 'AA' }
+          { color: theme.colors.onSurfaceVariant }
         ]}
       >
         Add items from the menu to start building your order
@@ -371,13 +412,13 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
               { color: theme.colors.onSurface }
             ]}
           >
-            Order #{currentOrder?.order_number || '----'}
+            Order #{currentOrder?.orderNumber || '----'}
           </Text>
-          <Text 
+          <Text
             variant="bodySmall"
             style={[
               styles.tableInfo,
-              { color: theme.colors.onSurface + 'CC' }
+              { color: theme.colors.onSurfaceVariant }
             ]}
           >
             Table {table.table_number} • {table.capacity} seats
@@ -443,8 +484,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   headerInfo: {
     flex: 1,
@@ -453,20 +494,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   tableInfo: {
-    marginTop: 2,
+    marginTop: spacing.xs / 2,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   itemCountBadge: {
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   clearButton: {
     margin: 0,
   },
   headerDivider: {
-    height: 1,
+    height: dividers.default,
   },
 
   // Cart content
@@ -474,36 +515,56 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cartItemsList: {
-    padding: 16,
+    padding: spacing.lg,
   },
   cartItemSeparator: {
-    height: 12,
+    height: spacing.md,
   },
 
   // Cart item
   cartItem: {
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: borderRadius.sm,
+    padding: spacing.md,
   },
   cartItemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   cartItemInfo: {
     flex: 1,
   },
   cartItemName: {
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
+  },
+  modifiersList: {
+    marginTop: spacing.xs,
+    marginLeft: spacing.sm,
+  },
+  modifierGroup: {
+    marginBottom: spacing.xs / 2,
+  },
+  modifierOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 1,
+  },
+  modifierText: {
+    flex: 1,
+  },
+  modifierPrice: {
+    marginLeft: spacing.sm,
   },
   cartItemNotes: {
     fontStyle: 'italic',
+    marginTop: spacing.xs,
   },
   removeButton: {
     margin: 0,
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
   cartItemActions: {
     flexDirection: 'row',
@@ -515,23 +576,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quantityButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: touchTargets.quantityButton,
+    height: touchTargets.quantityButton,
+    borderRadius: touchTargets.quantityButton / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   quantityText: {
-    marginHorizontal: 16,
+    marginHorizontal: spacing.lg,
     fontWeight: '600',
-    minWidth: 24,
+    minWidth: spacing['2xl'],
     textAlign: 'center',
   },
   itemTotalContainer: {
     alignItems: 'flex-end',
   },
   itemPrice: {
-    marginBottom: 2,
+    marginBottom: spacing.xs / 2,
   },
   itemTotal: {
     fontWeight: '700',
@@ -539,20 +600,20 @@ const styles = StyleSheet.create({
 
   // Order summary
   orderSummary: {
-    margin: 16,
-    marginTop: 24,
-    padding: 16,
-    borderRadius: 12,
+    margin: spacing.lg,
+    marginTop: spacing['2xl'],
+    padding: spacing.lg,
+    borderRadius: borderRadius.sm,
   },
   summaryTitle: {
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   summaryLabel: {
     flex: 1,
@@ -561,8 +622,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   summaryDivider: {
-    height: 1,
-    marginVertical: 8,
+    height: dividers.default,
+    marginVertical: spacing.sm,
   },
   totalLabel: {
     fontWeight: '700',
@@ -573,17 +634,17 @@ const styles = StyleSheet.create({
 
   // Action buttons
   actionButtons: {
-    padding: 16,
-    paddingTop: 8,
+    padding: spacing.lg,
+    paddingTop: spacing.sm,
   },
   actionButton: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   primaryAction: {
-    elevation: 4,
+    elevation: elevations.md,
   },
   actionButtonContent: {
-    paddingVertical: 6,
+    paddingVertical: spacing.sm - spacing.xs,
   },
   actionButtonLabel: {
     fontWeight: '600',
@@ -594,17 +655,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 48,
+    paddingHorizontal: spacing['3xl'],
+    paddingVertical: spacing['5xl'],
   },
   emptyCartTitle: {
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
     textAlign: 'center',
     fontWeight: '600',
   },
   emptyCartDescription: {
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: spacing.xl,
   },
 });

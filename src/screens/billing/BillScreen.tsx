@@ -76,18 +76,20 @@ const BillItemRow: React.FC<BillItemRowProps> = React.memo(({ item, formatPrice 
         <Text style={styles.name}>{item.name}</Text>
         {item.selectedModifiers && item.selectedModifiers.length > 0 && (
           <View style={styles.modifiers}>
-            {item.selectedModifiers.map((mod, index) => (
-              <Text key={index} style={styles.modifier}>
-                + {mod.name}
-                {mod.priceAdjustment > 0 && ` (${formatPrice(mod.priceAdjustment)})`}
-              </Text>
-            ))}
+            {item.selectedModifiers.flatMap((modGroup, groupIndex) =>
+              (modGroup.options || []).map((opt, optIndex) => (
+                <Text key={`${groupIndex}-${optIndex}`} style={styles.modifier}>
+                  + {opt.optionName}
+                  {opt.priceAdjustment > 0 && ` (${formatPrice(opt.priceAdjustment)})`}
+                </Text>
+              ))
+            )}
           </View>
         )}
       </View>
       <View style={styles.rightContent}>
         <Text style={styles.quantity}>x{item.quantity}</Text>
-        <Text style={styles.price}>{formatPrice(item.totalPrice)}</Text>
+        <Text style={styles.price}>{formatPrice(item.itemTotal)}</Text>
       </View>
     </View>
   );
@@ -370,7 +372,7 @@ export const BillScreen: React.FC = () => {
     );
   }
 
-  const subtotal = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const subtotal = order.items.reduce((sum, item) => sum + item.itemTotal, 0);
   const tipAmount = subtotal * (tipPercentage / 100);
   const taxAmount = subtotal * 0.1; // 10% tax
   const total = subtotal + tipAmount + taxAmount;

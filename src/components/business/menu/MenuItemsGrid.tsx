@@ -23,6 +23,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { MenuItem, MenuCategory } from '@/types/menu.types';
+import { formatPrice } from '@/utils/currency';
 import { usePerformanceMonitoring, useFlatListOptimization } from '@/hooks/usePerformanceMonitoring';
 import { MenuItemSkeletonCard } from '@/components/common/SkeletonLoader';
 import { ProfessionalButton, FadeInAnimation, SlideInAnimation } from '@/components/common/ProfessionalAnimations';
@@ -73,7 +74,7 @@ export const MenuItemsGrid: React.FC<MenuItemsGridProps> = ({
   // Memoized filtered items with professional optimization
   const filteredItems = useMemo(() => {
     const startTime = performance.now();
-    const filtered = menuItems.filter(item => {
+    const filtered = (menuItems || []).filter(item => {
       if (!item.is_available) return false;
       if (!searchQuery.trim()) return true;
       
@@ -84,7 +85,7 @@ export const MenuItemsGrid: React.FC<MenuItemsGridProps> = ({
     
     const endTime = performance.now();
     if (__DEV__ && endTime - startTime > 5) {
-      console.log(`⚡ MenuItemsGrid filtering: ${(endTime - startTime).toFixed(2)}ms for ${menuItems.length} items`);
+      console.log(`⚡ MenuItemsGrid filtering: ${(endTime - startTime).toFixed(2)}ms for ${(menuItems || []).length} items`);
     }
     
     return filtered;
@@ -193,7 +194,7 @@ export const MenuItemsGrid: React.FC<MenuItemsGridProps> = ({
                   { color: theme.colors.primary }
                 ]}
               >
-                ₹{item.price.toFixed(2)}
+                {formatPrice(item.price)}
               </Text>
               
               {item.preparation_time_minutes && (

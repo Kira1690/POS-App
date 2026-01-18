@@ -7,7 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Order } from '@/types/order.types';
-import { OrderStatus } from '@/types/common.types';
+import { OrderStatus, PaymentStatus } from '@/types/common.types';
 import { useTheme } from '@/hooks/useTheme';
 import { typography } from '@/design-system/theme/typography';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
@@ -29,21 +29,46 @@ interface OrderListItemProps {
   style?: any;
 }
 
-const getOrderPriorityColor = (order: Order) => {
+const getOrderPriorityColor = (order: Order, theme: any) => {
   const elapsedMinutes = Math.floor(
     (Date.now() - new Date(order.created_at).getTime()) / (1000 * 60)
   );
   const estimatedTime = order.estimated_prep_time || 15;
-  
+
+  // Defensive: fallback if theme or theme.colors.priority doesn't exist
+  const priority = theme?.colors?.priority || {
+    urgent: '#D32F2F',
+    high: '#F57C00',
+    normal: '#1976D2',
+    low: '#388E3C',
+  };
+
   if (elapsedMinutes > estimatedTime + 10) {
-    return '#D32F2F'; // Urgent - Red
+    return priority.urgent;
   } else if (elapsedMinutes > estimatedTime) {
-    return '#F57C00'; // High - Orange
+    return priority.high;
   } else if (elapsedMinutes > estimatedTime * 0.8) {
-    return '#1976D2'; // Normal - Blue
+    return priority.normal;
   }
-  
-  return '#388E3C'; // Low - Green
+
+  return priority.low;
+};
+
+const getCardStatusStyles = (status: OrderStatus, theme: any) => {
+  // Defensive: check if theme or theme.colors.status exists
+  if (!theme?.colors?.status) {
+    return {}; // Return empty object if status colors not available
+  }
+
+  const statusColors = theme.colors.status;
+  const statusKey = status.toLowerCase() as keyof typeof statusColors;
+  const colors = statusColors[statusKey] || statusColors.pending;
+
+  return {
+    backgroundColor: colors.bg,
+    borderLeftColor: colors.border,
+    borderLeftWidth: 4,
+  };
 };
 
 const OrderListItem: React.FC<OrderListItemProps> = ({
@@ -57,7 +82,15 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
   style,
 }) => {
   const { theme } = useTheme();
-  const priorityColor = getOrderPriorityColor(order);
+
+  // Defensive: ensure theme is valid before using
+  if (!theme || !theme.colors) {
+    console.error('[OrderListItem] Invalid theme object:', theme);
+    return null; // Don't render if theme is broken
+  }
+
+  const priorityColor = getOrderPriorityColor(order, theme);
+  const cardStatusStyles = getCardStatusStyles(order.status, theme);
 
   const handlePress = () => {
     if (onPress) {
@@ -73,6 +106,7 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.outline,
     },
+    cardStatusStyles, // Apply status-based card styling
     style,
   ];
 
@@ -98,8 +132,17 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
               </Text>
             )}
           </View>
-          
-          <OrderStatusBadge status={order.status} size="small" />
+
+          <View style={styles.badgeRow}>
+            {/* Paid badge */}
+            {order.payment_status === PaymentStatus.COMPLETED && (
+              <View style={[styles.paidBadge, { backgroundColor: theme.colors.successContainer }]}>
+                <MaterialIcons name="check-circle" size={12} color={theme.colors.success} />
+                <Text style={[styles.paidBadgeText, { color: theme.colors.success }]}>Paid</Text>
+              </View>
+            )}
+            <OrderStatusBadge status={order.status} size="small" />
+          </View>
         </View>
 
         {/* Order details row */}
@@ -153,16 +196,18 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
               </Text>
             </TouchableOpacity>
 
-            {/* Payment Button - Only show for orders ready for payment */}
-            {(order.status === OrderStatus.READY || order.status === OrderStatus.SERVED) && onProcessPayment && (
+            {/* Payment Button - Only show for unpaid orders ready for payment */}
+            {(order.status === OrderStatus.READY || order.status === OrderStatus.SERVED) &&
+             order.payment_status !== PaymentStatus.COMPLETED &&
+             onProcessPayment && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.paymentButton, { backgroundColor: theme.colors.primary }]}
                 onPress={() => onProcessPayment(order)}
               >
-                <MaterialIcons 
-                  name="payment" 
-                  size={16} 
-                  color={theme.colors.onPrimary} 
+                <MaterialIcons
+                  name="payment"
+                  size={16}
+                  color={theme.colors.onPrimary}
                 />
                 <Text style={[styles.actionText, { color: theme.colors.onPrimary }]}>
                   Payment
@@ -253,6 +298,23 @@ const styles = StyleSheet.create({
   },
   orderInfo: {
     flex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  paidBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
+    gap: 2,
+  },
+  paidBadgeText: {
+    ...typography.labelSmall,
+    fontWeight: '600',
   },
   orderNumber: {
     ...typography.titleMedium,

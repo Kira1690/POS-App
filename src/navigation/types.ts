@@ -14,7 +14,6 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Dashboard: NavigatorScreenParams<DashboardStackParamList>;
   Orders: NavigatorScreenParams<OrdersStackParamList>;
-  Tables: NavigatorScreenParams<TablesStackParamList>;
   Kitchen: NavigatorScreenParams<KitchenStackParamList>;
   Menu: undefined;
   Settings: undefined;
@@ -99,6 +98,17 @@ export type OrdersStackParamList = {
     orderId: string;
     splitId?: string;
     guestIndex?: number;
+    splitPayment?: {
+      guestId: string;
+      guestName: string;
+      amount: number;
+    };
+    splitPayments?: Array<{
+      id: string;
+      method: string;
+      amount: number;
+      status: string;
+    }>;
   };
   PaymentConfirmation: {
     payment: any;
@@ -109,8 +119,10 @@ export type OrdersStackParamList = {
   // Receipt screen
   Receipt: {
     orderId: string;
-    paymentId: string;
+    paymentId?: string;
     receiptId?: string;
+    payment?: any;
+    order?: any;
   };
 };
 

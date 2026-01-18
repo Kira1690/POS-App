@@ -78,6 +78,7 @@ export interface EnhancedOrderContextValue {
   setStatusFilter: (status: ExtendedOrderStatus | 'all') => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  setSelectedTable: (table: Table | null) => void;
 }
 
 // ============== CONTEXT ==============
@@ -152,6 +153,59 @@ export const EnhancedOrderProvider: React.FC<EnhancedOrderProviderProps> = ({
     initialize();
   }, []);
 
+  // Auto-save cart to draft when it changes (debounced)
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitializedRef = useRef(false);
+
+  useEffect(() => {
+    // Skip auto-save during initialization
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true;
+      return;
+    }
+
+    // Only save if there's a selected table and items in cart
+    if (!state.selectedTable || state.cart.length === 0) {
+      return;
+    }
+
+    // Debounce auto-save to avoid excessive writes
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await actions.saveDraft();
+        if (__DEV__) {
+          console.log(`[EnhancedOrderContext] Auto-saved cart draft (${state.cart.length} items)`);
+        }
+      } catch (error) {
+        console.error('[EnhancedOrderContext] Auto-save failed:', error);
+      }
+    }, 1000); // 1 second debounce
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [state.cart, state.selectedTable, actions]);
+
+  // Load draft when table is selected
+  useEffect(() => {
+    if (state.selectedTable && state.cart.length === 0) {
+      const loadExistingDraft = async () => {
+        try {
+          await actions.loadDraft(state.selectedTable!.id);
+        } catch (error) {
+          // Ignore - no draft exists for this table
+        }
+      };
+      loadExistingDraft();
+    }
+  }, [state.selectedTable?.id]);
+
   // Context value
   const contextValue: EnhancedOrderContextValue = {
     // State
@@ -190,6 +244,7 @@ export const EnhancedOrderProvider: React.FC<EnhancedOrderProviderProps> = ({
     setStatusFilter: actions.setStatusFilter,
     setError: actions.setError,
     clearError: actions.clearError,
+    setSelectedTable: actions.setSelectedTable,
   };
 
   return (
@@ -217,17 +272,22 @@ export const useEnhancedOrder = (): EnhancedOrderContextValue => {
  */
 export const useCart = () => {
   const { state, actions, selectors } = useEnhancedOrder();
+  const cartItems = state.cart || [];
 
   return {
-    // State
-    items: state.cart,
-    itemCount: state.cartItemCount,
-    subtotal: state.cartSubtotal,
-    taxRate: state.cartTaxRate,
-    taxAmount: state.cartTaxAmount,
-    discountAmount: state.cartDiscountAmount,
-    total: state.cartTotal,
-    isEmpty: state.cart.length === 0,
+    // State (with aliases for backward compatibility)
+    items: cartItems,
+    cart: cartItems, // Alias for backward compatibility
+    itemCount: state.cartItemCount || 0,
+    cartItemCount: state.cartItemCount || 0, // Alias
+    subtotal: state.cartSubtotal || 0,
+    cartSubtotal: state.cartSubtotal || 0, // Alias
+    taxRate: state.cartTaxRate || 0,
+    taxAmount: state.cartTaxAmount || 0,
+    discountAmount: state.cartDiscountAmount || 0,
+    total: state.cartTotal || 0,
+    cartTotal: state.cartTotal || 0, // Alias
+    isEmpty: cartItems.length === 0,
 
     // Computed
     summary: selectors.cartSummary,
@@ -236,14 +296,18 @@ export const useCart = () => {
     allergenItems: selectors.cartAllergenItems,
     hasComboItems: selectors.hasComboItems,
 
-    // Actions
+    // Actions (with aliases for backward compatibility)
     addItem: actions.addToCart,
+    addToCart: actions.addToCart, // Alias
     addCombo: actions.addComboToCart,
     updateItem: actions.updateCartItem,
     updateQuantity: actions.updateCartItemQuantity,
+    updateCartItemQuantity: actions.updateCartItemQuantity, // Alias
     updateModifiers: actions.updateCartItemModifiers,
     removeItem: actions.removeFromCart,
+    removeFromCart: actions.removeFromCart, // Alias
     clear: actions.clearCart,
+    clearCart: actions.clearCart, // Alias
     setTaxRate: actions.setCartTaxRate,
     setDiscount: actions.setCartDiscount,
   };
@@ -254,23 +318,30 @@ export const useCart = () => {
  */
 export const useCurrentOrder = () => {
   const { state, actions } = useEnhancedOrder();
+  const cart = state.cart || [];
 
   return {
-    // State
+    // State (with aliases for backward compatibility)
     order: state.currentOrder,
+    currentOrder: state.currentOrder, // Alias
     draft: state.currentDraft,
     table: state.selectedTable,
+    selectedTable: state.selectedTable, // Alias
 
     // Status
     hasOrder: state.currentOrder !== null,
     hasTable: state.selectedTable !== null,
-    canSubmit: state.cart.length > 0 && state.selectedTable !== null,
+    canSubmit: cart.length > 0 && state.selectedTable !== null,
 
-    // Actions
+    // Actions (with aliases for backward compatibility)
     create: actions.createOrder,
+    createOrder: actions.createOrder, // Alias
     clear: actions.clearCurrentOrder,
+    clearOrder: actions.clearCurrentOrder, // Alias
     setTable: actions.setSelectedTable,
+    setSelectedTable: actions.setSelectedTable, // Alias
     submit: actions.submitOrderToKitchen,
+    submitOrderToKitchen: actions.submitOrderToKitchen, // Alias
     saveDraft: actions.saveDraft,
     loadDraft: actions.loadDraft,
     deleteDraft: actions.deleteDraft,

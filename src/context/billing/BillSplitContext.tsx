@@ -9,6 +9,8 @@ import React, {
   useReducer,
   useCallback,
   useMemo,
+  useEffect,
+  useRef,
   ReactNode,
 } from 'react';
 import {
@@ -17,9 +19,9 @@ import {
   BillSplitState,
   BillSplitAction,
 } from './billSplitReducer';
-import { SplitType, GuestSplit, PaymentMethodSplit } from '@/types/billing.types';
+import { SplitType, GuestSplit, PaymentMethodSplit, BillSplit } from '@/types/billing.types';
 import { ExtendedOrder, ExtendedOrderItem } from '@/types/order-extended.types';
-import { paymentStorageService } from '@/services/storage';
+import { paymentStorageService } from '@/services/storage/PaymentStorageService';
 
 // ============== CONTEXT VALUE TYPE ==============
 
@@ -54,7 +56,7 @@ export interface BillSplitContextValue {
   removePaymentSplit: (index: number) => void;
 
   // Payment progress
-  markGuestPaid: (guestIndex: number) => Promise<void>;
+  markGuestPaid: (guestIndex: number, paymentId?: string) => void;
   unmarkGuestPaid: (guestIndex: number) => void;
 
   // UI
@@ -80,15 +82,101 @@ interface BillSplitProviderProps {
 
 export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(billSplitReducer, initialBillSplitState);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLoadingRef = useRef(false);
+
+  // Auto-save state to storage when it changes (debounced)
+  useEffect(() => {
+    // Don't save if no order or during initial load
+    if (!state.order || isLoadingRef.current) return;
+
+    // Debounce saves to avoid excessive storage writes
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        // Convert state to BillSplit format for storage
+        const billSplit: BillSplit = {
+          orderId: state.order!.id,
+          type: state.splitType,
+          guestCount: state.guestCount,
+          splits: state.guestSplits,
+          subtotal: state.subtotal,
+          taxAmount: state.taxAmount,
+          discountAmount: state.discountAmount,
+          tipAmount: state.tipAmount,
+          total: state.total,
+          paymentStatus: state.remainingAmount <= 0 ? 'completed' : 'pending',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        await paymentStorageService.saveSplit(billSplit);
+
+        if (__DEV__) {
+          console.log('[BillSplitContext] Auto-saved split for order:', state.order!.id);
+        }
+      } catch (error) {
+        console.error('[BillSplitContext] Failed to auto-save split:', error);
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [state.order, state.splitType, state.guestCount, state.guestSplits, state.subtotal, state.taxAmount, state.tipAmount, state.total, state.remainingAmount]);
 
   // Order actions
-  const setOrder = useCallback((order: ExtendedOrder, items: ExtendedOrderItem[]) => {
-    dispatch({ type: 'SET_ORDER', payload: { order, items } });
+  const setOrder = useCallback(async (order: ExtendedOrder, items: ExtendedOrderItem[]) => {
+    isLoadingRef.current = true;
+
+    // Check if there's an existing split for this order
+    try {
+      const existingSplit = await paymentStorageService.getSplit(order.id);
+      if (existingSplit) {
+        if (__DEV__) {
+          console.log('[BillSplitContext] Found existing split for order:', order.id);
+        }
+        // Restore the existing split configuration
+        dispatch({ type: 'SET_ORDER', payload: { order, items } });
+        dispatch({ type: 'SET_SPLIT_TYPE', payload: existingSplit.type });
+        dispatch({ type: 'SET_GUEST_COUNT', payload: existingSplit.guestCount });
+        if (existingSplit.tipAmount) {
+          dispatch({ type: 'SET_TIP_AMOUNT', payload: existingSplit.tipAmount });
+        }
+        // Recalculate splits to restore state
+        if (existingSplit.type === 'equal') {
+          dispatch({ type: 'CALCULATE_EQUAL_SPLITS' });
+        }
+      } else {
+        dispatch({ type: 'SET_ORDER', payload: { order, items } });
+      }
+    } catch (error) {
+      console.error('[BillSplitContext] Error loading existing split:', error);
+      dispatch({ type: 'SET_ORDER', payload: { order, items } });
+    }
+
+    isLoadingRef.current = false;
   }, []);
 
-  const clearOrder = useCallback(() => {
+  const clearOrder = useCallback(async () => {
+    // Remove split from storage when clearing order
+    if (state.order?.id) {
+      try {
+        await paymentStorageService.deleteSplit(state.order.id);
+        if (__DEV__) {
+          console.log('[BillSplitContext] Deleted split for order:', state.order.id);
+        }
+      } catch (error) {
+        console.error('[BillSplitContext] Failed to delete split:', error);
+      }
+    }
     dispatch({ type: 'CLEAR_ORDER' });
-  }, []);
+  }, [state.order?.id]);
 
   // Split configuration
   const setSplitType = useCallback((type: SplitType) => {
@@ -154,28 +242,15 @@ export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }
   }, []);
 
   // Payment progress
+  // Note: Actual payment processing is handled through PaymentProcessingScreen
+  // This function just marks the guest as paid in the split context
   const markGuestPaid = useCallback(
-    async (guestIndex: number) => {
+    (guestIndex: number, paymentId?: string) => {
       try {
         dispatch({ type: 'SET_PROCESSING', payload: true });
 
-        // Save payment record
-        if (state.order) {
-          const guestSplit = state.guestSplits[guestIndex];
-          if (guestSplit) {
-            const paymentId = `pay_${Date.now()}_${guestIndex}`;
-            await paymentStorageService.savePayment({
-              id: paymentId,
-              orderId: state.order.id,
-              amount: guestSplit.total,
-              method: 'cash', // Default, can be customized
-              status: 'completed',
-              processedAt: new Date().toISOString(),
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            });
-            dispatch({ type: 'ADD_COMPLETED_PAYMENT', payload: paymentId });
-          }
+        if (paymentId) {
+          dispatch({ type: 'ADD_COMPLETED_PAYMENT', payload: paymentId });
         }
 
         dispatch({ type: 'MARK_GUEST_PAID', payload: guestIndex });
@@ -184,7 +259,7 @@ export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }
         dispatch({ type: 'SET_ERROR', payload: String(error) });
       }
     },
-    [state.order, state.guestSplits]
+    []
   );
 
   const unmarkGuestPaid = useCallback((guestIndex: number) => {

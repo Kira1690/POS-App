@@ -4,12 +4,20 @@
  * Implements proper provider composition for better performance
  */
 
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { AuthProvider } from '@/context/auth/AuthProvider';
 import { TableProvider } from '@/context/table/TableProvider';
-import { OrderProvider } from '@/context/order/OrderContext';
+import { EnhancedOrderProvider } from '@/context/order/EnhancedOrderContext';
+import { BillSplitProvider } from '@/context/billing/BillSplitContext';
 import { PaymentProvider } from '@/context/payment/PaymentProvider';
-import { KitchenProvider } from '@/context/kitchen/KitchenContext';
+import { EnhancedKitchenProvider } from '@/context/kitchen';
+import {
+  orderStorageService,
+  kitchenStorageService,
+  tableStorageService,
+  paymentStorageService,
+  syncQueueService,
+} from '@/services/storage';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -50,14 +58,52 @@ BusinessStateProviders.displayName = 'BusinessStateProviders';
 /**
  * Order Management Providers - Further memoized grouping
  * Prevents table changes from affecting payment/kitchen contexts
+ * Uses EnhancedOrderProvider for kitchen ticket creation and modifier support
  */
 const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children }) => {
+  // Initialize ALL storage services on mount for data persistence
+  useEffect(() => {
+    const initializeAllStorage = async () => {
+      const restaurantId = 'rest_001'; // Default restaurant ID
+
+      try {
+        // Initialize all storage services in parallel
+        await Promise.all([
+          orderStorageService.initialize(),
+          kitchenStorageService.initialize(),
+          tableStorageService.initialize(restaurantId),
+          paymentStorageService.initialize(),
+          syncQueueService.initialize(),
+        ]);
+
+        if (__DEV__) {
+          console.log('[OptimizedAppProviders] All storage services initialized:');
+          console.log('  - orderStorageService: ready');
+          console.log('  - kitchenStorageService: ready');
+          console.log('  - tableStorageService: ready');
+          console.log('  - paymentStorageService: ready');
+          console.log('  - syncQueueService: ready');
+        }
+      } catch (error) {
+        console.error('[OptimizedAppProviders] Storage initialization failed:', error);
+        // Log which service failed if possible
+        if (error instanceof Error) {
+          console.error('  Error details:', error.message);
+        }
+      }
+    };
+
+    initializeAllStorage();
+  }, []);
+
   return (
-    <OrderProvider>
-      <TransactionProviders>
-        {children}
-      </TransactionProviders>
-    </OrderProvider>
+    <EnhancedOrderProvider>
+      <BillSplitProvider>
+        <TransactionProviders>
+          {children}
+        </TransactionProviders>
+      </BillSplitProvider>
+    </EnhancedOrderProvider>
   );
 });
 
@@ -70,9 +116,9 @@ OrderManagementProviders.displayName = 'OrderManagementProviders';
 const TransactionProviders = memo<{ children: React.ReactNode }>(({ children }) => {
   return (
     <PaymentProvider>
-      <KitchenProvider>
+      <EnhancedKitchenProvider>
         {children}
-      </KitchenProvider>
+      </EnhancedKitchenProvider>
     </PaymentProvider>
   );
 });

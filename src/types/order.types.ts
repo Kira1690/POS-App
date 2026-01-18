@@ -43,12 +43,14 @@ export interface OrderItem {
 export interface Order extends BaseEntity {
   restaurant_id: string;
   table_id?: string;
+  table_number?: string; // Display name for the table
   customer_id?: string;
   staff_id: string;
   order_number: string; // Professional numbering (ORD-001234)
   status: OrderStatus;
+  payment_status?: PaymentStatus; // Track payment state separately from order state
   items: OrderItem[];
-  
+
   // Financial details
   subtotal: number;
   tax_amount: number;
@@ -60,6 +62,8 @@ export interface Order extends BaseEntity {
   preparing_at?: string; // When kitchen started
   ready_at?: string; // When food ready
   served_at?: string; // When delivered to customer
+  paid_at?: string; // When payment was completed
+  payment_id?: string; // Reference to payment record
   
   // Restaurant operations
   special_instructions?: string;

@@ -27,6 +27,7 @@ interface MenuItemGridProps {
   onItemLongPress: (item: MenuItemExtended) => void;
   onEditItem: (item: MenuItemExtended) => void;
   onDeleteItem: (item: MenuItemExtended) => void;
+  onAssignModifiers?: (item: MenuItemExtended) => void;
   onAddItem: () => void;
   isLoading?: boolean;
   emptyMessage?: string;
@@ -44,6 +45,7 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
   onItemLongPress,
   onEditItem,
   onDeleteItem,
+  onAssignModifiers,
   onAddItem,
   isLoading = false,
   emptyMessage = 'No menu items found',
@@ -306,6 +308,7 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
             onLongPress={() => onItemLongPress(item)}
             onEditPress={() => onEditItem(item)}
             onDeletePress={() => onDeleteItem(item)}
+            onAssignModifiersPress={onAssignModifiers ? () => onAssignModifiers(item) : undefined}
           />
         </View>
       );
@@ -317,6 +320,7 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
       onItemLongPress,
       onEditItem,
       onDeleteItem,
+      onAssignModifiers,
       styles.gridItem,
     ]
   );

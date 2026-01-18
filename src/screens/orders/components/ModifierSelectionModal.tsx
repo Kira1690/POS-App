@@ -16,7 +16,15 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { MenuItemExtended, ModifierGroup, ModifierOption } from '@/types/menu-management-extended.types';
-import { SelectedModifier } from '@/types/order-extended.types';
+import { SelectedModifier, SelectedModifierOption } from '@/types/order-extended.types';
+
+// Internal type for tracking selections during editing
+interface InternalSelection {
+  optionId: string;
+  optionName: string;
+  priceAdjustment: number;
+  quantity: number;
+}
 
 interface ModifierSelectionModalProps {
   visible: boolean;
@@ -31,6 +39,7 @@ interface ModifierSelectionModalProps {
   initialModifiers?: SelectedModifier[];
   initialQuantity?: number;
   initialNotes?: string;
+  isEditing?: boolean; // Show "Update Cart" instead of "Add to Cart"
 }
 
 export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
@@ -41,10 +50,12 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
   initialModifiers = [],
   initialQuantity = 1,
   initialNotes = '',
+  isEditing = false,
 }) => {
   const { theme } = useTheme();
 
-  const [selectedModifiers, setSelectedModifiers] = useState<Map<string, SelectedModifier[]>>(
+  // Internal state tracks selections per group using simpler InternalSelection type
+  const [selectedOptions, setSelectedOptions] = useState<Map<string, InternalSelection[]>>(
     new Map()
   );
   const [quantity, setQuantity] = useState(initialQuantity);
@@ -53,24 +64,31 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
   // Reset state when item changes
   useEffect(() => {
     if (item) {
-      const initialMap = new Map<string, SelectedModifier[]>();
+      const initialMap = new Map<string, InternalSelection[]>();
 
-      // Set initial modifiers
+      // Set initial modifiers from props (convert from SelectedModifier to InternalSelection)
       initialModifiers.forEach((mod) => {
+        if (!mod.options) return; // Skip if options is undefined
         const existing = initialMap.get(mod.groupId) || [];
-        initialMap.set(mod.groupId, [...existing, mod]);
+        // Convert each option in the SelectedModifier to InternalSelection
+        const newSelections = mod.options.map((opt) => ({
+          optionId: opt.optionId,
+          optionName: opt.optionName,
+          priceAdjustment: opt.priceAdjustment,
+          quantity: opt.quantity,
+        }));
+        initialMap.set(mod.groupId, [...existing, ...newSelections]);
       });
 
       // Set default modifiers if no initial modifiers
       if (initialModifiers.length === 0 && item.modifier_groups) {
         item.modifier_groups.forEach((group) => {
+          if (!group.options) return; // Skip if options is undefined
           const defaults = group.options
             .filter((opt) => opt.is_default && opt.is_available)
-            .map((opt) => ({
-              groupId: group.id,
-              groupName: group.name,
+            .map((opt): InternalSelection => ({
               optionId: opt.id,
-              name: opt.name,
+              optionName: opt.name,
               priceAdjustment: opt.price_adjustment,
               quantity: 1,
             }));
@@ -80,7 +98,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
         });
       }
 
-      setSelectedModifiers(initialMap);
+      setSelectedOptions(initialMap);
       setQuantity(initialQuantity);
       setNotes(initialNotes);
     }
@@ -299,22 +317,20 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
     (group: ModifierGroup, option: ModifierOption) => {
       if (!option.is_available) return;
 
-      setSelectedModifiers((prev) => {
+      setSelectedOptions((prev) => {
         const newMap = new Map(prev);
         const currentGroupSelections = newMap.get(group.id) || [];
 
+        const newSelection: InternalSelection = {
+          optionId: option.id,
+          optionName: option.name,
+          priceAdjustment: option.price_adjustment,
+          quantity: 1,
+        };
+
         if (group.selection_type === 'single') {
           // Single selection - replace existing
-          newMap.set(group.id, [
-            {
-              groupId: group.id,
-              groupName: group.name,
-              optionId: option.id,
-              name: option.name,
-              priceAdjustment: option.price_adjustment,
-              quantity: 1,
-            },
-          ]);
+          newMap.set(group.id, [newSelection]);
         } else {
           // Multiple selection - toggle
           const existingIndex = currentGroupSelections.findIndex(
@@ -334,17 +350,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
             // Add if within max selections
             const maxSelections = group.max_selections || Infinity;
             if (currentGroupSelections.length < maxSelections) {
-              newMap.set(group.id, [
-                ...currentGroupSelections,
-                {
-                  groupId: group.id,
-                  groupName: group.name,
-                  optionId: option.id,
-                  name: option.name,
-                  priceAdjustment: option.price_adjustment,
-                  quantity: 1,
-                },
-              ]);
+              newMap.set(group.id, [...currentGroupSelections, newSelection]);
             }
           }
         }
@@ -357,10 +363,10 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
 
   const isOptionSelected = useCallback(
     (groupId: string, optionId: string) => {
-      const groupSelections = selectedModifiers.get(groupId) || [];
+      const groupSelections = selectedOptions.get(groupId) || [];
       return groupSelections.some((s) => s.optionId === optionId);
     },
-    [selectedModifiers]
+    [selectedOptions]
   );
 
   const { isValid, validationErrors } = useMemo(() => {
@@ -370,7 +376,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
 
     item.modifier_groups.forEach((group) => {
       if (group.is_required) {
-        const selections = selectedModifiers.get(group.id) || [];
+        const selections = selectedOptions.get(group.id) || [];
         const minRequired = group.min_selections || 1;
 
         if (selections.length < minRequired) {
@@ -380,32 +386,56 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
     });
 
     return { isValid: errors.length === 0, validationErrors: errors };
-  }, [item, selectedModifiers]);
+  }, [item, selectedOptions]);
 
   const totalPrice = useMemo(() => {
     if (!item) return 0;
 
     let total = item.price;
-    selectedModifiers.forEach((selections) => {
+    selectedOptions.forEach((selections) => {
       selections.forEach((s) => {
         total += s.priceAdjustment * s.quantity;
       });
     });
 
     return total * quantity;
-  }, [item, selectedModifiers, quantity]);
+  }, [item, selectedOptions, quantity]);
 
   const handleConfirm = useCallback(() => {
     if (!item || !isValid) return;
 
+    // Build properly structured SelectedModifier objects
     const allModifiers: SelectedModifier[] = [];
-    selectedModifiers.forEach((selections) => {
-      allModifiers.push(...selections);
+
+    // Iterate over modifier groups to build correct structure
+    item.modifier_groups?.forEach((group) => {
+      const selections = selectedOptions.get(group.id);
+      if (selections && selections.length > 0) {
+        // Convert InternalSelection[] to SelectedModifierOption[]
+        const options: SelectedModifierOption[] = selections.map((sel) => ({
+          optionId: sel.optionId,
+          optionName: sel.optionName,
+          priceAdjustment: sel.priceAdjustment,
+          quantity: sel.quantity,
+          totalPrice: sel.priceAdjustment * sel.quantity,
+        }));
+
+        // Create properly structured SelectedModifier
+        const modifier: SelectedModifier = {
+          groupId: group.id,
+          groupName: group.name,
+          selectionType: group.selection_type,
+          isRequired: group.is_required,
+          options,
+        };
+
+        allModifiers.push(modifier);
+      }
     });
 
     onConfirm(item, allModifiers, quantity, notes || undefined);
     onClose();
-  }, [item, selectedModifiers, quantity, notes, isValid, onConfirm, onClose]);
+  }, [item, selectedOptions, quantity, notes, isValid, onConfirm, onClose]);
 
   const formatPrice = (price: number): string => `$${price.toFixed(2)}`;
 
@@ -450,7 +480,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
                 </Text>
 
                 <View style={styles.optionsContainer}>
-                  {group.options.map((option) => {
+                  {(group.options || []).map((option) => {
                     const isSelected = isOptionSelected(group.id, option.id);
                     return (
                       <TouchableOpacity
@@ -560,11 +590,13 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
               disabled={!isValid}
             >
               <MaterialCommunityIcons
-                name="cart-plus"
+                name={isEditing ? 'cart-check' : 'cart-plus'}
                 size={20}
                 color={theme.colors.onPrimary}
               />
-              <Text style={styles.confirmButtonText}>Add to Cart</Text>
+              <Text style={styles.confirmButtonText}>
+                {isEditing ? 'Update Cart' : 'Add to Cart'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

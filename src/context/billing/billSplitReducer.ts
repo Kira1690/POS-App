@@ -127,12 +127,15 @@ export type BillSplitAction =
 
 // ============== HELPER FUNCTIONS ==============
 
+// Default tax rate should match PaymentReducer default (8.25%)
+const DEFAULT_TAX_RATE = 0.0825;
+
 const calculateTotals = (
   items: ExtendedOrderItem[],
-  taxRate: number = 0.1,
+  taxRate: number = DEFAULT_TAX_RATE,
   discountAmount: number = 0
 ) => {
-  const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.itemTotal, 0);
   const taxAmount = (subtotal - discountAmount) * taxRate;
   const total = subtotal - discountAmount + taxAmount;
 
@@ -141,16 +144,21 @@ const calculateTotals = (
 
 const createEmptyGuestSplits = (
   guestCount: number,
-  orderId: string
+  _orderId: string
 ): GuestSplit[] => {
   return Array.from({ length: guestCount }, (_, index) => ({
+    id: `guest_${index}_${Date.now()}`,
+    name: `Guest ${index + 1}`,
     guestIndex: index,
     guestName: `Guest ${index + 1}`,
     items: [],
+    assignedItems: [],
+    sharedItemsAmount: 0,
     subtotal: 0,
     taxAmount: 0,
     tipAmount: 0,
     total: 0,
+    paymentStatus: 'pending' as const,
     isPaid: false,
   }));
 };
@@ -161,7 +169,7 @@ const calculateEqualGuestSplits = (
   taxAmount: number,
   tipAmount: number,
   total: number,
-  orderId: string
+  _orderId: string
 ): GuestSplit[] => {
   const perPersonSubtotal = subtotal / guestCount;
   const perPersonTax = taxAmount / guestCount;
@@ -169,13 +177,18 @@ const calculateEqualGuestSplits = (
   const perPersonTotal = total / guestCount;
 
   return Array.from({ length: guestCount }, (_, index) => ({
+    id: `guest_${index}_${Date.now()}`,
+    name: `Guest ${index + 1}`,
     guestIndex: index,
     guestName: `Guest ${index + 1}`,
     items: [],
+    assignedItems: [],
+    sharedItemsAmount: 0,
     subtotal: Math.round(perPersonSubtotal * 100) / 100,
     taxAmount: Math.round(perPersonTax * 100) / 100,
     tipAmount: Math.round(perPersonTip * 100) / 100,
     total: Math.round(perPersonTotal * 100) / 100,
+    paymentStatus: 'pending' as const,
     isPaid: false,
   }));
 };
@@ -194,32 +207,32 @@ const calculateItemGuestSplits = (
 
     if (guestIndices.length === 0) {
       // Unassigned items go to first guest by default
-      splits[0].items.push({
+      splits[0].items?.push({
         itemId: item.id,
         itemName: item.name,
         quantity: item.quantity,
-        price: item.totalPrice,
+        price: item.itemTotal,
         guestIndex: 0,
       });
-      splits[0].subtotal += item.totalPrice;
+      splits[0].subtotal += item.itemTotal;
     } else if (guestIndices.length === 1) {
       // Single assignment
       const guestIndex = guestIndices[0];
-      splits[guestIndex].items.push({
+      splits[guestIndex].items?.push({
         itemId: item.id,
         itemName: item.name,
         quantity: item.quantity,
-        price: item.totalPrice,
+        price: item.itemTotal,
         guestIndex,
       });
-      splits[guestIndex].subtotal += item.totalPrice;
+      splits[guestIndex].subtotal += item.itemTotal;
     } else {
       // Split among multiple guests
-      const splitPrice = item.totalPrice / guestIndices.length;
+      const splitPrice = item.itemTotal / guestIndices.length;
       const splitQuantity = item.quantity / guestIndices.length;
 
       guestIndices.forEach((guestIndex) => {
-        splits[guestIndex].items.push({
+        splits[guestIndex].items?.push({
           itemId: item.id,
           itemName: item.name,
           quantity: splitQuantity,
@@ -427,7 +440,7 @@ export const billSplitReducer = (
         state.items,
         state.itemAssignments,
         state.guestCount,
-        0.1, // Tax rate
+        DEFAULT_TAX_RATE, // Use consistent tax rate
         state.tipAmount
       );
 

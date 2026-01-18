@@ -134,7 +134,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
 
       {/* Order items - Kitchen optimized display */}
       <View style={styles.itemsList}>
-        {order.items.slice(0, compact ? 2 : 3).map((item, index) => (
+        {(order.items || []).slice(0, compact ? 2 : 3).map((item, index) => (
           <View key={item.id} style={styles.itemRow}>
             <Text style={[styles.itemQuantity, { 
               color: theme.colors.onPrimary,

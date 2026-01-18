@@ -17,6 +17,7 @@ interface MenuItemCardProps {
   onLongPress: () => void;
   onEditPress: () => void;
   onDeletePress: () => void;
+  onAssignModifiersPress?: () => void;
 }
 
 export const MenuItemCard: React.FC<MenuItemCardProps> = ({
@@ -27,6 +28,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
   onLongPress,
   onEditPress,
   onDeletePress,
+  onAssignModifiersPress,
 }) => {
   const { theme } = useTheme();
 
@@ -261,6 +263,24 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
           </View>
 
           <View style={styles.actions}>
+            {onAssignModifiersPress && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onAssignModifiersPress();
+                }}
+                accessibilityLabel={`Assign modifiers to ${item.name}`}
+                accessibilityRole="button"
+              >
+                <Icon
+                  name="tune-variant"
+                  size={16}
+                  color={theme.colors.secondary}
+                  accessibilityLabel=""
+                />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={styles.actionButton}
               onPress={(e) => {

@@ -23,6 +23,14 @@ export {
   type MenuStorageData,
 } from './MenuStorageService';
 
+export {
+  tableStorageService,
+  type TableStorageData,
+  type StoredArea,
+  type FloorPlanData,
+  type FloorPlanPosition,
+} from './TableStorageService';
+
 // Order Management Storage Services
 export { orderStorageService } from './OrderStorageService';
 export { kitchenStorageService } from './KitchenStorageService';

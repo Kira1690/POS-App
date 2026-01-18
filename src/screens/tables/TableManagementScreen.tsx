@@ -22,6 +22,7 @@ import { Table } from '@/types/table.types';
 import { TableStatus } from '@/types/common.types';
 import { TableGrid } from '@/components/business/table';
 import { showToast } from '@/utils/toast';
+import { formatPrice } from '@/utils/currency';
 
 // APPLE COMPONENT SYSTEM (Universal Reusable Components)
 import {
@@ -302,7 +303,7 @@ const TableManagementScreen: React.FC = () => {
           textAlign: 'center',
           marginBottom: 16
         }}>
-          Total: ₹{tableState.activeOrder?.total || 0}
+          Total: {formatPrice(tableState.activeOrder?.total || 0)}
         </Text>
 
         <View style={{ flexDirection: 'row', gap: 8 }}>

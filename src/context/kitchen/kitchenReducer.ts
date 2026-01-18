@@ -87,7 +87,7 @@ export const initialKitchenState: KitchenState = {
   viewMode: 'kanban',
   sortBy: 'priority',
   autoRefresh: true,
-  refreshInterval: 30000,
+  refreshInterval: 5000, // 5 seconds for responsive kitchen display
 
   stats: {
     totalTickets: 0,

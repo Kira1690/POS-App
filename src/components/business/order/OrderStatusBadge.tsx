@@ -18,16 +18,28 @@ interface OrderStatusBadgeProps {
   style?: any;
 }
 
-const getStatusConfig = (status: OrderStatus) => {
+const getStatusConfig = (status: OrderStatus, theme: any) => {
+  // Defensive: fallback if theme or theme.colors.status doesn't exist
+  const statusColors = theme?.colors?.status || {
+    pending: { bg: '#FFF8E1', text: '#E65100', border: '#FFB74D' },
+    confirmed: { bg: '#E8F5E9', text: '#2E7D32', border: '#81C784' },
+    preparing: { bg: '#E3F2FD', text: '#1565C0', border: '#64B5F6' },
+    ready: { bg: '#F3E5F5', text: '#7B1FA2', border: '#BA68C8' },
+    served: { bg: '#E0F7FA', text: '#00838F', border: '#4DD0E1' },
+    cancelled: { bg: '#FFEBEE', text: '#C62828', border: '#EF9A9A' },
+    paid: { bg: '#E8F5E9', text: '#1B5E20', border: '#66BB6A' },
+    completed: { bg: '#E8F5E9', text: '#1B5E20', border: '#66BB6A' },
+  };
+
   switch (status) {
     case OrderStatus.PENDING:
       return {
         label: 'Pending',
         icon: 'schedule' as const,
         colors: {
-          background: '#FFF3E0',
-          text: '#E65100',
-          border: '#FFB74D',
+          background: statusColors.pending.bg,
+          text: statusColors.pending.text,
+          border: statusColors.pending.border,
         },
       };
     case OrderStatus.CONFIRMED:
@@ -35,9 +47,9 @@ const getStatusConfig = (status: OrderStatus) => {
         label: 'Confirmed',
         icon: 'check-circle-outline' as const,
         colors: {
-          background: '#E8F5E8',
-          text: '#2E7D32',
-          border: '#81C784',
+          background: statusColors.confirmed.bg,
+          text: statusColors.confirmed.text,
+          border: statusColors.confirmed.border,
         },
       };
     case OrderStatus.PREPARING:
@@ -45,9 +57,9 @@ const getStatusConfig = (status: OrderStatus) => {
         label: 'Preparing',
         icon: 'restaurant' as const,
         colors: {
-          background: '#E3F2FD',
-          text: '#1565C0',
-          border: '#64B5F6',
+          background: statusColors.preparing.bg,
+          text: statusColors.preparing.text,
+          border: statusColors.preparing.border,
         },
       };
     case OrderStatus.READY:
@@ -55,9 +67,9 @@ const getStatusConfig = (status: OrderStatus) => {
         label: 'Ready',
         icon: 'notifications' as const,
         colors: {
-          background: '#F3E5F5',
-          text: '#7B1FA2',
-          border: '#BA68C8',
+          background: statusColors.ready.bg,
+          text: statusColors.ready.text,
+          border: statusColors.ready.border,
         },
       };
     case OrderStatus.SERVED:
@@ -65,9 +77,9 @@ const getStatusConfig = (status: OrderStatus) => {
         label: 'Served',
         icon: 'done-all' as const,
         colors: {
-          background: '#E8F5E8',
-          text: '#388E3C',
-          border: '#66BB6A',
+          background: statusColors.served.bg,
+          text: statusColors.served.text,
+          border: statusColors.served.border,
         },
       };
     case OrderStatus.CANCELLED:
@@ -75,9 +87,9 @@ const getStatusConfig = (status: OrderStatus) => {
         label: 'Cancelled',
         icon: 'cancel' as const,
         colors: {
-          background: '#FFEBEE',
-          text: '#D32F2F',
-          border: '#EF5350',
+          background: statusColors.cancelled.bg,
+          text: statusColors.cancelled.text,
+          border: statusColors.cancelled.border,
         },
       };
     default:
@@ -85,9 +97,9 @@ const getStatusConfig = (status: OrderStatus) => {
         label: 'Unknown',
         icon: 'help-outline' as const,
         colors: {
-          background: '#F5F5F5',
-          text: '#616161',
-          border: '#BDBDBD',
+          background: theme.colors.surfaceVariant,
+          text: theme.colors.onSurfaceVariant,
+          border: theme.colors.outline,
         },
       };
   }
@@ -126,7 +138,7 @@ const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({
   style,
 }) => {
   const { theme } = useTheme();
-  const statusConfig = getStatusConfig(status);
+  const statusConfig = getStatusConfig(status, theme);
   const sizeConfig = getSizeConfig(size);
 
   const badgeStyle = [
