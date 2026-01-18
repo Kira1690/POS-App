@@ -321,24 +321,25 @@ export const lightTheme = {
   // STATUS ICONS MAPPING (Premium Vector Icons)
   statusIcons: colors.statusIcons,
 
-  // Order status colors (for components) - light mode
+  // Order status colors - DISTINCT colors for each status (Single Source of Truth)
+  // Matches Kitchen Display for consistency
   status: {
-    pending: { bg: '#FFF8E1', text: '#E65100', border: '#FFB74D' },
-    confirmed: { bg: '#E8F5E9', text: '#2E7D32', border: '#81C784' },
-    preparing: { bg: '#E3F2FD', text: '#1565C0', border: '#64B5F6' },
-    ready: { bg: '#F3E5F5', text: '#7B1FA2', border: '#BA68C8' },
-    served: { bg: '#E0F7FA', text: '#00838F', border: '#4DD0E1' },
-    cancelled: { bg: '#FFEBEE', text: '#C62828', border: '#EF9A9A' },
-    paid: { bg: '#E8F5E9', text: '#1B5E20', border: '#66BB6A' },
-    completed: { bg: '#E8F5E9', text: '#1B5E20', border: '#66BB6A' },
+    pending: { bg: '#FFF3E0', text: '#E65100', border: '#FF9800' },      // Orange - waiting
+    confirmed: { bg: '#E8F5E9', text: '#2E7D32', border: '#4CAF50' },    // GREEN - accepted (distinct from ready)
+    preparing: { bg: '#F3E5F5', text: '#7B1FA2', border: '#AB47BC' },    // Purple - cooking in progress
+    ready: { bg: '#E1F5FE', text: '#0277BD', border: '#03A9F4' },        // Cyan - ready to serve
+    served: { bg: '#F5F5F5', text: '#616161', border: '#9E9E9E' },       // Gray - delivered
+    cancelled: { bg: '#FFEBEE', text: '#C62828', border: '#EF5350' },    // Red - cancelled
+    paid: { bg: '#E8F5E9', text: '#2E7D32', border: '#66BB6A' },         // Green - payment complete
+    completed: { bg: '#E8F5E9', text: '#2E7D32', border: '#66BB6A' },    // Green - all done
   },
 
-  // Priority colors for order urgency
+  // Priority colors for order urgency - Professional palette
   priority: {
     urgent: '#D32F2F',
     high: '#F57C00',
     normal: '#1976D2',
-    low: '#388E3C',
+    low: '#546E7A',
   },
 } as const;
 
@@ -455,24 +456,25 @@ export const darkTheme = {
   // STATUS ICONS MAPPING (Premium Vector Icons)
   statusIcons: colors.statusIcons,
 
-  // Order status colors (for components) - dark mode optimized
+  // Order status colors - DISTINCT colors for dark mode
+  // Matches Kitchen Display for consistency
   status: {
-    pending: { bg: '#3D2814', text: '#FFCC80', border: '#8D6E63' },
-    confirmed: { bg: '#1A3A1A', text: '#81C784', border: '#4CAF50' },
-    preparing: { bg: '#1A2A3D', text: '#90CAF9', border: '#42A5F5' },
-    ready: { bg: '#2A1A3D', text: '#CE93D8', border: '#AB47BC' },
-    served: { bg: '#1A3A3D', text: '#80CBC4', border: '#26A69A' },
-    cancelled: { bg: '#3D1A1A', text: '#EF9A9A', border: '#E57373' },
-    paid: { bg: '#1A3A1A', text: '#A5D6A7', border: '#66BB6A' },
-    completed: { bg: '#1A3A1A', text: '#A5D6A7', border: '#66BB6A' },
+    pending: { bg: '#3D2814', text: '#FFB74D', border: '#FF9800' },      // Orange - waiting
+    confirmed: { bg: '#1A3D2A', text: '#81C784', border: '#4CAF50' },    // GREEN - accepted (distinct from ready)
+    preparing: { bg: '#2D1A3D', text: '#CE93D8', border: '#AB47BC' },    // Purple - cooking in progress
+    ready: { bg: '#1A2D3D', text: '#4FC3F7', border: '#03A9F4' },        // Cyan - ready to serve
+    served: { bg: '#2C2C2E', text: '#9E9E9E', border: '#757575' },       // Gray - delivered
+    cancelled: { bg: '#3D1A1A', text: '#EF9A9A', border: '#E57373' },    // Red - cancelled
+    paid: { bg: '#1A3D2A', text: '#81C784', border: '#66BB6A' },         // Green - payment complete
+    completed: { bg: '#1A3D2A', text: '#81C784', border: '#66BB6A' },    // Green - all done
   },
 
-  // Priority colors for dark theme (vibrant but not harsh)
+  // Priority colors for dark theme - Professional palette
   priority: {
     urgent: '#EF5350',
     high: '#FFB74D',
     normal: '#64B5F6',
-    low: '#81C784',
+    low: '#78909C',
   },
 } as const;
 

@@ -7,12 +7,19 @@ export type OrderEventType =
   | 'ORDER_STATUS_CHANGED'
   | 'PAYMENT_STATUS_CHANGED'
   | 'ORDER_CREATED'
-  | 'ORDER_CANCELLED';
+  | 'ORDER_CANCELLED'
+  | 'ORDER_PAID'
+  | 'SYSTEM_RESET';
 
 export interface OrderEventData {
   status?: string;
   paymentStatus?: string;
   paidAt?: string;
+  tableId?: string;
+  method?: string;
+  amount?: number;
+  reason?: string;
+  orderNumber?: string;
   [key: string]: unknown;
 }
 

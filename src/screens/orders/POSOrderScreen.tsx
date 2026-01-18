@@ -17,11 +17,12 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useEnhancedOrder, useCart, useCurrentOrder } from '@/context/order';
+import { useUnifiedOrder, useUnifiedCart } from '@/context/unified-order';
 import { useTable } from '@/context/table';
 import { useTheme } from '@/hooks/useTheme';
 import { useMenu } from '@/hooks/useMenu';
-import { MenuItemExtended, SelectedModifier, ComboDeal } from '@/types/menu-management-extended.types';
+import { MenuItemExtended, ComboDeal } from '@/types/menu-management-extended.types';
+import { SelectedModifier } from '@/types/unified-order.types';
 import { MenuItem } from '@/types/menu.types';
 import { useMenuContext } from '@/context/menu';
 import { Table } from '@/types/table.types';
@@ -48,10 +49,27 @@ const POSOrderScreen: React.FC = () => {
   // Get table from navigation params
   const routeTable = (route.params as any)?.table as Table | undefined;
 
-  // Use Enhanced Order Context hooks
-  const { createOrder, submitOrderToKitchen, setError, clearError, setSelectedTable } = useEnhancedOrder();
-  const { cart, addToCart, updateCartItemQuantity, removeFromCart, clearCart, cartSubtotal: cartTotal, cartItemCount } = useCart();
-  const { currentOrder, selectedTable } = useCurrentOrder();
+  // Use Unified Order Context hooks
+  const {
+    submitToKitchen,
+    setError,
+    clearError,
+    setSelectedTable,
+    state: orderState,
+  } = useUnifiedOrder();
+  const {
+    items: cart,
+    addItem: addToCart,
+    updateQuantity: updateCartItemQuantity,
+    removeItem: removeFromCart,
+    clear: clearCart,
+    subtotal: cartTotal,
+    itemCount: cartItemCount,
+    selectedTable,
+  } = useUnifiedCart();
+
+  // Derive currentOrder from state (unified context doesn't have a separate "currentOrder" during cart mode)
+  const currentOrder = orderState.currentOrder;
 
   // Get tax rate from payment context (single source of truth)
   const { taxRate: contextTaxRate } = usePayment();
@@ -79,13 +97,12 @@ const POSOrderScreen: React.FC = () => {
 
   // Initialize order when table is provided or selected
   useEffect(() => {
-    if (routeTable && !currentOrder) {
+    if (routeTable && !selectedTable) {
       selectTable(routeTable);
       setSelectedTable(routeTable);
-      createOrder(routeTable, 1); // Create with default guest count of 1
       setShowTableSelector(false);
     }
-  }, [routeTable, currentOrder, selectTable, setSelectedTable, createOrder]);
+  }, [routeTable, selectedTable, selectTable, setSelectedTable]);
 
   // Filter menu items based on category and search
   const filteredMenuItems = useMemo(() => {
@@ -109,13 +126,12 @@ const POSOrderScreen: React.FC = () => {
   const handleTableSelect = useCallback((table: Table) => {
     selectTable(table);
     setSelectedTable(table);
-    createOrder(table, 1); // Create with default guest count of 1
     setShowTableSelector(false);
-  }, [selectTable, setSelectedTable, createOrder]);
+  }, [selectTable, setSelectedTable]);
 
   // Handle menu item selection
   const handleMenuItemSelect = useCallback((menuItem: MenuItem) => {
-    if (!currentOrder) {
+    if (!selectedTable) {
       setError('Please select a table first');
       return;
     }
@@ -152,7 +168,7 @@ const POSOrderScreen: React.FC = () => {
     } catch (error) {
       setError(`Failed to add item: ${error}`);
     }
-  }, [currentOrder, addToCart, setError]);
+  }, [selectedTable, addToCart, setError]);
 
   // Handle modifier confirmation (for both new items and editing existing)
   const handleModifierConfirm = useCallback(
@@ -236,14 +252,14 @@ const POSOrderScreen: React.FC = () => {
 
   // Handle combo selection
   const handleComboSelect = useCallback((combo: ComboDeal) => {
-    if (!currentOrder) {
+    if (!selectedTable) {
       setError('Please select a table first');
       return;
     }
 
     setSelectedCombo(combo);
     setIsComboModalVisible(true);
-  }, [currentOrder, setError]);
+  }, [selectedTable, setError]);
 
   // Handle combo confirm - add all combo items to cart
   const handleComboConfirm = useCallback((result: ComboSelectionResult) => {
@@ -512,8 +528,8 @@ const POSOrderScreen: React.FC = () => {
       }
 
       try {
-        // Submit order to kitchen system (KOT) using Enhanced context
-        const result = await submitOrderToKitchen();
+        // Submit order to kitchen system (KOT) using Unified context
+        const result = await submitToKitchen();
 
         if (result.success) {
           showToast({
@@ -563,7 +579,7 @@ const POSOrderScreen: React.FC = () => {
         taxRate={taxRate}
         taxAmount={taxAmount}
         total={total}
-        orderTime={currentOrder?.created_at || new Date().toISOString()}
+        orderTime={currentOrder?.createdAt || new Date().toISOString()}
         onItemQuantityChange={handleItemQuantityChange}
         onItemRemove={handleItemRemove}
         onAddItem={handleAddItem}

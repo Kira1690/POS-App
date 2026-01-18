@@ -27,23 +27,10 @@ export {
   useTableSummary,
 } from './useTableSelectors';
 
-// Order context selectors - use these instead of direct OrderContext
-export {
-  useCurrentOrder,
-  useCartItems,
-  useCartTotals,
-  useOrderHistory,
-  useOrdersByStatus,
-  useOrdersForTable,
-  useOrderLoadingState,
-  useOrderActions,
-  useKitchenOrders,
-  useOrderById,
-  useOrderStats,
-  useIsCartEmpty,
-  useHasActiveOrder,
-  useOrderWorkflowState,
-} from './useOrderSelectors';
+// Order context selectors - DEPRECATED: Use unified-order context hooks directly
+// The old OrderContext has been replaced by UnifiedOrderContext
+// Use: useUnifiedOrder, useUnifiedCart, useUnifiedKitchen, useUnifiedOrderManagement, useUnifiedBilling
+// from '@/context/unified-order'
 
 // Re-export common types for convenience
 export type { Table } from '@/types/table.types';

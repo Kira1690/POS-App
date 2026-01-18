@@ -190,11 +190,12 @@ export const AppleSettingsPanel: React.FC<Omit<AppleContentPanelProps, 'variant'
 );
 
 // DASHBOARD CONTENT PANEL (for Dashboard screens)
+// Uses 'background' layer for consistent look with Kitchen Display
 export const AppleDashboardPanel: React.FC<Omit<AppleContentPanelProps, 'variant'>> = (props) => (
   <AppleContentPanel
     {...props}
     variant="dashboard"
-    backgroundLayer="surfaceVariant"
+    backgroundLayer="background"
     padding="medium"
   />
 );

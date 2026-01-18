@@ -29,7 +29,7 @@ interface KitchenDisplayScreenProps {
 }
 
 const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation }) => {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { state, refreshTickets, sortedTickets, filteredTickets } = useEnhancedKitchen();
   const { stats, isLoading } = useKitchenTickets();
   const { updateTicketStatus, bumpTicket } = useKitchenActions();
@@ -41,13 +41,13 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.background,
+      backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
     },
     header: {
       paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
+      paddingVertical: theme.spacing.md,
       borderBottomWidth: 1,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: isDark ? theme.colors.layer1 : theme.colors.surface,
       borderBottomColor: theme.colors.outline,
     },
     headerTop: {
@@ -80,6 +80,8 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       paddingVertical: theme.spacing.md,
       borderRadius: theme.borderRadius.lg,
       marginHorizontal: theme.spacing.xs / 2,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
     },
     statNumber: {
       ...theme.typography.h2,
@@ -129,6 +131,13 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       marginBottom: theme.spacing.sm,
       borderWidth: 1,
       borderColor: theme.colors.outline,
+      // Apple-style card shadow
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.2 : 0.08,
+      shadowRadius: 8,
+      elevation: 3,
+      overflow: 'hidden',
     },
     ticketHeader: {
       flexDirection: 'row',
@@ -356,56 +365,58 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
     ).length;
   }, [sortedTickets]);
 
-  // Get status color (for badge and card border)
+  // Get status color using theme.colors.status for professional blue palette consistency
   const getStatusColor = (status: TicketStatus) => {
+    const statusColors = theme.colors.status;
     switch (status) {
       case 'pending':
-        return { bg: theme.colors.warningContainer, text: theme.colors.warning };
+        return { bg: statusColors.pending.bg, text: statusColors.pending.text };
       case 'preparing':
-        return { bg: theme.colors.primaryContainer, text: theme.colors.primary };
+        return { bg: statusColors.preparing.bg, text: statusColors.preparing.text };
       case 'ready':
-        return { bg: theme.colors.successContainer, text: theme.colors.success };
+        return { bg: statusColors.ready.bg, text: statusColors.ready.text };
       case 'served':
-        return { bg: theme.colors.surfaceLight, text: theme.colors.onSurfaceVariant };
+        return { bg: statusColors.served.bg, text: statusColors.served.text };
       case 'cancelled':
-        return { bg: theme.colors.errorContainer, text: theme.colors.error };
+        return { bg: statusColors.cancelled.bg, text: statusColors.cancelled.text };
       default:
         return { bg: theme.colors.surfaceLight, text: theme.colors.onSurfaceVariant };
     }
   };
 
-  // Get card background and border color based on status for better visual distinction
+  // Get card background and border color based on status using theme colors
   const getCardStatusStyles = (status: TicketStatus) => {
+    const statusColors = theme.colors.status;
     switch (status) {
       case 'pending':
         return {
-          backgroundColor: '#FFF8E1', // Light amber
-          borderColor: '#FFA000', // Amber
+          backgroundColor: statusColors.pending.bg,
+          borderColor: statusColors.pending.border,
           borderWidth: 2,
         };
       case 'preparing':
         return {
-          backgroundColor: '#E3F2FD', // Light blue
-          borderColor: '#1976D2', // Blue
+          backgroundColor: statusColors.preparing.bg,
+          borderColor: statusColors.preparing.border,
           borderWidth: 2,
         };
       case 'ready':
         return {
-          backgroundColor: '#E8F5E9', // Light green
-          borderColor: '#388E3C', // Green
-          borderWidth: 3, // Thicker border for ready items
+          backgroundColor: statusColors.ready.bg,
+          borderColor: statusColors.ready.border,
+          borderWidth: 3,
         };
       case 'served':
         return {
-          backgroundColor: '#F5F5F5', // Light grey
-          borderColor: '#9E9E9E', // Grey
+          backgroundColor: statusColors.served.bg,
+          borderColor: statusColors.served.border,
           borderWidth: 1,
           opacity: 0.7,
         };
       case 'cancelled':
         return {
-          backgroundColor: '#FFEBEE', // Light red
-          borderColor: '#D32F2F', // Red
+          backgroundColor: statusColors.cancelled.bg,
+          borderColor: statusColors.cancelled.border,
           borderWidth: 2,
           opacity: 0.6,
         };
@@ -475,32 +486,32 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       </View>
 
       <View style={styles.statsContainer}>
-        <View style={[styles.statItem, { backgroundColor: theme.colors.warningContainer }]}>
-          <Text style={[styles.statNumber, { color: theme.colors.warning }]}>
+        <View style={[styles.statItem, { backgroundColor: theme.colors.status.pending.bg }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.status.pending.text }]}>
             {stats?.pendingCount || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.warning }]}>Pending</Text>
+          <Text style={[styles.statLabel, { color: theme.colors.status.pending.text }]}>Pending</Text>
         </View>
 
-        <View style={[styles.statItem, { backgroundColor: theme.colors.primaryContainer }]}>
-          <Text style={[styles.statNumber, { color: theme.colors.primary }]}>
+        <View style={[styles.statItem, { backgroundColor: theme.colors.status.preparing.bg }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.status.preparing.text }]}>
             {stats?.preparingCount || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.primary }]}>Preparing</Text>
+          <Text style={[styles.statLabel, { color: theme.colors.status.preparing.text }]}>Preparing</Text>
         </View>
 
-        <View style={[styles.statItem, { backgroundColor: theme.colors.successContainer }]}>
-          <Text style={[styles.statNumber, { color: theme.colors.success }]}>
+        <View style={[styles.statItem, { backgroundColor: theme.colors.status.ready.bg }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.status.ready.text }]}>
             {stats?.readyCount || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.success }]}>Ready</Text>
+          <Text style={[styles.statLabel, { color: theme.colors.status.ready.text }]}>Ready</Text>
         </View>
 
-        <View style={[styles.statItem, { backgroundColor: theme.colors.infoContainer }]}>
-          <Text style={[styles.statNumber, { color: theme.colors.info }]}>
-            {stats?.totalTickets || 0}
+        <View style={[styles.statItem, { backgroundColor: theme.colors.status.served.bg }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.status.served.text }]}>
+            {stats?.servedCount || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.info }]}>Total</Text>
+          <Text style={[styles.statLabel, { color: theme.colors.status.served.text }]}>Served</Text>
         </View>
       </View>
 

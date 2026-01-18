@@ -13,6 +13,8 @@ import { orderService } from '@/services/orders/orderService';
 import TableContext from './TableContext';
 import { tableReducer, initialTableState } from './TableReducer';
 import { createTableActions } from './TableActions';
+import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
+import { tableStorageService } from '@/services/storage';
 
 interface TableProviderProps {
   children: React.ReactNode;
@@ -115,6 +117,78 @@ export const TableProvider: React.FC<TableProviderProps> = ({
 
   // Remove automatic loading - let the screen handle it
   // This prevents duplicate loads and race conditions
+
+  // Subscribe to order events for table status management
+  useEffect(() => {
+    // ORDER_CREATED: Mark table as OCCUPIED when order is submitted
+    const unsubscribeCreated = orderEventEmitter.subscribe('ORDER_CREATED', (orderId, data) => {
+      const tableId = data?.tableId as string;
+      if (tableId) {
+        console.log('[TableProvider] Order created - marking table OCCUPIED:', tableId);
+        // Set table to OCCUPIED
+        updateTableStatus(tableId, { status: TableStatus.OCCUPIED })
+          .then(() => {
+            // Also persist to storage
+            tableStorageService.updateTableStatus(tableId, TableStatus.OCCUPIED);
+            console.log('[TableProvider] ✅ Table', tableId, 'set to OCCUPIED');
+          })
+          .catch((error) => {
+            console.error('[TableProvider] ❌ Failed to mark table occupied:', error);
+          });
+      }
+    });
+
+    // ORDER_PAID: Release table when payment is complete
+    const unsubscribePaid = orderEventEmitter.subscribe('ORDER_PAID', (orderId, data) => {
+      const tableId = data?.tableId as string;
+      if (tableId) {
+        console.log('[TableProvider] Order paid - releasing table:', tableId);
+        // Set table back to AVAILABLE
+        updateTableStatus(tableId, { status: TableStatus.AVAILABLE })
+          .then(() => {
+            // Also persist to storage
+            tableStorageService.updateTableStatus(tableId, TableStatus.AVAILABLE);
+            console.log('[TableProvider] ✅ Table', tableId, 'set to AVAILABLE');
+          })
+          .catch((error) => {
+            console.error('[TableProvider] ❌ Failed to release table:', error);
+          });
+      }
+    });
+
+    // ORDER_CANCELLED: Release table when order is cancelled
+    const unsubscribeCancelled = orderEventEmitter.subscribe('ORDER_CANCELLED', (orderId, data) => {
+      const tableId = data?.tableId as string;
+      if (tableId) {
+        console.log('[TableProvider] Order cancelled - releasing table:', tableId);
+        // Set table back to AVAILABLE
+        updateTableStatus(tableId, { status: TableStatus.AVAILABLE })
+          .then(() => {
+            // Also persist to storage
+            tableStorageService.updateTableStatus(tableId, TableStatus.AVAILABLE);
+            console.log('[TableProvider] ✅ Table', tableId, 'set to AVAILABLE');
+          })
+          .catch((error) => {
+            console.error('[TableProvider] ❌ Failed to release table:', error);
+          });
+      }
+    });
+
+    // SYSTEM_RESET: Refresh tables when data is cleared
+    const unsubscribeReset = orderEventEmitter.subscribe('SYSTEM_RESET', () => {
+      console.log('[TableProvider] System reset - refreshing tables');
+      refreshTables().catch((error) => {
+        console.error('[TableProvider] Failed to refresh tables:', error);
+      });
+    });
+
+    return () => {
+      unsubscribeCreated();
+      unsubscribePaid();
+      unsubscribeCancelled();
+      unsubscribeReset();
+    };
+  }, [updateTableStatus, refreshTables]);
 
   // Cleanup on unmount
   useEffect(() => {

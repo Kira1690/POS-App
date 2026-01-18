@@ -1,3 +1,10 @@
+/**
+ * MainNavigator - Bottom tab navigation with stack navigators
+ *
+ * NOTE: All business providers (Order, Kitchen, Payment, etc.) are in OptimizedAppProviders.
+ * DO NOT add provider wrappers here - they're already at the app root level.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -30,97 +37,79 @@ import BillSplitScreen from '@/screens/billing/BillSplitScreen';
 import { ReceiptPreviewScreen } from '@/screens/receipt';
 // Import actual Settings screen
 import SettingsScreen from '@/screens/settings/SettingsScreen';
-import { TableProvider } from '@/context/table';
-import { OrderProvider, EnhancedOrderProvider } from '@/context/order';
-import { OrderManagementProvider } from '@/context/orderManagement';
-import { PaymentProvider } from '@/context/payment';
-import { BillSplitProvider } from '@/context/billing';
-import { EnhancedKitchenProvider } from '@/context/kitchen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const OrdersStack = createStackNavigator<OrdersStackParamList>();
 const KitchenStack = createStackNavigator<KitchenStackParamList>();
 
-// Orders Stack Navigator - Professional order management
+/**
+ * Orders Stack Navigator
+ * All providers are at app root level in OptimizedAppProviders
+ */
 const OrdersStackNavigator = () => (
-  <TableProvider>
-    <PaymentProvider>
-      <OrderProvider>
-        <EnhancedOrderProvider>
-          <BillSplitProvider>
-            <OrderManagementProvider>
-              <OrdersStack.Navigator
-                screenOptions={{
-                  headerShown: false,
-                }}
-              >
-              <OrdersStack.Screen
-                name="OrderManagement"
-                component={OrderManagementScreen}
-              />
-              <OrdersStack.Screen
-                name="OrderDetails"
-                component={OrderDetailsScreen}
-              />
-              <OrdersStack.Screen
-                name="POSOrder"
-                component={POSOrderScreen}
-              />
-              <OrdersStack.Screen
-                name="Ordering"
-                component={OrderingScreen}
-              />
-              <OrdersStack.Screen
-                name="Bill"
-                component={BillScreen}
-              />
-              <OrdersStack.Screen
-                name="BillSplit"
-                component={BillSplitScreen}
-              />
-              <OrdersStack.Screen
-                name="PaymentProcessing"
-                component={PaymentProcessingScreen}
-              />
-              <OrdersStack.Screen
-                name="PaymentConfirmation"
-                component={PaymentConfirmationScreen}
-              />
-              <OrdersStack.Screen
-                name="Receipt"
-                component={ReceiptPreviewScreen}
-              />
-            </OrdersStack.Navigator>
-          </OrderManagementProvider>
-        </BillSplitProvider>
-      </EnhancedOrderProvider>
-    </OrderProvider>
-  </PaymentProvider>
-  </TableProvider>
+  <OrdersStack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <OrdersStack.Screen
+      name="OrderManagement"
+      component={OrderManagementScreen}
+    />
+    <OrdersStack.Screen
+      name="OrderDetails"
+      component={OrderDetailsScreen}
+    />
+    <OrdersStack.Screen
+      name="POSOrder"
+      component={POSOrderScreen}
+    />
+    <OrdersStack.Screen
+      name="Ordering"
+      component={OrderingScreen}
+    />
+    <OrdersStack.Screen
+      name="Bill"
+      component={BillScreen}
+    />
+    <OrdersStack.Screen
+      name="BillSplit"
+      component={BillSplitScreen}
+    />
+    <OrdersStack.Screen
+      name="PaymentProcessing"
+      component={PaymentProcessingScreen}
+    />
+    <OrdersStack.Screen
+      name="PaymentConfirmation"
+      component={PaymentConfirmationScreen}
+    />
+    <OrdersStack.Screen
+      name="Receipt"
+      component={ReceiptPreviewScreen}
+    />
+  </OrdersStack.Navigator>
 );
 
-// Kitchen Stack Navigator - Kitchen operations
+/**
+ * Kitchen Stack Navigator
+ * All providers are at app root level in OptimizedAppProviders
+ */
 const KitchenStackNavigator = () => (
-  <EnhancedOrderProvider>
-    <EnhancedKitchenProvider>
-      <OrderManagementProvider>
-        <KitchenStack.Navigator
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <KitchenStack.Screen
-            name="KitchenDisplay"
-            component={KitchenDisplayScreen}
-          />
-          <KitchenStack.Screen
-            name="OrderDetails"
-            component={OrderDetailsScreen}
-          />
-        </KitchenStack.Navigator>
-      </OrderManagementProvider>
-    </EnhancedKitchenProvider>
-  </EnhancedOrderProvider>
+  <KitchenStack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <KitchenStack.Screen
+      name="KitchenDisplay"
+      component={KitchenDisplayScreen}
+    />
+    <KitchenStack.Screen
+      name="OrderDetails"
+      component={OrderDetailsScreen}
+    />
+  </KitchenStack.Navigator>
 );
 
 // Dashboard with Provider wrapper

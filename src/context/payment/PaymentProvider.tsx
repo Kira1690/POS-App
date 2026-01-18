@@ -428,6 +428,11 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     dispatch(PaymentActions.resetPaymentState());
   }, []);
 
+  const resetProcessingStatus = useCallback(() => {
+    dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.IDLE));
+    dispatch(PaymentActions.clearError());
+  }, []);
+
   // Context Value
   const contextValue: PaymentContextInterface = {
     // State
@@ -474,6 +479,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     
     // State Reset
     resetPaymentState,
+    resetProcessingStatus,
   };
 
   return (
