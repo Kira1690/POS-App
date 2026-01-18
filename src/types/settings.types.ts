@@ -171,6 +171,12 @@ export interface PaymentConfiguration {
       print_receipts: boolean;
       receipt_footer?: string;
     };
+    // Payment Timing Configuration
+    payment_timing: {
+      mode: 'pay_at_counter' | 'pay_after_dining' | 'customer_choice';
+      default_for_dine_in: 'pay_at_counter' | 'pay_after_dining';
+      require_selection_at_order: boolean;
+    };
   };
 }
 

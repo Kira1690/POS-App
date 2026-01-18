@@ -20,7 +20,14 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
   // Theme hook FIRST (REQUIRED per CLAUDE.md)
   const { theme } = useTheme();
 
-  const [config, setConfig] = useState<PaymentConfiguration>({
+  // Payment timing settings (Pay After Dining is the default per user request)
+  const [paymentTiming, setPaymentTiming] = useState({
+    mode: 'pay_after_dining' as 'pay_at_counter' | 'pay_after_dining' | 'customer_choice',
+    default_for_dine_in: 'pay_after_dining' as 'pay_at_counter' | 'pay_after_dining',
+    require_selection_at_order: false,
+  });
+
+  const [config, setConfig] = useState({
     enabled_methods: ['card', 'cash'],
     card_processing: {
       processor: 'VP3350',
@@ -58,6 +65,11 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
         [field]: value,
       },
     });
+    onChangesDetected(true);
+  };
+
+  const handlePaymentTimingChange = (mode: 'pay_at_counter' | 'pay_after_dining' | 'customer_choice') => {
+    setPaymentTiming(prev => ({ ...prev, mode }));
     onChangesDetected(true);
   };
 
@@ -183,6 +195,58 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
       fontSize: 14,
       fontWeight: 'bold',
     },
+    radioOption: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    radioCircle: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: theme.colors.border,
+      marginRight: 12,
+      marginTop: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioCircleSelected: {
+      borderColor: theme.colors.primary,
+    },
+    radioInner: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: theme.colors.primary,
+    },
+    radioContent: {
+      flex: 1,
+    },
+    radioLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      marginBottom: 2,
+    },
+    radioDesc: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+    },
+    defaultBadge: {
+      backgroundColor: theme.colors.success,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+      marginLeft: 8,
+    },
+    defaultBadgeText: {
+      color: theme.colors.white,
+      fontSize: 10,
+      fontWeight: 'bold',
+    },
   });
 
   return (
@@ -303,6 +367,76 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
         <View style={styles.configRow}>
           <Text style={styles.configLabel}>Signature Threshold</Text>
           <Text style={styles.configValue}>${config.settings.signature_threshold}</Text>
+        </View>
+      </View>
+
+      {/* Payment Timing Settings */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Payment Timing</Text>
+        {[
+          {
+            id: 'pay_after_dining' as const,
+            iconName: 'silverware-fork-knife',
+            label: 'Pay After Dining',
+            desc: 'Customer pays after finishing their meal (traditional dine-in)',
+            isDefault: true,
+          },
+          {
+            id: 'pay_at_counter' as const,
+            iconName: 'cash-register',
+            label: 'Pay at Counter',
+            desc: 'Customer pays when placing order (quick service)',
+            isDefault: false,
+          },
+          {
+            id: 'customer_choice' as const,
+            iconName: 'swap-horizontal',
+            label: 'Customer Choice',
+            desc: 'Allow customers to choose payment timing at order',
+            isDefault: false,
+          },
+        ].map(option => (
+          <TouchableOpacity
+            key={option.id}
+            style={styles.radioOption}
+            onPress={() => handlePaymentTimingChange(option.id)}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: paymentTiming.mode === option.id }}
+            accessibilityLabel={option.label}
+          >
+            <View style={[
+              styles.radioCircle,
+              paymentTiming.mode === option.id && styles.radioCircleSelected,
+            ]}>
+              {paymentTiming.mode === option.id && <View style={styles.radioInner} />}
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+              <Icon name={option.iconName} size={20} color={theme.colors.primary} />
+              <View style={styles.radioContent}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.radioLabel}>{option.label}</Text>
+                  {option.isDefault && (
+                    <View style={styles.defaultBadge}>
+                      <Text style={styles.defaultBadgeText}>DEFAULT</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.radioDesc}>{option.desc}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+        <View style={[styles.configRow, { borderBottomWidth: 0 }]}>
+          <Text style={styles.configLabel}>Require Selection at Order</Text>
+          <Switch
+            value={paymentTiming.require_selection_at_order}
+            onValueChange={(value) => {
+              setPaymentTiming(prev => ({ ...prev, require_selection_at_order: value }));
+              onChangesDetected(true);
+            }}
+            trackColor={{ false: theme.colors.border, true: theme.colors.success }}
+            thumbColor={theme.colors.white}
+          />
         </View>
       </View>
 

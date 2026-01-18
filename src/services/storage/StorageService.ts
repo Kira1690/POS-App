@@ -44,6 +44,13 @@ export const STORAGE_KEYS = {
   SPLIT_BILLS: '@pos_split_bills',
   RECEIPTS: '@pos_receipts',
   PAYMENT_LAST_SYNC: '@pos_payment_last_sync',
+  PAYMENT_CONFIG: '@pos_payment_config',
+
+  // Table Management keys
+  TABLE_DATA: '@pos_table_data',
+  TABLE_AREAS: '@pos_table_areas',
+  TABLE_FLOOR_PLAN: '@pos_table_floor_plan',
+  TABLE_LAST_SYNC: '@pos_table_last_sync',
 
   // Sync Queue keys
   SYNC_QUEUE: '@pos_sync_queue',

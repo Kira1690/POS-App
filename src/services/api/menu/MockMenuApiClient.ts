@@ -60,6 +60,7 @@ export class MockMenuApiClient {
     },
   ];
 
+  // Menu items with USD prices
   private mockMenuItems: MenuItem[] = [
     // Beverages
     {
@@ -68,7 +69,7 @@ export class MockMenuApiClient {
       category_id: 'cat_1',
       name: 'Coffee',
       description: 'Hot black coffee',
-      price: 50,
+      price: 4.50,
       is_available: true,
       preparation_time_minutes: 5,
       created_at: '2025-07-20T00:00:00Z',
@@ -80,13 +81,13 @@ export class MockMenuApiClient {
       category_id: 'cat_1',
       name: 'Tea',
       description: 'Hot chai tea',
-      price: 30,
+      price: 3.00,
       is_available: true,
       preparation_time_minutes: 3,
       created_at: '2025-07-20T00:00:00Z',
       updated_at: '2025-07-20T00:00:00Z',
     },
-    
+
     // VEG
     {
       id: 'item_3',
@@ -94,7 +95,7 @@ export class MockMenuApiClient {
       category_id: 'cat_5',
       name: 'Paneer Butter Masala',
       description: 'Creamy paneer curry',
-      price: 220,
+      price: 16.99,
       is_available: true,
       preparation_time_minutes: 15,
       created_at: '2025-07-20T00:00:00Z',
@@ -106,7 +107,7 @@ export class MockMenuApiClient {
       category_id: 'cat_5',
       name: 'Dal Makhani',
       description: 'Rich black lentil curry',
-      price: 160,
+      price: 13.99,
       is_available: true,
       preparation_time_minutes: 12,
       created_at: '2025-07-20T00:00:00Z',
@@ -118,13 +119,13 @@ export class MockMenuApiClient {
       category_id: 'cat_5',
       name: 'Roti',
       description: 'Fresh wheat bread',
-      price: 25,
+      price: 2.50,
       is_available: true,
       preparation_time_minutes: 3,
       created_at: '2025-07-20T00:00:00Z',
       updated_at: '2025-07-20T00:00:00Z',
     },
-    
+
     // NON VEG
     {
       id: 'item_6',
@@ -132,7 +133,7 @@ export class MockMenuApiClient {
       category_id: 'cat_3',
       name: 'Chicken Curry',
       description: 'Spicy chicken curry',
-      price: 280,
+      price: 18.99,
       is_available: true,
       preparation_time_minutes: 20,
       created_at: '2025-07-20T00:00:00Z',
@@ -144,7 +145,7 @@ export class MockMenuApiClient {
       category_id: 'cat_3',
       name: 'Fish Fry',
       description: 'Crispy fried fish',
-      price: 320,
+      price: 21.99,
       is_available: true,
       preparation_time_minutes: 18,
       created_at: '2025-07-20T00:00:00Z',

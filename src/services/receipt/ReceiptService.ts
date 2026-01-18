@@ -177,7 +177,9 @@ class ReceiptService implements IReceiptService {
 
     // Footer
     lines.push(this.centerText(receipt.footer.thankYouMessage, width));
-    lines.push(this.centerText(receipt.footer.website, width));
+    if (receipt.footer.website) {
+      lines.push(this.centerText(receipt.footer.website, width));
+    }
 
     return lines.join('\n');
   }
@@ -199,9 +201,9 @@ class ReceiptService implements IReceiptService {
   private createReceiptOrderItems(order: Order): ReceiptOrderItem[] {
     return order.items?.map(item => ({
       quantity: item.quantity,
-      name: item.name || 'Menu Item',
-      unitPrice: item.price || 0,
-      totalPrice: (item.price || 0) * item.quantity,
+      name: item.menu_item?.name || 'Menu Item',
+      unitPrice: item.unit_price || 0,
+      totalPrice: item.total_price || (item.unit_price || 0) * item.quantity,
       modifiers: item.special_instructions ? [item.special_instructions] : undefined,
     })) || [];
   }

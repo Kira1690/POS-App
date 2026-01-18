@@ -907,6 +907,55 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
     [emitEvent]
   );
 
+  // ============== RELOAD EXTENDED DATA ==============
+  // Reloads menu data from storage after modifications
+  const loadExtendedMenuData = useCallback(async () => {
+    try {
+      const storedData = await menuStorageService.getMenuData(restaurantId);
+      if (storedData) {
+        // Recalculate category stats based on actual items
+        const categoriesWithCorrectStats = recalculateCategoryStats(
+          storedData.categories,
+          storedData.menuItems
+        );
+
+        dispatch({
+          type: 'SET_EXTENDED_DATA',
+          payload: {
+            categoriesWithStats: categoriesWithCorrectStats,
+            menuItemsExtended: storedData.menuItems,
+            modifierGroups: storedData.modifierGroups,
+            combos: storedData.combos,
+          },
+        });
+
+        if (__DEV__) {
+          console.log('[MenuContext] Reloaded extended menu data from storage');
+        }
+      }
+    } catch (error) {
+      console.error('[MenuContext] Failed to reload extended menu data:', error);
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error instanceof Error ? error.message : 'Failed to reload menu data',
+      });
+    }
+  }, [restaurantId, recalculateCategoryStats]);
+
+  const assignModifiersToMenuItem = useCallback(
+    async (menuItemId: string, modifierGroupIds: string[]): Promise<void> => {
+      // Use menuStorageService to update the assignments
+      await menuStorageService.assignModifiersToMenuItem(menuItemId, modifierGroupIds);
+
+      // Reload the extended menu data to reflect the changes
+      await loadExtendedMenuData();
+
+      // Emit event for real-time updates
+      emitEvent('MODIFIERS_ASSIGNED', { menuItemId, modifierGroupIds });
+    },
+    [emitEvent, loadExtendedMenuData]
+  );
+
   // ============== COMBO CRUD ==============
 
   const createCombo = useCallback(
@@ -1104,6 +1153,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       removeModifierOption,
       assignModifierToItems,
       unassignModifierFromItems,
+      assignModifiersToMenuItem,
       createCombo,
       updateCombo,
       deleteCombo,
@@ -1143,6 +1193,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       removeModifierOption,
       assignModifierToItems,
       unassignModifierFromItems,
+      assignModifiersToMenuItem,
       createCombo,
       updateCombo,
       deleteCombo,

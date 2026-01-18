@@ -13,12 +13,16 @@ import {
   RefreshControl,
   Dimensions,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useOrderManagement } from '@/context/orderManagement';
+import { useTable } from '@/context/table';
 import { useTheme } from '@/hooks/useTheme';
 import { Order } from '@/types/order.types';
-import { OrderStatus } from '@/types/common.types';
+import { Table } from '@/types/table.types';
+import { OrderStatus, PaymentStatus } from '@/types/common.types';
 import { OrderListItem, OrderStatusBadge } from '@/components/business/order';
+import { TableSelectionModal } from '@/components/modals';
 import { showToast } from '@/utils/toast';
 
 // APPLE COMPONENT SYSTEM (Advanced Search & Filter Components)
@@ -55,6 +59,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     filteredOrders,
     searchQuery,
     statusFilter,
+    paymentFilter,
     isLoading,
     loadOrders,
     selectOrder,
@@ -62,27 +67,37 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     cancelOrder,
     setSearchQuery,
     setStatusFilter,
+    setPaymentFilter,
   } = useOrderManagement();
+
+  const { state: tableState, selectTable, refreshTables } = useTable();
 
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showTableModal, setShowTableModal] = useState(false);
 
-  // Load orders on component mount
-  useEffect(() => {
-    const initializeOrders = async () => {
-      try {
-        await loadOrders();
-      } catch (error) {
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: 'Failed to load orders',
-        });
-      }
-    };
+  // Load orders and tables on component mount and when screen is focused
+  // Using useFocusEffect ensures data is refreshed after payment completion
+  useFocusEffect(
+    useCallback(() => {
+      const initializeData = async () => {
+        try {
+          await Promise.all([
+            loadOrders(),
+            refreshTables(),
+          ]);
+        } catch (error) {
+          showToast({
+            type: 'error',
+            title: 'Error',
+            message: 'Failed to load data',
+          });
+        }
+      };
 
-    initializeOrders();
-  }, [loadOrders]);
+      initializeData();
+    }, [loadOrders, refreshTables])
+  );
 
   // Handle pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -99,6 +114,21 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
       setRefreshing(false);
     }
   }, [loadOrders]);
+
+  // Handle new order - show table selection modal
+  const handleNewOrder = useCallback(() => {
+    setShowTableModal(true);
+  }, []);
+
+  // Handle table selection from modal
+  const handleTableSelect = useCallback((table: Table) => {
+    selectTable(table);
+    setShowTableModal(false);
+    // Pass the full Table object - POSOrderScreen expects params.table
+    navigation?.navigate('POSOrder', {
+      table: table,
+    });
+  }, [selectTable, navigation]);
 
   // Handle order item press
   const handleOrderPress = useCallback((order: Order) => {
@@ -148,13 +178,14 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   // Handle payment processing - Restaurant workflow
   const handleProcessPayment = useCallback(async (order: Order) => {
     try {
-      // Navigate to payment processing screen
-      navigation?.navigate('PaymentProcessing', { 
+      // Navigate to payment processing screen with full order object
+      navigation?.navigate('PaymentProcessing', {
         orderId: order.id,
+        order: order, // Pass the full order object for PaymentProcessingScreen
         orderTotal: order.total_amount,
         tableNumber: order.table_number || 'N/A'
       });
-      
+
       showToast({
         type: 'info',
         title: 'Payment Processing',
@@ -195,112 +226,200 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     }));
   };
 
-  // APPLE SEARCH BAR (using universal components)
+  // Search bar component
   const renderSearchBar = () => (
-    <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <AppleCard layer="surfaceVariant" size="medium" style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
+    <AppleCard layer="surfaceVariant" size="medium" style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 12 }}>
+      <MaterialIcons
+        name="search"
+        size={20}
+        color={theme.colors.onSurfaceVariant}
+      />
+      <TextInput
+        style={{
+          flex: 1,
+          marginLeft: 8,
+          fontSize: 16,
+          color: theme.colors.onSurface
+        }}
+        placeholder="Search orders by number, table, or instructions..."
+        placeholderTextColor={theme.colors.onSurfaceVariant}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      {searchQuery.length > 0 && (
+        <AppleInteractive onPress={() => setSearchQuery('')} feedbackType="opacity">
           <MaterialIcons
-            name="search"
+            name="clear"
             size={20}
             color={theme.colors.onSurfaceVariant}
           />
-          <TextInput
-            style={{
-              flex: 1,
-              marginLeft: 8,
-              fontSize: 16,
-              color: theme.colors.onSurface
-            }}
-            placeholder="Search orders by number, table, or instructions..."
-            placeholderTextColor={theme.colors.onSurfaceVariant}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <AppleInteractive onPress={() => setSearchQuery('')} feedbackType="opacity">
-              <MaterialIcons
-                name="clear"
-                size={20}
-                color={theme.colors.onSurfaceVariant}
-              />
-            </AppleInteractive>
-          )}
-        </AppleCard>
-
-        <AppleButton
-          title={showFilters ? '🔼 Filters' : '🔽 Filters'}
-          variant="secondary"
-          size="medium"
-          onPress={() => setShowFilters(!showFilters)}
-        />
-      </View>
+        </AppleInteractive>
+      )}
     </AppleCard>
   );
 
-  // APPLE FILTER CHIPS (using universal components)
-  const renderFilters = () => {
-    if (!showFilters) return null;
+  // Payment filter options
+  const paymentFilters: Array<{ value: 'ALL' | 'PAID' | 'UNPAID'; label: string; count: number }> = [
+    { value: 'ALL', label: 'All', count: orders.length },
+    { value: 'PAID', label: 'Paid', count: orders.filter(o => o.payment_status === PaymentStatus.COMPLETED).length },
+    { value: 'UNPAID', label: 'Unpaid', count: orders.filter(o => o.payment_status !== PaymentStatus.COMPLETED).length },
+  ];
 
+  // Filter chips - always visible, compact horizontal layout
+  const renderFilters = () => {
     const statusCounts = getStatusCounts();
 
     return (
-      <AppleCard layer="surfaceVariant" size="large" style={{ marginBottom: 16 }}>
-        <Text style={{
-          fontSize: 16,
-          fontWeight: '600',
-          color: theme.colors.onSurface,
-          marginBottom: 12
-        }}>
-          Filter by Status
-        </Text>
-
-        <FlatList
-          data={statusCounts}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.value}
-          contentContainerStyle={{ paddingHorizontal: 4 }}
-          renderItem={({ item }) => (
-            <View style={{ marginRight: 8 }}>
+      <View style={{ marginBottom: 12 }}>
+        {/* Order Status Filter Row */}
+        <View style={{ marginBottom: 8 }}>
+          <Text style={{
+            fontSize: 13,
+            fontWeight: '600',
+            color: theme.colors.onSurfaceVariant,
+            marginBottom: 6,
+            marginLeft: 4,
+          }}>
+            Status
+          </Text>
+          <FlatList
+            data={statusCounts}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.value}
+            renderItem={({ item }) => (
               <AppleInteractive
                 onPress={() => setStatusFilter(item.value)}
                 feedbackType="scale"
+                style={{ marginRight: 6 }}
               >
-                <AppleCard
-                  layer={statusFilter === item.value ? "surfaceElevated" : "surface"}
-                  size="small"
+                <View
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderWidth: statusFilter === item.value ? 2 : 1,
-                    borderColor: statusFilter === item.value ? theme.colors.primary : theme.colors.outline
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    backgroundColor: statusFilter === item.value
+                      ? theme.colors.primary
+                      : theme.colors.surfaceLight,
+                    borderWidth: 1,
+                    borderColor: statusFilter === item.value
+                      ? theme.colors.primary
+                      : theme.colors.outline,
                   }}
                 >
                   <Text style={{
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: statusFilter === item.value ? '600' : '500',
-                    color: statusFilter === item.value ? theme.colors.primary : theme.colors.onSurface
+                    color: statusFilter === item.value
+                      ? theme.colors.onPrimary
+                      : theme.colors.onSurface,
                   }}>
                     {item.label}
                   </Text>
-
-                  {item.count !== undefined && (
-                    <AppleStatusPill
-                      status={statusFilter === item.value ? "active" : "neutral"}
-                      text={item.count.toString()}
-                      size="small"
-                      style={{ marginLeft: 8 }}
-                    />
-                  )}
-                </AppleCard>
+                  <View style={{
+                    marginLeft: 6,
+                    backgroundColor: statusFilter === item.value
+                      ? 'rgba(255,255,255,0.25)'
+                      : theme.colors.surfaceVariant,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 10,
+                  }}>
+                    <Text style={{
+                      fontSize: 11,
+                      fontWeight: '600',
+                      color: statusFilter === item.value
+                        ? theme.colors.onPrimary
+                        : theme.colors.onSurfaceVariant,
+                    }}>
+                      {item.count}
+                    </Text>
+                  </View>
+                </View>
               </AppleInteractive>
-            </View>
-          )}
-        />
-      </AppleCard>
+            )}
+          />
+        </View>
+
+        {/* Payment Status Filter Row */}
+        <View>
+          <Text style={{
+            fontSize: 13,
+            fontWeight: '600',
+            color: theme.colors.onSurfaceVariant,
+            marginBottom: 6,
+            marginLeft: 4,
+          }}>
+            Payment
+          </Text>
+          <View style={{ flexDirection: 'row' }}>
+            {paymentFilters.map((filter) => (
+              <AppleInteractive
+                key={filter.value}
+                onPress={() => setPaymentFilter(filter.value)}
+                feedbackType="scale"
+                style={{ marginRight: 6 }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    backgroundColor: paymentFilter === filter.value
+                      ? (filter.value === 'PAID' ? theme.colors.success : theme.colors.primary)
+                      : theme.colors.surfaceLight,
+                    borderWidth: 1,
+                    borderColor: paymentFilter === filter.value
+                      ? (filter.value === 'PAID' ? theme.colors.success : theme.colors.primary)
+                      : theme.colors.outline,
+                  }}
+                >
+                  <MaterialIcons
+                    name={filter.value === 'PAID' ? 'check-circle' : filter.value === 'UNPAID' ? 'schedule' : 'list'}
+                    size={14}
+                    color={paymentFilter === filter.value
+                      ? theme.colors.onPrimary
+                      : theme.colors.onSurfaceVariant}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={{
+                    fontSize: 13,
+                    fontWeight: paymentFilter === filter.value ? '600' : '500',
+                    color: paymentFilter === filter.value
+                      ? theme.colors.onPrimary
+                      : theme.colors.onSurface,
+                  }}>
+                    {filter.label}
+                  </Text>
+                  <View style={{
+                    marginLeft: 6,
+                    backgroundColor: paymentFilter === filter.value
+                      ? 'rgba(255,255,255,0.25)'
+                      : theme.colors.surfaceVariant,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 10,
+                  }}>
+                    <Text style={{
+                      fontSize: 11,
+                      fontWeight: '600',
+                      color: paymentFilter === filter.value
+                        ? theme.colors.onPrimary
+                        : theme.colors.onSurfaceVariant,
+                    }}>
+                      {filter.count}
+                    </Text>
+                  </View>
+                </View>
+              </AppleInteractive>
+            ))}
+          </View>
+        </View>
+      </View>
     );
   };
 
@@ -385,8 +504,14 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
         size="small"
       />
       <AppleButton
-        title="🔄 Refresh"
+        title="+ New Order"
         variant="primary"
+        size="medium"
+        onPress={handleNewOrder}
+      />
+      <AppleButton
+        title="Refresh"
+        variant="secondary"
         size="medium"
         onPress={handleRefresh}
       />
@@ -424,6 +549,17 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
           showsVerticalScrollIndicator={false}
         />
       </AppleDashboardPanel>
+
+      {/* Table Selection Modal for New Orders */}
+      <TableSelectionModal
+        visible={showTableModal}
+        onClose={() => setShowTableModal(false)}
+        onTableSelect={handleTableSelect}
+        tables={tableState.tables}
+        isLoading={tableState.isLoading}
+        title="Select Table"
+        subtitle="Choose a table to start a new order"
+      />
     </SafeAreaView>
   );
 };

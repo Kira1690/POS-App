@@ -16,7 +16,9 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useReceiptManagement } from '@/context/payment';
+import { useOrderManagement } from '@/context/orderManagement/OrderManagementContext';
 import { Order } from '@/types/order.types';
+import { PaymentStatus } from '@/types/common.types';
 import { ProfessionalPayment, ReceiptType } from '@/types/payment.types';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
@@ -40,17 +42,25 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   route,
 }) => {
   const { theme } = useTheme();
-  const { 
+  const {
     generateReceipt,
     printReceipt,
     emailReceipt,
     smsReceipt,
     receiptSettings,
   } = useReceiptManagement();
+  const { updateOrderPaymentStatus } = useOrderManagement();
 
   const { payment, order, orderId } = route.params;
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
   const [receiptId, setReceiptId] = useState<string | null>(null);
+
+  // Mark order as paid when payment confirmation screen loads
+  useEffect(() => {
+    if (orderId && payment?.id) {
+      updateOrderPaymentStatus(orderId, PaymentStatus.COMPLETED, payment.id);
+    }
+  }, [orderId, payment?.id, updateOrderPaymentStatus]);
 
   // Auto-generate receipt on screen load
   useEffect(() => {

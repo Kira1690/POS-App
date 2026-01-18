@@ -27,6 +27,7 @@ import {
   AddModifierGroupModal,
   EditModifierGroupModal,
   AddModifierOptionModal,
+  AssignModifiersModal,
   AddComboModal,
   EditComboModal,
 } from './modals';
@@ -68,6 +69,7 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
   const [showEditModifierGroup, setShowEditModifierGroup] = useState(false);
   const [showDeleteModifierGroup, setShowDeleteModifierGroup] = useState(false);
   const [showAddModifierOption, setShowAddModifierOption] = useState(false);
+  const [showAssignModifiers, setShowAssignModifiers] = useState(false);
 
   // Modal visibility states - Combos
   const [showAddCombo, setShowAddCombo] = useState(false);
@@ -84,6 +86,7 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
   const [selectedModifierGroup, setSelectedModifierGroup] = useState<ModifierGroup | null>(null);
   const [modifierGroupToEdit, setModifierGroupToEdit] = useState<ModifierGroup | null>(null);
   const [modifierGroupToDelete, setModifierGroupToDelete] = useState<ModifierGroup | null>(null);
+  const [itemToAssignModifiers, setItemToAssignModifiers] = useState<MenuItemExtended | null>(null);
 
   // Combo state
   const [selectedCombo, setSelectedCombo] = useState<ComboDeal | null>(null);
@@ -135,6 +138,11 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
   const handleDeleteItem = useCallback((item: MenuItemExtended) => {
     setItemToDelete(item);
     setShowDeleteItem(true);
+  }, []);
+
+  const handleAssignModifiers = useCallback((item: MenuItemExtended) => {
+    setItemToAssignModifiers(item);
+    setShowAssignModifiers(true);
   }, []);
 
   const handleItemPress = useCallback((item: MenuItemExtended) => {
@@ -259,6 +267,12 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
     await menuContext.addModifierOption(groupId, data);
   }, [menuContext]);
 
+  const handleSaveModifierAssignments = useCallback(async (menuItemId: string, modifierGroupIds: string[]) => {
+    await menuContext.assignModifiersToMenuItem(menuItemId, modifierGroupIds);
+    setShowAssignModifiers(false);
+    setItemToAssignModifiers(null);
+  }, [menuContext]);
+
   // Combo handlers
   const handleAddCombo = useCallback(() => setShowAddCombo(true), []);
 
@@ -378,6 +392,7 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
                 selectedItemIds={selectedItemIds} isMultiSelectMode={isMultiSelectMode}
                 onItemPress={handleItemPress} onItemLongPress={handleItemLongPress}
                 onEditItem={handleEditItem} onDeleteItem={handleDeleteItem}
+                onAssignModifiers={handleAssignModifiers}
                 onAddItem={handleAddItem} isLoading={isLoading}
                 emptyMessage={selectedCategoryId ? 'No items in this category' : 'No menu items found'}
               />
@@ -479,6 +494,12 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
         group={selectedModifierGroup}
         onClose={() => setShowAddModifierOption(false)}
         onSave={handleSaveModifierOption}
+      />
+      <AssignModifiersModal
+        visible={showAssignModifiers}
+        menuItem={itemToAssignModifiers}
+        onClose={() => { setShowAssignModifiers(false); setItemToAssignModifiers(null); }}
+        onSave={handleSaveModifierAssignments}
       />
 
       {/* Combo Modals */}

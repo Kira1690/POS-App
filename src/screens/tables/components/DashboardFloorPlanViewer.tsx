@@ -11,10 +11,11 @@
  * NO complex gesture logic, NO animated values
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { useFloorPlan } from '@/context/floorPlan';
+import { useTable } from '@/context/table';
 import FloorPlanTabs from '@/screens/settings/components/tableManagement/floorPlan/FloorPlanTabs';
 import { MOCK_TABLES } from '@/data/tables';
 import { TableStatus } from '@/types/settings/table-management.types';
@@ -52,6 +53,27 @@ const DashboardFloorPlanViewer: React.FC<DashboardFloorPlanViewerProps> = ({
   const { theme } = useTheme();
   const floorPlan = useFloorPlan();
 
+  // Use TableContext for synced table data (includes order-status sync)
+  const { state: tableState, refreshTables } = useTable();
+
+  // Convert Table[] from context to component format
+  const tables = useMemo(() => {
+    if (tableState.tables.length > 0) {
+      return tableState.tables.map(table => ({
+        id: table.id,
+        number: table.table_number,
+        capacity: table.capacity,
+        status: table.status as string, // Already synced with orders
+        area: table.location || '',
+        areaId: table.section || '',
+        positionX: 0, // Will be overridden by floor plan positions
+        positionY: 0,
+        shape: 'square' as const,
+      }));
+    }
+    return MOCK_TABLES;
+  }, [tableState.tables]);
+
   const {
     floors,
     activeFloorId,
@@ -61,17 +83,26 @@ const DashboardFloorPlanViewer: React.FC<DashboardFloorPlanViewerProps> = ({
     currentTablePositions,
   } = floorPlan;
 
-  // Build status map from mock data if not provided externally
+  // Refresh tables when component mounts to ensure synced data
+  useEffect(() => {
+    if (__DEV__) {
+      console.log(`[FloorPlanViewer] Using ${tables.length} tables from TableContext (synced with orders)`);
+    }
+    // Trigger refresh to ensure fresh data with order sync
+    refreshTables();
+  }, [refreshTables]);
+
+  // Build status map from loaded tables if not provided externally
   const tableStatusMapFinal = useMemo(() => {
     if (externalStatusMap) return externalStatusMap;
 
-    // Build from MOCK_TABLES status
+    // Build from loaded tables status (from AsyncStorage or MOCK)
     const statusMap: Record<string, TableStatus> = {};
-    MOCK_TABLES.forEach(table => {
+    tables.forEach(table => {
       statusMap[table.id] = mapStringToStatus(table.status);
     });
     return statusMap;
-  }, [externalStatusMap]);
+  }, [externalStatusMap, tables]);
 
   // Handle table selection
   const handleTableSelect = useCallback(
@@ -130,7 +161,7 @@ const DashboardFloorPlanViewer: React.FC<DashboardFloorPlanViewerProps> = ({
           floor={currentFloor}
           zones={currentZones}
           tablePositions={currentTablePositions}
-          tables={MOCK_TABLES}
+          tables={tables}
           selectedTableId={selectedTableId}
           tableStatusMap={tableStatusMapFinal}
           onTableSelect={handleTableSelect}

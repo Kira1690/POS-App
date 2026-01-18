@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Icon } from '@/components/common';
+import { clearAllOrderAndTicketData, verifyRemainingData } from '@/utils/clearOrderData';
 
 interface SecurityBackupSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -56,6 +57,38 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Restore', style: 'destructive' },
+      ]
+    );
+  };
+
+  const handleClearOrderData = () => {
+    Alert.alert(
+      '⚠️ Clear All Order Data',
+      'This will permanently delete:\n\n• All orders (active & history)\n• All kitchen tickets\n• All payment records\n• All receipts\n\nThis will KEEP:\n✅ Menu items\n✅ Tables & areas\n✅ Settings\n✅ User data\n\nAre you absolutely sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All Orders',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearAllOrderAndTicketData();
+              Alert.alert(
+                '✅ Success',
+                'All order and ticket data has been cleared!\n\nYour menu, tables, and settings are still intact.\n\nRestart the app to see changes.',
+                [{ text: 'OK' }]
+              );
+              // Optionally verify what's left
+              await verifyRemainingData();
+            } catch (error) {
+              Alert.alert(
+                '❌ Error',
+                'Failed to clear order data. Please try again.',
+                [{ text: 'OK' }]
+              );
+            }
+          },
+        },
       ]
     );
   };
@@ -201,6 +234,38 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
     },
     restoreButtonText: {
       color: theme.colors.onSurface, // Dark text on warning for WCAG AA compliance
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    dangerSection: {
+      backgroundColor: theme.colors.error + '10', // 10% opacity red background
+      borderRadius: 8,
+      padding: 20,
+      marginBottom: 20,
+      borderWidth: 2,
+      borderColor: theme.colors.error,
+    },
+    dangerTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.error,
+      marginBottom: 10,
+    },
+    dangerDesc: {
+      fontSize: 13,
+      color: theme.colors.onSurface,
+      marginBottom: 15,
+      lineHeight: 20,
+    },
+    clearButton: {
+      backgroundColor: theme.colors.error,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    clearButtonText: {
+      color: theme.colors.white,
       fontSize: 14,
       fontWeight: 'bold',
     },
@@ -384,6 +449,26 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
             <Icon name="restore" size={16} color={theme.colors.white} />
             <Text style={styles.restoreButtonText}>Restore Data</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* DANGER ZONE - Clear Order Data */}
+      <View style={styles.dangerSection}>
+        <Text style={styles.dangerTitle}>⚠️ DANGER ZONE</Text>
+        <Text style={styles.dangerDesc}>
+          Clear all order and ticket data to get a fresh start. This will delete all orders, kitchen tickets, and payments, but will keep your menu, tables, and settings intact.{'\n\n'}
+          <Text style={{ fontWeight: 'bold' }}>This action cannot be undone!</Text>
+        </Text>
+        <TouchableOpacity
+          style={styles.clearButton}
+          onPress={handleClearOrderData}
+          accessibilityRole="button"
+          accessibilityLabel="Clear all order data"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <Icon name="delete-forever" size={16} color={theme.colors.white} />
+            <Text style={styles.clearButtonText}>Clear All Order Data</Text>
           </View>
         </TouchableOpacity>
       </View>

@@ -25,8 +25,9 @@ import {
   KitchenStation,
   DEFAULT_STATION_CONFIGS,
 } from '@/types/kitchen-ticket.types';
-import { kitchenStorageService } from '@/services/storage';
+import { kitchenStorageService, orderStorageService } from '@/services/storage';
 import { ticketRoutingService } from '@/services/kitchen/TicketRoutingService';
+import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
 
 // ============== CONTEXT VALUE TYPE ==============
 
@@ -139,7 +140,7 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
     }
   }, []);
 
-  // Update ticket status
+  // Update ticket status with order sync
   const updateTicketStatus = useCallback(
     async (ticketId: string, status: TicketStatus) => {
       try {
@@ -164,6 +165,55 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
 
         await kitchenStorageService.updateTicket(ticketId, updates);
         dispatch({ type: 'UPDATE_TICKET_STATUS', payload: { ticketId, status } });
+
+        // ========== SYNC KITCHEN STATUS TO ORDER ==========
+        // Get all tickets for this order to determine overall order status
+        if (ticket.orderId) {
+          try {
+            const orderTickets = await kitchenStorageService.getTicketsByOrder(ticket.orderId);
+
+            // Update the current ticket status in the list
+            const updatedOrderTickets = orderTickets.map(t =>
+              t.id === ticketId ? { ...t, status } : t
+            );
+
+            // Calculate order status based on all tickets
+            const allServed = updatedOrderTickets.every(t => t.status === 'served');
+            const allReadyOrServed = updatedOrderTickets.every(
+              t => t.status === 'ready' || t.status === 'served'
+            );
+            const anyPreparing = updatedOrderTickets.some(t => t.status === 'preparing');
+            const allCancelled = updatedOrderTickets.every(t => t.status === 'cancelled');
+
+            let orderStatus: string;
+            if (allCancelled) {
+              orderStatus = 'cancelled';
+            } else if (allServed) {
+              orderStatus = 'completed';
+            } else if (allReadyOrServed) {
+              orderStatus = 'ready';
+            } else if (anyPreparing) {
+              orderStatus = 'preparing';
+            } else {
+              orderStatus = 'pending';
+            }
+
+            // Update order status in storage
+            await orderStorageService.updateOrder(ticket.orderId, { status: orderStatus });
+
+            // Emit event for real-time cross-context sync
+            orderEventEmitter.emit('ORDER_STATUS_CHANGED', ticket.orderId, {
+              status: orderStatus,
+            });
+
+            if (__DEV__) {
+              console.log(`[Kitchen→Order Sync] Order ${ticket.orderId} status updated to: ${orderStatus}`);
+            }
+          } catch (syncError) {
+            console.error('[EnhancedKitchenContext] Order sync error:', syncError);
+            // Don't fail the ticket update if order sync fails
+          }
+        }
       } catch (error) {
         console.error('[EnhancedKitchenContext] Update status error:', error);
         dispatch({ type: 'SET_ERROR', payload: String(error) });

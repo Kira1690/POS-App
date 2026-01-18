@@ -19,7 +19,7 @@ import {
   useAuthService 
 } from '@/hooks/services';
 import { OrderManagementProvider, useOrderManagement } from '@/context/orderManagement/OrderManagementContext';
-import { KitchenProvider, useKitchen } from '@/context/kitchen/KitchenContext';
+import { EnhancedKitchenProvider, useEnhancedKitchen } from '@/context/kitchen';
 import { CartProvider, useCart } from '@/context/cart/CartContext';
 import { OrderBusinessLogicProvider, useOrderBusinessLogic } from '@/context/orderBusinessLogic/OrderBusinessLogicContext';
 import { IOrderService } from '@/interfaces/services/order.interface';
@@ -166,20 +166,20 @@ describe('End-to-End Integration Tests', () => {
   describe('Complete Order Workflow', () => {
     const CompleteAppWrapper = ({ children }: { children: React.ReactNode }) => (
       <OrderManagementProvider>
-        <KitchenProvider>
+        <EnhancedKitchenProvider>
           <CartProvider>
             <OrderBusinessLogicProvider>
               {children}
             </OrderBusinessLogicProvider>
           </CartProvider>
-        </KitchenProvider>
+        </EnhancedKitchenProvider>
       </OrderManagementProvider>
     );
 
     test('should complete full order lifecycle through all contexts', async () => {
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useKitchen(),
+        kitchen: useEnhancedKitchen(),
         cart: useCart(),
         businessLogic: useOrderBusinessLogic(),
       }), { wrapper: CompleteAppWrapper });
@@ -260,7 +260,7 @@ describe('End-to-End Integration Tests', () => {
     test('should maintain data consistency across all contexts', async () => {
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useKitchen(),
+        kitchen: useEnhancedKitchen(),
       }), { wrapper: CompleteAppWrapper });
 
       // Load data in both contexts
@@ -283,7 +283,7 @@ describe('End-to-End Integration Tests', () => {
     test('should handle concurrent operations safely', async () => {
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useKitchen(),
+        kitchen: useEnhancedKitchen(),
       }), { wrapper: CompleteAppWrapper });
 
       // Perform multiple operations concurrently
@@ -330,9 +330,9 @@ describe('End-to-End Integration Tests', () => {
 
       const CompleteAppWrapper = ({ children }: { children: React.ReactNode }) => (
         <OrderManagementProvider>
-          <KitchenProvider>
+          <EnhancedKitchenProvider>
             {children}
-          </KitchenProvider>
+          </EnhancedKitchenProvider>
         </OrderManagementProvider>
       );
 
@@ -340,7 +340,7 @@ describe('End-to-End Integration Tests', () => {
       expect(() => {
         renderHook(() => ({
           orderManagement: useOrderManagement(),
-          kitchen: useKitchen(),
+          kitchen: useEnhancedKitchen(),
         }), { wrapper: CompleteAppWrapper });
       }).toThrow();
     });
@@ -350,13 +350,13 @@ describe('End-to-End Integration Tests', () => {
     test('should not create memory leaks with multiple context providers', () => {
       const CompleteAppWrapper = ({ children }: { children: React.ReactNode }) => (
         <OrderManagementProvider>
-          <KitchenProvider>
+          <EnhancedKitchenProvider>
             <CartProvider>
               <OrderBusinessLogicProvider>
                 {children}
               </OrderBusinessLogicProvider>
             </CartProvider>
-          </KitchenProvider>
+          </EnhancedKitchenProvider>
         </OrderManagementProvider>
       );
 
@@ -364,7 +364,7 @@ describe('End-to-End Integration Tests', () => {
       for (let i = 0; i < 10; i++) {
         const { unmount } = renderHook(() => ({
           orderManagement: useOrderManagement(),
-          kitchen: useKitchen(),
+          kitchen: useEnhancedKitchen(),
           cart: useCart(),
           businessLogic: useOrderBusinessLogic(),
         }), { wrapper: CompleteAppWrapper });
@@ -380,19 +380,19 @@ describe('End-to-End Integration Tests', () => {
     test('should maintain performance with multiple concurrent operations', async () => {
       const CompleteAppWrapper = ({ children }: { children: React.ReactNode }) => (
         <OrderManagementProvider>
-          <KitchenProvider>
+          <EnhancedKitchenProvider>
             <CartProvider>
               <OrderBusinessLogicProvider>
                 {children}
               </OrderBusinessLogicProvider>
             </CartProvider>
-          </KitchenProvider>
+          </EnhancedKitchenProvider>
         </OrderManagementProvider>
       );
 
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useKitchen(),
+        kitchen: useEnhancedKitchen(),
         cart: useCart(),
       }), { wrapper: CompleteAppWrapper });
 
@@ -440,19 +440,19 @@ describe('End-to-End Integration Tests', () => {
     test('should demonstrate Single Responsibility Principle compliance', () => {
       const CompleteAppWrapper = ({ children }: { children: React.ReactNode }) => (
         <OrderManagementProvider>
-          <KitchenProvider>
+          <EnhancedKitchenProvider>
             <CartProvider>
               <OrderBusinessLogicProvider>
                 {children}
               </OrderBusinessLogicProvider>
             </CartProvider>
-          </KitchenProvider>
+          </EnhancedKitchenProvider>
         </OrderManagementProvider>
       );
 
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useKitchen(),
+        kitchen: useEnhancedKitchen(),
         cart: useCart(),
         businessLogic: useOrderBusinessLogic(),
       }), { wrapper: CompleteAppWrapper });

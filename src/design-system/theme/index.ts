@@ -2,6 +2,7 @@ import { Dimensions } from 'react-native';
 import { lightTheme, darkTheme, type ColorTheme } from './colors';
 import { typography, getResponsiveTypography } from './typography';
 import { spacing, borderRadius, shadows, componentSpacing, getResponsiveSpacing, touchTargets } from './spacing';
+import { panelWidths, cardDimensions, gridConfig, iconSizes, dividers, elevations, opacities } from './layout';
 
 // Enhanced animation system for POS UI
 export const animations = {
@@ -204,6 +205,7 @@ export const glassStyles = {
 export * from './colors';
 export * from './typography';
 export * from './spacing';
+export * from './layout';
 
 // Default export
 export default themes.light; 

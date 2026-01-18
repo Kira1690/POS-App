@@ -69,13 +69,31 @@ export interface AssignedItem {
 
 // ============== GUEST SPLIT ==============
 
+/**
+ * Internal item structure for guest split tracking
+ */
+export interface GuestSplitItem {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  price: number;
+  guestIndex: number;
+}
+
 export interface GuestSplit {
   id: string;
   name: string;
   color?: string; // For visual identification
 
-  // Assigned items (for by_items split)
+  // Index-based identification (for reducer)
+  guestIndex?: number;
+  guestName?: string; // Alias for name
+
+  // Assigned items (for by_items split) - new format
   assignedItems: AssignedItem[];
+
+  // Legacy items format (for reducer compatibility)
+  items?: GuestSplitItem[];
 
   // Shared items portion
   sharedItemsAmount: number;
@@ -92,6 +110,9 @@ export interface GuestSplit {
   transactionId?: string;
   paidAt?: string;
   paidAmount?: number;
+
+  // Convenience flag for reducer
+  isPaid?: boolean;
 }
 
 // ============== PAYMENT METHOD SPLIT ==============

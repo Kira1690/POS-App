@@ -626,6 +626,82 @@ class PaymentStorageService {
       AsyncStorage.removeItem(STORAGE_KEYS.PAYMENT_LAST_SYNC),
     ]);
   }
+
+  // ============== PAYMENT CONFIGURATION ==============
+
+  /**
+   * Save payment configuration (tax rate, tip rates, etc.)
+   */
+  async savePaymentConfig(config: PaymentConfig): Promise<void> {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.PAYMENT_CONFIG, JSON.stringify(config));
+    } catch (error) {
+      console.error('[PaymentStorage] Error saving payment config:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get payment configuration
+   */
+  async getPaymentConfig(): Promise<PaymentConfig | null> {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.PAYMENT_CONFIG);
+      if (data) {
+        return JSON.parse(data);
+      }
+      return null;
+    } catch (error) {
+      console.error('[PaymentStorage] Error getting payment config:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update tax rate
+   */
+  async updateTaxRate(rate: number): Promise<void> {
+    try {
+      const config = await this.getPaymentConfig();
+      const updatedConfig: PaymentConfig = {
+        ...config,
+        taxRate: rate,
+        updatedAt: new Date().toISOString(),
+      };
+      await this.savePaymentConfig(updatedConfig);
+    } catch (error) {
+      console.error('[PaymentStorage] Error updating tax rate:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get tax rate from storage
+   */
+  async getTaxRate(): Promise<number | null> {
+    try {
+      const config = await this.getPaymentConfig();
+      return config?.taxRate ?? null;
+    } catch (error) {
+      console.error('[PaymentStorage] Error getting tax rate:', error);
+      return null;
+    }
+  }
+}
+
+// Payment configuration interface
+interface PaymentConfig {
+  taxRate?: number;
+  defaultTipRates?: number[];
+  minimumTipAmount?: number;
+  maximumCashPayment?: number;
+  receiptSettings?: {
+    printAutomatically?: boolean;
+    emailByDefault?: boolean;
+    thermalPrinterWidth?: number;
+    receiptTemplate?: string;
+  };
+  updatedAt?: string;
 }
 
 // Export singleton instance

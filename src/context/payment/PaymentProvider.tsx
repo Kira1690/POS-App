@@ -3,11 +3,12 @@
  * Professional payment state management provider with comprehensive payment processing
  */
 
-import React, { useReducer, useCallback, ReactNode } from 'react';
+import React, { useReducer, useCallback, useEffect, ReactNode } from 'react';
 import { PaymentContext, PaymentContextInterface } from './PaymentContext';
 import { paymentReducer, initialPaymentState } from './PaymentReducer';
 import { PaymentActions } from './PaymentActions';
 import { paymentService } from '@/services/payment';
+import { paymentStorageService } from '@/services/storage/PaymentStorageService';
 import {
   ProfessionalPayment,
   PaymentProcessingStatus,
@@ -28,6 +29,37 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
   const [state, dispatch] = useReducer(paymentReducer, initialPaymentState);
   // Use direct service instance to avoid DI registration issues
   const paymentServiceInstance = paymentService;
+
+  // Load tax rate from storage on mount
+  useEffect(() => {
+    const loadPaymentConfig = async () => {
+      try {
+        const config = await paymentStorageService.getPaymentConfig();
+        if (config) {
+          // Load tax rate
+          if (config.taxRate !== undefined) {
+            dispatch(PaymentActions.setTaxRate(config.taxRate));
+          }
+          // Load tip rates
+          if (config.defaultTipRates) {
+            dispatch(PaymentActions.setTipRates(config.defaultTipRates));
+          }
+          // Load receipt settings
+          if (config.receiptSettings) {
+            dispatch(PaymentActions.updateReceiptSettings(config.receiptSettings));
+          }
+
+          if (__DEV__) {
+            console.log('[PaymentProvider] Loaded payment config from storage:', config);
+          }
+        }
+      } catch (error) {
+        console.error('[PaymentProvider] Failed to load payment config:', error);
+      }
+    };
+
+    loadPaymentConfig();
+  }, []);
 
   // Payment Processing Methods
   const processCardPayment = useCallback(async (request: ProcessPaymentRequest): Promise<ProfessionalPayment> => {
@@ -365,8 +397,17 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
   }, []);
 
   // Configuration Actions
-  const updateTaxRate = useCallback((rate: number) => {
+  const updateTaxRate = useCallback(async (rate: number) => {
     dispatch(PaymentActions.setTaxRate(rate));
+    // Persist to storage
+    try {
+      await paymentStorageService.updateTaxRate(rate);
+      if (__DEV__) {
+        console.log('[PaymentProvider] Tax rate saved to storage:', rate);
+      }
+    } catch (error) {
+      console.error('[PaymentProvider] Failed to save tax rate:', error);
+    }
   }, []);
 
   const updateTipRates = useCallback((rates: number[]) => {

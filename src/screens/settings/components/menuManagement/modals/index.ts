@@ -29,6 +29,8 @@ export type { ModifierGroupUpdateData } from './EditModifierGroupModal';
 export { AddModifierOptionModal } from './AddModifierOptionModal';
 export type { ModifierOptionFormData } from './AddModifierOptionModal';
 
+export { AssignModifiersModal } from './AssignModifiersModal';
+
 // Combo modals
 export { AddComboModal } from './AddComboModal';
 export type { ComboFormData } from './AddComboModal';

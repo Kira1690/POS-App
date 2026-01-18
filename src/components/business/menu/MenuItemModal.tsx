@@ -21,6 +21,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { MenuItem } from '@/types/menu.types';
+import { formatPrice } from '@/utils/currency';
 
 interface MenuItemModalProps {
   menuItem: MenuItem;
@@ -125,7 +126,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
                   { color: theme.colors.primary }
                 ]}
               >
-                ₹{menuItem.price.toFixed(2)}
+                {formatPrice(menuItem.price)}
               </Text>
               
               {menuItem.preparation_time_minutes && (
@@ -314,7 +315,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
                 { color: theme.colors.onPrimaryContainer }
               ]}
             >
-              Total ({quantity} × ₹{menuItem.price.toFixed(2)}):
+              Total ({quantity} × {formatPrice(menuItem.price)}):
             </Text>
             <Text 
               variant="headlineMedium"
@@ -323,7 +324,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
                 { color: theme.colors.onPrimaryContainer }
               ]}
             >
-              ₹{totalPrice.toFixed(2)}
+              {formatPrice(totalPrice)}
             </Text>
           </View>
         </Surface>

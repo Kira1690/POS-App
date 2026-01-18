@@ -43,12 +43,20 @@ export const ProfessionalTheme = {
     // Apple-inspired status colors
     success: '#34C759',       // Apple's green (more vibrant than previous)
     successLight: '#D1F2DF',  // Light green background
+    successContainer: '#E8F5E9', // Container background for success states
+    onSuccessContainer: '#1B5E20', // Text on success container
     warning: '#FF9500',       // Apple's orange (warmer than previous)
     warningLight: '#FFF4E6',  // Light orange background
+    warningContainer: '#FEF7E0', // Container background for warning states
+    onWarningContainer: '#7A5700', // Text on warning container
     error: '#FF3B30',         // Apple's red (more vibrant)
     errorLight: '#FFEBEE',    // Light red background
+    errorContainer: '#FFEBEE', // Container background for error states
+    onErrorContainer: '#B71C1C', // Text on error container
     info: '#007AFF',          // Apple's signature blue
     infoLight: '#E3F2FD',     // Light blue background
+    infoContainer: '#E3F2FD', // Container background for info states
+    onInfoContainer: '#0D47A1', // Text on info container
 
     // Apple-style UI elements
     border: '#A8A8B0',        // Apple's standard border color (4.8:1 contrast - WCAG compliant)
@@ -78,6 +86,26 @@ export const ProfessionalTheme = {
       cyan: '#32D74B',        // Apple cyan (from battery reference)
       purple: '#AF52DE',      // Apple purple (from focus reference)
       gradient: ['#1C1C1E', '#2C2C2E', '#48484A'], // Apple dark gradients
+    },
+
+    // Order status colors (professional, readable in light theme)
+    status: {
+      pending: { bg: '#FFF8E1', text: '#E65100', border: '#FFB74D' },
+      confirmed: { bg: '#E8F5E9', text: '#2E7D32', border: '#81C784' },
+      preparing: { bg: '#E3F2FD', text: '#1565C0', border: '#64B5F6' },
+      ready: { bg: '#F3E5F5', text: '#7B1FA2', border: '#BA68C8' },
+      served: { bg: '#E0F7FA', text: '#00838F', border: '#4DD0E1' },
+      cancelled: { bg: '#FFEBEE', text: '#C62828', border: '#EF9A9A' },
+      paid: { bg: '#E8F5E9', text: '#1B5E20', border: '#66BB6A' },
+      completed: { bg: '#E8F5E9', text: '#1B5E20', border: '#66BB6A' },
+    },
+
+    // Priority colors for order urgency
+    priority: {
+      urgent: '#D32F2F',
+      high: '#F57C00',
+      normal: '#1976D2',
+      low: '#388E3C',
     },
   },
   
@@ -172,33 +200,39 @@ export const ProfessionalTheme = {
     },
     h4: {
       fontSize: 18,
-      fontWeight: '500',
+      fontWeight: '500' as const,
       lineHeight: 26,
       letterSpacing: 0,
     },
     body1: {
       fontSize: 16,
-      fontWeight: '400',
+      fontWeight: '400' as const,
       lineHeight: 24,
       letterSpacing: 0,
     },
     body2: {
       fontSize: 14,
-      fontWeight: '400',
+      fontWeight: '400' as const,
       lineHeight: 20,
       letterSpacing: 0,
     },
     caption: {
       fontSize: 12,
-      fontWeight: '400',
+      fontWeight: '400' as const,
       lineHeight: 18,
       letterSpacing: 0.1,
     },
     label: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: '500' as const,
       lineHeight: 20,
       letterSpacing: 0,
+    },
+    button: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+      lineHeight: 22,
+      letterSpacing: 0.1,
     },
   },
   
@@ -537,6 +571,26 @@ export const DarkTheme = {
       cyan: '#40CBE0',          // Apple cyan
       purple: '#BF5AF2',        // Apple purple
       gradient: ['#FFFFFF', '#EBEBF5', '#8E8E93'], // Light to dark gradients
+    },
+
+    // Order status colors (softer, muted for dark theme readability)
+    status: {
+      pending: { bg: '#3D2814', text: '#FFCC80', border: '#8D6E63' },
+      confirmed: { bg: '#1A3A1A', text: '#81C784', border: '#4CAF50' },
+      preparing: { bg: '#1A2A3D', text: '#90CAF9', border: '#42A5F5' },
+      ready: { bg: '#2A1A3D', text: '#CE93D8', border: '#AB47BC' },
+      served: { bg: '#1A3A3D', text: '#80CBC4', border: '#26A69A' },
+      cancelled: { bg: '#3D1A1A', text: '#EF9A9A', border: '#E57373' },
+      paid: { bg: '#1A3A1A', text: '#A5D6A7', border: '#66BB6A' },
+      completed: { bg: '#1A3A1A', text: '#A5D6A7', border: '#66BB6A' },
+    },
+
+    // Priority colors for dark theme (vibrant but not harsh)
+    priority: {
+      urgent: '#EF5350',
+      high: '#FFB74D',
+      normal: '#64B5F6',
+      low: '#81C784',
     },
   },
 

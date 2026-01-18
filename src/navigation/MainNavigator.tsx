@@ -6,7 +6,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import {
   MainTabParamList,
-  TablesStackParamList,
   OrdersStackParamList,
   KitchenStackParamList
 } from './types';
@@ -14,7 +13,6 @@ import {
 import { DashboardNavigator } from './DashboardNavigator';
 import { DashboardProvider } from '@/context/dashboard/DashboardContext';
 import { FloorPlanProvider } from '@/context/floorPlan';
-import TableManagementScreen from '@/screens/tables/TableManagementScreen';
 // Direct imports for order screens
 import POSOrderScreen from '@/screens/orders/POSOrderScreen';
 import OrderManagementScreen from '@/screens/orders/OrderManagementScreen';
@@ -27,6 +25,9 @@ import PaymentProcessingScreen from '@/screens/payment/PaymentProcessingScreen';
 import PaymentConfirmationScreen from '@/screens/payment/PaymentConfirmationScreen';
 // Billing screens
 import BillScreen from '@/screens/billing/BillScreen';
+import BillSplitScreen from '@/screens/billing/BillSplitScreen';
+// Receipt screens
+import { ReceiptPreviewScreen } from '@/screens/receipt';
 // Import actual Settings screen
 import SettingsScreen from '@/screens/settings/SettingsScreen';
 import { TableProvider } from '@/context/table';
@@ -37,76 +38,65 @@ import { BillSplitProvider } from '@/context/billing';
 import { EnhancedKitchenProvider } from '@/context/kitchen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const TablesStack = createStackNavigator<TablesStackParamList>();
 const OrdersStack = createStackNavigator<OrdersStackParamList>();
 const KitchenStack = createStackNavigator<KitchenStackParamList>();
 
-// Tables Stack Navigator - includes TableManagement and POSOrder
-const TablesStackNavigator = () => (
-  <TableProvider>
-    <OrderProvider>
-      <TablesStack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <TablesStack.Screen 
-          name="TableManagement" 
-          component={TableManagementScreen} 
-        />
-        <TablesStack.Screen 
-          name="POSOrder" 
-          component={POSOrderScreen}
-        />
-      </TablesStack.Navigator>
-    </OrderProvider>
-  </TableProvider>
-);
-
 // Orders Stack Navigator - Professional order management
 const OrdersStackNavigator = () => (
-  <PaymentProvider>
-    <EnhancedOrderProvider>
-      <BillSplitProvider>
-        <OrderManagementProvider>
-          <OrdersStack.Navigator
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <OrdersStack.Screen
-              name="OrderManagement"
-              component={OrderManagementScreen}
-            />
-            <OrdersStack.Screen
-              name="OrderDetails"
-              component={OrderDetailsScreen}
-            />
-            <OrdersStack.Screen
-              name="POSOrder"
-              component={POSOrderScreen}
-            />
-            <OrdersStack.Screen
-              name="Ordering"
-              component={OrderingScreen}
-            />
-            <OrdersStack.Screen
-              name="Bill"
-              component={BillScreen}
-            />
-            <OrdersStack.Screen
-              name="PaymentProcessing"
-              component={PaymentProcessingScreen}
-            />
-            <OrdersStack.Screen
-              name="PaymentConfirmation"
-              component={PaymentConfirmationScreen}
-            />
-          </OrdersStack.Navigator>
-        </OrderManagementProvider>
-      </BillSplitProvider>
-    </EnhancedOrderProvider>
+  <TableProvider>
+    <PaymentProvider>
+      <OrderProvider>
+        <EnhancedOrderProvider>
+          <BillSplitProvider>
+            <OrderManagementProvider>
+              <OrdersStack.Navigator
+                screenOptions={{
+                  headerShown: false,
+                }}
+              >
+              <OrdersStack.Screen
+                name="OrderManagement"
+                component={OrderManagementScreen}
+              />
+              <OrdersStack.Screen
+                name="OrderDetails"
+                component={OrderDetailsScreen}
+              />
+              <OrdersStack.Screen
+                name="POSOrder"
+                component={POSOrderScreen}
+              />
+              <OrdersStack.Screen
+                name="Ordering"
+                component={OrderingScreen}
+              />
+              <OrdersStack.Screen
+                name="Bill"
+                component={BillScreen}
+              />
+              <OrdersStack.Screen
+                name="BillSplit"
+                component={BillSplitScreen}
+              />
+              <OrdersStack.Screen
+                name="PaymentProcessing"
+                component={PaymentProcessingScreen}
+              />
+              <OrdersStack.Screen
+                name="PaymentConfirmation"
+                component={PaymentConfirmationScreen}
+              />
+              <OrdersStack.Screen
+                name="Receipt"
+                component={ReceiptPreviewScreen}
+              />
+            </OrdersStack.Navigator>
+          </OrderManagementProvider>
+        </BillSplitProvider>
+      </EnhancedOrderProvider>
+    </OrderProvider>
   </PaymentProvider>
+  </TableProvider>
 );
 
 // Kitchen Stack Navigator - Kitchen operations
@@ -180,9 +170,6 @@ export const MainNavigator: React.FC = () => {
             case 'Orders':
               iconName = 'receipt';
               break;
-            case 'Tables':
-              iconName = 'table-restaurant';
-              break;
             case 'Kitchen':
               iconName = 'restaurant';
               break;
@@ -212,17 +199,12 @@ export const MainNavigator: React.FC = () => {
         component={DashboardWithProvider}
         options={{ title: 'Dashboard', headerShown: false }}
       />
-      <Tab.Screen 
-        name="Orders" 
+      <Tab.Screen
+        name="Orders"
         component={OrdersStackNavigator}
         options={{ title: 'Order Management', headerShown: false }}
       />
-      <Tab.Screen 
-        name="Tables" 
-        component={TablesStackNavigator}
-        options={{ title: 'Table Management', headerShown: false }}
-      />
-      <Tab.Screen 
+      <Tab.Screen
         name="Kitchen" 
         component={KitchenStackNavigator}
         options={{ title: 'Kitchen Operations', headerShown: false }}
