@@ -364,6 +364,7 @@ class MenuStorageService {
   /**
    * Assign modifier groups to a menu item
    * Replaces existing assignments with new ones
+   * Also populates modifier_groups for consistency
    */
   async assignModifiersToMenuItem(
     menuItemId: string,
@@ -385,10 +386,17 @@ class MenuStorageService {
       created_at: new Date().toISOString(),
     }));
 
-    // Update the menu item
+    // Get modifier groups to populate modifier_groups array
+    const allModifierGroups = await this.getModifierGroups();
+    const assignedModifierGroups = modifierGroupIds
+      .map((groupId) => allModifierGroups.find((g) => g.id === groupId))
+      .filter((g): g is ModifierGroup => g !== undefined);
+
+    // Update the menu item with both assignments and populated modifier_groups
     items[itemIndex] = {
       ...items[itemIndex],
       modifier_assignments: newAssignments,
+      modifier_groups: assignedModifierGroups,
     };
 
     await this.saveMenuItems(items);
@@ -397,6 +405,7 @@ class MenuStorageService {
   /**
    * Add a modifier group to a menu item
    * Appends to existing assignments
+   * Also updates modifier_groups for consistency
    */
   async addModifierToMenuItem(
     menuItemId: string,
@@ -430,10 +439,19 @@ class MenuStorageService {
       created_at: new Date().toISOString(),
     };
 
-    // Update the menu item
+    const updatedAssignments = [...existingAssignments, newAssignment];
+
+    // Get modifier groups to populate modifier_groups array
+    const allModifierGroups = await this.getModifierGroups();
+    const assignedModifierGroups = updatedAssignments
+      .map((a) => allModifierGroups.find((g) => g.id === a.modifier_group_id))
+      .filter((g): g is ModifierGroup => g !== undefined);
+
+    // Update the menu item with both assignments and populated modifier_groups
     items[itemIndex] = {
       ...items[itemIndex],
-      modifier_assignments: [...existingAssignments, newAssignment],
+      modifier_assignments: updatedAssignments,
+      modifier_groups: assignedModifierGroups,
     };
 
     await this.saveMenuItems(items);
@@ -441,6 +459,7 @@ class MenuStorageService {
 
   /**
    * Remove a modifier group from a menu item
+   * Also updates modifier_groups for consistency
    */
   async removeModifierFromMenuItem(
     menuItemId: string,
@@ -467,10 +486,17 @@ class MenuStorageService {
       sort_order: index,
     }));
 
-    // Update the menu item
+    // Get modifier groups to populate modifier_groups array
+    const allModifierGroups = await this.getModifierGroups();
+    const assignedModifierGroups = reorderedAssignments
+      .map((a) => allModifierGroups.find((g) => g.id === a.modifier_group_id))
+      .filter((g): g is ModifierGroup => g !== undefined);
+
+    // Update the menu item with both assignments and populated modifier_groups
     items[itemIndex] = {
       ...items[itemIndex],
       modifier_assignments: reorderedAssignments,
+      modifier_groups: assignedModifierGroups,
     };
 
     await this.saveMenuItems(items);
@@ -478,6 +504,7 @@ class MenuStorageService {
 
   /**
    * Clear all modifier assignments from a menu item
+   * Also clears modifier_groups for consistency
    */
   async clearModifierAssignments(menuItemId: string): Promise<void> {
     const items = await this.getMenuItems();
@@ -487,10 +514,11 @@ class MenuStorageService {
       throw new Error(`Menu item with ID ${menuItemId} not found`);
     }
 
-    // Update the menu item
+    // Update the menu item - clear both assignments and groups
     items[itemIndex] = {
       ...items[itemIndex],
       modifier_assignments: [],
+      modifier_groups: [],
     };
 
     await this.saveMenuItems(items);

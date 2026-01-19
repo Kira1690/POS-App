@@ -2,15 +2,16 @@
  * Table Storage Service
  * Handles persistence of table management data
  *
- * Current: Uses AsyncStorage for local persistence
- * Future: Can integrate with Table Management API
+ * SINGLE SOURCE OF TRUTH: AsyncStorage ONLY
+ * Tables are created via Settings > Table Management
+ * Table STATUS is computed at runtime from orders (not stored here)
+ *
+ * NO MOCK DATA - Production ready
  */
 
 import { Table } from '@/types/table.types';
 import { TableStatus } from '@/types/common.types';
 import { storageService, STORAGE_KEYS } from './StorageService';
-import { MOCK_TABLES, MockTable } from '@/data/tables/mockTables';
-import { MOCK_AREAS, MockArea } from '@/data/tables/mockAreas';
 
 // Area interface for storage (matches MockArea structure)
 export interface StoredArea {
@@ -45,77 +46,14 @@ export interface FloorPlanData {
 
 /**
  * TableStorageService - Manages table data persistence
- * Designed to work with both local storage and future API integration
+ *
+ * SINGLE SOURCE OF TRUTH: AsyncStorage ONLY
+ * - Tables are created via Settings > Table Management
+ * - NO mock data seeding
+ * - Table status is computed at runtime from orders
  */
 class TableStorageService {
   private readonly DEFAULT_RESTAURANT_ID = 'rest_001';
-
-  /**
-   * Convert MockTable to Table interface
-   */
-  private normalizeTable(mock: MockTable, restaurantId: string): Table {
-    return {
-      id: mock.id,
-      restaurant_id: restaurantId,
-      table_number: mock.number,
-      capacity: mock.capacity,
-      status: mock.status as TableStatus,
-      location: mock.area,
-      section: mock.areaId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      is_active: true,
-      is_deleted: false,
-    };
-  }
-
-  /**
-   * Convert MockArea to StoredArea
-   */
-  private normalizeArea(mock: MockArea): StoredArea {
-    return {
-      id: mock.id,
-      name: mock.name,
-      icon: mock.icon,
-      description: mock.description,
-      isActive: mock.isActive,
-      color: mock.color,
-    };
-  }
-
-  /**
-   * Seed storage with mock data (called only if storage is empty)
-   */
-  async seedFromMockData(restaurantId: string = this.DEFAULT_RESTAURANT_ID): Promise<void> {
-    const tables = MOCK_TABLES.map(mock => this.normalizeTable(mock, restaurantId));
-    const areas = MOCK_AREAS.map(mock => this.normalizeArea(mock));
-
-    // Also extract floor plan positions
-    const positions: FloorPlanPosition[] = MOCK_TABLES
-      .filter(mock => mock.positionX !== undefined && mock.positionY !== undefined)
-      .map(mock => ({
-        tableId: mock.id,
-        positionX: mock.positionX!,
-        positionY: mock.positionY!,
-        shape: mock.shape || 'square',
-      }));
-
-    await this.saveTableData({
-      tables,
-      areas,
-      lastUpdated: new Date().toISOString(),
-      restaurantId,
-    });
-
-    await this.saveFloorPlan({
-      positions,
-      lastUpdated: new Date().toISOString(),
-    });
-
-    if (__DEV__) {
-      console.log(`[TableStorageService] Seeded ${tables.length} tables and ${areas.length} areas from mock data`);
-    }
-  }
 
   /**
    * Save all table data
@@ -404,59 +342,67 @@ class TableStorageService {
   }
 
   /**
-   * Initialize storage - seeds from mock data if empty
+   * Initialize storage - returns existing data or empty state
+   * NO mock data seeding - tables created via Settings > Table Management
    */
   async initialize(restaurantId: string = this.DEFAULT_RESTAURANT_ID): Promise<TableStorageData> {
-    const hasData = await this.hasTableData();
-
     if (__DEV__) {
-      console.log('[TableStorageService] Initializing... hasData:', hasData);
+      console.log('[TableStorageService] Initializing...');
     }
 
-    if (!hasData) {
+    const data = await this.getTableData(restaurantId);
+
+    if (data && data.tables.length > 0) {
       if (__DEV__) {
-        console.log('[TableStorageService] No data found, seeding from mock data...');
+        console.log(`[TableStorageService] Loaded ${data.tables.length} tables, ${data.areas.length} areas`);
       }
-      await this.seedFromMockData(restaurantId);
+      return data;
     }
 
-    let data = await this.getTableData(restaurantId);
-
-    // If still no data after seeding, force reseed
-    if (!data || data.tables.length === 0) {
-      if (__DEV__) {
-        console.log('[TableStorageService] Data missing after init, force reseeding...');
-      }
-      await this.clearTableData();
-      await this.seedFromMockData(restaurantId);
-      data = await this.getTableData(restaurantId);
-    }
-
-    if (!data) {
-      throw new Error('Failed to initialize table storage');
-    }
-
+    // Return empty state - user creates tables via Settings
     if (__DEV__) {
-      console.log(`[TableStorageService] Initialized with ${data.tables.length} tables, ${data.areas.length} areas`);
+      console.log('[TableStorageService] No tables found. Create tables in Settings > Table Management');
     }
 
-    return data;
+    return {
+      tables: [],
+      areas: [],
+      lastUpdated: new Date().toISOString(),
+      restaurantId,
+    };
   }
 
   /**
-   * Force reseed - clears storage and reseeds from mock data
+   * Reset all table statuses to AVAILABLE
+   * Used when clearing order data to ensure tables are not stuck as OCCUPIED
+   */
+  async resetAllTableStatuses(): Promise<void> {
+    const tables = await this.getTables();
+    if (tables.length === 0) return;
+
+    const resetTables = tables.map(table => ({
+      ...table,
+      status: TableStatus.AVAILABLE,
+      current_order_id: undefined,
+      updated_at: new Date().toISOString(),
+    }));
+
+    await this.saveTables(resetTables);
+
+    if (__DEV__) {
+      console.log(`[TableStorageService] Reset ${resetTables.length} tables to AVAILABLE`);
+    }
+  }
+
+  /**
+   * Force reseed - DEPRECATED (no mock data)
+   * Now just clears data and returns empty state
    */
   async forceReseed(restaurantId: string = this.DEFAULT_RESTAURANT_ID): Promise<TableStorageData> {
     if (__DEV__) {
-      console.log('[TableStorageService] Force reseeding...');
+      console.log('[TableStorageService] forceReseed called - returning current data (no mock seeding)');
     }
-    await this.clearTableData();
-    await this.seedFromMockData(restaurantId);
-    const data = await this.getTableData(restaurantId);
-    if (!data) {
-      throw new Error('Failed to reseed table storage');
-    }
-    return data;
+    return this.initialize(restaurantId);
   }
 }
 

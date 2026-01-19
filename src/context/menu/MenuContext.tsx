@@ -410,22 +410,74 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
             storedData.menuItems
           );
 
+          // ALWAYS populate modifier_groups from current modifierGroups data
+          // This ensures we get the latest options (not stale stored versions)
+          const menuItemsWithModifiers = storedData.menuItems.map(item => {
+            // Get modifier group IDs from either modifier_assignments or existing modifier_groups
+            let modifierGroupIds: string[] = [];
+
+            if (item.modifier_assignments && item.modifier_assignments.length > 0) {
+              // Prefer modifier_assignments as the source of truth
+              modifierGroupIds = item.modifier_assignments.map(a => a.modifier_group_id);
+            } else if (item.modifier_groups && item.modifier_groups.length > 0) {
+              // Fallback to existing modifier_groups IDs
+              modifierGroupIds = item.modifier_groups.map(g => g.id);
+            }
+
+            // Always look up fresh modifier groups with current options
+            const itemModifiers = modifierGroupIds
+              .map(groupId => storedData.modifierGroups.find(g => g.id === groupId))
+              .filter((g): g is ModifierGroup => g !== undefined);
+
+            return {
+              ...item,
+              modifier_groups: itemModifiers,
+            };
+          });
+
           dispatch({
             type: 'SET_EXTENDED_DATA',
             payload: {
               categoriesWithStats: categoriesWithCorrectStats,
-              menuItemsExtended: storedData.menuItems,
+              menuItemsExtended: menuItemsWithModifiers,
               modifierGroups: storedData.modifierGroups,
               combos: storedData.combos,
             },
           });
 
+          // Debug: Log modifier groups with their options count
+          const modifierGroupsWithOptions = storedData.modifierGroups.filter(g => g.options && g.options.length > 0);
+          const itemsWithModifiersAndOptions = menuItemsWithModifiers.filter(item =>
+            item.modifier_groups?.some(g => g.options && g.options.length > 0)
+          );
+
           console.log('[Menu] Loaded from storage:', {
             categories: categoriesWithCorrectStats.length,
-            items: storedData.menuItems.length,
-            modifiers: storedData.modifierGroups.length,
+            items: menuItemsWithModifiers.length,
+            modifierGroups: storedData.modifierGroups.length,
+            modifierGroupsWithOptions: modifierGroupsWithOptions.length,
             combos: storedData.combos.length,
+            itemsWithModifierGroups: menuItemsWithModifiers.filter(i => i.modifier_groups?.length > 0).length,
+            itemsWithModifiersAndOptions: itemsWithModifiersAndOptions.length,
           });
+
+          // Debug: Log each modifier group with its options
+          if (__DEV__) {
+            storedData.modifierGroups.forEach(g => {
+              console.log(`[Menu] Modifier Group: "${g.name}" (${g.id}) - ${g.options?.length || 0} options`);
+              g.options?.forEach(opt => console.log(`  - Option: "${opt.name}" (+$${opt.price_adjustment})`));
+            });
+
+            // Log items with modifiers
+            menuItemsWithModifiers
+              .filter(item => item.modifier_groups?.length > 0)
+              .forEach(item => {
+                console.log(`[Menu] Item "${item.name}" has ${item.modifier_groups?.length || 0} modifier groups:`);
+                item.modifier_groups?.forEach(g => {
+                  console.log(`  - "${g.name}": ${g.options?.length || 0} options`);
+                });
+              });
+          }
 
           emitEvent('MENU_REFRESHED', {});
           return;
@@ -538,6 +590,80 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
 
     return () => clearTimeout(timeoutId);
   }, [state.categoriesWithStats, state.menuItemsExtended, state.modifierGroups, state.combos, persistToStorage]);
+
+  // ============== SYNC MODIFIER GROUPS TO MENU ITEMS ==============
+  // When modifierGroups changes (options added/removed), re-populate modifier_groups on menu items
+  // This ensures menu items always have the latest modifier groups with current options
+  const lastModifierGroupsRef = React.useRef<string>('');
+
+  useEffect(() => {
+    // Create a signature of current modifier groups (id + options count)
+    const currentSignature = state.modifierGroups
+      .map(g => `${g.id}:${g.options?.length || 0}`)
+      .join(',');
+
+    // Skip if nothing changed
+    if (currentSignature === lastModifierGroupsRef.current) {
+      return;
+    }
+    lastModifierGroupsRef.current = currentSignature;
+
+    if (state.modifierGroups.length === 0 || state.menuItemsExtended.length === 0) {
+      return;
+    }
+
+    // Re-populate modifier_groups from current modifierGroups
+    const updatedMenuItems = state.menuItemsExtended.map(item => {
+      // Get modifier group IDs from assignments or existing groups
+      let modifierGroupIds: string[] = [];
+      if (item.modifier_assignments && item.modifier_assignments.length > 0) {
+        modifierGroupIds = item.modifier_assignments.map(a => a.modifier_group_id);
+      } else if (item.modifier_groups && item.modifier_groups.length > 0) {
+        modifierGroupIds = item.modifier_groups.map(g => g.id);
+      }
+
+      if (modifierGroupIds.length === 0) {
+        return item;
+      }
+
+      // Look up fresh modifier groups with current options
+      const freshModifierGroups = modifierGroupIds
+        .map(groupId => state.modifierGroups.find(g => g.id === groupId))
+        .filter((g): g is ModifierGroup => g !== undefined);
+
+      return {
+        ...item,
+        modifier_groups: freshModifierGroups,
+      };
+    });
+
+    // Only dispatch if there are actual changes
+    const hasChanges = updatedMenuItems.some((item, index) => {
+      const original = state.menuItemsExtended[index];
+      const originalOptionsCount = original.modifier_groups?.reduce((sum, g) => sum + (g.options?.length || 0), 0) || 0;
+      const updatedOptionsCount = item.modifier_groups?.reduce((sum, g) => sum + (g.options?.length || 0), 0) || 0;
+      return originalOptionsCount !== updatedOptionsCount;
+    });
+
+    if (hasChanges) {
+      dispatch({
+        type: 'SET_EXTENDED_DATA',
+        payload: {
+          categoriesWithStats: state.categoriesWithStats,
+          menuItemsExtended: updatedMenuItems,
+          modifierGroups: state.modifierGroups,
+          combos: state.combos,
+        },
+      });
+
+      if (__DEV__) {
+        const itemsWithOptions = updatedMenuItems.filter(item =>
+          item.modifier_groups?.some(g => g.options && g.options.length > 0)
+        );
+        console.log(`[MenuContext] Synced modifier_groups on menu items. Items with options: ${itemsWithOptions.length}`);
+      }
+    }
+  }, [state.modifierGroups, state.menuItemsExtended, state.categoriesWithStats, state.combos]);
 
   // ============== GETTERS ==============
 
@@ -814,9 +940,18 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       };
       dispatch({ type: 'ADD_MODIFIER_GROUP', payload: newGroup });
       emitEvent('MODIFIER_GROUP_CREATED', { modifierGroupId: newGroup.id, newValue: newGroup });
+
+      // CRITICAL: Force immediate persistence to storage
+      const updatedModifierGroups = [...state.modifierGroups, newGroup];
+      await menuStorageService.saveModifierGroups(updatedModifierGroups);
+
+      if (__DEV__) {
+        console.log(`[MenuContext] Created modifier group "${newGroup.name}", saved to storage`);
+      }
+
       return newGroup;
     },
-    [state.modifierGroups.length, emitEvent]
+    [state.modifierGroups, emitEvent]
   );
 
   const updateModifierGroup = useCallback(
@@ -825,6 +960,16 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       const updated = { ...previousGroup, ...data, updated_at: new Date().toISOString() };
       dispatch({ type: 'UPDATE_MODIFIER_GROUP', payload: { id, data: updated } });
       emitEvent('MODIFIER_GROUP_UPDATED', { modifierGroupId: id, previousValue: previousGroup, newValue: updated });
+
+      // CRITICAL: Force immediate persistence to storage
+      const updatedModifierGroups = state.modifierGroups.map(g =>
+        g.id === id ? (updated as ModifierGroup) : g
+      );
+      await menuStorageService.saveModifierGroups(updatedModifierGroups);
+
+      if (__DEV__) {
+        console.log(`[MenuContext] Updated modifier group "${updated.name}", saved to storage`);
+      }
       return updated as ModifierGroup;
     },
     [state.modifierGroups, emitEvent]
@@ -854,6 +999,17 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
         const updatedGroup = { ...group, options: [...group.options, newOption] };
         dispatch({ type: 'UPDATE_MODIFIER_GROUP', payload: { id: groupId, data: updatedGroup } });
         emitEvent('MODIFIER_OPTION_ADDED', { modifierGroupId: groupId, modifierOptionId: newOption.id });
+
+        // CRITICAL: Force immediate persistence to storage
+        // Don't rely on auto-persist debounce - save modifier groups with options NOW
+        const updatedModifierGroups = state.modifierGroups.map(g =>
+          g.id === groupId ? updatedGroup : g
+        );
+        await menuStorageService.saveModifierGroups(updatedModifierGroups);
+
+        if (__DEV__) {
+          console.log(`[MenuContext] Added option "${newOption.name}" to group "${group.name}", saved to storage`);
+        }
       }
       return newOption;
     },
@@ -919,11 +1075,36 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
           storedData.menuItems
         );
 
+        // ALWAYS populate modifier_groups from current modifierGroups data
+        // This ensures we get the latest options (not stale stored versions)
+        const menuItemsWithModifiers = storedData.menuItems.map(item => {
+          // Get modifier group IDs from either modifier_assignments or existing modifier_groups
+          let modifierGroupIds: string[] = [];
+
+          if (item.modifier_assignments && item.modifier_assignments.length > 0) {
+            // Prefer modifier_assignments as the source of truth
+            modifierGroupIds = item.modifier_assignments.map(a => a.modifier_group_id);
+          } else if (item.modifier_groups && item.modifier_groups.length > 0) {
+            // Fallback to existing modifier_groups IDs
+            modifierGroupIds = item.modifier_groups.map(g => g.id);
+          }
+
+          // Always look up fresh modifier groups with current options
+          const itemModifiers = modifierGroupIds
+            .map(groupId => storedData.modifierGroups.find(g => g.id === groupId))
+            .filter((g): g is ModifierGroup => g !== undefined);
+
+          return {
+            ...item,
+            modifier_groups: itemModifiers,
+          };
+        });
+
         dispatch({
           type: 'SET_EXTENDED_DATA',
           payload: {
             categoriesWithStats: categoriesWithCorrectStats,
-            menuItemsExtended: storedData.menuItems,
+            menuItemsExtended: menuItemsWithModifiers,
             modifierGroups: storedData.modifierGroups,
             combos: storedData.combos,
           },
@@ -931,6 +1112,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
 
         if (__DEV__) {
           console.log('[MenuContext] Reloaded extended menu data from storage');
+          console.log('[MenuContext] Menu items with modifiers:', menuItemsWithModifiers.filter(i => i.modifier_groups?.length > 0).length);
         }
       }
     } catch (error) {
@@ -944,6 +1126,11 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
 
   const assignModifiersToMenuItem = useCallback(
     async (menuItemId: string, modifierGroupIds: string[]): Promise<void> => {
+      // CRITICAL: Force persist current state BEFORE assigning modifiers
+      // This ensures modifier groups with their options are saved to storage
+      // before assignModifiersToMenuItem reads them from storage
+      await persistToStorage();
+
       // Use menuStorageService to update the assignments
       await menuStorageService.assignModifiersToMenuItem(menuItemId, modifierGroupIds);
 
@@ -953,7 +1140,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       // Emit event for real-time updates
       emitEvent('MODIFIERS_ASSIGNED', { menuItemId, modifierGroupIds });
     },
-    [emitEvent, loadExtendedMenuData]
+    [emitEvent, loadExtendedMenuData, persistToStorage]
   );
 
   // ============== COMBO CRUD ==============

@@ -24,6 +24,7 @@ import {
   TicketStatus,
   KitchenStation,
   DEFAULT_STATION_CONFIGS,
+  formatModifiersForDisplay,
 } from '@/types/kitchen-ticket.types';
 import { kitchenStorageService, orderStorageService, unifiedOrderStorageService } from '@/services/storage';
 import { ticketRoutingService } from '@/services/kitchen/TicketRoutingService';
@@ -473,18 +474,15 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
               station,
               items: items.map(item => ({
                 id: item.id,
-                menuItemId: item.menuItemId,
                 name: item.name,
                 quantity: item.quantity,
-                modifiers: item.selectedModifiers?.map(m => ({
-                  id: m.id,
-                  name: m.name,
-                  price: m.price,
-                })) || [],
-                modifiersDisplay: item.selectedModifiers?.map(m => m.name).join(', ') || '',
+                // Use formatModifiersForDisplay to convert SelectedModifier[] to string[]
+                modifiers: formatModifiersForDisplay(item.selectedModifiers || []),
+                modifierDetails: item.selectedModifiers,
                 specialInstructions: item.specialInstructions,
                 status: 'pending',
                 allergens: item.allergens || [],
+                hasAllergenWarning: (item.allergens?.length || 0) > 0,
               })),
               status: 'pending',
               priority: 'normal',

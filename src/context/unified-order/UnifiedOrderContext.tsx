@@ -328,16 +328,22 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       return { success: false, error: 'No items in cart or table not selected' };
     }
 
-    // Validation 2: Table must not have an active order already
-    // This prevents multiple orders on the same table
-    const existingActiveOrder = currentState.activeOrders.find(
-      (o) => o.tableId === currentState.selectedTable!.id
-    );
-    if (existingActiveOrder) {
-      return {
-        success: false,
-        error: `Table already has an active order: ${existingActiveOrder.orderNumber}. Please complete or cancel it first.`,
-      };
+    // Validation 2: Check storage DIRECTLY for active orders on this table
+    // This ensures we use the same data source as the table sync
+    try {
+      const allOrders = await unifiedOrderStorageService.getAllOrders();
+      const existingActiveOrder = allOrders.find(
+        (o) => isActiveOrder(o) && o.tableId === currentState.selectedTable!.id
+      );
+      if (existingActiveOrder) {
+        return {
+          success: false,
+          error: `Table already has an active order: ${existingActiveOrder.orderNumber}. Please complete or cancel it first.`,
+        };
+      }
+    } catch (error) {
+      console.warn('[UnifiedOrderContext] Failed to check for existing orders:', error);
+      // Continue anyway - we'll catch duplicates in storage
     }
 
     dispatch({ type: 'SET_SUBMITTING', payload: true });

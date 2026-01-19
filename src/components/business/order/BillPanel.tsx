@@ -20,6 +20,11 @@ import { formatDateTime } from '@/utils/date';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 
+interface BillItemModifier {
+  groupName: string;
+  options: string[];
+}
+
 interface BillItem {
   id: string;
   name: string;
@@ -28,6 +33,7 @@ interface BillItem {
   notes?: string;
   category?: string;
   hasModifiers?: boolean; // Indicates if item has editable modifiers
+  modifiers?: BillItemModifier[]; // Selected modifier groups with option names
 }
 
 interface BillPanelProps {
@@ -144,6 +150,21 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Display selected modifiers */}
+      {item.modifiers && item.modifiers.length > 0 && (
+        <View style={styles.modifiersContainer}>
+          {item.modifiers.map((mod, modIndex) => (
+            <Text
+              key={modIndex}
+              style={[styles.modifierText, { color: theme.colors.primary }]}
+              numberOfLines={1}
+            >
+              + {mod.options.join(', ')}
+            </Text>
+          ))}
+        </View>
+      )}
 
       {item.notes && (
         <Text style={[styles.itemNotes, { color: theme.colors.onSurfaceVariant }]}>
@@ -392,6 +413,16 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     padding: spacing.xs / 2,
+  },
+  modifiersContainer: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  modifierText: {
+    ...typography.bodySmall,
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
   },
   itemNotes: {
     ...typography.bodySmall,

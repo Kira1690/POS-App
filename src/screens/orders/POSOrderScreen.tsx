@@ -14,13 +14,13 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
+  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useUnifiedOrder, useUnifiedCart } from '@/context/unified-order';
 import { useTable } from '@/context/table';
 import { useTheme } from '@/hooks/useTheme';
-import { useMenu } from '@/hooks/useMenu';
 import { MenuItemExtended, ComboDeal } from '@/types/menu-management-extended.types';
 import { SelectedModifier } from '@/types/unified-order.types';
 import { MenuItem } from '@/types/menu.types';
@@ -55,6 +55,8 @@ const POSOrderScreen: React.FC = () => {
     setError,
     clearError,
     setSelectedTable,
+    getActiveOrderForTable,
+    cancelOrder,
     state: orderState,
   } = useUnifiedOrder();
   const {
@@ -75,8 +77,15 @@ const POSOrderScreen: React.FC = () => {
   const { taxRate: contextTaxRate } = usePayment();
 
   const { state: tableState, selectTable } = useTable();
-  const { menuItems, categories, searchMenuItems, isLoading } = useMenu();
-  
+
+  // Use MenuContext as single source of truth for menu items
+  // This ensures real-time sync with Settings > Menu Management
+  const menuContext = useMenuContext();
+  const menuItems = menuContext.menuItemsExtended; // Real-time sync with assigned modifiers
+  const categories = menuContext.categoriesWithStats;
+  const combos = menuContext.combos || [];
+  const isLoading = menuContext.isLoading;
+
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [showTableSelector, setShowTableSelector] = useState(!routeTable);
@@ -91,18 +100,40 @@ const POSOrderScreen: React.FC = () => {
   const [isComboModalVisible, setIsComboModalVisible] = useState(false);
   const [selectedCombo, setSelectedCombo] = useState<ComboDeal | null>(null);
 
-  // Get combos from menu context
-  const menuContext = useMenuContext();
-  const combos = menuContext.combos || [];
-
-  // Initialize order when table is provided or selected
+  // Initialize order when table is provided via navigation
+  // Note: Uses handleTableSelect to check for existing orders
   useEffect(() => {
     if (routeTable && !selectedTable) {
-      selectTable(routeTable);
-      setSelectedTable(routeTable);
-      setShowTableSelector(false);
+      // Check for existing order first (same logic as handleTableSelect)
+      const existingOrder = getActiveOrderForTable(routeTable.id);
+      if (existingOrder) {
+        // Show alert about existing order
+        Alert.alert(
+          'Existing Order Found',
+          `Table ${routeTable.table_number} has an active order (${existingOrder.orderNumber}) with ${existingOrder.items.length} item(s).\n\nStatus: ${existingOrder.status.toUpperCase()}\n\nWhat would you like to do?`,
+          [
+            {
+              text: 'Go Back',
+              style: 'cancel',
+              onPress: () => navigation.goBack(),
+            },
+            {
+              text: 'Continue Order',
+              onPress: () => {
+                selectTable(routeTable);
+                setSelectedTable(routeTable);
+                setShowTableSelector(false);
+              },
+            },
+          ]
+        );
+      } else {
+        selectTable(routeTable);
+        setSelectedTable(routeTable);
+        setShowTableSelector(false);
+      }
     }
-  }, [routeTable, selectedTable, selectTable, setSelectedTable]);
+  }, [routeTable, selectedTable, selectTable, setSelectedTable, getActiveOrderForTable, navigation]);
 
   // Filter menu items based on category and search
   const filteredMenuItems = useMemo(() => {
@@ -122,12 +153,68 @@ const POSOrderScreen: React.FC = () => {
     return items;
   }, [menuItems, selectedCategory, searchQuery]);
 
-  // Handle table selection
+  // Handle table selection - check for existing active orders first
   const handleTableSelect = useCallback((table: Table) => {
-    selectTable(table);
-    setSelectedTable(table);
-    setShowTableSelector(false);
-  }, [selectTable, setSelectedTable]);
+    // Check if this table already has an active order in storage
+    const existingOrder = getActiveOrderForTable(table.id);
+
+    if (existingOrder) {
+      // Table has an existing order - ask user what to do
+      Alert.alert(
+        'Existing Order Found',
+        `Table ${table.table_number} has an active order (${existingOrder.orderNumber}) with ${existingOrder.items.length} item(s).\n\nStatus: ${existingOrder.status.toUpperCase()}\n\nWhat would you like to do?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Cancel Old Order',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await cancelOrder(existingOrder.id, 'Cancelled to start new order');
+                // Now select the table with fresh state
+                selectTable(table);
+                setSelectedTable(table);
+                setShowTableSelector(false);
+                showToast({
+                  type: 'success',
+                  title: 'Order Cancelled',
+                  message: `Previous order ${existingOrder.orderNumber} has been cancelled. You can now start a new order.`,
+                });
+              } catch (error) {
+                showToast({
+                  type: 'error',
+                  title: 'Error',
+                  message: 'Failed to cancel the existing order.',
+                });
+              }
+            },
+          },
+          {
+            text: 'Continue Order',
+            onPress: () => {
+              // Select the table (user will work with the existing order)
+              selectTable(table);
+              setSelectedTable(table);
+              setShowTableSelector(false);
+              showToast({
+                type: 'info',
+                title: 'Continuing Order',
+                message: `Working with existing order ${existingOrder.orderNumber}. Complete or cancel it before starting a new one.`,
+              });
+            },
+          },
+        ]
+      );
+    } else {
+      // No existing order - proceed normally
+      selectTable(table);
+      setSelectedTable(table);
+      setShowTableSelector(false);
+    }
+  }, [selectTable, setSelectedTable, getActiveOrderForTable, cancelOrder]);
 
   // Handle menu item selection
   const handleMenuItemSelect = useCallback((menuItem: MenuItem) => {
@@ -140,8 +227,12 @@ const POSOrderScreen: React.FC = () => {
       // Convert MenuItem to MenuItemExtended for addToCart
       const extendedItem = menuItem as MenuItemExtended;
 
-      // Check if item has modifiers
-      if (extendedItem.modifier_groups && extendedItem.modifier_groups.length > 0) {
+      // Check if item has modifier groups assigned
+      // Show modal if ANY modifier groups assigned (allows viewing even if no options yet)
+      const hasModifiers = extendedItem.modifier_groups &&
+                          extendedItem.modifier_groups.length > 0;
+
+      if (hasModifiers) {
         // Show toast that item has add-ons
         showToast({
           type: 'info',
@@ -157,7 +248,7 @@ const POSOrderScreen: React.FC = () => {
         setSelectedItem(extendedItem);
         setIsModifierModalVisible(true);
       } else {
-        // No modifiers - add directly to cart
+        // No modifiers with options - add directly to cart
         addToCart(extendedItem, [], 1);
         showToast({
           type: 'success',
@@ -228,7 +319,13 @@ const POSOrderScreen: React.FC = () => {
 
     // Find the original menu item to get modifier groups
     const menuItem = menuItems.find(item => item.id === cartItem.menuItemId);
-    if (!menuItem || !menuItem.modifier_groups || menuItem.modifier_groups.length === 0) {
+
+    // Check if item has modifier groups WITH options
+    const hasModifiersWithOptions = menuItem?.modifier_groups?.some(
+      (group) => group.options && group.options.length > 0
+    );
+
+    if (!menuItem || !hasModifiersWithOptions) {
       showToast({
         type: 'warning',
         title: 'No Add-ons',
@@ -476,9 +573,17 @@ const POSOrderScreen: React.FC = () => {
 
     // Transform cart items to BillItem format (using correct ExtendedOrderItem properties)
     const billItems = (cart || []).map(item => {
-      // Check if the original menu item has modifiers
+      // Check if the original menu item has modifier groups WITH options
       const menuItem = menuItems.find(m => m.id === item.menuItemId);
-      const hasModifiers = menuItem?.modifier_groups && menuItem.modifier_groups.length > 0;
+      const hasModifiers = menuItem?.modifier_groups?.some(
+        (group) => group.options && group.options.length > 0
+      ) ?? false;
+
+      // Transform selectedModifiers to BillItem format
+      const modifiers = item.selectedModifiers?.map(mod => ({
+        groupName: mod.groupName,
+        options: mod.options?.map(opt => opt.optionName) || [],
+      })).filter(mod => mod.options.length > 0) || [];
 
       return {
         id: item.id,
@@ -488,6 +593,7 @@ const POSOrderScreen: React.FC = () => {
         notes: item.specialInstructions,
         category: item.category,
         hasModifiers, // Pass to BillPanel for edit button visibility
+        modifiers, // Pass selected modifier options for display
       };
     });
 

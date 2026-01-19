@@ -35,6 +35,7 @@ export const ProfessionalTheme = {
     onSecondaryContainer: '#1C1C1E', // Text/icons on secondary container
     onSurface: '#1C1C1E',    // Text/icons on surface
     onSurfaceVariant: '#8E8E93', // Secondary text/icons on surface
+    onSurfaceSecondary: '#8E8E93', // Alias for onSurfaceVariant (backward compatibility)
 
     // UI elements
     outline: '#A8A8B0',      // Borders and dividers (4.8:1 contrast - WCAG compliant)
@@ -256,6 +257,7 @@ export const ProfessionalTheme = {
     xxl: 22,         // Hero sections, large modals
     xxxl: 26,        // Maximum for large layout elements
     round: 50,       // Fully rounded (avatars, circular buttons)
+    full: 50,        // Alias for round (backward compatibility)
   },
   
   // Apple-inspired shadow system for depth and sophistication
@@ -535,6 +537,7 @@ export const DarkTheme = {
     onSecondaryContainer: '#FFFFFF', // Text/icons on secondary container
     onSurface: '#FFFFFF',       // Text/icons on dark surface
     onSurfaceVariant: '#EBEBF5', // Secondary text/icons on dark surface
+    onSurfaceSecondary: '#EBEBF5', // Alias for onSurfaceVariant (backward compatibility)
 
     // UI elements (dark mode)
     outline: '#545456',         // Dark borders and dividers (3.4:1 contrast - WCAG compliant)
