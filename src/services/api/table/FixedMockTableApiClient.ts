@@ -1,14 +1,18 @@
 /**
- * Fixed Mock Table API Client - For UI-only development
- * Now uses TableStorageService for persistence
- * Data synced with Settings > Table Management
- * Table status is synced with active orders - tables with unpaid orders are marked OCCUPIED
+ * Table API Client
+ *
+ * SINGLE SOURCE OF TRUTH: AsyncStorage via TableStorageService
+ * - Tables created via Settings > Table Management
+ * - Table STATUS is COMPUTED at runtime from orders (not stored)
+ * - NO mock data dependency
+ *
+ * Production Ready
  */
 
 import { Table, CreateTableRequest, UpdateTableStatusRequest, TableReservation } from '@/types/table.types';
-import { TableStatus, PaymentStatus, OrderStatus } from '@/types/common.types';
-import { tableStorageService } from '@/services/storage';
-import { orderService } from '@/services/orders/orderService';
+import { TableStatus } from '@/types/common.types';
+import { tableStorageService, unifiedOrderStorageService } from '@/services/storage';
+import { isActiveOrder } from '@/types/unified-order.types';
 
 export class FixedMockTableApiClient {
   private initialized = false;
@@ -19,50 +23,34 @@ export class FixedMockTableApiClient {
   }
 
   /**
-   * Initialize storage and load tables
-   * Seeds from MOCK_TABLES if storage is empty
+   * Initialize storage and load tables from AsyncStorage
+   * NO mock data - tables come from Settings > Table Management
    */
   private async ensureInitialized(restaurantId: string): Promise<void> {
-    // Only skip if we truly have data
-    if (this.initialized && this.cachedTables.length > 0) {
-      if (__DEV__) {
-        console.log(`[FixedMockTableApi] Already initialized with ${this.cachedTables.length} tables`);
-      }
+    if (this.initialized) {
       return;
     }
 
     try {
       if (__DEV__) {
-        console.log('[FixedMockTableApi] Initializing storage...');
+        console.log('[TableApiClient] Initializing from AsyncStorage...');
       }
 
-      // Initialize storage (seeds from mock data if empty)
       const data = await tableStorageService.initialize(restaurantId);
       this.cachedTables = data.tables;
       this.initialized = true;
 
       if (__DEV__) {
-        console.log(`[FixedMockTableApi] Initialized with ${this.cachedTables.length} tables from storage`);
+        if (this.cachedTables.length === 0) {
+          console.log('[TableApiClient] No tables found. Create tables in Settings > Table Management');
+        } else {
+          console.log(`[TableApiClient] Loaded ${this.cachedTables.length} tables from storage`);
+        }
       }
     } catch (error) {
-      console.error('[FixedMockTableApi] Failed to initialize:', error);
-
-      // Try force reseed as last resort
-      try {
-        if (__DEV__) {
-          console.log('[FixedMockTableApi] Attempting force reseed...');
-        }
-        const data = await tableStorageService.forceReseed(restaurantId);
-        this.cachedTables = data.tables;
-        this.initialized = true;
-        if (__DEV__) {
-          console.log(`[FixedMockTableApi] Force reseeded with ${this.cachedTables.length} tables`);
-        }
-      } catch (reseedError) {
-        console.error('[FixedMockTableApi] Force reseed also failed:', reseedError);
-        this.cachedTables = [];
-        this.initialized = true;
-      }
+      console.error('[TableApiClient] Failed to initialize:', error);
+      this.cachedTables = [];
+      this.initialized = true;
     }
   }
 
@@ -93,7 +81,7 @@ export class FixedMockTableApiClient {
     if (__DEV__) {
       const occupied = tables.filter(t => t.status === TableStatus.OCCUPIED).length;
       const available = tables.filter(t => t.status === TableStatus.AVAILABLE).length;
-      console.log(`[FixedMockTableApi] getTables: ${tables.length} tables (${available} available, ${occupied} occupied)`);
+      console.log(`[TableApiClient] getTables: ${tables.length} tables (${available} available, ${occupied} occupied)`);
     }
 
     return tables;
@@ -107,90 +95,78 @@ export class FixedMockTableApiClient {
   }
 
   /**
-   * Sync table status with active orders
-   * Tables with active (unpaid) orders are marked as OCCUPIED
-   * Tables without active orders are set to AVAILABLE (unless reserved/cleaning)
+   * Sync table status with active orders from UnifiedOrderStorageService
+   * SINGLE SOURCE OF TRUTH: Orders in AsyncStorage determine table status
+   *
+   * CRITICAL: Status is COMPUTED at runtime, not stored
+   * - Default: AVAILABLE
+   * - Has active order: OCCUPIED
+   * - Reserved/Cleaning: Keep as-is (manual status)
    */
   private async syncTableStatusWithOrders(tables: Table[]): Promise<Table[]> {
     try {
-      // Get all orders from the order service
-      const ordersResponse = await orderService.getOrders();
-      const orders = ordersResponse.data || [];
+      // CRITICAL: Use UnifiedOrderStorageService as SINGLE SOURCE OF TRUTH
+      await unifiedOrderStorageService.initialize();
+      const allOrders = await unifiedOrderStorageService.getAllOrders();
 
-      // Find tables with active (unpaid) orders
-      // An order is "active" if it's not CANCELLED and payment is not COMPLETED
+      // Find tables with active orders
       const tablesWithActiveOrders = new Set<string>();
       const tableOrderMap = new Map<string, string>(); // tableId -> orderId
 
-      for (const order of orders) {
-        // Check BOTH property names (snake_case and camelCase) for compatibility
-        const tableId = order.table_id || (order as any).tableId;
+      for (const order of allOrders) {
+        if (!isActiveOrder(order)) continue;
+        const tableId = order.tableId;
         if (!tableId) continue;
-
-        // Skip cancelled orders (case-insensitive)
-        const orderStatus = String(order.status).toLowerCase();
-        if (orderStatus === 'cancelled') continue;
-
-        // Skip orders that are paid (case-insensitive)
-        const paymentStatus = String(order.payment_status || (order as any).paymentStatus || '').toLowerCase();
-        if (paymentStatus === 'completed' || paymentStatus === 'paid') continue;
-
-        // This table has an active unpaid order
         tablesWithActiveOrders.add(tableId);
         tableOrderMap.set(tableId, order.id);
       }
 
       if (__DEV__) {
-        console.log('[FixedMockTableApi] ========== SYNC TABLE STATUS DEBUG ==========');
-        console.log(`[FixedMockTableApi] Total orders from storage: ${orders.length}`);
-        // Log sample orders for debugging
-        orders.slice(0, 3).forEach((order, index) => {
-          console.log(`[FixedMockTableApi] Order sample ${index + 1}:`, {
-            id: order.id,
-            table_id: order.table_id,
-            tableId: (order as any).tableId,
-            status: order.status,
-            payment_status: order.payment_status,
-            paymentStatus: (order as any).paymentStatus,
-          });
-        });
-        console.log(`[FixedMockTableApi] Tables with active orders: [${Array.from(tablesWithActiveOrders).join(', ')}]`);
-        console.log('[FixedMockTableApi] =============================================');
+        console.log('[TableApiClient] ========== SYNC TABLE STATUS ==========');
+        console.log(`[TableApiClient] Total orders: ${allOrders.length}`);
+        console.log(`[TableApiClient] Active orders: ${tablesWithActiveOrders.size}`);
+        if (tablesWithActiveOrders.size > 0) {
+          console.log(`[TableApiClient] Tables with active orders: [${Array.from(tablesWithActiveOrders).join(', ')}]`);
+        }
+        console.log('[TableApiClient] ==========================================');
       }
 
-      // Update table statuses based on active orders
+      // COMPUTE status for each table based on orders
       return tables.map(table => {
-        const hasActiveOrder = tablesWithActiveOrders.has(table.id) ||
-                               tablesWithActiveOrders.has(table.table_number);
+        const hasActiveOrder = tablesWithActiveOrders.has(table.id);
 
+        // If table has an active order -> OCCUPIED
         if (hasActiveOrder) {
-          // Table has an active order - mark as occupied
           return {
             ...table,
             status: TableStatus.OCCUPIED,
-            current_order_id: tableOrderMap.get(table.id) || tableOrderMap.get(table.table_number),
-          };
-        } else if (this.isStatusOccupied(table.status)) {
-          // Table was marked occupied but has no active orders - mark as available
-          if (__DEV__) {
-            console.log(`[FixedMockTableApi] Resetting ${table.table_number} from occupied to available`);
-          }
-          return {
-            ...table,
-            status: TableStatus.AVAILABLE,
-            current_order_id: undefined,
+            current_order_id: tableOrderMap.get(table.id),
           };
         }
 
-        // Keep other statuses (reserved, cleaning) unchanged
-        return table;
+        // If table is reserved or cleaning -> keep manual status
+        const manualStatuses = [TableStatus.RESERVED, TableStatus.CLEANING];
+        if (manualStatuses.includes(table.status as TableStatus)) {
+          return table;
+        }
+
+        // Default: AVAILABLE (reset any stale OCCUPIED status)
+        return {
+          ...table,
+          status: TableStatus.AVAILABLE,
+          current_order_id: undefined,
+        };
       });
     } catch (error) {
       if (__DEV__) {
-        console.warn('[FixedMockTableApi] Failed to sync table status with orders:', error);
+        console.warn('[TableApiClient] Failed to sync table status with orders:', error);
       }
-      // Return tables unchanged if order sync fails
-      return tables;
+      // On error, default all tables to AVAILABLE for safety
+      return tables.map(table => ({
+        ...table,
+        status: TableStatus.AVAILABLE,
+        current_order_id: undefined,
+      }));
     }
   }
 
@@ -228,7 +204,7 @@ export class FixedMockTableApiClient {
     await this.refreshCache();
 
     if (__DEV__) {
-      console.log('[FixedMockTableApi] Created table:', newTable.table_number);
+      console.log('[TableApiClient] Created table:', newTable.table_number);
     }
 
     return newTable;
@@ -252,7 +228,7 @@ export class FixedMockTableApiClient {
     }
 
     if (__DEV__) {
-      console.log('[FixedMockTableApi] Updated table status:', tableId, updateData.status);
+      console.log('[TableApiClient] Updated table status:', tableId, updateData.status);
     }
 
     return updatedTable;
@@ -268,7 +244,7 @@ export class FixedMockTableApiClient {
     await this.refreshCache();
 
     if (__DEV__) {
-      console.log('[FixedMockTableApi] Deleted table:', tableId);
+      console.log('[TableApiClient] Deleted table:', tableId);
     }
   }
 
@@ -300,11 +276,23 @@ export class FixedMockTableApiClient {
   async cancelReservation(reservationId: string): Promise<void> {
     await this.delay();
     if (__DEV__) {
-      console.log('[FixedMockTableApi] Cancelled reservation:', reservationId);
+      console.log('[TableApiClient] Cancelled reservation:', reservationId);
     }
   }
 
   // ============== UTILITY METHODS ==============
+
+  /**
+   * Reset cache - forces reload from storage on next access
+   * Call this after clearing order data to ensure fresh table status
+   */
+  resetCache(): void {
+    this.initialized = false;
+    this.cachedTables = [];
+    if (__DEV__) {
+      console.log('[TableApiClient] Cache reset - will reload from storage on next access');
+    }
+  }
 
   /**
    * Force refresh from storage (useful after Settings changes)

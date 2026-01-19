@@ -215,6 +215,12 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStat
                   </View>
                 )}
               </View>
+              {/* Display modifiers if present */}
+              {item.modifiers && item.modifiers.length > 0 && (
+                <Text style={[styles.specialInstructions, { color: theme.colors.primary, fontStyle: 'normal' }]}>
+                  + {item.modifiers.flatMap(m => m.options).join(', ')}
+                </Text>
+              )}
               {item.specialInstructions && (
                 <Text style={styles.specialInstructions}>Note: {item.specialInstructions}</Text>
               )}

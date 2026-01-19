@@ -3,11 +3,17 @@
  * Comprehensive data for Kitchen Dashboard according to wireframes
  */
 
+export interface KitchenItemModifier {
+  groupName: string;
+  options: string[]; // Selected option names
+}
+
 export interface KitchenOrderItem {
   id: string;
   name: string;
   quantity: number;
   specialInstructions?: string;
+  modifiers?: KitchenItemModifier[]; // Selected modifiers for kitchen display
   preparationTime: number; // minutes
   category: 'appetizer' | 'main' | 'side' | 'dessert' | 'beverage';
   allergens?: string[];

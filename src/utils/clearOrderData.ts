@@ -1,37 +1,38 @@
 /**
  * Utility to clear ONLY order and ticket data from AsyncStorage
- * Keeps menu, tables, settings, and other data intact
+ * Keeps menu, tables (structure), settings intact
  *
- * UNIFIED ORDER SYSTEM: Uses unified storage service and emits SYSTEM_RESET event
+ * SINGLE SOURCE OF TRUTH: AsyncStorage only
+ * - Clears order storage
+ * - Resets all table statuses to AVAILABLE
+ * - Emits SYSTEM_RESET event
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   paymentStorageService,
   unifiedOrderStorageService,
+  tableStorageService,
   STORAGE_KEYS,
 } from '@/services/storage';
+import { tableApiClient } from '@/services/api/table';
 import { orderEventEmitter } from '@/context/unified-order';
 
 /**
  * Clear all order and ticket data from AsyncStorage AND in-memory caches
- * This gives you a fresh start for orders/tickets while keeping everything else
+ * Also resets all table statuses to AVAILABLE
  *
- * CRITICAL: Uses unified storage service clearAll() which resets BOTH:
- * - AsyncStorage persisted data
- * - In-memory caches
- * - Context state via SYSTEM_RESET event
- *
- * This ensures:
- * - Tables correctly show as AVAILABLE after clearing data
- * - Context state is reset WITHOUT requiring app restart
+ * CRITICAL: This function ensures:
+ * - Order data is cleared from AsyncStorage AND cache
+ * - All table statuses reset to AVAILABLE
+ * - SYSTEM_RESET event triggers context state reset
+ * - NO app restart required
  */
 export const clearAllOrderAndTicketData = async (): Promise<void> => {
   try {
     console.log('[ClearOrderData] Starting to clear order and ticket data...');
 
-    // STEP 1: Clear unified storage (SINGLE source of truth)
-    // This clears BOTH AsyncStorage AND in-memory cache
+    // STEP 1: Clear unified order storage (SINGLE source of truth)
     await unifiedOrderStorageService.clearAll();
     console.log('[ClearOrderData] ✅ Unified order storage cleared');
 
@@ -39,14 +40,25 @@ export const clearAllOrderAndTicketData = async (): Promise<void> => {
     await paymentStorageService.clearAll();
     console.log('[ClearOrderData] ✅ Payment storage cleared');
 
-    // STEP 3: Emit SYSTEM_RESET event to notify all contexts
-    // This triggers state reset in UnifiedOrderContext and TableProvider
+    // STEP 3: Reset all table statuses to AVAILABLE
+    // This ensures tables are not stuck as OCCUPIED after clearing orders
+    await tableStorageService.resetAllTableStatuses();
+    console.log('[ClearOrderData] ✅ All table statuses reset to AVAILABLE');
+
+    // STEP 4: Reset table API client cache
+    // This forces fresh reload from storage on next table fetch
+    tableApiClient.resetCache();
+    console.log('[ClearOrderData] ✅ Table API client cache reset');
+
+    // STEP 5: Emit SYSTEM_RESET event to notify all contexts
     orderEventEmitter.emit('SYSTEM_RESET', '', {});
     console.log('[ClearOrderData] ✅ SYSTEM_RESET event emitted');
 
-    console.log('[ClearOrderData] ✅ Successfully cleared all order and payment data');
+    console.log('[ClearOrderData] ========================================');
+    console.log('[ClearOrderData] ✅ All order data cleared successfully');
+    console.log('[ClearOrderData] ✅ Tables reset to AVAILABLE');
     console.log('[ClearOrderData] ✅ Context state will reset WITHOUT app restart');
-    console.log('[ClearOrderData] ✅ Menu, Tables, and Settings are PRESERVED');
+    console.log('[ClearOrderData] ========================================');
 
     return;
   } catch (error) {

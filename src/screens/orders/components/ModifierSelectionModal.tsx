@@ -114,6 +114,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
     container: {
       width: '90%',
       maxWidth: 600,
+      minHeight: 400,
       maxHeight: '90%',
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.lg,
@@ -148,6 +149,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
     },
     scrollContent: {
       padding: theme.spacing.md,
+      flexGrow: 1,
     },
     modifierGroup: {
       marginBottom: theme.spacing.lg,

@@ -194,7 +194,10 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(
       );
     };
 
-    const hasModifiers = item.modifier_groups && item.modifier_groups.length > 0;
+    // Check if item has modifier groups WITH options (not just empty groups)
+    const hasModifiers = item.modifier_groups?.some(
+      (group) => group.options && group.options.length > 0
+    ) ?? false;
     const isAvailable = item.is_available !== false;
 
     return (

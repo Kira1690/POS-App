@@ -1,6 +1,6 @@
 # Unified Order Management - Progress Tracker
 
-## Status: CRITICAL FIXES APPLIED - READY FOR TESTING
+## Status: SINGLE SOURCE OF TRUTH IMPLEMENTED
 
 ---
 
@@ -10,7 +10,7 @@ See previous sections for details on cleanup and audit.
 
 ---
 
-## Phase 8: Critical Fixes Applied (Current Session)
+## Phase 8: Critical Fixes Applied (Previous Session)
 
 ### 8.1 Unified Event System (COMPLETED)
 
@@ -79,102 +79,6 @@ if (existingActiveOrder) {
 
 **File Changed:** `src/services/storage/index.ts`
 
----
-
-## Architecture After Fixes
-
-### Event System (UNIFIED)
-
-```
-Single Event Emitter: @/services/events/OrderEventEmitter.ts
-
-Event Flow:
-┌─────────────────────────────────────────────────────────────┐
-│                                                              │
-│  ORDER_CREATED                                               │
-│  ├─→ TableProvider: Mark table OCCUPIED                     │
-│  └─→ EnhancedKitchenContext: Create kitchen tickets         │
-│                                                              │
-│  ORDER_STATUS_CHANGED (Kitchen ONLY)                        │
-│  └─→ UnifiedOrderContext: Update order status               │
-│                                                              │
-│  ORDER_PAID                                                  │
-│  └─→ TableProvider: Mark table AVAILABLE                    │
-│                                                              │
-│  ORDER_CANCELLED                                             │
-│  └─→ TableProvider: Mark table AVAILABLE                    │
-│                                                              │
-│  SYSTEM_RESET                                                │
-│  ├─→ UnifiedOrderContext: Reset state                       │
-│  ├─→ TableProvider: Refresh tables                          │
-│  └─→ EnhancedKitchenContext: Clear tickets                  │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Data Flow (CORRECTED)
-
-```
-ORDER CREATION FLOW:
-┌─────────────────────────────────────────────────────────────┐
-│                                                              │
-│  1. User: Select Table T-1, Add Items, Click "Send"         │
-│                                                              │
-│  2. UnifiedOrderContext.submitToKitchen():                  │
-│     ├─ Validate: Table selected? ✓                          │
-│     ├─ Validate: Cart not empty? ✓                          │
-│     ├─ Validate: Table has no active order? ✓  [NEW]        │
-│     ├─ Create UnifiedOrder                                  │
-│     ├─ Save to UnifiedOrderStorageService                   │
-│     └─ Emit ORDER_CREATED                                   │
-│                                                              │
-│  3. TableProvider receives ORDER_CREATED:                   │
-│     ├─ updateTableStatus(tableId, OCCUPIED)                 │
-│     └─ Persist to TableStorageService                       │
-│                                                              │
-│  4. EnhancedKitchenContext receives ORDER_CREATED:          │
-│     ├─ Get order from storage                               │
-│     ├─ Group items by station                               │
-│     ├─ Create KitchenTicket per station                     │
-│     ├─ Save to KitchenStorageService                        │
-│     └─ Update context state                                 │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Business Logic Flow
-
-```
-STATUS FLOW:
-  draft → confirmed → preparing → ready → served → paid
-                                                 ↓
-                                       [Table AVAILABLE]
-
-RULES:
-  1. Kitchen is the ONLY source of status updates
-  2. Payment button appears ONLY when status === 'served'
-  3. Table marked OCCUPIED on order creation
-  4. Table marked AVAILABLE on payment or cancellation
-  5. Cannot create multiple orders on same table
-```
-
----
-
-## Files Modified in This Session
-
-| File | Changes |
-|------|---------|
-| `src/context/unified-order/UnifiedOrderContext.tsx` | Unified emitter, added validation |
-| `src/context/unified-order/index.ts` | Updated exports |
-| `src/context/table/TableProvider.tsx` | Added event handlers |
-| `src/context/kitchen/EnhancedKitchenContext.tsx` | Added ticket creation |
-| `src/services/storage/index.ts` | Added exports |
-| `src/screens/payment/PaymentConfirmationScreen.tsx` | Fixed import to use unified context |
-| `src/hooks/context/index.ts` | Removed dead order selectors export |
-| `src/hooks/context/useOrderSelectors.ts` | DELETED (dead code) |
-
----
-
 ### 8.6 Import Error Fixes (COMPLETED)
 
 **Problem:** PaymentConfirmationScreen imported from deleted `OrderManagementContext`
@@ -193,27 +97,276 @@ RULES:
 
 ---
 
-## Testing Checklist
+## Phase 9: Single Source of Truth Implementation (Current Session)
 
-After fixes, verify:
+### 9.1 ModifierSelectionModal Layout Fix (COMPLETED)
 
-- [ ] Cannot place 2nd order on table with active order
-- [ ] Table shows OCCUPIED after order created
-- [ ] Kitchen display shows tickets after order created
-- [ ] Kitchen status updates flow to order status
-- [ ] Payment button only appears when order is served
-- [ ] Table shows AVAILABLE after payment
-- [ ] Table shows AVAILABLE after order cancelled
-- [ ] Clear data resets all state
+**Problem:** Modal showed header and footer but modifier groups were NOT visible (ScrollView collapsed to 0 height)
+
+**Root Cause:** CSS Flex layout issue - container had `maxHeight: '90%'` but NO `height`/`minHeight`, causing ScrollView with `flex: 1` to collapse.
+
+**Fix:**
+- Added `minHeight: 400` to container style
+- Added `flexGrow: 1` to scrollContent style
+- Removed debug console.log statements
+
+**File Changed:** `src/screens/orders/components/ModifierSelectionModal.tsx`
+
+### 9.2 Modifier Display in Orders (COMPLETED)
+
+**Problem:** Selected modifiers not showing in bill panel
+
+**Fix:** Added modifier transformation in POSOrderScreen:
+```typescript
+const modifiers = item.selectedModifiers?.map(mod => ({
+  groupName: mod.groupName,
+  options: mod.options?.map(opt => opt.optionName) || [],
+})).filter(mod => mod.options.length > 0) || [];
+```
+
+**Files Changed:**
+- `src/screens/orders/POSOrderScreen.tsx` - Added modifier transformation
+- `src/components/business/order/BillPanel.tsx` - Added BillItemModifier interface and display
+
+### 9.3 Kitchen Display [object Object] Fix (COMPLETED)
+
+**Problem:** Kitchen display showed "[object Object]" instead of modifier names
+
+**Fix:** Used `formatModifiersForDisplay()` helper instead of mapping to objects:
+```typescript
+import { formatModifiersForDisplay } from '@/types/kitchen-ticket.types';
+
+items: items.map(item => ({
+  modifiers: formatModifiersForDisplay(item.selectedModifiers || []),
+  modifierDetails: item.selectedModifiers,
+  // ...
+})),
+```
+
+**File Changed:** `src/context/kitchen/EnhancedKitchenContext.tsx`
+
+### 9.4 Payment Screen Modifier Display (COMPLETED)
+
+**Problem:** Payment summary didn't show selected modifiers with pricing
+
+**Fix:** Added `getItemModifiers()` helper and modifier display:
+```typescript
+const getItemModifiers = (item: AnyOrderItem): string[] => {
+  if ('selectedModifiers' in item && item.selectedModifiers) {
+    const modifiers: string[] = [];
+    for (const mod of item.selectedModifiers) {
+      if (mod.options) {
+        for (const opt of mod.options) {
+          const prefix = opt.priceAdjustment > 0 ? '+' : '';
+          const priceStr = opt.priceAdjustment !== 0
+            ? ` (${prefix}$${opt.priceAdjustment.toFixed(2)})`
+            : '';
+          modifiers.push(`${opt.optionName}${priceStr}`);
+        }
+      }
+    }
+    return modifiers;
+  }
+  return [];
+};
+```
+
+**File Changed:** `src/components/business/payment/PaymentSummary.tsx`
+
+### 9.5 Remove Mock Data from TableStorageService (COMPLETED)
+
+**Problem:** Tables were seeded from mock data, not production-ready
+
+**Fix:**
+- Removed imports of `MOCK_TABLES` and `MOCK_AREAS`
+- Removed `normalizeTable()`, `normalizeArea()`, `seedFromMockData()` methods
+- Updated `initialize()` to return empty state if no tables (instead of seeding)
+- Added `resetAllTableStatuses()` method to reset all tables to AVAILABLE
+- Updated `forceReseed()` to just return current data (deprecated)
+
+**File Changed:** `src/services/storage/TableStorageService.ts`
+
+### 9.6 Production-Ready Table API Client (COMPLETED)
+
+**Problem:** FixedMockTableApiClient used mock data and had stale cache issues
+
+**Fix:**
+- Removed mock data dependency in `ensureInitialized()`
+- Simplified error handling
+- Added `resetCache()` method for clearing data scenarios
+- Updated `syncTableStatusWithOrders()` to COMPUTE status at runtime:
+  - Default: AVAILABLE
+  - Has active order: OCCUPIED
+  - Reserved/Cleaning: Keep as-is (manual status)
+  - On error: Default all to AVAILABLE for safety
+
+**File Changed:** `src/services/api/table/FixedMockTableApiClient.ts`
+
+### 9.7 Clear Data Resets Tables (COMPLETED)
+
+**Problem:** Clearing order data didn't reset table statuses
+
+**Fix:** Updated `clearAllOrderAndTicketData()`:
+1. Clear unified order storage
+2. Clear payment storage
+3. Reset all table statuses to AVAILABLE (NEW)
+4. Reset table API client cache (NEW)
+5. Emit SYSTEM_RESET event
+
+**File Changed:** `src/utils/clearOrderData.ts`
+
+### 9.8 Clear Data Button Debug Logging (COMPLETED)
+
+**Problem:** User reported clear data button not working
+
+**Fix:** Added debug logging and visual feedback:
+- `console.log('[SecurityBackupSettings] Clear button pressed!')` on tap
+- `console.log('[SecurityBackupSettings] User confirmed - starting clear...')` on confirm
+- Added `activeOpacity={0.7}` for visual feedback
+- Better error message showing actual error
+
+**File Changed:** `src/screens/settings/components/SecurityBackupSettings.tsx`
 
 ---
 
-## Pre-existing Issues (NOT related to this migration)
+## Architecture After Phase 9
 
-### Test File
+### Single Source of Truth
+
+```
+STORAGE ARCHITECTURE (PRODUCTION READY)
+=======================================
+
+AsyncStorage (SINGLE SOURCE OF TRUTH)
+├── @unified_orders        ← UnifiedOrderStorageService
+│   └── All order data, status, items, payments
+├── @table_data           ← TableStorageService
+│   └── Table structure (created via Settings > Table Management)
+│   └── Status COMPUTED at runtime from orders (not stored)
+├── @menu_categories      ← MenuStorageService
+├── @menu_items           ← MenuStorageService
+└── @payment_records      ← PaymentStorageService
+
+NO MOCK DATA:
+- TableStorageService does NOT seed from mock data
+- FixedMockTableApiClient uses only AsyncStorage
+- Tables created via Settings > Table Management
+```
+
+### Table Status Computation
+
+```
+TABLE STATUS FLOW
+=================
+
+getTables() called
+       ↓
+Load tables from TableStorageService
+       ↓
+syncTableStatusWithOrders():
+       ↓
+Get all orders from UnifiedOrderStorageService
+       ↓
+For each table:
+  ├── Has active order? → OCCUPIED
+  ├── Status is RESERVED/CLEANING? → Keep as-is
+  └── Otherwise → AVAILABLE
+       ↓
+Return tables with computed status
+```
+
+### Clear Data Flow
+
+```
+CLEAR DATA FLOW (COMPLETE)
+==========================
+
+User: Settings > Clear All Order Data
+       ↓
+clearAllOrderAndTicketData():
+       ↓
+1. unifiedOrderStorageService.clearAll()
+   └── Clear orders from AsyncStorage + cache
+       ↓
+2. paymentStorageService.clearAll()
+   └── Clear payments
+       ↓
+3. tableStorageService.resetAllTableStatuses()
+   └── Set all tables to AVAILABLE in storage
+       ↓
+4. tableApiClient.resetCache()
+   └── Clear cached tables (force reload)
+       ↓
+5. orderEventEmitter.emit('SYSTEM_RESET')
+   └── Notify all contexts
+       ↓
+TableProvider receives SYSTEM_RESET:
+   └── refreshTables() → Load fresh data
+       ↓
+All tables show AVAILABLE (no restart needed)
+```
+
+---
+
+## Files Modified in Phase 9
+
+| File | Changes |
+|------|---------|
+| `src/screens/orders/components/ModifierSelectionModal.tsx` | Fixed ScrollView collapse, added minHeight |
+| `src/screens/orders/POSOrderScreen.tsx` | Added modifier transformation for BillPanel |
+| `src/components/business/order/BillPanel.tsx` | Added modifier display |
+| `src/context/kitchen/EnhancedKitchenContext.tsx` | Fixed [object Object] bug with formatModifiersForDisplay |
+| `src/components/business/payment/PaymentSummary.tsx` | Added modifier display with pricing |
+| `src/services/storage/TableStorageService.ts` | Removed mock data, added resetAllTableStatuses() |
+| `src/services/api/table/FixedMockTableApiClient.ts` | Production-ready, resetCache(), computed status |
+| `src/utils/clearOrderData.ts` | Added table reset, cache clear |
+| `src/screens/settings/components/SecurityBackupSettings.tsx` | Debug logging, better error handling |
+
+---
+
+## Testing Checklist
+
+### Order Flow
+- [ ] Select table → Add items → Submit to kitchen
+- [ ] Table shows OCCUPIED after order created
+- [ ] Cannot place 2nd order on table with active order
+- [ ] Kitchen display shows tickets with modifiers
+
+### Modifier Flow
+- [ ] Select item with modifiers → Modal shows modifier groups
+- [ ] Selected modifiers show in bill panel
+- [ ] Kitchen display shows modifier names (not [object Object])
+- [ ] Payment summary shows modifiers with pricing
+
+### Table Status
+- [ ] New app install: No tables (create in Settings)
+- [ ] Tables show correct status based on active orders
+- [ ] Table shows AVAILABLE after payment
+- [ ] Table shows AVAILABLE after order cancelled
+
+### Clear Data
+- [ ] Button shows visual feedback when pressed
+- [ ] Confirmation alert appears
+- [ ] After confirm: Orders cleared, tables AVAILABLE
+- [ ] No app restart required
+
+---
+
+## Known Issues (Pre-existing, Not Related)
+
+### Test Files
 - `EndToEndIntegration.test.tsx` - References deleted OrderManagementContext
 - Needs update but not blocking
 
 ### Apple Components
 - Theme property mismatches (layer1, layer2, surfaceDisabled, etc.)
 - Pre-existing, unrelated to order management
+
+---
+
+## Next Steps
+
+1. **Test the clear data button** - Check console for debug logs
+2. **Create tables in Settings** - If no tables exist after clearing
+3. **Test full order flow** - Create order, kitchen update, payment
+4. **Fix remaining test files** - Update to use unified context

@@ -43,6 +43,31 @@ const getItemPrice = (item: AnyOrderItem): number => {
   return 0;
 };
 
+// Helper to get modifiers display string from either format
+const getItemModifiers = (item: AnyOrderItem): string[] => {
+  // UnifiedOrderItem has selectedModifiers
+  if ('selectedModifiers' in item && item.selectedModifiers) {
+    const modifiers: string[] = [];
+    for (const mod of item.selectedModifiers) {
+      if (mod.options) {
+        for (const opt of mod.options) {
+          const prefix = opt.priceAdjustment > 0 ? '+' : '';
+          const priceStr = opt.priceAdjustment !== 0
+            ? ` (${prefix}$${opt.priceAdjustment.toFixed(2)})`
+            : '';
+          modifiers.push(`${opt.optionName}${priceStr}`);
+        }
+      }
+    }
+    return modifiers;
+  }
+  // Legacy OrderItem has modifiers
+  if ('modifiers' in item && item.modifiers) {
+    return item.modifiers.map((m: any) => m.name || m);
+  }
+  return [];
+};
+
 // Helper to get order totals from either format
 const getOrderTotals = (order: AnyOrder) => ({
   subtotal: (order as any).subtotal ?? 0,
@@ -95,21 +120,38 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         Order Items
       </Text>
 
-      {(order.items || []).map((item: AnyOrderItem, index: number) => (
-        <View key={item.id || index} style={styles.orderItem}>
-          <View style={styles.itemInfo}>
-            <Text style={[styles.itemQuantity, { color: theme.colors.primary }]}>
-              {item.quantity}×
-            </Text>
-            <Text style={[styles.itemName, { color: theme.colors.onSurface }]}>
-              {getItemName(item)}
-            </Text>
+      {(order.items || []).map((item: AnyOrderItem, index: number) => {
+        const modifiers = getItemModifiers(item);
+        return (
+          <View key={item.id || index}>
+            <View style={styles.orderItem}>
+              <View style={styles.itemInfo}>
+                <Text style={[styles.itemQuantity, { color: theme.colors.primary }]}>
+                  {item.quantity}×
+                </Text>
+                <Text style={[styles.itemName, { color: theme.colors.onSurface }]}>
+                  {getItemName(item)}
+                </Text>
+              </View>
+              <Text style={[styles.itemPrice, { color: theme.colors.onSurface }]}>
+                {formatCurrency(getItemPrice(item))}
+              </Text>
+            </View>
+            {modifiers.length > 0 && (
+              <View style={styles.itemModifiers}>
+                {modifiers.map((mod, modIndex) => (
+                  <Text
+                    key={modIndex}
+                    style={[styles.modifierText, { color: theme.colors.primary }]}
+                  >
+                    + {mod}
+                  </Text>
+                ))}
+              </View>
+            )}
           </View>
-          <Text style={[styles.itemPrice, { color: theme.colors.onSurface }]}>
-            {formatCurrency(getItemPrice(item))}
-          </Text>
-        </View>
-      ))}
+        );
+      })}
 
       {orderTotals.specialInstructions && (
         <View style={styles.specialInstructions}>
@@ -353,6 +395,14 @@ const styles = StyleSheet.create({
   itemPrice: {
     ...typography.bodyMedium,
     fontWeight: '600',
+  },
+  itemModifiers: {
+    marginLeft: 40,
+    marginBottom: spacing.xs,
+  },
+  modifierText: {
+    ...typography.bodySmall,
+    fontWeight: '500',
   },
   specialInstructions: {
     flexDirection: 'row',
