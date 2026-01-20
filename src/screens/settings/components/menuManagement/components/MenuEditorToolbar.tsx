@@ -107,7 +107,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     iconButtonActive: {
-      backgroundColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     iconButtonDisabled: {
       opacity: 0.4,
@@ -151,14 +151,14 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
       width: 8,
       height: 8,
       borderRadius: 4,
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     countText: {
       fontSize: 13,
       color: theme.colors.onSurfaceSecondary,
     },
     selectedCountText: {
-      color: theme.colors.primary,
+      color: theme.colors.tertiary,
       fontWeight: '600',
     },
     actionButton: {
@@ -180,13 +180,13 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
       alignItems: 'center',
       paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
       borderRadius: theme.borderRadius.md,
       gap: theme.spacing.xs,
     },
     addButtonText: {
       fontSize: 13,
-      color: theme.colors.white,
+      color: '#FFFFFF',
       fontWeight: '600',
     },
   });

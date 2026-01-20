@@ -26,8 +26,8 @@ import { UnifiedOrderItem, UnifiedOrder } from '@/types/unified-order.types';
 import { Table } from '@/types/table.types';
 import { useUnifiedCart } from '@/context/unified-order';
 import { formatPrice } from '@/utils/currency';
-import { spacing, borderRadius } from '@/design-system/theme/spacing';
-import { touchTargets, iconSizes, dividers, elevations } from '@/design-system/theme/layout';
+import { spacing, borderRadius, touchTargets } from '@/design-system/theme/spacing';
+import { iconSizes, dividers, elevations } from '@/design-system/theme/layout';
 
 interface OrderCartPanelProps {
   cart: UnifiedOrderItem[];

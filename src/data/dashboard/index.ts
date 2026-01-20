@@ -3,12 +3,54 @@
  * Centralized data management for all dashboard types
  */
 
+// Import for internal use
+import {
+  MANAGER_DASHBOARD_DATA as _MANAGER_DATA,
+  getManagerDashboardData as _getManagerData,
+  type ManagerDashboardData as _ManagerData,
+} from './managerDashboard';
+
+import {
+  STAFF_DASHBOARD_DATA as _STAFF_DATA,
+  getStaffDashboardData as _getStaffData,
+  type StaffDashboardData as _StaffData,
+} from './staffDashboard';
+
+import {
+  KITCHEN_DASHBOARD_DATA as _KITCHEN_DATA,
+  getKitchenDashboardData as _getKitchenData,
+  type KitchenDashboardData as _KitchenData,
+} from './kitchenDashboard';
+
+import {
+  STAFF_MANAGEMENT_DASHBOARD_DATA as _STAFF_MGMT_DATA,
+  getStaffManagementDashboardData as _getStaffMgmtData,
+  type StaffManagementDashboardData as _StaffMgmtData,
+} from './staffManagementDashboard';
+
+import {
+  ORDERS_DASHBOARD_DATA as _ORDERS_DATA,
+} from './ordersDashboard';
+
+import {
+  TABLES_DASHBOARD_DATA as _TABLES_DATA,
+} from './tablesDashboard';
+
+import {
+  REPORTS_DASHBOARD_DATA as _REPORTS_DATA,
+} from './reportsDashboard';
+
+import {
+  KITCHEN_STAFF_DASHBOARD_DATA as _KITCHEN_STAFF_DATA,
+  type KitchenDashboardData as _KitchenStaffData,
+} from './kitchenStaffDashboard';
+
 // Manager Dashboard exports
 export {
   MANAGER_DASHBOARD_DATA,
   getManagerDashboardData,
   getSalesGrowthPercentage,
-  getOrderCompletionRate,
+  getOrderCompletionRate as getManagerOrderCompletionRate,
   type ManagerDashboardData,
   type DashboardStats,
   type RecentOrder,
@@ -39,13 +81,13 @@ export {
   KITCHEN_DASHBOARD_DATA,
   DEFAULT_KITCHEN_DATA,
   getKitchenDashboardData,
-  getOrdersByStatus,
+  getOrdersByStatus as getKitchenDashboardOrdersByStatus,
   getStationEfficiency,
   getOverdueOrders,
   getKitchenAlerts,
-  type KitchenDashboardData,
+  type KitchenDashboardData as KitchenMainDashboardData,
   type ChefInfo,
-  type KitchenStation,
+  type KitchenStation as KitchenMainStation,
   type PriorityOrder,
   type ActiveOrder,
   type KitchenControl,
@@ -79,14 +121,14 @@ export {
   ORDERS_DASHBOARD_DATA,
   MOCK_ORDERS,
   MOCK_ORDER_ANALYTICS,
-  getOrdersByStatus,
+  getOrdersByStatus as getOrdersDashboardOrdersByStatus,
   getOrdersByType,
   getUrgentOrders,
-  getOrderCompletionRate,
+  getOrderCompletionRate as getOrdersDashboardCompletionRate,
   type OrdersDashboardData,
   type DashboardOrder,
   type OrderAnalytics,
-  type OrderItem,
+  type OrderItem as DashboardOrderItem,
   type Customer,
   type OrderFilters,
 } from './ordersDashboard';
@@ -161,28 +203,28 @@ export const getDashboardDataByType = (
 ) => {
   switch (dashboardType) {
     case 'manager':
-      return getManagerDashboardData(identifier);
+      return _getManagerData(identifier);
 
     case 'staff':
-      return getStaffDashboardData(identifier || 'EMP001');
+      return _getStaffData(identifier || 'EMP001');
 
     case 'kitchen':
-      return getKitchenDashboardData(identifier || 'CHEF001');
+      return _getKitchenData(identifier || 'CHEF001');
 
     case 'staff-management':
-      return getStaffManagementDashboardData(identifier);
+      return _getStaffMgmtData(identifier);
 
     case 'orders':
-      return ORDERS_DASHBOARD_DATA;
+      return _ORDERS_DATA;
 
     case 'tables':
-      return TABLES_DASHBOARD_DATA;
+      return _TABLES_DATA;
 
     case 'reports':
-      return REPORTS_DASHBOARD_DATA;
+      return _REPORTS_DATA;
 
     case 'kitchen-staff':
-      return KITCHEN_STAFF_DASHBOARD_DATA;
+      return _KITCHEN_STAFF_DATA;
 
     default:
       throw new Error(`Unknown dashboard type: ${dashboardType}`);
@@ -190,31 +232,35 @@ export const getDashboardDataByType = (
 };
 
 // Dashboard type guards
-export const isManagerDashboardData = (data: any): data is ManagerDashboardData => {
-  return data && typeof data.stats === 'object' && data.stats.todaysSales;
+export const isManagerDashboardData = (data: unknown): data is _ManagerData => {
+  return data !== null && typeof data === 'object' && 'stats' in data &&
+    typeof (data as Record<string, unknown>).stats === 'object';
 };
 
-export const isStaffDashboardData = (data: any): data is StaffDashboardData => {
-  return data && typeof data.staff === 'object' && data.staff.employeeId;
+export const isStaffDashboardData = (data: unknown): data is _StaffData => {
+  return data !== null && typeof data === 'object' && 'staff' in data &&
+    typeof (data as Record<string, unknown>).staff === 'object';
 };
 
-export const isKitchenDashboardData = (data: any): data is KitchenDashboardData => {
-  return data && typeof data.chef === 'object' && Array.isArray(data.stations);
+export const isKitchenDashboardData = (data: unknown): data is _KitchenStaffData => {
+  return data !== null && typeof data === 'object' && 'chef' in data &&
+    Array.isArray((data as Record<string, unknown>).stations);
 };
 
-export const isStaffManagementDashboardData = (data: any): data is StaffManagementDashboardData => {
-  return data && Array.isArray(data.staff) && typeof data.metrics === 'object';
+export const isStaffManagementDashboardData = (data: unknown): data is _StaffMgmtData => {
+  return data !== null && typeof data === 'object' && 'staff' in data &&
+    Array.isArray((data as Record<string, unknown>).staff);
 };
 
 // Dashboard refresh utilities
 export const refreshDashboardData = (dashboardType: string) => {
   // In a real app, this would trigger API calls to refresh data
   // For now, it just returns fresh copies of the mock data
-  return getDashboardDataByType(dashboardType as any);
+  return getDashboardDataByType(dashboardType as 'manager' | 'staff' | 'kitchen' | 'staff-management' | 'orders' | 'tables' | 'reports' | 'kitchen-staff');
 };
 
 // Data validation utilities
-export const validateDashboardData = (data: any, type: string): boolean => {
+export const validateDashboardData = (data: unknown, type: string): boolean => {
   try {
     switch (type) {
       case 'manager':
@@ -236,14 +282,14 @@ export const validateDashboardData = (data: any, type: string): boolean => {
 
 // Export all dashboard data for easy access
 export const ALL_DASHBOARD_DATA = {
-  manager: MANAGER_DASHBOARD_DATA,
-  staff: STAFF_DASHBOARD_DATA,
-  kitchen: KITCHEN_DASHBOARD_DATA,
-  staffManagement: STAFF_MANAGEMENT_DASHBOARD_DATA,
-  orders: ORDERS_DASHBOARD_DATA,
-  tables: TABLES_DASHBOARD_DATA,
-  reports: REPORTS_DASHBOARD_DATA,
-  kitchenStaff: KITCHEN_STAFF_DASHBOARD_DATA,
+  manager: _MANAGER_DATA,
+  staff: _STAFF_DATA,
+  kitchen: _KITCHEN_DATA,
+  staffManagement: _STAFF_MGMT_DATA,
+  orders: _ORDERS_DATA,
+  tables: _TABLES_DATA,
+  reports: _REPORTS_DATA,
+  kitchenStaff: _KITCHEN_STAFF_DATA,
 };
 
 export default ALL_DASHBOARD_DATA;

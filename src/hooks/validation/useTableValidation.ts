@@ -130,9 +130,11 @@ export function useTableValidation(): UseTableValidationResult {
 
     // Define valid transitions
     const validTransitions: Record<TableStatus, TableStatus[]> = {
-      [TableStatus.AVAILABLE]: [TableStatus.OCCUPIED, TableStatus.RESERVED, TableStatus.OUT_OF_SERVICE],
-      [TableStatus.OCCUPIED]: [TableStatus.AVAILABLE],
+      [TableStatus.AVAILABLE]: [TableStatus.OCCUPIED, TableStatus.RESERVED, TableStatus.OUT_OF_ORDER, TableStatus.OUT_OF_SERVICE, TableStatus.CLEANING],
+      [TableStatus.OCCUPIED]: [TableStatus.AVAILABLE, TableStatus.CLEANING],
       [TableStatus.RESERVED]: [TableStatus.OCCUPIED, TableStatus.AVAILABLE],
+      [TableStatus.CLEANING]: [TableStatus.AVAILABLE, TableStatus.OUT_OF_ORDER],
+      [TableStatus.OUT_OF_ORDER]: [TableStatus.AVAILABLE, TableStatus.CLEANING],
       [TableStatus.OUT_OF_SERVICE]: [TableStatus.AVAILABLE],
     };
 

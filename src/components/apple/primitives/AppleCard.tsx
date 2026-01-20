@@ -14,7 +14,7 @@ interface AppleCardProps {
   children: React.ReactNode;
 
   // APPLE LAYER SYSTEM (from 5 reference images analysis)
-  layer?: 'background' | 'surface' | 'surfaceVariant' | 'surfaceElevated';
+  layer?: 'background' | 'surface' | 'surfaceVariant' | 'surfaceElevated' | 'primary';
 
   // UNIVERSAL SIZING SYSTEM (reusable across all screens)
   size?: 'small' | 'medium' | 'large' | 'hero';
@@ -47,6 +47,10 @@ export const AppleCard: React.FC<AppleCardProps> = ({
 
   // APPLE LAYER COLOR MAPPING (from 4-layer depth system)
   const getLayerColor = () => {
+    // Handle primary layer (for selection states)
+    if (layer === 'primary') {
+      return theme.colors.primary;
+    }
     if (isDark) {
       switch (layer) {
         case 'background': return theme.colors.layer0; // Pure black background

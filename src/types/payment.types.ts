@@ -4,6 +4,10 @@
  */
 
 import { BaseEntity, PaymentStatus, PaymentMethod } from './common.types';
+import { Order } from './order.types';
+
+// Re-export PaymentMethod for backward compatibility
+export { PaymentMethod } from './common.types';
 
 // Enhanced Payment Methods for Professional POS
 export enum ProfessionalPaymentMethod {
@@ -20,12 +24,14 @@ export enum ProfessionalPaymentMethod {
 export enum PaymentProcessingStatus {
   IDLE = 'idle',
   CONNECTING = 'connecting',
+  PENDING = 'pending',
   PROCESSING = 'processing',
   COMPLETED = 'completed',
   FAILED = 'failed',
   CANCELLED = 'cancelled',
   REFUNDING = 'refunding',
   REFUNDED = 'refunded',
+  VOIDED = 'voided',
 }
 
 // VP3350 Device Status
@@ -35,6 +41,7 @@ export enum VP3350DeviceStatus {
   CONNECTED = 'connected',
   READY = 'ready',
   PROCESSING = 'processing',
+  UPDATING = 'updating',
   ERROR = 'error',
 }
 
@@ -99,7 +106,19 @@ export interface ProfessionalPayment extends BaseEntity {
   receiptPrinted: boolean;
   receiptEmailed: boolean;
   receiptSmsed: boolean;
-  
+  receiptPrintedAt?: string;
+  receiptEmailedAt?: string;
+  receiptSmsedAt?: string;
+
+  // Refund Information
+  refundAmount?: number;
+  refundReason?: string;
+  refundedAt?: string;
+
+  // Void Information
+  voidReason?: string;
+  voidedAt?: string;
+
   // Error and Recovery
   errorMessage?: string;
   retryCount: number;
@@ -152,6 +171,7 @@ export interface VP3350PaymentResult {
   emvData?: Record<string, any>;
   contactlessUsed?: boolean;
   pinVerified?: boolean;
+  signatureRequired?: boolean;
 }
 
 // VP3350 Device Configuration
@@ -167,6 +187,7 @@ export interface VP3350DeviceConfig {
   enableChip: boolean;
   enableSwipe: boolean;
   enablePin: boolean;
+  connectionType?: 'bluetooth' | 'usb' | 'serial';
 }
 
 // Receipt Data Structure
@@ -259,26 +280,28 @@ export interface ReceiptFooter {
 // Payment Processing Request Interfaces
 export interface ProcessPaymentRequest {
   orderId: string;
+  order?: string; // Alias for orderId (backward compatibility)
+  orderData?: Order; // Full order object for receipt generation
   amount: number;
   method: ProfessionalPaymentMethod;
-  
+
   // Payment Method Specific
   cashTendered?: number;
   tipAmount?: number;
   tipPercentage?: number;
-  
+
   // Customer Information
   customerEmail?: string;
   customerPhone?: string;
-  
+
   // Split Payment
   splitPayments?: Omit<SplitPaymentItem, 'id' | 'status'>[];
-  
+
   // Receipt Options
   printReceipt?: boolean;
   emailReceipt?: boolean;
   smsReceipt?: boolean;
-  
+
   // Professional Options
   notes?: string;
   managerApproval?: boolean;
@@ -394,6 +417,17 @@ export interface PaymentAnalytics {
     refundAmount: number;
     refundRate: number;
   };
+
+  dateRange?: {
+    from: string;
+    to: string;
+  };
+
+  peakHours?: {
+    hour: number;
+    transactions: number;
+    amount: number;
+  }[];
 }
 
 // Error Types

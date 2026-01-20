@@ -230,6 +230,11 @@ export class MockSettingsService {
         print_receipts: true,
         receipt_footer: 'Thank you for dining with us! Visit again soon.',
       },
+      payment_timing: {
+        mode: 'pay_at_counter' as const,
+        default_for_dine_in: 'pay_at_counter' as const,
+        require_selection_at_order: false,
+      },
     },
   };
 

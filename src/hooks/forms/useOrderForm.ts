@@ -20,7 +20,7 @@ export interface OrderFormData {
 
 export interface OrderFormState {
   data: OrderFormData;
-  errors: Record<string, string>;
+  errors: Record<string, string | undefined>;
   touched: Record<string, boolean>;
   isSubmitting: boolean;
   isDirty: boolean;

@@ -34,7 +34,7 @@ export const usePerformanceMonitoring = (
   } = options;
 
   const renderCount = useRef(0);
-  const memoryTracker = useRef<MemoryTracker>();
+  const memoryTracker = useRef<MemoryTracker | undefined>(undefined);
 
   // Initialize memory tracking if enabled
   useEffect(() => {
@@ -151,8 +151,8 @@ export const useMemoizationOptimization = <T>(
   deps: React.DependencyList,
   debugName?: string
 ) => {
-  const lastDeps = useRef<React.DependencyList>();
-  const lastResult = useRef<T>();
+  const lastDeps = useRef<React.DependencyList | undefined>(undefined);
+  const lastResult = useRef<T | undefined>(undefined);
   const computationCount = useRef(0);
 
   // Check if dependencies have changed
@@ -182,8 +182,8 @@ export const useCallbackOptimization = <T extends (...args: any[]) => any>(
   debugName?: string
 ): T => {
   const callCount = useRef(0);
-  const lastCallback = useRef<T>();
-  const lastDeps = useRef<React.DependencyList>();
+  const lastCallback = useRef<T | undefined>(undefined);
+  const lastDeps = useRef<React.DependencyList | undefined>(undefined);
 
   // Check if dependencies have changed
   const depsChanged = !lastDeps.current || 

@@ -67,7 +67,7 @@ export default function SystemLogsSettings({ onChangesDetected }: SystemLogsSett
       <View style={styles.logItem}>
         <View style={styles.logHeader}>
           <View style={styles.logLevel}>
-            <MaterialCommunityIcons name={iconProps.name} size={10} color={iconProps.color} />
+            <MaterialCommunityIcons name={iconProps.name as any} size={10} color={iconProps.color} />
             <Text style={[styles.logLevelText, { color: getLogLevelColor(item.level) }]}>
               {item.level}
             </Text>

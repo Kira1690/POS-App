@@ -117,6 +117,7 @@ class SplitPaymentService implements ISplitPaymentService {
       const amount = i === 0 ? baseAmount + remainder : baseAmount;
       splitItems.push({
         id: this.generateId(),
+        description: `Split ${i + 1} of ${splits}`,
         amount,
         method: ProfessionalPaymentMethod.CARD, // Default method
         status: PaymentProcessingStatus.PENDING,

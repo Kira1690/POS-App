@@ -207,7 +207,7 @@ export const AppleSidebarCollapsible: React.FC<AppleSidebarCollapsibleProps> = (
     },
     badge: {
       backgroundColor: theme.colors.error,
-      borderRadius: borderRadius.pill as number,
+      borderRadius: borderRadius.full,
       paddingHorizontal: 6,
       paddingVertical: 2,
       minWidth: 18,

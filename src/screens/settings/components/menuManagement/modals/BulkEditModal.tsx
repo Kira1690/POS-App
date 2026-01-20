@@ -159,7 +159,7 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
     infoBox: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.tertiaryContainer,
       padding: theme.spacing.md,
       borderRadius: theme.borderRadius.md,
       marginBottom: theme.spacing.lg,
@@ -168,7 +168,7 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
     infoText: {
       flex: 1,
       fontSize: 13,
-      color: theme.colors.primary,
+      color: theme.colors.tertiary,
       lineHeight: 18,
     },
     fieldSection: {
@@ -195,8 +195,8 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
       justifyContent: 'center',
     },
     checkboxChecked: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
+      borderColor: theme.colors.tertiary,
     },
     fieldContent: {
       paddingLeft: theme.spacing.md,
@@ -222,8 +222,8 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
       gap: theme.spacing.xs,
     },
     categoryOptionSelected: {
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      borderColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     categoryDot: {
       width: 8,
@@ -251,8 +251,8 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
       gap: theme.spacing.xs,
     },
     toggleOptionSelected: {
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      borderColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     toggleText: {
       fontSize: 13,
@@ -273,8 +273,8 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
       alignItems: 'center',
     },
     priceButtonSelected: {
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      borderColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     priceButtonText: {
       fontSize: 12,
@@ -332,7 +332,7 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     applyButton: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     buttonDisabled: {
       opacity: 0.6,
@@ -383,7 +383,7 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
               <Icon
                 name="information-outline"
                 size={20}
-                color={theme.colors.primary}
+                color={theme.colors.tertiary}
                 accessibilityLabel=""
               />
               <Text style={styles.infoText}>
@@ -425,7 +425,7 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
                       accessibilityLabel={`Select ${category.name}`}
                     >
                       <View
-                        style={[styles.categoryDot, { backgroundColor: category.color || theme.colors.primary }]}
+                        style={[styles.categoryDot, { backgroundColor: category.color || theme.colors.tertiary }]}
                       />
                       <Text style={styles.categoryName}>{category.name}</Text>
                     </TouchableOpacity>
@@ -464,7 +464,7 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
                     <Icon
                       name="eye-outline"
                       size={18}
-                      color={isAvailable ? theme.colors.primary : theme.colors.onSurfaceSecondary}
+                      color={isAvailable ? theme.colors.tertiary : theme.colors.onSurfaceSecondary}
                       accessibilityLabel=""
                     />
                     <Text style={styles.toggleText}>Available</Text>
@@ -477,7 +477,7 @@ export const BulkEditModal: React.FC<BulkEditModalProps> = ({
                     <Icon
                       name="eye-off-outline"
                       size={18}
-                      color={!isAvailable ? theme.colors.primary : theme.colors.onSurfaceSecondary}
+                      color={!isAvailable ? theme.colors.tertiary : theme.colors.onSurfaceSecondary}
                       accessibilityLabel=""
                     />
                     <Text style={styles.toggleText}>Unavailable</Text>

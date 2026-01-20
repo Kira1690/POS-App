@@ -4,7 +4,7 @@
  * Following data structure design from prep/settings-table-management/data-structure.md
  */
 
-export type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning';
+export type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning' | 'out_of_order' | 'out_of_service';
 
 export interface MockTable {
   id: string;
@@ -16,6 +16,7 @@ export interface MockTable {
   positionX?: number;
   positionY?: number;
   shape?: 'square' | 'round' | 'rectangle';
+  notes?: string;
 }
 
 /**

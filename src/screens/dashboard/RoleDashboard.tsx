@@ -68,7 +68,7 @@ const RoleDashboard: React.FC<RoleDashboardProps> = () => {
         const dashboardType = selectedDashboard === 'staff-management' ? 'staff-management' : 'manager';
         return {
           type: dashboardType,
-          statusBarStyle: isDark ? 'light-content' : 'dark-content' as const,
+          statusBarStyle: (isDark ? 'light-content' : 'dark-content') as 'light-content' | 'dark-content',
           backgroundColor: theme.colors.surface,
           canSwitch: true, // Enable dashboard switching
           availableDashboards: [

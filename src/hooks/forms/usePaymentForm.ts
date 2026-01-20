@@ -42,7 +42,7 @@ export interface PaymentFormData {
 
 export interface PaymentFormState {
   data: PaymentFormData;
-  errors: Record<string, string>;
+  errors: Record<string, string | undefined>;
   touched: Record<string, boolean>;
   isSubmitting: boolean;
   isDirty: boolean;

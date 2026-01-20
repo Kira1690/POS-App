@@ -104,6 +104,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
 
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [timer, isResendAvailable, showResendTimer, onTimerComplete]);
 
   // Auto submit when OTP is complete
@@ -280,7 +281,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   });
 
   // Get individual input styles
-  const getInputStyles = (index: number): ViewStyle => {
+  const getInputStyles = (index: number): TextStyle => {
     const inputSize = getInputSize();
     const isFocused = focusedIndex === index;
     const hasValue = value[index] !== undefined && value[index] !== '';
@@ -372,7 +373,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
         {Array.from({ length }, (_, index) => (
           <TextInput
             key={index}
-            ref={(ref) => (inputRefs.current[index] = ref)}
+            ref={(ref) => { inputRefs.current[index] = ref; }}
             style={getInputStyles(index)}
             value={value[index] || ''}
             onChangeText={(text) => handleChangeText(text, index)}

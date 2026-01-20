@@ -258,8 +258,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         menuItem.category_id
       );
 
-      const allergens: AllergenType[] = menuItem.allergens || [];
-      const dietaryTags: DietaryTag[] = menuItem.dietary_tags || [];
+      const allergens = (menuItem.allergens || []) as AllergenType[];
+      const dietaryTags = (menuItem.dietary_tags || []) as DietaryTag[];
 
       const orderItem: UnifiedOrderItem = {
         id: generateUnifiedOrderItemId(),
@@ -852,6 +852,7 @@ export const useUnifiedOrderManagement = () => {
     loadOrders: context.loadOrders,
     refreshOrders: context.refreshOrders,
     getOrderById: context.getOrderById,
+    updateOrderStatus: context.updateOrderStatus,
     cancelOrder: context.cancelOrder,
     setSelectedOrderId: context.setSelectedOrderId,
     selectedOrderId: context.state.selectedOrderId,

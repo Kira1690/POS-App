@@ -21,8 +21,8 @@ export type AuthInputVariant = 'text' | 'email' | 'password' | 'phone' | 'search
 export interface AuthInputProps {
   /** Input variant for different use cases */
   variant?: AuthInputVariant;
-  /** Label text */
-  label: string;
+  /** Label text (optional - can use just placeholder) */
+  label?: string;
   /** Placeholder text */
   placeholder?: string;
   /** Current value */
@@ -63,6 +63,10 @@ export interface AuthInputProps {
   accessibilityLabel?: string;
   /** Test ID for testing */
   testID?: string;
+  /** Auto capitalize setting */
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  /** Auto complete type */
+  autoComplete?: string;
 }
 
 export const AuthInput: React.FC<AuthInputProps> = ({

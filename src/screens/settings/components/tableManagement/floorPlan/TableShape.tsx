@@ -36,6 +36,7 @@ const getStatusColor = (
     [TableStatus.OCCUPIED]: theme.colors.error,
     [TableStatus.RESERVED]: theme.colors.warning,
     [TableStatus.CLEANING]: theme.colors.info,
+    [TableStatus.OUT_OF_ORDER]: theme.colors.outline,
     [TableStatus.OUT_OF_SERVICE]: theme.colors.outline,
   };
 

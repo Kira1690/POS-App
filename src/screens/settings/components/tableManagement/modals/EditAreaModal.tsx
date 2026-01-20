@@ -649,7 +649,7 @@ export const EditAreaModal: React.FC<EditAreaModalProps> = ({
           <View style={styles.footer}>
             <AppleButton
               title="Delete"
-              variant="danger"
+              variant="destructive"
               size="medium"
               icon={
                 <Icon

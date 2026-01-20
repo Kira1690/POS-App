@@ -8,11 +8,14 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { OrderStatus } from '@/types/common.types';
+import { UnifiedOrderStatus } from '@/types/unified-order.types';
 import { useTheme } from '@/hooks/useTheme';
 import { typography } from '@/design-system/theme/typography';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { formatTime } from '@/utils/date';
 import { AnyOrder, getOrderTimestamps } from '@/utils/orderFormatHelpers';
+
+type StatusType = OrderStatus | UnifiedOrderStatus;
 
 interface OrderTimelineProps {
   order: AnyOrder;
@@ -36,7 +39,7 @@ const getTimelineSteps = (order: AnyOrder): TimelineStep[] => {
     {
       status: OrderStatus.PENDING,
       label: 'Order Placed',
-      icon: 'receipt',
+      icon: 'receipt' as const,
       timestamp: timestamps.createdAt,
       completed: true,
       active: currentStatusIndex === 0,
@@ -44,7 +47,7 @@ const getTimelineSteps = (order: AnyOrder): TimelineStep[] => {
     {
       status: OrderStatus.CONFIRMED,
       label: 'Confirmed',
-      icon: 'check-circle',
+      icon: 'check-circle' as const,
       timestamp: timestamps.submittedAt,
       completed: currentStatusIndex >= 1,
       active: currentStatusIndex === 1,
@@ -52,7 +55,7 @@ const getTimelineSteps = (order: AnyOrder): TimelineStep[] => {
     {
       status: OrderStatus.PREPARING,
       label: 'Preparing',
-      icon: 'restaurant',
+      icon: 'restaurant' as const,
       timestamp: timestamps.preparingAt,
       completed: currentStatusIndex >= 2,
       active: currentStatusIndex === 2,
@@ -60,7 +63,7 @@ const getTimelineSteps = (order: AnyOrder): TimelineStep[] => {
     {
       status: OrderStatus.READY,
       label: 'Ready',
-      icon: 'notifications',
+      icon: 'notifications' as const,
       timestamp: timestamps.readyAt,
       completed: currentStatusIndex >= 3,
       active: currentStatusIndex === 3,
@@ -68,7 +71,7 @@ const getTimelineSteps = (order: AnyOrder): TimelineStep[] => {
     {
       status: OrderStatus.SERVED,
       label: 'Served',
-      icon: 'done-all',
+      icon: 'done-all' as const,
       timestamp: timestamps.servedAt,
       completed: currentStatusIndex >= 4,
       active: currentStatusIndex === 4,
@@ -76,12 +79,19 @@ const getTimelineSteps = (order: AnyOrder): TimelineStep[] => {
   ].filter(step => order.status !== OrderStatus.CANCELLED || step.completed);
 };
 
-const getStatusIndex = (status: OrderStatus): number => {
-  switch (status) {
+const getStatusIndex = (status: StatusType): number => {
+  // Handle both enum values and string values
+  const statusStr = String(status);
+  switch (statusStr) {
+    case 'pending':
     case OrderStatus.PENDING: return 0;
+    case 'confirmed':
     case OrderStatus.CONFIRMED: return 1;
+    case 'preparing':
     case OrderStatus.PREPARING: return 2;
+    case 'ready':
     case OrderStatus.READY: return 3;
+    case 'served':
     case OrderStatus.SERVED: return 4;
     default: return 0;
   }

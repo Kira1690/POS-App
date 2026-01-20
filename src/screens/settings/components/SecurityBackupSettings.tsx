@@ -398,7 +398,7 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
               <Text style={styles.backupDate}>{backup.date}</Text>
               <Text style={styles.backupDetails}>{backup.type} • {backup.size}</Text>
             </View>
-            <View style={[styles.backupStatus, styles[`status${backup.status}`]]}>
+            <View style={[styles.backupStatus, backup.status === 'Success' && styles.statusSuccess]}>
               <Text style={styles.backupStatusText}>{backup.status}</Text>
             </View>
           </View>

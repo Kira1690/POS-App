@@ -8,6 +8,7 @@ import { STORAGE_KEYS } from './StorageService';
 import {
   KitchenTicket,
   TicketStatus,
+  TicketPriority,
   TicketFilters,
   StationConfig,
   DEFAULT_STATION_CONFIGS,
@@ -183,7 +184,9 @@ class KitchenStorageService {
       .filter(Boolean)
       .sort((a, b) => {
         // Sort by priority first, then by creation time
-        const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+        const priorityOrder: Record<TicketPriority, number> = {
+          vip: 0, rush: 1, urgent: 2, high: 3, normal: 4, low: 5
+        };
         const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
         if (priorityDiff !== 0) return priorityDiff;
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -210,7 +213,9 @@ class KitchenStorageService {
     return Object.values(this.ticketsCache.tickets)
       .filter((t) => t.station === station && this.isActiveTicket(t))
       .sort((a, b) => {
-        const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+        const priorityOrder: Record<TicketPriority, number> = {
+          vip: 0, rush: 1, urgent: 2, high: 3, normal: 4, low: 5
+        };
         const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
         if (priorityDiff !== 0) return priorityDiff;
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -265,7 +270,14 @@ class KitchenStorageService {
     }
 
     return tickets.sort((a, b) => {
-      const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+      const priorityOrder: Record<TicketPriority, number> = {
+        vip: 0,
+        rush: 1,
+        urgent: 2,
+        high: 3,
+        normal: 4,
+        low: 5
+      };
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();

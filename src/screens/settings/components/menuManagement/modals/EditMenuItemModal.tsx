@@ -90,8 +90,8 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
         tax_rate: item.tax_rate || 0,
         is_available: item.is_available,
         preparation_time: item.preparation_time || 15,
-        dietary_tags: item.dietary_tags || [],
-        allergens: item.allergens || [],
+        dietary_tags: (item.dietary_tags || []) as DietaryTag[],
+        allergens: (item.allergens || []) as AllergenType[],
         calories: item.nutritional_info?.calories || 0,
         image_url: item.image_url || item.image,
         modifier_group_ids: modifierGroupIds,
@@ -216,7 +216,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       color: theme.colors.onSurfaceSecondary,
     },
     tabTextActive: {
-      color: theme.colors.primary,
+      color: theme.colors.tertiary,
       fontWeight: '600',
     },
     content: {
@@ -278,8 +278,8 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       gap: theme.spacing.xs,
     },
     categoryOptionSelected: {
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      borderColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     categoryDot: {
       width: 8,
@@ -334,7 +334,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       padding: 2,
     },
     switchOn: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     switchOff: {
       backgroundColor: theme.colors.outline,
@@ -368,8 +368,8 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       gap: theme.spacing.xs,
     },
     tagOptionSelected: {
-      backgroundColor: theme.colors.primaryLight,
-      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiaryContainer,
+      borderColor: theme.colors.tertiary,
     },
     tagText: {
       fontSize: 12,
@@ -407,7 +407,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     saveButton: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     buttonDisabled: {
       opacity: 0.6,
@@ -488,7 +488,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
               <View
                 style={[
                   styles.categoryDot,
-                  { backgroundColor: category.color || theme.colors.primary },
+                  { backgroundColor: category.color || theme.colors.tertiary },
                 ]}
               />
               <Text style={styles.categoryName}>{category.name}</Text>
@@ -646,7 +646,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
                   size={16}
                   color={
                     (formData.dietary_tags || []).includes(tag)
-                      ? theme.colors.primary
+                      ? theme.colors.tertiary
                       : theme.colors.onSurfaceSecondary
                   }
                   accessibilityLabel=""
@@ -730,7 +730,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
                 <Icon
                   name={tab.icon}
                   size={18}
-                  color={activeTab === tab.id ? theme.colors.primary : theme.colors.onSurfaceSecondary}
+                  color={activeTab === tab.id ? theme.colors.tertiary : theme.colors.onSurfaceSecondary}
                   accessibilityLabel=""
                 />
                 <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>

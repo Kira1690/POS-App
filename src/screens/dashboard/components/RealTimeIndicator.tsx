@@ -4,11 +4,12 @@
  */
 
 import React, { memo, useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
+import {
+  View,
+  Text,
   StyleSheet,
-  Animated
+  Animated,
+  ViewStyle
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -52,6 +53,7 @@ const RealTimeIndicator: React.FC<RealTimeIndicatorProps> = ({
       pulse.start();
       return () => pulse.stop();
     }
+    return undefined;
   }, [status, pulseAnimation]);
 
   // Update current time every second
@@ -182,7 +184,7 @@ const RealTimeIndicator: React.FC<RealTimeIndicatorProps> = ({
   return (
     <View style={[
       styles.container,
-      styles[`container${size.charAt(0).toUpperCase() + size.slice(1)}` as keyof typeof styles]
+      styles[`container${size.charAt(0).toUpperCase() + size.slice(1)}` as keyof typeof styles] as ViewStyle
     ]}>
       <View style={styles.statusRow}>
         <Animated.View 

@@ -17,7 +17,7 @@ import { OrderService } from '@/services/orders/orderService';
 import { TableService } from '@/services/tables/TableService';
 import { MenuService } from '@/services/menu/MenuService';
 import { AuthService } from '@/services/auth/AuthService';
-import { PerformanceAnalyticsService } from '@/services/analytics/PerformanceAnalyticsService';
+import PerformanceAnalyticsService from '@/services/analytics/PerformanceAnalyticsService';
 
 // Payment services (already refactored)
 import { CompositePaymentService } from '@/services/payment/CompositePaymentService';

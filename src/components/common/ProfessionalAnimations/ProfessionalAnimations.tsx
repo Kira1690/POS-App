@@ -10,6 +10,7 @@ import {
   Animated,
   TouchableOpacity,
   ViewStyle,
+  StyleProp,
   Pressable,
   Dimensions,
 } from 'react-native';
@@ -234,7 +235,7 @@ interface SlideInAnimationProps {
   distance?: number;
   duration?: number;
   delay?: number;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const SlideInAnimation: React.FC<SlideInAnimationProps> = ({

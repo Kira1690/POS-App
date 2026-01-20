@@ -20,11 +20,14 @@ export interface BaseEntity {
 }
 
 export enum OrderStatus {
+  DRAFT = 'draft',
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
   PREPARING = 'preparing',
   READY = 'ready',
   SERVED = 'served',
+  PAID = 'paid',
+  COMPLETED = 'completed',
   CANCELLED = 'cancelled',
 }
 
@@ -49,6 +52,7 @@ export enum TableStatus {
   RESERVED = 'reserved',
   CLEANING = 'cleaning',
   OUT_OF_ORDER = 'out_of_order',
+  OUT_OF_SERVICE = 'out_of_service',
 }
 
 export interface NotificationData {

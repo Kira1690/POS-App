@@ -69,13 +69,13 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
       style={StyleSheet.flatten([
         styles.skeleton,
         {
-          width,
+          width: width as ViewStyle['width'],
           height,
           borderRadius,
           backgroundColor: animatedBackgroundColor,
         },
         style,
-      ])}
+      ]) as any}
     />
   );
 };

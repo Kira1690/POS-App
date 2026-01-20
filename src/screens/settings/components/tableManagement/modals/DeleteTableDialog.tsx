@@ -290,7 +290,7 @@ export const DeleteTableDialog: React.FC<DeleteTableDialogProps> = ({
             />
             <AppleButton
               title="Delete Table"
-              variant="danger"
+              variant="destructive"
               size="medium"
               icon={
                 <Icon

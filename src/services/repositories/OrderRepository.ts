@@ -76,6 +76,8 @@ export class OrderRepository implements IOrderRepository {
       pendingSync: true,
       createdAt: data.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      created_at: data.created_at || data.createdAt || new Date().toISOString(),
+      updated_at: data.updated_at || new Date().toISOString(),
     };
 
     orders.push(newOrder);

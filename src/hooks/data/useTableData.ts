@@ -79,12 +79,12 @@ export function useTableData(): UseTableDataResult {
   // Load tables
   const loadTables = useCallback(async (restaurantId?: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
-      const response = await tableService.getTables({ restaurantId });
+      const tables = await tableService.getTables(restaurantId || '');
       setState(prev => ({
         ...prev,
-        tables: response.data || [],
+        tables: tables || [],
         isLoading: false,
         lastUpdated: new Date(),
       }));

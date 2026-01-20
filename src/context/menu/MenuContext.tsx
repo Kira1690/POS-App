@@ -1200,7 +1200,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
     async (id: string, data: UpdateComboRequest): Promise<ComboDeal> => {
       const previousCombo = state.combos.find((c) => c.id === id);
       const updated = { ...previousCombo, ...data, updated_at: new Date().toISOString() };
-      dispatch({ type: 'UPDATE_COMBO', payload: { id, data: updated } });
+      dispatch({ type: 'UPDATE_COMBO', payload: { id, data: updated as Partial<ComboDeal> } });
       emitEvent('COMBO_UPDATED', { comboId: id, previousValue: previousCombo, newValue: updated });
       return updated as ComboDeal;
     },
@@ -1272,9 +1272,10 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       const nutritionalInfo: NutritionalInfo = {
         id: `nutr_${itemId}`,
         menu_item_id: itemId,
-        nutritional_facts: data.nutritional_facts || {
+        nutritional_facts: {
           serving_size: '',
           calories: 0,
+          ...data.nutritional_facts,
         },
         allergens: data.allergens || [],
         dietary_tags: data.dietary_tags || [],

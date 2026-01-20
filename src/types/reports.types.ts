@@ -1,7 +1,7 @@
 export interface SalesReport {
   id: string;
   date: string;
-  period: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  period: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
   revenue: {
     total: number;
     cash: number;

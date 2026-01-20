@@ -50,6 +50,7 @@ export interface SystemAlert {
   message: string;
   timestamp: string;
   acknowledged: boolean;
+  source?: string; // Source of the alert (e.g., system, module name)
 }
 
 export interface HappyHourSchedule {

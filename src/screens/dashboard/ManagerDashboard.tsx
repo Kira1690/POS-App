@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgeText: {
-    color: theme.colors.onPrimary,
+    color: '#FFFFFF', // onPrimary color
     fontSize: 12,
     fontWeight: '700',
   },
@@ -564,11 +564,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
   },
-  placeholderText: {
-    ...typography.bodyMedium,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -584,7 +579,7 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   actionText: {
-    color: theme.colors.onPrimary,
+    color: '#FFFFFF', // onPrimary color
     ...typography.bodyMedium,
     fontWeight: '600',
     marginLeft: spacing.xs,

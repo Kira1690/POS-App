@@ -342,7 +342,7 @@ export class MockMenuManagementService {
     };
 
     this.mockMenuItems.push(newItem);
-    
+
     // Update category stats
     const categoryIndex = this.mockCategories.findIndex(cat => cat.id === data.category_id);
     if (categoryIndex !== -1) {
@@ -351,6 +351,49 @@ export class MockMenuManagementService {
     }
 
     return newItem;
+  }
+
+  /**
+   * Update menu item
+   */
+  async updateMenuItem(id: string, data: UpdateMenuItemRequest): Promise<MenuItemWithStats> {
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    const itemIndex = this.mockMenuItems.findIndex(item => item.id === id);
+    if (itemIndex === -1) {
+      throw new Error('Menu item not found');
+    }
+
+    const item = this.mockMenuItems[itemIndex];
+    this.mockMenuItems[itemIndex] = {
+      ...item,
+      ...data,
+      updated_at: new Date().toISOString(),
+    };
+
+    return this.mockMenuItems[itemIndex];
+  }
+
+  /**
+   * Delete menu item
+   */
+  async deleteMenuItem(id: string): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const itemIndex = this.mockMenuItems.findIndex(item => item.id === id);
+    if (itemIndex === -1) {
+      throw new Error('Menu item not found');
+    }
+
+    // Update category stats
+    const item = this.mockMenuItems[itemIndex];
+    const categoryIndex = this.mockCategories.findIndex(cat => cat.id === item.category_id);
+    if (categoryIndex !== -1) {
+      this.mockCategories[categoryIndex].stats.itemCount -= 1;
+      this.mockCategories[categoryIndex].updated_at = new Date().toISOString();
+    }
+
+    this.mockMenuItems.splice(itemIndex, 1);
   }
 
   /**
@@ -381,14 +424,16 @@ export class MockMenuManagementService {
         break;
         
       case 'update_price':
-        if (operation.data?.price_adjustment) {
+        if (operation.data?.price_adjustment !== undefined) {
+          const priceAdjustment = operation.data.price_adjustment;
+          const adjustmentType = operation.data.price_adjustment_type;
           operation.itemIds.forEach(itemId => {
             const item = this.mockMenuItems.find(i => i.id === itemId);
-            if (item && operation.data) {
-              if (operation.data.price_adjustment_type === 'percentage') {
-                item.price = item.price * (1 + operation.data.price_adjustment / 100);
+            if (item) {
+              if (adjustmentType === 'percentage') {
+                item.price = item.price * (1 + priceAdjustment / 100);
               } else {
-                item.price += operation.data.price_adjustment;
+                item.price += priceAdjustment;
               }
             }
           });

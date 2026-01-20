@@ -72,11 +72,11 @@ export const MenuEditorTabs: React.FC<MenuEditorTabsProps> = ({
       color: theme.colors.onSurfaceVariant,
     },
     tabLabelActive: {
-      color: theme.colors.primary,
+      color: theme.colors.tertiary,
       fontWeight: '600',
     },
     badge: {
-      backgroundColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.tertiaryContainer,
       paddingHorizontal: theme.spacing.xs,
       paddingVertical: 2,
       borderRadius: theme.borderRadius.full,
@@ -84,15 +84,15 @@ export const MenuEditorTabs: React.FC<MenuEditorTabsProps> = ({
       alignItems: 'center',
     },
     badgeActive: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     badgeText: {
       fontSize: 11,
       fontWeight: '600',
-      color: theme.colors.primary,
+      color: theme.colors.tertiary,
     },
     badgeTextActive: {
-      color: theme.colors.white,
+      color: '#FFFFFF',
     },
   });
 

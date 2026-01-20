@@ -344,7 +344,7 @@ class PerformanceAnalyticsService {
       }, {});
 
     const topSlowComponents = Object.entries(slowComponents)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 5)
       .map(([component]) => component);
 

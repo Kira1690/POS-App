@@ -132,9 +132,9 @@ export default function AdvancedFeaturesScreen() {
         `Enter your manager PIN to authorize ${type.replace('_', ' ')}:`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Authorize', 
-            onPress: async (pin) => {
+          {
+            text: 'Authorize',
+            onPress: async (pin: string | undefined) => {
               try {
                 switch (type) {
                   case 'price':

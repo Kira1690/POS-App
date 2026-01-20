@@ -13,10 +13,10 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { ExtendedOrderItem } from '@/types/order-extended.types';
+import { UnifiedOrderItem } from '@/types/unified-order.types';
 
 interface OrderCartProps {
-  items: ExtendedOrderItem[];
+  items: UnifiedOrderItem[];
   subtotal: number;
   taxAmount: number;
   discountAmount: number;
@@ -25,14 +25,14 @@ interface OrderCartProps {
   guestCount?: number;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
-  onEditItem: (item: ExtendedOrderItem) => void;
+  onEditItem: (item: UnifiedOrderItem) => void;
   onClearCart: () => void;
   onSendToKitchen: () => void;
   isSubmitting?: boolean;
 }
 
 interface CartItemRowProps {
-  item: ExtendedOrderItem;
+  item: UnifiedOrderItem;
   onUpdateQuantity: (quantity: number) => void;
   onRemove: () => void;
   onEdit: () => void;
@@ -136,19 +136,19 @@ const CartItemRow: React.FC<CartItemRowProps> = React.memo(
               <View style={styles.modifiers}>
                 {item.selectedModifiers.map((mod, index) => (
                   <Text key={index} style={styles.modifier}>
-                    + {mod.name}
-                    {mod.priceAdjustment > 0 && ` (+${formatPrice(mod.priceAdjustment)})`}
+                    + {mod.name ?? mod.groupName}
+                    {(mod.priceAdjustment ?? 0) > 0 && ` (+${formatPrice(mod.priceAdjustment ?? 0)})`}
                   </Text>
                 ))}
               </View>
             )}
-            {item.notes && (
+            {item.specialInstructions && (
               <Text style={styles.notes} numberOfLines={1}>
-                Note: {item.notes}
+                Note: {item.specialInstructions}
               </Text>
             )}
           </View>
-          <Text style={styles.price}>{formatPrice(item.unitPrice)}</Text>
+          <Text style={styles.price}>{formatPrice(item.basePrice)}</Text>
         </View>
 
         <View style={styles.footer}>
@@ -193,7 +193,7 @@ const CartItemRow: React.FC<CartItemRowProps> = React.memo(
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.itemTotal}>{formatPrice(item.totalPrice)}</Text>
+          <Text style={styles.itemTotal}>{formatPrice(item.itemTotal)}</Text>
         </View>
       </View>
     );
@@ -388,7 +388,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: ExtendedOrderItem }) => (
+    ({ item }: { item: UnifiedOrderItem }) => (
       <CartItemRow
         item={item}
         onUpdateQuantity={(quantity) => onUpdateQuantity(item.id, quantity)}
@@ -399,7 +399,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({
     [onUpdateQuantity, onRemoveItem, onEditItem]
   );
 
-  const keyExtractor = useCallback((item: ExtendedOrderItem) => item.id, []);
+  const keyExtractor = useCallback((item: UnifiedOrderItem) => item.id, []);
 
   const ListEmptyComponent = useMemo(
     () => (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ViewStyle, GestureResponderEvent } from 'react-native';
+import { Pressable, ViewStyle, StyleProp, GestureResponderEvent } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 
 // SOLID PRINCIPLES IMPLEMENTATION:
@@ -29,8 +29,14 @@ interface AppleInteractiveProps {
   touchTarget?: 'small' | 'medium' | 'large' | 'auto';
 
   // UNIVERSAL STYLING SYSTEM (extensible)
-  style?: ViewStyle;
-  pressedStyle?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
+  pressedStyle?: StyleProp<ViewStyle>;
+
+  // ACCESSIBILITY SYSTEM
+  accessibilityRole?: string;
+  accessibilityState?: Record<string, boolean | string>;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 // UNIVERSAL APPLE INTERACTIVE COMPONENT (Single Responsibility)

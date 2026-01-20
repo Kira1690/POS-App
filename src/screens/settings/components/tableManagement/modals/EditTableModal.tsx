@@ -583,7 +583,7 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({
               <Text style={styles.label}>Position</Text>
               <View style={styles.positionSection}>
                 <Text style={styles.positionText}>
-                  Row {table.position?.row || 2}, Column {table.position?.col || 3}
+                  X: {table.positionX ?? 0}, Y: {table.positionY ?? 0}
                 </Text>
                 <TouchableOpacity style={styles.actionButton} onPress={() => console.log('Adjust position')}>
                   <Icon
@@ -642,7 +642,7 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({
           <View style={styles.footer}>
             <AppleButton
               title="Delete"
-              variant="danger"
+              variant="destructive"
               size="medium"
               icon={
                 <Icon

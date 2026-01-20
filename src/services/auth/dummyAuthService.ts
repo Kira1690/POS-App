@@ -35,6 +35,10 @@ export class DummyAuthService implements IAuthService {
 
     const { identifier, password, isStaffLogin } = credentials;
 
+    if (!identifier) {
+      throw new Error('Login identifier is required');
+    }
+
     const user = findUserByCredentials(identifier, password, isStaffLogin);
 
     if (!user) {
@@ -296,12 +300,17 @@ export class DummyAuthService implements IAuthService {
     }
 
     // Mock session data
+    const now = new Date().toISOString();
+    const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     return [{
       id: 'session_1',
-      deviceInfo: 'Mobile App',
+      userId: this.currentUser.id,
+      device: 'Mobile App',
+      deviceInfo: 'React Native App',
       ipAddress: '192.168.1.100',
-      lastActive: new Date().toISOString(),
-      isCurrentSession: true,
+      createdAt: now,
+      expiresAt: futureDate,
+      isActive: true,
     }];
   }
 

@@ -160,8 +160,8 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(
     const renderDietaryTags = () => {
       if (!item.dietary_tags || item.dietary_tags.length === 0) return null;
 
-      return item.dietary_tags.slice(0, 3).map((tag: DietaryTag) => {
-        const tagInfo = DIETARY_TAGS_CONFIG[tag];
+      return item.dietary_tags.slice(0, 3).map((tag) => {
+        const tagInfo = DIETARY_TAGS_CONFIG[tag as DietaryTag];
         if (!tagInfo) return null;
 
         return (

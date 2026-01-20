@@ -667,6 +667,7 @@ export const STAFF_MANAGEMENT_DASHBOARD_DATA: StaffManagementDashboardData = {
       status: 'scheduled',
       scheduledDate: '2025-09-26',
       trainer: 'Tech Support Team',
+      certificateIssued: false,
     },
   ],
   recentActivity: [

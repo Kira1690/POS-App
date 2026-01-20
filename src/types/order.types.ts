@@ -174,3 +174,14 @@ export interface CancelOrderRequest {
   cancelled_by: string;
   refund_amount?: number;
 }
+
+// Paginated response interface for list endpoints
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
