@@ -83,14 +83,14 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
       alignItems: 'center',
       paddingVertical: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
       borderRadius: theme.borderRadius.md,
       gap: theme.spacing.xs,
     },
     addButtonText: {
       fontSize: 14,
       fontWeight: '600',
-      color: theme.colors.white,
+      color: '#FFFFFF',
     },
     loadingContainer: {
       flex: 1,
@@ -187,8 +187,8 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
       marginRight: theme.spacing.sm,
     },
     checkboxSelected: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
+      borderColor: theme.colors.tertiary,
     },
   });
 

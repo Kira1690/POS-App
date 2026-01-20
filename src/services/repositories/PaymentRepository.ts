@@ -132,8 +132,8 @@ export class PaymentRepository implements ISyncableRepository<ProfessionalPaymen
         const aVal = (a as any)[options.sortBy!];
         const bVal = (b as any)[options.sortBy!];
 
-        if (aVal < bVal) return options.sortDirection === 'asc' ? -1 : 1;
-        if (aVal > bVal) return options.sortDirection === 'asc' ? 1 : -1;
+        if (aVal < bVal) return options.sortOrder === 'asc' ? -1 : 1;
+        if (aVal > bVal) return options.sortOrder === 'asc' ? 1 : -1;
         return 0;
       });
     }
@@ -345,13 +345,13 @@ export class PaymentRepository implements ISyncableRepository<ProfessionalPaymen
     return payments.filter((p) => (p as any).pendingSync === true);
   }
 
-  async markSynced(ids: string[]): Promise<void> {
+  async markSynced(id: string, syncedAt: string): Promise<void> {
     const payments = await this.getAll();
 
     for (const payment of payments) {
-      if (ids.includes(payment.id)) {
+      if (payment.id === id) {
         (payment as any).pendingSync = false;
-        (payment as any).lastSyncedAt = new Date().toISOString();
+        (payment as any).lastSyncedAt = syncedAt;
       }
     }
 
@@ -364,6 +364,72 @@ export class PaymentRepository implements ISyncableRepository<ProfessionalPaymen
 
   async setLastSyncTime(time: string): Promise<void> {
     await this.adapter.set(`${this.syncKey}_lastSync`, time);
+  }
+
+  async markBatchSynced(ids: string[], syncedAt: string): Promise<void> {
+    const payments = await this.getAll();
+
+    for (const payment of payments) {
+      if (ids.includes(payment.id)) {
+        (payment as any).pendingSync = false;
+        (payment as any).lastSyncedAt = syncedAt;
+      }
+    }
+
+    await this.adapter.set(this.storageKey, payments);
+  }
+
+  // ============== ADDITIONAL INTERFACE METHODS ==============
+
+  async getByIds(ids: string[]): Promise<ProfessionalPayment[]> {
+    const payments = await this.getAll();
+    return payments.filter((p) => ids.includes(p.id));
+  }
+
+  async queryPaginated(
+    options: QueryOptions<ProfessionalPayment>,
+    page: number,
+    pageSize: number
+  ): Promise<PaginatedResult<ProfessionalPayment>> {
+    let payments = await this.getAll();
+
+    // Apply filters
+    if (options.filters) {
+      for (const [key, value] of Object.entries(options.filters)) {
+        if (value !== undefined && value !== null) {
+          payments = payments.filter((p) => (p as any)[key] === value);
+        }
+      }
+    }
+
+    // Apply sorting
+    if (options.sortBy) {
+      payments.sort((a, b) => {
+        const aVal = (a as any)[options.sortBy!];
+        const bVal = (b as any)[options.sortBy!];
+
+        if (aVal < bVal) return options.sortOrder === 'asc' ? -1 : 1;
+        if (aVal > bVal) return options.sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    const total = payments.length;
+    const offset = (page - 1) * pageSize;
+    const items = payments.slice(offset, offset + pageSize);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      hasMore: offset + pageSize < total,
+    };
+  }
+
+  async exists(id: string): Promise<boolean> {
+    const payment = await this.getById(id);
+    return payment !== null;
   }
 }
 

@@ -43,12 +43,24 @@ export class OrderService implements IOrderService {
       API_ENDPOINTS.ORDERS.BASE,
       { params }
     );
-    
+
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to get orders');
     }
-    
-    return response.data as PaginatedResponse<Order>;
+
+    // Transform ApiResponse to PaginatedResponse
+    const orders = response.data.data || [];
+    const page = params?.page || 1;
+    const limit = params?.limit || 10;
+    return {
+      data: orders,
+      total: orders.length,
+      page,
+      limit,
+      totalPages: Math.ceil(orders.length / limit),
+      hasNextPage: false,
+      hasPrevPage: page > 1,
+    };
   }
 
   async getOrder(orderId: string): Promise<Order> {
@@ -84,12 +96,102 @@ export class OrderService implements IOrderService {
       `${API_ENDPOINTS.ORDERS.BASE}/${orderId}/cancel`,
       { reason }
     );
-    
+
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || 'Failed to cancel order');
     }
-    
+
     return response.data.data;
+  }
+
+  async updateOrder(orderId: string, updates: Partial<Order>): Promise<Order> {
+    const response = await apiClient.patch<Order>(
+      `${API_ENDPOINTS.ORDERS.BASE}/${orderId}`,
+      updates
+    );
+
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || 'Failed to update order');
+    }
+
+    return response.data.data;
+  }
+
+  async deleteOrder(orderId: string): Promise<void> {
+    const response = await apiClient.delete(
+      `${API_ENDPOINTS.ORDERS.BASE}/${orderId}`
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to delete order');
+    }
+  }
+
+  async updateOrderItemStatus(
+    orderId: string,
+    itemId: string,
+    statusData: UpdateOrderItemStatusRequest
+  ): Promise<Order> {
+    const response = await apiClient.patch<Order>(
+      `${API_ENDPOINTS.ORDERS.BASE}/${orderId}/items/${itemId}/status`,
+      statusData
+    );
+
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || 'Failed to update order item status');
+    }
+
+    return response.data.data;
+  }
+
+  async markOrderReady(orderId: string): Promise<Order> {
+    return this.updateOrderStatus(orderId, { status: OrderStatus.READY });
+  }
+
+  async getOrdersByTable(tableId: string): Promise<Order[]> {
+    const response = await this.getOrders({ tableId });
+    return response.data || [];
+  }
+
+  async getOrdersByStatus(status: OrderStatus): Promise<Order[]> {
+    const response = await this.getOrders({ status: status as string });
+    return response.data || [];
+  }
+
+  async getOrdersByDateRange(startDate: string, endDate: string): Promise<Order[]> {
+    const response = await apiClient.get<Order[]>(
+      API_ENDPOINTS.ORDERS.BASE,
+      { params: { date_from: startDate, date_to: endDate } }
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to get orders by date range');
+    }
+
+    return response.data.data || [];
+  }
+
+  async getOrderStats(restaurantId: string, dateRange?: { start: string; end: string }): Promise<{
+    totalOrders: number;
+    totalRevenue: number;
+    averageOrderValue: number;
+    popularItems: Array<{ itemId: string; name: string; count: number }>;
+  }> {
+    const response = await apiClient.get(
+      `${API_ENDPOINTS.ORDERS.BASE}/stats`,
+      { params: { restaurantId, ...dateRange } }
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to get order stats');
+    }
+
+    return response.data.data || {
+      totalOrders: 0,
+      totalRevenue: 0,
+      averageOrderValue: 0,
+      popularItems: [],
+    };
   }
 
   async getCurrentOrders(restaurantId?: string): Promise<Order[]> {
@@ -116,12 +218,24 @@ export class OrderService implements IOrderService {
       API_ENDPOINTS.ORDERS.HISTORY,
       { params }
     );
-    
+
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to get order history');
     }
-    
-    return response.data as PaginatedResponse<Order>;
+
+    // Transform ApiResponse to PaginatedResponse
+    const orders = response.data.data || [];
+    const page = params?.page || 1;
+    const limit = params?.limit || 10;
+    return {
+      data: orders,
+      total: orders.length,
+      page,
+      limit,
+      totalPages: Math.ceil(orders.length / limit),
+      hasNextPage: false,
+      hasPrevPage: page > 1,
+    };
   }
 
   async addItemToOrder(orderId: string, item: {
@@ -430,17 +544,13 @@ class MockOrderService extends OrderService {
     );
 
     return {
-      success: true,
       data: sortedOrders,
-      message: 'Success',
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: sortedOrders.length,
-        totalPages: Math.ceil(sortedOrders.length / 10),
-        hasNext: false,
-        hasPrevious: false,
-      },
+      total: sortedOrders.length,
+      page: 1,
+      limit: 10,
+      totalPages: Math.ceil(sortedOrders.length / 10),
+      hasNextPage: false,
+      hasPrevPage: false,
     };
   }
 
@@ -450,12 +560,14 @@ class MockOrderService extends OrderService {
   private convertExtendedOrderToOrder(extOrder: ExtendedOrder): Order {
     // Map ExtendedOrderStatus to OrderStatus
     const statusMap: Record<ExtendedOrderStatus, OrderStatus> = {
+      'pending': OrderStatus.PENDING,
       'draft': OrderStatus.PENDING,
       'confirmed': OrderStatus.CONFIRMED,
       'preparing': OrderStatus.PREPARING,
       'ready': OrderStatus.READY,
       'served': OrderStatus.SERVED,
       'paid': OrderStatus.SERVED,
+      'completed': OrderStatus.SERVED,
       'cancelled': OrderStatus.CANCELLED,
     };
 

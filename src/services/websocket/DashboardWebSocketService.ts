@@ -41,8 +41,8 @@ export class DashboardWebSocketService {
   private config: DashboardWebSocketConfig;
   private callbacks: DashboardWebSocketCallbacks;
   private reconnectAttempts = 0;
-  private reconnectTimer: NodeJS.Timeout | null = null;
-  private heartbeatTimer: NodeJS.Timeout | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private isManuallyDisconnected = false;
 
   constructor(config: DashboardWebSocketConfig, callbacks: DashboardWebSocketCallbacks) {

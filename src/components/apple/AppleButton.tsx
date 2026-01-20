@@ -13,7 +13,7 @@ import { borderRadius, touchTargets } from '@/design-system/theme/spacing';
 
 interface AppleButtonProps {
   title: string;
-  onPress: () => void;
+  onPress?: () => void;
 
   // APPLE BUTTON VARIANTS (from reference images analysis)
   variant?: 'primary' | 'secondary' | 'ghost' | 'destructive' | 'success';

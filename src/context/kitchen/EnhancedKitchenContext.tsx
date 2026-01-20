@@ -23,14 +23,26 @@ import {
   KitchenTicket,
   TicketStatus,
   KitchenStation,
+  StationConfig,
   DEFAULT_STATION_CONFIGS,
   formatModifiersForDisplay,
 } from '@/types/kitchen-ticket.types';
+
 import { kitchenStorageService, orderStorageService, unifiedOrderStorageService } from '@/services/storage';
 import { ticketRoutingService } from '@/services/kitchen/TicketRoutingService';
 import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
 import { UnifiedOrderItem } from '@/types/unified-order.types';
+import { ExtendedOrderStatus } from '@/types/order-extended.types';
 import { generateTicketId } from '@/types/kitchen-ticket.types';
+
+// Convert DEFAULT_STATION_CONFIGS array to Record for type compatibility
+const STATION_CONFIGS_RECORD: Record<KitchenStation, StationConfig> = DEFAULT_STATION_CONFIGS.reduce(
+  (acc, config) => {
+    acc[config.station] = config;
+    return acc;
+  },
+  {} as Record<KitchenStation, StationConfig>
+);
 
 // ============== CONTEXT VALUE TYPE ==============
 
@@ -84,7 +96,7 @@ interface EnhancedKitchenProviderProps {
 export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(kitchenReducer, initialKitchenState);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load tickets from storage - loads ALL tickets (including history)
   const loadTickets = useCallback(async () => {
@@ -94,10 +106,24 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
       await kitchenStorageService.initialize();
       // Get ALL tickets (including served/completed) for history in "All" tab
       const tickets = await kitchenStorageService.getTickets();
-      const stationConfigs = await kitchenStorageService.getStationConfigs();
+      const rawStationConfigs = await kitchenStorageService.getStationConfigs();
+
+      // Convert array to record if needed
+      let stationConfigsRecord: Record<KitchenStation, StationConfig>;
+      if (Array.isArray(rawStationConfigs)) {
+        stationConfigsRecord = rawStationConfigs.reduce(
+          (acc, config) => {
+            acc[config.station] = config;
+            return acc;
+          },
+          {} as Record<KitchenStation, StationConfig>
+        );
+      } else {
+        stationConfigsRecord = rawStationConfigs || STATION_CONFIGS_RECORD;
+      }
 
       dispatch({ type: 'SET_TICKETS', payload: tickets });
-      dispatch({ type: 'SET_STATION_CONFIGS', payload: stationConfigs || DEFAULT_STATION_CONFIGS });
+      dispatch({ type: 'SET_STATION_CONFIGS', payload: stationConfigsRecord });
       dispatch({ type: 'SET_ERROR', payload: null });
     } catch (error) {
       console.error('[EnhancedKitchenContext] Load error:', error);
@@ -190,7 +216,7 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
             const anyPreparing = updatedOrderTickets.some(t => t.status === 'preparing');
             const allCancelled = updatedOrderTickets.every(t => t.status === 'cancelled');
 
-            let orderStatus: string;
+            let orderStatus: ExtendedOrderStatus;
             if (allCancelled) {
               orderStatus = 'cancelled';
             } else if (allServed) {
@@ -465,6 +491,11 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
             const ticketId = generateTicketId();
             const estimatedPrepTime = Math.max(...items.map(i => i.estimatedPrepTime || 10));
 
+            // Calculate allergen items
+            const allergenItemNames = items
+              .filter(i => (i.allergens?.length || 0) > 0)
+              .map(i => i.name);
+
             const ticket: KitchenTicket = {
               id: ticketId,
               orderId: order.id,
@@ -484,13 +515,18 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
                 allergens: item.allergens || [],
                 hasAllergenWarning: (item.allergens?.length || 0) > 0,
               })),
+              itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
+              completedItemCount: 0,
               status: 'pending',
               priority: 'normal',
               createdAt: now,
               updatedAt: now,
               estimatedPrepTime,
               hasAllergens: items.some(i => (i.allergens?.length || 0) > 0),
+              allergenItems: allergenItemNames,
+              isRush: false,
               isOverdue: false,
+              pendingSync: true,
             };
 
             // Save ticket to storage

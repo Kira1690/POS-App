@@ -132,7 +132,7 @@ const SalesChart: React.FC<SalesChartProps> = ({
             <View key={index} style={styles.barColumn}>
               <View style={styles.barWrapper}>
                 <LinearGradient
-                  colors={isToday ? colors.gradient : [colors.secondary, colors.secondary + '80']}
+                  colors={isToday ? colors.gradient as [string, string] : [colors.secondary, colors.secondary + '80'] as [string, string]}
                   style={[
                     styles.bar,
                     { 

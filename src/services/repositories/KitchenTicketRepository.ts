@@ -18,6 +18,7 @@ import {
   KitchenTicket,
   TicketStatus,
   KitchenStation,
+  TicketPriority,
   isTicketOverdue,
   getStationConfig,
 } from '@/types/kitchen-ticket.types';
@@ -403,7 +404,7 @@ export class KitchenTicketRepository implements IKitchenTicketRepository {
   }
 
   private sortByPriorityAndTime(tickets: KitchenTicket[]): KitchenTicket[] {
-    const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+    const priorityOrder: Record<TicketPriority, number> = { vip: 0, rush: 1, urgent: 2, high: 3, normal: 4, low: 5 };
 
     return [...tickets].sort((a, b) => {
       // First by overdue status

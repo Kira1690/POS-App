@@ -41,6 +41,9 @@ interface AppleContentPanelProps {
 
   // UNIVERSAL STYLING SYSTEM (extensible)
   style?: ViewStyle;
+
+  // PULL TO REFRESH SYSTEM
+  refreshControl?: React.ReactElement;
 }
 
 // UNIVERSAL APPLE CONTENT PANEL COMPONENT (Single Responsibility)

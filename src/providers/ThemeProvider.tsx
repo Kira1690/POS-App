@@ -2,8 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { ThemeContext as CustomThemeContext } from '../hooks/useTheme';
-import { themes, createTheme, getResponsiveTheme, type Theme } from '../design-system/theme';
-import { lightTheme, darkTheme } from '../design-system/theme/colors';
+import { ProfessionalTheme, DarkTheme } from '../constants/theme';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -21,7 +20,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   //   }
   // }, [systemColorScheme]);
 
-  const theme = createTheme(colorScheme);
+  // Use the theme from constants/theme.ts which matches the expected type
+  const theme = colorScheme === 'dark' ? DarkTheme : ProfessionalTheme;
   const isDark = colorScheme === 'dark';
 
   const toggleTheme = () => {
@@ -59,9 +59,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       outlineVariant: theme.colors.outlineVariant,
       shadow: theme.colors.shadow,
       scrim: theme.colors.scrim,
-      inverseSurface: isDark ? lightTheme.surface : darkTheme.surface,
-      inverseOnSurface: isDark ? lightTheme.onSurface : darkTheme.onSurface,
-      inversePrimary: isDark ? lightTheme.primary : darkTheme.primary,
+      inverseSurface: isDark ? ProfessionalTheme.colors.surface : DarkTheme.colors.surface,
+      inverseOnSurface: isDark ? ProfessionalTheme.colors.onSurface : DarkTheme.colors.onSurface,
+      inversePrimary: isDark ? ProfessionalTheme.colors.primary : DarkTheme.colors.primary,
       elevation: {
         level0: theme.colors.surface,
         level1: theme.colors.surfaceVariant,

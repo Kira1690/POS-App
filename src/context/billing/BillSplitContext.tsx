@@ -100,15 +100,19 @@ export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }
         // Convert state to BillSplit format for storage
         const billSplit: BillSplit = {
           orderId: state.order!.id,
-          type: state.splitType,
+          orderNumber: state.order!.orderNumber || '',
+          splitType: state.splitType,
           guestCount: state.guestCount,
-          splits: state.guestSplits,
-          subtotal: state.subtotal,
-          taxAmount: state.taxAmount,
-          discountAmount: state.discountAmount,
-          tipAmount: state.tipAmount,
-          total: state.total,
-          paymentStatus: state.remainingAmount <= 0 ? 'completed' : 'pending',
+          guests: state.guestSplits,
+          originalSubtotal: state.subtotal,
+          originalTaxAmount: state.taxAmount,
+          originalTipAmount: state.tipAmount,
+          originalTotal: state.total,
+          unassignedItems: [],
+          totalAmount: state.total,
+          paidAmount: state.total - state.remainingAmount,
+          remainingAmount: state.remainingAmount,
+          isComplete: state.remainingAmount <= 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -143,13 +147,13 @@ export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }
         }
         // Restore the existing split configuration
         dispatch({ type: 'SET_ORDER', payload: { order, items } });
-        dispatch({ type: 'SET_SPLIT_TYPE', payload: existingSplit.type });
-        dispatch({ type: 'SET_GUEST_COUNT', payload: existingSplit.guestCount });
-        if (existingSplit.tipAmount) {
-          dispatch({ type: 'SET_TIP_AMOUNT', payload: existingSplit.tipAmount });
+        dispatch({ type: 'SET_SPLIT_TYPE', payload: existingSplit.splitType });
+        dispatch({ type: 'SET_GUEST_COUNT', payload: existingSplit.guestCount ?? 1 });
+        if (existingSplit.originalTipAmount) {
+          dispatch({ type: 'SET_TIP_AMOUNT', payload: existingSplit.originalTipAmount });
         }
         // Recalculate splits to restore state
-        if (existingSplit.type === 'equal') {
+        if (existingSplit.splitType === 'equal') {
           dispatch({ type: 'CALCULATE_EQUAL_SPLITS' });
         }
       } else {

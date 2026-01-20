@@ -7,18 +7,21 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { OrderStatus } from '@/types/common.types';
+import { UnifiedOrderStatus } from '@/types/unified-order.types';
 import { useTheme } from '@/hooks/useTheme';
 import { typography } from '@/design-system/theme/typography';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 
+type StatusType = OrderStatus | UnifiedOrderStatus;
+
 interface OrderStatusBadgeProps {
-  status: OrderStatus;
+  status: StatusType;
   size?: 'small' | 'medium' | 'large';
   showIcon?: boolean;
   style?: any;
 }
 
-const getStatusConfig = (status: OrderStatus, theme: any) => {
+const getStatusConfig = (status: StatusType, theme: any) => {
   // Defensive: fallback if theme or theme.colors.status doesn't exist
   // Using distinct colors for each status - matching theme.ts and colors.ts
   // CONFIRMED=Green, PREPARING=Purple, READY=Cyan for easy visual distinction

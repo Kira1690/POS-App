@@ -15,11 +15,12 @@ export type { DiscountModalProps, DiscountData } from './DiscountModal';
 export { ComboSelectionModal } from './ComboSelectionModal';
 export type {
   ComboSelectionModalProps,
-  ComboDeal,
-  ComboComponent,
-  ComboOption,
-  SelectedComboOption,
+  ComboItemSelection,
+  ComboSelectionResult,
 } from './ComboSelectionModal';
+
+// Re-export ComboDeal from menu types for convenience
+export type { ComboDeal } from '@/types/menu-management-extended.types';
 
 // Quantity Modal
 export { QuantityModal } from './QuantityModal';

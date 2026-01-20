@@ -259,8 +259,8 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
       borderColor: 'transparent',
     },
     iconOptionSelected: {
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      borderColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     toggleRow: {
       flexDirection: 'row',
@@ -306,7 +306,7 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     saveButton: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     saveButtonDisabled: {
       opacity: 0.6,
@@ -468,7 +468,7 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                       size={22}
                       color={
                         formData.icon === icon
-                          ? theme.colors.primary
+                          ? theme.colors.tertiary
                           : theme.colors.onSurfaceVariant
                       }
                       accessibilityLabel=""
@@ -495,8 +495,8 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                 <Switch
                   value={formData.is_active}
                   onValueChange={(value) => setFormData((prev) => ({ ...prev, is_active: value }))}
-                  trackColor={{ false: theme.colors.outline, true: theme.colors.primaryLight }}
-                  thumbColor={formData.is_active ? theme.colors.primary : theme.colors.surface}
+                  trackColor={{ false: theme.colors.outline, true: theme.colors.tertiaryContainer }}
+                  thumbColor={formData.is_active ? theme.colors.tertiary : theme.colors.surface}
                   accessibilityLabel="Toggle category active status"
                 />
               </View>

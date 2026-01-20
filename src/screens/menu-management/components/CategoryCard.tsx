@@ -41,7 +41,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }
     },
     inactiveCard: {
       opacity: 0.8,
-      borderColor: theme.colors.outlineLight,
+      borderColor: theme.colors.borderLight,
     },
     statusBadge: {
       position: 'absolute',
@@ -132,7 +132,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }
     },
     editButtonText: {
       ...theme.typography.caption,
-      color: theme.colors.onSurfaceOnPrimary,
+      color: theme.colors.onPrimary,
       fontSize: 10,
       fontWeight: '600',
     },
@@ -141,7 +141,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }
     },
     itemsButtonText: {
       ...theme.typography.caption,
-      color: theme.colors.onSurfaceOnPrimary,
+      color: theme.colors.onPrimary,
       fontSize: 10,
       fontWeight: '600',
     },
@@ -150,7 +150,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }
     },
     toggleButtonText: {
       ...theme.typography.caption,
-      color: theme.colors.onSurfaceOnPrimary,
+      color: theme.colors.onPrimary,
       fontSize: 10,
       fontWeight: '600',
     },
@@ -160,7 +160,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }
     },
     deleteHint: {
       ...theme.typography.caption,
-      color: theme.colors.onSurfaceLight,
+      color: theme.colors.textLight,
       fontSize: 9,
       fontStyle: 'italic',
     },
@@ -261,168 +261,3 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onAction }
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    width: '48%',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginHorizontal: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.outline,
-    minHeight: 220,
-  },
-
-  inactiveCard: {
-    opacity: 0.8,
-    borderColor: theme.colors.outlineLight,
-  },
-
-  statusBadge: {
-    position: 'absolute',
-    top: theme.spacing.sm,
-    right: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: theme.borderRadius.xl,
-  },
-
-  statusText: {
-    ...theme.typography.caption,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-
-  header: {
-    marginBottom: theme.spacing.sm,
-    marginTop: theme.spacing.xs,
-  },
-
-  categoryName: {
-    ...theme.typography.h4,
-    color: theme.colors.onSurface,
-    marginBottom: 4,
-  },
-
-  inactiveText: {
-    color: theme.colors.onSurfaceSecondary,
-  },
-
-  itemCount: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurfaceSecondary,
-  },
-
-  description: {
-    ...theme.typography.body2,
-    color: theme.colors.onSurfaceSecondary,
-    marginBottom: theme.spacing.sm,
-    lineHeight: 16,
-  },
-
-  statsContainer: {
-    marginBottom: theme.spacing.sm,
-  },
-
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-
-  statLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurfaceSecondary,
-    flex: 1,
-  },
-
-  statValue: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurface,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'right',
-  },
-
-  popularItems: {
-    marginBottom: theme.spacing.sm,
-  },
-
-  popularTitle: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurface,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-
-  popularList: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurfaceSecondary,
-    fontSize: 10,
-    lineHeight: 12,
-  },
-
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.xs,
-    gap: 4,
-  },
-
-  actionButton: {
-    flex: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: theme.borderRadius.sm,
-    alignItems: 'center',
-  },
-
-  editButton: {
-    backgroundColor: theme.colors.info,
-  },
-
-  editButtonText: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurfaceOnPrimary,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-
-  itemsButton: {
-    backgroundColor: theme.colors.primary,
-  },
-
-  itemsButtonText: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurfaceOnPrimary,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-
-  toggleButton: {
-    backgroundColor: theme.colors.warning,
-  },
-
-  toggleButtonText: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurfaceOnPrimary,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-
-  deleteArea: {
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-
-  deleteHint: {
-    ...theme.typography.caption,
-    color: theme.colors.onSurfaceLight,
-    fontSize: 9,
-    fontStyle: 'italic',
-  },
-});

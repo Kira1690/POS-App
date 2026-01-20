@@ -92,10 +92,11 @@ export const AppleSidebar: React.FC<AppleSidebarProps> = ({
   useEffect(() => {
     if (collapsible) {
       loadSidebarState().then((savedCollapsed) => {
-        setIsCollapsed(savedCollapsed);
+        const collapsed = savedCollapsed ?? defaultCollapsed;
+        setIsCollapsed(collapsed);
         // Immediately set width without animation on mount
-        sidebarWidth.setValue(getSidebarWidth(savedCollapsed));
-        textOpacity.setValue(savedCollapsed ? 0 : 1);
+        sidebarWidth.setValue(getSidebarWidth(collapsed));
+        textOpacity.setValue(collapsed ? 0 : 1);
       });
     }
   }, [collapsible]);
@@ -218,7 +219,7 @@ export const AppleSidebar: React.FC<AppleSidebarProps> = ({
     },
     badge: {
       backgroundColor: theme.colors.error,
-      borderRadius: borderRadius.pill as number,
+      borderRadius: borderRadius.full,
       paddingHorizontal: 6,
       paddingVertical: 2,
       minWidth: 18,

@@ -45,7 +45,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
     },
 
     periodButtonActive: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
 
     periodButtonText: {
@@ -55,7 +55,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
     },
 
     periodButtonTextActive: {
-      color: theme.colors.onSurfaceOnPrimary,
+      color: '#FFFFFF',
     },
 
     chartsGrid: {

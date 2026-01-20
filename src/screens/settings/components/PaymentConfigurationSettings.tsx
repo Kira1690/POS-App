@@ -61,7 +61,7 @@ export default function PaymentConfigurationSettings({ onChangesDetected }: Paym
     setConfig({
       ...config,
       [section]: {
-        ...config[section as keyof PaymentConfiguration],
+        ...(config as Record<string, any>)[section],
         [field]: value,
       },
     });

@@ -261,8 +261,8 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       borderColor: 'transparent',
     },
     iconOptionSelected: {
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      borderColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     footer: {
       flexDirection: 'row',
@@ -286,7 +286,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     saveButton: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     saveButtonDisabled: {
       opacity: 0.6,
@@ -440,7 +440,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                       size={22}
                       color={
                         formData.icon === icon
-                          ? theme.colors.primary
+                          ? theme.colors.tertiary
                           : theme.colors.onSurfaceSecondary
                       }
                       accessibilityLabel=""

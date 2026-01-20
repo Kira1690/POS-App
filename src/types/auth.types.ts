@@ -15,10 +15,12 @@ export interface User {
   id: string;
   first_name: string;
   last_name: string;
+  name?: string; // Full name (computed from first_name + last_name)
   email: string;
   phone_number: string;
   role: UserRole;
   employee_id?: string;
+  employeeId?: string; // Alias for employee_id (backward compatibility)
   default_restaurant_id?: string;
   is_active: boolean;
   created_at: string;
@@ -32,10 +34,15 @@ export interface Restaurant {
   phone?: string;
   email?: string;
   manager_id?: string;
-  timezone: string;
+  timezone?: string;
   operating_hours?: Record<string, any>;
   settings?: Record<string, any>;
-  is_active: boolean;
+  is_active?: boolean;
+  isActive?: boolean; // Alias for is_active (backward compatibility)
+  created_at?: string;
+  createdAt?: string; // Alias for created_at (backward compatibility)
+  updated_at?: string;
+  updatedAt?: string; // Alias for updated_at (backward compatibility)
 }
 
 export interface AuthTokens {
@@ -47,8 +54,10 @@ export interface AuthTokens {
 export interface LoginRequest {
   email?: string;
   employee_id?: string;
+  identifier?: string; // Generic identifier (email or employee_id)
   password: string;
   restaurantId?: string;
+  isStaffLogin?: boolean; // Flag for staff (employee_id) vs manager (email) login
 }
 
 export interface LoginResponse {

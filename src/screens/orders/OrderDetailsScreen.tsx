@@ -66,7 +66,7 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
 
   const handlePrint = useCallback((type: 'KOT' | 'Receipt') => {
     // Print functionality would be implemented here
-    console.log(`Printing ${type} for order ${order?.order_number}`);
+    console.log(`Printing ${type} for order ${order?.orderNumber}`);
   }, [order]);
 
   // Error state for missing order
@@ -106,16 +106,16 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
       
       {/* Actions Section */}
       <View style={styles.actionsSection}>
-        <OrderStatusManager 
-          order={order}
-          onStatusUpdate={updateOrderStatus}
+        <OrderStatusManager
+          order={order as any}
+          onStatusUpdate={(orderId, newStatus) => updateOrderStatus(orderId, newStatus as any)}
           loading={isLoadingDetails}
         />
         <OrderActionPanel
-          order={order}
+          order={order as any}
           onPrint={handlePrint}
-          onPayment={order.status === OrderStatus.READY ? handlePaymentNavigation : undefined}
-          onCancelOrder={cancelOrder}
+          onPayment={order.status === 'ready' ? handlePaymentNavigation : undefined}
+          onCancelOrder={(orderId) => cancelOrder(orderId, 'Cancelled by user')}
           loading={isLoadingDetails}
         />
       </View>

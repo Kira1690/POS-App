@@ -153,7 +153,7 @@ export const AppleProgressBar: React.FC<AppleProgressBarProps> = ({
       width: progressWidth,
       height: sizeSpecs.height,
       backgroundColor: colors.track,
-      borderRadius: borderRadius.pill as number, // Perfect pill shape like Apple
+      borderRadius: borderRadius.full, // Perfect pill shape like Apple
       overflow: 'hidden',
       // Apple subtle shadow for depth
       shadowColor: '#000000',
@@ -166,7 +166,7 @@ export const AppleProgressBar: React.FC<AppleProgressBarProps> = ({
       height: '100%',
       width: `${percentage}%`,
       backgroundColor: colors.fill,
-      borderRadius: borderRadius.pill as number, // Maintains pill shape
+      borderRadius: borderRadius.full, // Maintains pill shape
       // Apple progress glow effect
       shadowColor: colors.fill,
       shadowOffset: { width: 0, height: 0 },

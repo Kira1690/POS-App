@@ -189,7 +189,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
 
   const renderApiCard = (api: any) => (
     <View key={api.id} style={styles.apiCard}>
-      <View style={[styles.apiIcon, styles[`apiIcon${api.id}`]]}>
+      <View style={styles.apiIcon}>
         <Icon name={api.iconName} size={16} color={theme.colors.onPrimary} />
       </View>
       <View style={styles.apiInfo}>
@@ -203,7 +203,7 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
         <Text style={styles.apiUrl}>{api.url}</Text>
       </View>
       <TouchableOpacity
-        style={[styles.apiButton, styles[`apiButton${api.status}`]]}
+        style={[styles.apiButton, api.status === 'connected' && styles.apiButtonconnected]}
         onPress={() => handleApiTest(api.id)}
       >
         <Text style={styles.apiButtonText}>
@@ -458,6 +458,10 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
       color: theme.colors.onSurface,
       marginBottom: 8,
     },
+    networkInfo: {
+      flex: 1,
+      marginBottom: 10,
+    },
     networkDetail: {
       fontSize: 12,
       color: theme.colors.onSurfaceVariant,
@@ -515,6 +519,10 @@ export default function DeviceHardwareSettings({ onChangesDetected }: DeviceHard
       fontWeight: 'bold',
       color: theme.colors.onSurface,
       marginBottom: 8,
+    },
+    healthInfo: {
+      flex: 1,
+      marginBottom: 10,
     },
     healthDetail: {
       fontSize: 12,

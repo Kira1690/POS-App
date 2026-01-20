@@ -39,7 +39,11 @@ export function useOrderValidation(): UseOrderValidationResult {
     try {
       // Delegate to DI service
       const result = await businessLogic.validateOrder(order);
-      return result;
+      return {
+        isValid: result.isValid,
+        errors: result.errors,
+        warnings: [], // Context doesn't provide warnings
+      };
     } catch (error) {
       return {
         isValid: false,
@@ -53,7 +57,12 @@ export function useOrderValidation(): UseOrderValidationResult {
   const validateCartItems = useCallback((items: CartItem[]): OrderValidationResult => {
     try {
       // Delegate to DI service
-      return businessLogic.validateCartItems(items);
+      const result = businessLogic.validateCartItems(items);
+      return {
+        isValid: result.isValid,
+        errors: result.errors,
+        warnings: [], // Context doesn't provide warnings
+      };
     } catch (error) {
       return {
         isValid: false,
@@ -66,8 +75,12 @@ export function useOrderValidation(): UseOrderValidationResult {
   // Validate table assignment
   const validateTableAssignment = useCallback((tableId: string): { canAssign: boolean; message?: string } => {
     try {
-      // Delegate to DI service
-      return businessLogic.checkTableConstraints(tableId);
+      // Delegate to DI service - map isValid to canAssign
+      const result = businessLogic.checkTableConstraints(tableId);
+      return {
+        canAssign: result.isValid,
+        message: result.message,
+      };
     } catch (error) {
       return {
         canAssign: false,
@@ -92,8 +105,13 @@ export function useOrderValidation(): UseOrderValidationResult {
   // Validate order constraints
   const validateOrderConstraints = useCallback((order: Order): OrderValidationResult => {
     try {
-      // Delegate to DI service
-      return businessLogic.checkOrderConstraints(order);
+      // Delegate to DI service - map canProceed to isValid
+      const result = businessLogic.checkOrderConstraints(order);
+      return {
+        isValid: result.canProceed,
+        errors: result.canProceed ? [] : result.warnings, // Treat warnings as errors if can't proceed
+        warnings: result.canProceed ? result.warnings : [],
+      };
     } catch (error) {
       return {
         isValid: false,

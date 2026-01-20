@@ -42,6 +42,7 @@ export interface SessionInfo {
   id: string;
   userId: string;
   device: string;
+  deviceInfo?: string; // Additional device information
   ipAddress: string;
   createdAt: string;
   expiresAt: string;

@@ -296,6 +296,7 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
 
   const handleDuplicateCombo = useCallback(async (combo: ComboDeal) => {
     const newCombo = {
+      restaurant_id: combo.restaurant_id,
       name: `${combo.name} (Copy)`,
       description: combo.description,
       combo_items: combo.combo_items,

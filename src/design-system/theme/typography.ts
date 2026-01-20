@@ -346,6 +346,15 @@ export const typography = {
     letterSpacing: 0.2,
     textTransform: 'uppercase' as const,
   },
+
+  // Caption style for small descriptive text
+  caption: {
+    fontFamily: fontFamilies.regular,
+    fontWeight: fontWeights.regular,
+    fontSize: getFontSize(11),
+    lineHeight: getFontSize(14),
+    letterSpacing: 0.4,
+  },
 } as const;
 
 // Professional responsive typography helpers for enterprise environment

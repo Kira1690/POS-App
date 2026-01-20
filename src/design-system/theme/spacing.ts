@@ -23,30 +23,35 @@ export const spacing = {
 export const borderRadius = {
   // CORE UNIVERSAL TOKENS (Single Responsibility - each serves one purpose)
   none: 0,
-  xs: 8,     // Small elements (badges, small pills) - Apple minimum
-  sm: 12,    // Medium elements (search bars, small buttons) - Apple standard
-  md: 16,    // Large elements (standard cards, inputs) - Apple preferred
-  lg: 20,    // Extra large elements (large cards, panels) - Apple generous
-  xl: 24,    // Hero elements (modals, major panels) - Apple maximum
+  xs: 10,    // Small elements (badges, small pills) - Apple minimum
+  sm: 14,    // Medium elements (search bars, small buttons) - Apple standard
+  md: 20,    // Large elements (standard cards, inputs) - Apple preferred
+  lg: 24,    // Extra large elements (large cards, panels) - Apple generous
+  xl: 28,    // Hero elements (modals, major panels) - Apple maximum
   pill: '50%', // Perfect pills (toggles, status indicators) - Apple signature
   full: 9999,  // Circular elements (avatars, circular buttons)
 
   // APPLE REFERENCE IMAGE SPECIFICATIONS (Open/Closed - extensible)
   // Based on direct measurements from the 5 Apple reference images
-  appleSmall: 12,    // Small Apple elements (icons, badges)
-  appleMedium: 16,   // Medium Apple elements (buttons, inputs)
-  appleLarge: 20,    // Large Apple elements (cards, panels)
-  appleXLarge: 24,   // Extra large Apple elements (modals, hero sections)
+  appleSmall: 14,    // Small Apple elements (icons, badges)
+  appleMedium: 20,   // Medium Apple elements (buttons, inputs)
+  appleLarge: 24,    // Large Apple elements (cards, panels)
+  appleXLarge: 28,   // Extra large Apple elements (modals, hero sections)
   applePill: '50%',  // Apple perfect pills (toggles, status)
 
   // UNIVERSAL COMPONENT TOKENS (Interface Segregation - focused purposes)
   // These can be used anywhere without component-specific dependencies
-  universalCard: 20,        // Universal card radius - works everywhere
+  universalCard: 24,        // Universal card radius - works everywhere
   universalButton: 22,      // Universal button radius - Apple optimized
-  universalInput: 16,       // Universal input radius - Apple standard
-  universalModal: 24,       // Universal modal radius - Apple hero
+  universalInput: 18,       // Universal input radius - Apple standard
+  universalModal: 28,       // Universal modal radius - Apple hero
   universalToggle: '50%',   // Universal toggle radius - Apple pill
   universalBadge: 12,       // Universal badge radius - Apple small
+
+  // Backward compatibility aliases
+  button: 22,               // Alias for universalButton
+  card: 24,                 // Alias for universalCard
+  input: 18,                // Alias for universalInput
 } as const;
 
 // Apple Tahoe Shadow system following Apple's design language
@@ -276,6 +281,9 @@ export const touchTargets = {
   formInput: 56, // Form input fields
   roleButton: 48, // Role selection buttons
   biometricButton: 72, // Biometric authentication
+  quantityButton: 28, // Cart quantity buttons
+  iconButton: 36, // Icon-only buttons
+  searchInput: 40, // Search input height
 } as const;
 
 export type SpacingKey = keyof typeof spacing;

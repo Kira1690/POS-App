@@ -358,7 +358,7 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
               <FormField
                 label="Verification Code"
                 required
-                error={otpError}
+                error={otpError ?? undefined}
               >
                 <OTPInput
                   length={6}
@@ -369,7 +369,7 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
                   resendTimeout={30}
                   onResend={handleResendMFA}
                   onSubmit={handleMFAVerification}
-                  error={otpError}
+                  error={otpError ?? undefined}
                   testID="mfa-otp-input"
                 />
               </FormField>

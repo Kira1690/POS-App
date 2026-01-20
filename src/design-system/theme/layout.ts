@@ -53,19 +53,6 @@ export const cardDimensions = {
   },
 } as const;
 
-// Touch target sizes - Based on Apple HIG and accessibility guidelines
-export const touchTargets = {
-  minimum: 44,           // Apple HIG minimum
-  comfortable: 48,       // Android accessibility minimum
-  large: 56,             // Large touch target
-  posDefault: 56,        // POS tablet default
-  posLarge: 64,          // Primary actions on POS
-  posHuge: 72,           // Emergency/critical actions
-  quantityButton: 28,    // Cart quantity buttons
-  iconButton: 36,        // Icon-only buttons
-  searchInput: 40,       // Search input height
-} as const;
-
 // Grid configurations - Based on screen width
 export const gridConfig = {
   // Menu grid columns based on available width

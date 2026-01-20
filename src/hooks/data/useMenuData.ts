@@ -71,12 +71,12 @@ export function useMenuData(): UseMenuDataResult {
   // Load categories
   const loadCategories = useCallback(async (restaurantId?: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
-      const response = await menuService.getCategories({ restaurantId });
+      const categories = await menuService.getCategories(restaurantId || '');
       setState(prev => ({
         ...prev,
-        categories: response.data || [],
+        categories: categories || [],
         isLoading: false,
         lastUpdated: new Date(),
       }));
@@ -92,24 +92,23 @@ export function useMenuData(): UseMenuDataResult {
   // Load menu items
   const loadMenuItems = useCallback(async (restaurantId?: string, categoryId?: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
-      const params = { restaurantId };
       if (categoryId) {
         // Get items for specific category
-        const items = await menuService.getMenuItemsByCategory(categoryId);
+        const items = await menuService.getMenuItemsByCategory(restaurantId || '', categoryId);
         setState(prev => ({
           ...prev,
-          menuItems: items,
+          menuItems: items || [],
           isLoading: false,
           lastUpdated: new Date(),
         }));
       } else {
         // Get all items
-        const response = await menuService.getMenuItems(params);
+        const items = await menuService.getMenuItems(restaurantId || '');
         setState(prev => ({
           ...prev,
-          menuItems: response.data || [],
+          menuItems: items || [],
           isLoading: false,
           lastUpdated: new Date(),
         }));

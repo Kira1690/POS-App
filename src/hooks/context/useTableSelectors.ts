@@ -4,11 +4,15 @@
  * specific parts of table state they actually need
  */
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useContextSelector, deepEqual, shallowEqual } from './useContextSelector';
-import { TableContext } from '@/context/table/TableContext';
+import TableContext from '@/context/table/TableContext';
 import { Table } from '@/types/table.types';
 import { TableStatus } from '@/types/common.types';
+import { ITableContext } from '@/interfaces';
+
+// Type alias for the TableContext type
+type TableContextType = React.Context<ITableContext | undefined>;
 
 /**
  * Select only the currently selected table
@@ -16,8 +20,8 @@ import { TableStatus } from '@/types/common.types';
  */
 export const useSelectedTable = () => {
   return useContextSelector(
-    TableContext,
-    state => state.selectedTable,
+    TableContext as TableContextType,
+    (ctx) => ctx?.state.selectedTable ?? null,
     (a, b) => a?.id === b?.id && a?.status === b?.status
   );
 };
@@ -25,10 +29,10 @@ export const useSelectedTable = () => {
 /**
  * Select all tables - use sparingly, prefer more specific selectors
  */
-export const useAllTables = () => {
+export const useAllTables = (): Table[] => {
   return useContextSelector(
-    TableContext,
-    state => state.tables,
+    TableContext as TableContextType,
+    (ctx) => ctx?.state.tables ?? [],
     deepEqual
   );
 };
@@ -37,11 +41,11 @@ export const useAllTables = () => {
  * Select tables by specific status
  * Only re-renders when tables with the specified status change
  */
-export const useTablesByStatus = (status: TableStatus) => {
+export const useTablesByStatus = (status: TableStatus): Table[] => {
   return useContextSelector(
-    TableContext,
-    state => state.tables.filter(table => table.status === status),
-    (a, b) => a.length === b.length && a.every((table, i) => 
+    TableContext as TableContextType,
+    (ctx) => (ctx?.state.tables ?? []).filter((table: Table) => table.status === status),
+    (a: Table[], b: Table[]) => a.length === b.length && a.every((table: Table, i: number) =>
       table.id === b[i]?.id && table.status === b[i]?.status
     )
   );
@@ -51,11 +55,11 @@ export const useTablesByStatus = (status: TableStatus) => {
  * Select tables by service area
  * Only re-renders when tables in the specified area change
  */
-export const useTablesByServiceArea = (serviceArea: string) => {
+export const useTablesByServiceArea = (serviceArea: string): Table[] => {
   return useContextSelector(
-    TableContext,
-    state => state.tables.filter(table => table.service_area === serviceArea),
-    (a, b) => a.length === b.length && a.every((table, i) => table.id === b[i]?.id)
+    TableContext as TableContextType,
+    (ctx) => (ctx?.state.tables ?? []).filter((table: Table) => table.service_area === serviceArea),
+    (a: Table[], b: Table[]) => a.length === b.length && a.every((table: Table, i: number) => table.id === b[i]?.id)
   );
 };
 
@@ -65,16 +69,16 @@ export const useTablesByServiceArea = (serviceArea: string) => {
  */
 export const useTableStats = () => {
   return useContextSelector(
-    TableContext,
-    state => {
-      const tables = state.tables;
+    TableContext as TableContextType,
+    (ctx) => {
+      const tables = ctx?.state.tables ?? [];
       const total = tables.length;
-      const available = tables.filter(t => t.status === TableStatus.AVAILABLE).length;
-      const occupied = tables.filter(t => t.status === TableStatus.OCCUPIED).length;
-      const reserved = tables.filter(t => t.status === TableStatus.RESERVED).length;
-      const cleaning = tables.filter(t => t.status === TableStatus.CLEANING).length;
-      const outOfOrder = tables.filter(t => t.status === TableStatus.OUT_OF_ORDER).length;
-      
+      const available = tables.filter((t: Table) => t.status === TableStatus.AVAILABLE).length;
+      const occupied = tables.filter((t: Table) => t.status === TableStatus.OCCUPIED).length;
+      const reserved = tables.filter((t: Table) => t.status === TableStatus.RESERVED).length;
+      const cleaning = tables.filter((t: Table) => t.status === TableStatus.CLEANING).length;
+      const outOfOrder = tables.filter((t: Table) => t.status === TableStatus.OUT_OF_ORDER).length;
+
       return {
         total,
         available,
@@ -93,10 +97,10 @@ export const useTableStats = () => {
  * Select specific table by ID
  * Only re-renders when that specific table changes
  */
-export const useTableById = (tableId: string | null) => {
+export const useTableById = (tableId: string | null): Table | null | undefined => {
   return useContextSelector(
-    TableContext,
-    state => tableId ? state.tables.find(table => table.id === tableId) : null,
+    TableContext as TableContextType,
+    (ctx) => tableId ? (ctx?.state.tables ?? []).find((table: Table) => table.id === tableId) : null,
     (a, b) => a?.id === b?.id && a?.status === b?.status && a?.current_order_id === b?.current_order_id
   );
 };
@@ -123,11 +127,11 @@ export const useOccupiedTables = () => {
  */
 export const useTableLoadingState = () => {
   return useContextSelector(
-    TableContext,
-    state => ({
-      isLoading: state.isLoading,
-      error: state.error,
-      lastUpdated: state.lastUpdated,
+    TableContext as TableContextType,
+    (ctx) => ({
+      isLoading: ctx?.state.isLoading ?? false,
+      error: ctx?.state.error ?? null,
+      lastUpdated: ctx?.state.lastUpdated ?? null,
     }),
     shallowEqual
   );
@@ -139,12 +143,12 @@ export const useTableLoadingState = () => {
  */
 export const useTableActions = () => {
   return useContextSelector(
-    TableContext,
-    state => ({
-      selectTable: state.selectTable,
-      updateTableStatus: state.updateTableStatus,
-      refreshTables: state.refreshTables,
-      clearError: state.clearError,
+    TableContext as TableContextType,
+    (ctx) => ({
+      selectTable: ctx?.selectTable ?? (() => {}),
+      updateTableStatus: ctx?.updateTableStatus ?? (async () => {}),
+      refreshTables: ctx?.refreshTables ?? (async () => {}),
+      clearError: ctx?.clearError ?? (() => {}),
     }),
     () => true // Actions never change, so always equal
   );
@@ -154,11 +158,11 @@ export const useTableActions = () => {
  * Select tables with active orders
  * Useful for order management workflows
  */
-export const useTablesWithOrders = () => {
+export const useTablesWithOrders = (): Table[] => {
   return useContextSelector(
-    TableContext,
-    state => state.tables.filter(table => table.current_order_id),
-    (a, b) => a.length === b.length && a.every((table, i) => 
+    TableContext as TableContextType,
+    (ctx) => (ctx?.state.tables ?? []).filter((table: Table) => table.current_order_id),
+    (a: Table[], b: Table[]) => a.length === b.length && a.every((table: Table, i: number) =>
       table.id === b[i]?.id && table.current_order_id === b[i]?.current_order_id
     )
   );

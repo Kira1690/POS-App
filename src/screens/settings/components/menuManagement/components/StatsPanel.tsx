@@ -220,7 +220,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
       gap: theme.spacing.xs,
     },
     primaryAction: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     secondaryAction: {
       backgroundColor: theme.colors.surfaceLight,

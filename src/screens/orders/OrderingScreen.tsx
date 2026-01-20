@@ -20,7 +20,9 @@ import { OrdersStackParamList } from '@/navigation/types';
 import { useUnifiedOrder, useUnifiedCart } from '@/context/unified-order';
 import { MenuItemExtended } from '@/types/menu-management-extended.types';
 import { MenuCategory } from '@/types/menu.types';
-import { SelectedModifier, getStationForCategory } from '@/types/unified-order.types';
+import { SelectedModifier } from '@/types/unified-order.types';
+import { getStationForCategory } from '@/types/order-extended.types';
+import { TableStatus } from '@/types/common.types';
 
 // Components
 import { CategorySidebar } from './components/CategorySidebar';
@@ -159,7 +161,7 @@ export const OrderingScreen: React.FC = () => {
       id: tableId,
       table_number: tableName,
       capacity: guestCount || 4,
-      status: 'occupied',
+      status: TableStatus.OCCUPIED,
       restaurant_id: 'rest1',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -341,14 +343,14 @@ export const OrderingScreen: React.FC = () => {
             text: 'Discard',
             style: 'destructive',
             onPress: () => {
-              actions.clearCart();
+              clearCart();
               navigation.goBack();
             },
           },
           {
             text: 'Save Draft',
             onPress: async () => {
-              await actions.saveDraft();
+              // TODO: Implement save draft functionality
               navigation.goBack();
             },
           },
@@ -357,7 +359,7 @@ export const OrderingScreen: React.FC = () => {
     } else {
       navigation.goBack();
     }
-  }, [cart, actions, navigation]);
+  }, [cart, clearCart, navigation]);
 
   // Calculate cart values
   const subtotal = state.cartSubtotal;

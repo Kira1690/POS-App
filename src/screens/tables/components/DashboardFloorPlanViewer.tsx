@@ -17,8 +17,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { useFloorPlan } from '@/context/floorPlan';
 import { useTable } from '@/context/table';
 import FloorPlanTabs from '@/screens/settings/components/tableManagement/floorPlan/FloorPlanTabs';
-import { MOCK_TABLES } from '@/data/tables';
-import { TableStatus } from '@/types/settings/table-management.types';
+import { MOCK_TABLES, MockTable } from '@/data/tables';
+import { TableStatus } from '@/types/common.types';
 import { borderRadius } from '@/design-system/theme/spacing';
 import FloorPlanViewerCanvas from './FloorPlanViewerCanvas';
 
@@ -57,13 +57,13 @@ const DashboardFloorPlanViewer: React.FC<DashboardFloorPlanViewerProps> = ({
   const { state: tableState, refreshTables } = useTable();
 
   // Convert Table[] from context to component format
-  const tables = useMemo(() => {
+  const tables: MockTable[] = useMemo(() => {
     if (tableState.tables.length > 0) {
       return tableState.tables.map(table => ({
         id: table.id,
         number: table.table_number,
         capacity: table.capacity,
-        status: table.status as string, // Already synced with orders
+        status: table.status as TableStatus, // Already synced with orders
         area: table.location || '',
         areaId: table.section || '',
         positionX: 0, // Will be overridden by floor plan positions

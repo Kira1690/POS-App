@@ -15,12 +15,13 @@ import {
   VP3350DeviceStatus,
   Receipt,
   ReceiptType,
+  PaymentProcessingStatus,
 } from '@/types/payment.types';
 
 import { cardPaymentService, ICardPaymentService } from './card/CardPaymentService';
 import { cashPaymentService, ICashPaymentService } from './cash/CashPaymentService';
 import { vp3350DeviceService, IVP3350DeviceService } from './vp3350/VP3350DeviceService';
-import { splitPaymentService, ISplitPaymentService } from './split/SplitPaymentService';
+import { splitPaymentService, ISplitPaymentService, SplitPaymentRequest } from './split/SplitPaymentService';
 import { receiptService, IReceiptService } from '../receipt/ReceiptService';
 import { paymentAnalyticsService, IPaymentAnalyticsService } from './analytics/PaymentAnalyticsService';
 import { Order } from '@/types/order.types';
@@ -61,8 +62,9 @@ export class CompositePaymentService implements PaymentServiceInterface {
     });
 
     // Generate receipt if requested
-    if (request.printReceipt && request.order) {
-      await this.generateReceipt(result.id, ReceiptType.CUSTOMER, request.order, result);
+    // Note: request.order is a string (orderId), receipt generation requires fetching the full order
+    if (request.printReceipt && request.orderData) {
+      await this.generateReceipt(result.id, ReceiptType.CUSTOMER, request.orderData, result);
     }
 
     return result;
@@ -98,8 +100,9 @@ export class CompositePaymentService implements PaymentServiceInterface {
     });
 
     // Generate receipt if requested
-    if (request.printReceipt && request.order) {
-      await this.generateReceipt(result.id, ReceiptType.CUSTOMER, request.order, result);
+    // Note: request.order is a string (orderId), receipt generation requires fetching the full order
+    if (request.printReceipt && request.orderData) {
+      await this.generateReceipt(result.id, ReceiptType.CUSTOMER, request.orderData, result);
     }
 
     return result;
@@ -113,10 +116,14 @@ export class CompositePaymentService implements PaymentServiceInterface {
       throw new Error('Split payment items are required');
     }
 
-    const splitRequest = {
+    const splitRequest: SplitPaymentRequest = {
       orderId: request.orderId,
       totalAmount: request.amount,
-      splitItems: request.splitPayments,
+      splitItems: request.splitPayments.map((item, index) => ({
+        ...item,
+        id: `split_${Date.now()}_${index}`,
+        status: PaymentProcessingStatus.PENDING,
+      })),
       notes: request.notes,
     };
 
@@ -133,8 +140,9 @@ export class CompositePaymentService implements PaymentServiceInterface {
     });
 
     // Generate receipt if requested
-    if (request.printReceipt && request.order) {
-      await this.generateReceipt(result.id, ReceiptType.CUSTOMER, request.order, result);
+    // Note: request.order is a string (orderId), receipt generation requires fetching the full order
+    if (request.printReceipt && request.orderData) {
+      await this.generateReceipt(result.id, ReceiptType.CUSTOMER, request.orderData, result);
     }
 
     return result;

@@ -15,11 +15,12 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { ExtendedOrderItem, KitchenStation, DEFAULT_CATEGORY_STATION_MAP } from '@/types/order-extended.types';
+import { KitchenStation, DEFAULT_CATEGORY_STATION_MAP } from '@/types/order-extended.types';
+import { UnifiedOrderItem } from '@/types/unified-order.types';
 
 interface SendToKitchenModalProps {
   visible: boolean;
-  items: ExtendedOrderItem[];
+  items: UnifiedOrderItem[];
   tableName: string;
   total: number;
   onClose: () => void;
@@ -29,7 +30,7 @@ interface SendToKitchenModalProps {
 
 interface StationSummary {
   station: KitchenStation;
-  items: ExtendedOrderItem[];
+  items: UnifiedOrderItem[];
   itemCount: number;
 }
 
@@ -240,12 +241,12 @@ export const SendToKitchenModal: React.FC<SendToKitchenModalProps> = ({
   });
 
   const { stationSummaries, hasAllergens, allergenItems } = useMemo(() => {
-    const stationMap = new Map<KitchenStation, ExtendedOrderItem[]>();
+    const stationMap = new Map<KitchenStation, UnifiedOrderItem[]>();
 
     items.forEach((item) => {
-      const station = item.kitchenStation;
-      const existing = stationMap.get(station) || [];
-      stationMap.set(station, [...existing, item]);
+      const station = item.kitchenStation || 'hot_kitchen';
+      const existing = stationMap.get(station as KitchenStation) || [];
+      stationMap.set(station as KitchenStation, [...existing, item]);
     });
 
     const summaries: StationSummary[] = [];

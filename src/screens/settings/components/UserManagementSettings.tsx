@@ -9,10 +9,30 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { UserProfile, UserPermission } from '@/types/settings.types';
+import { UserProfile, UserPermissions } from '@/types/settings.types';
 import { MockSettingsService } from '@/services/settings/MockSettingsService';
 import { useTheme } from '@/hooks/useTheme';
 import { Icon, StatusIndicator } from '@/components/common';
+
+// Helper to get role-based styling
+const getRoleColor = (role: UserProfile['role']): { bg: string; border: string } => {
+  const roleColors: Record<UserProfile['role'], { bg: string; border: string }> = {
+    manager: { bg: '#FFF3E0', border: '#FB8C00' },
+    restaurant_staff: { bg: '#E8F5E8', border: '#4CAF50' },
+    kitchen_staff: { bg: '#E3F2FD', border: '#2196F3' },
+    admin: { bg: '#FCE4EC', border: '#E91E63' },
+    superadmin: { bg: '#F3E5F5', border: '#9C27B0' },
+  };
+  return roleColors[role] || { bg: '#E0E0E0', border: '#9E9E9E' };
+};
+
+// Transform permissions object to array for rendering
+const permissionsToArray = (permissions: UserPermissions): { module: string; enabled: boolean }[] => {
+  return Object.entries(permissions).map(([module, enabled]) => ({
+    module,
+    enabled: enabled as boolean,
+  }));
+};
 
 interface UserManagementSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -37,7 +57,7 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const usersData = await settingsService.getUsers('rest_001');
+      const usersData = await settingsService.getUserProfiles('rest_001');
       setUsers(usersData);
       if (usersData.length > 0) {
         setSelectedUser(usersData[0]);
@@ -85,12 +105,12 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
         <Text style={styles.userName}>{item.name}</Text>
         <Text style={styles.userEmail}>{item.email}</Text>
       </View>
-      <View style={[styles.roleTag, styles[`roleTag${item.role}`]]}>
-        <Text style={styles.roleText}>{item.role.toUpperCase()}</Text>
+      <View style={[styles.roleTag, { backgroundColor: getRoleColor(item.role).bg, borderColor: getRoleColor(item.role).border, borderWidth: 1 }]}>
+        <Text style={styles.roleText}>{item.role.replace('_', ' ').toUpperCase()}</Text>
       </View>
       <View style={{ width: 95 }}>
         <StatusIndicator
-          status={item.status === 'active' ? 'active' : 'inactive'}
+          status={item.is_active ? 'active' : 'inactive'}
           textSize={12}
           iconSize={14}
         />
@@ -437,15 +457,15 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
             <Text style={styles.selectedUserText}>Selected: {selectedUser.name}</Text>
 
             <View style={styles.permissionsContainer}>
-              {selectedUser.permissions.map((permission) => (
+              {permissionsToArray(selectedUser.permissions).map((permission) => (
                 <View key={permission.module} style={styles.permissionRow}>
-                  <Text style={styles.permissionLabel}>{permission.module}</Text>
+                  <Text style={styles.permissionLabel}>{permission.module.charAt(0).toUpperCase() + permission.module.slice(1)}</Text>
                   <TouchableOpacity
-                    style={[styles.permissionToggle, permission.level === 'full' && styles.permissionToggleActive]}
+                    style={[styles.permissionToggle, permission.enabled && styles.permissionToggleActive]}
                     onPress={() => handlePermissionChange(permission.module)}
                   >
                     <Text style={styles.permissionToggleText}>
-                      🔘 {permission.level === 'full' ? 'Full Access' : 'Limited'}
+                      {permission.enabled ? 'Enabled' : 'Disabled'}
                     </Text>
                   </TouchableOpacity>
                 </View>

@@ -27,7 +27,7 @@ interface SimpleOrder {
 
 export const createTableActions = (
   tableService: ITableService,
-  tableWebSocketService: ITableWebSocketService,
+  tableWebSocketService: ITableWebSocketService | undefined,
   orderService: any, // Will be typed when orderService is enhanced
   dispatch: React.Dispatch<TableAction>
 ) => {

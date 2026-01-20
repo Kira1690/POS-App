@@ -36,7 +36,9 @@ export interface AuthButtonProps {
   /** Press handler */
   onPress: () => void;
   /** Button text content */
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  /** Button title (alternative to children) */
+  title?: string;
   /** Custom styles */
   style?: ViewStyle;
   /** Accessibility label */

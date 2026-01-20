@@ -42,7 +42,7 @@ export interface MenuItemModifierAssignment {
   modifier_group_id: string;
   sort_order: number;
   is_required_override?: boolean;
-  created_at: string;
+  created_at?: string; // Made optional for backward compatibility
 }
 
 export interface ModifierGroupWithStats extends ModifierGroup {
@@ -206,6 +206,8 @@ export interface NutritionalInfo extends BaseEntity {
   dietary_tags: DietaryTag[];
   contains_warning?: string;
   preparation_notes?: string;
+  // Convenience properties (derived from nutritional_facts)
+  calories?: number;
 }
 
 // ============== EXTENDED MENU ITEM ==============
@@ -215,8 +217,15 @@ export interface MenuItemExtended extends MenuItem {
   modifier_groups?: ModifierGroup[];
   nutritional_info?: NutritionalInfo;
   combo_memberships?: string[];
-  dietary_tags?: DietaryTag[];
-  allergens?: AllergenType[];
+  // Note: dietary_tags and allergens are inherited from MenuItem as string[]
+  // Use NutritionalInfo.dietary_tags for strongly-typed DietaryTag[]
+  // Use NutritionalInfo.allergens for strongly-typed AllergenType[]
+  // Extended display properties
+  image?: string; // Alias for image_url
+  cost_price?: number;
+  tax_rate?: number;
+  preparation_time?: number;
+  sort_order?: number;
 }
 
 // ============== REQUEST TYPES ==============

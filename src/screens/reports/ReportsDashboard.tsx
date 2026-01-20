@@ -155,7 +155,7 @@ const SimpleChart: React.FC<SimpleChartProps> = ({ data, title, type, height = 2
       backgroundColor: theme.colors.primary,
       borderRadius: theme.borderRadius.sm,
       minHeight: 4,
-      width: '80%',
+      width: '80%' as const,
       marginBottom: 4,
     },
     barLabel: {

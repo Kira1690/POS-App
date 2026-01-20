@@ -4,15 +4,13 @@
  * Following strict TypeScript and SOLID principles
  */
 
-// ==================== ENUMS ====================
+// Import consolidated TableStatus from common.types
+import { TableStatus } from '../common.types';
 
-export enum TableStatus {
-  AVAILABLE = 'available',
-  OCCUPIED = 'occupied',
-  RESERVED = 'reserved',
-  CLEANING = 'cleaning',
-  OUT_OF_SERVICE = 'out_of_service',
-}
+// Re-export for backwards compatibility
+export { TableStatus };
+
+// ==================== ENUMS ====================
 
 export enum TableShape {
   ROUND = 'round',

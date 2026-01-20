@@ -17,7 +17,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { MenuItemExtended, ComboItem, ComboItemCategory } from '@/types/menu-management-extended.types';
 import { CategoryWithStats } from '@/types/menu-management.types';
 
-interface SelectedComboItem {
+export interface SelectedComboItem {
   menu_item_id?: string;
   category_choice?: string;
   quantity: number;
@@ -187,7 +187,7 @@ export const ComboItemSelector: React.FC<ComboItemSelectorProps> = ({
         <View style={styles.selectedItemHeader}>
           <View style={styles.selectedItemInfo}>
             <MaterialCommunityIcons
-              name={ITEM_CATEGORIES.find(c => c.value === item.item_category)?.icon || 'food'}
+              name={(ITEM_CATEGORIES.find(c => c.value === item.item_category)?.icon || 'food') as any}
               size={16}
               color={theme.colors.primary}
             />

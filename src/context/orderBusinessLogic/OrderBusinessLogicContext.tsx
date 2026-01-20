@@ -58,6 +58,7 @@ interface OrderBusinessLogicActions {
   // Business constraints
   checkOrderConstraints: (order: Order) => { canProceed: boolean; warnings: string[] };
   checkTimeConstraints: () => { canOrder: boolean; message?: string };
+  checkTableConstraints: (tableId: string) => { isValid: boolean; message?: string };
 }
 
 export interface OrderBusinessLogicContextValue extends OrderBusinessLogicState, OrderBusinessLogicActions {}
@@ -258,7 +259,15 @@ export const OrderBusinessLogicProvider: React.FC<OrderBusinessLogicProviderProp
     
     return { canOrder: true };
   }, []);
-  
+
+  const checkTableConstraints = useCallback((tableId: string): { isValid: boolean; message?: string } => {
+    if (!tableId) {
+      return { isValid: false, message: 'Table must be selected' };
+    }
+    // Additional table validation can be added here
+    return { isValid: true };
+  }, []);
+
   const contextValue: OrderBusinessLogicContextValue = {
     ...state,
     validateOrder,
@@ -269,6 +278,7 @@ export const OrderBusinessLogicProvider: React.FC<OrderBusinessLogicProviderProp
     createOrderFromCart,
     checkOrderConstraints,
     checkTimeConstraints,
+    checkTableConstraints,
   };
   
   return (

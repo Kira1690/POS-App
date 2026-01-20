@@ -75,14 +75,14 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       margin: theme.spacing.sm,
       paddingVertical: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
       borderRadius: theme.borderRadius.md,
       gap: theme.spacing.xs,
     },
     addButtonText: {
       fontSize: 14,
       fontWeight: '600',
-      color: theme.colors.white,
+      color: '#FFFFFF',
     },
     listContainer: {
       flex: 1,
@@ -101,8 +101,8 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       gap: theme.spacing.sm,
     },
     allItemsCardSelected: {
-      backgroundColor: theme.colors.primaryLight,
-      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiaryContainer,
+      borderColor: theme.colors.tertiary,
     },
     allItemsIconContainer: {
       width: 40,
@@ -113,7 +113,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       justifyContent: 'center',
     },
     allItemsIconContainerSelected: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     allItemsContent: {
       flex: 1,
@@ -124,7 +124,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       color: theme.colors.onSurface,
     },
     allItemsTitleSelected: {
-      color: theme.colors.primary,
+      color: theme.colors.tertiary,
     },
     allItemsSubtitle: {
       fontSize: 12,
@@ -143,7 +143,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       borderColor: 'transparent',
     },
     categoryCardSelected: {
-      borderColor: theme.colors.primary,
+      borderColor: theme.colors.tertiary,
     },
     categoryIconContainer: {
       width: 44,
@@ -162,7 +162,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       color: theme.colors.onSurface,
     },
     categoryNameSelected: {
-      color: theme.colors.primary,
+      color: theme.colors.tertiary,
     },
     categoryMeta: {
       flexDirection: 'row',
@@ -198,7 +198,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
     collapsedAddButton: {
       margin: theme.spacing.sm,
       padding: theme.spacing.sm,
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
       borderRadius: theme.borderRadius.md,
       alignItems: 'center',
       justifyContent: 'center',
@@ -212,7 +212,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       borderRadius: theme.borderRadius.md,
     },
     collapsedCategorySelected: {
-      backgroundColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     collapsedIconContainer: {
       width: 36,
@@ -268,13 +268,13 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
             <View
               style={[
                 styles.collapsedIconContainer,
-                { backgroundColor: !selectedCategoryId ? theme.colors.primary : theme.colors.surfaceLight },
+                { backgroundColor: !selectedCategoryId ? theme.colors.tertiary : theme.colors.surfaceLight },
               ]}
             >
               <Icon
                 name="view-grid"
                 size={20}
-                color={!selectedCategoryId ? theme.colors.white : theme.colors.onSurfaceVariant}
+                color={!selectedCategoryId ? '#FFFFFF' : theme.colors.onSurfaceVariant}
                 accessibilityLabel=""
               />
             </View>
@@ -283,7 +283,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
           {/* Categories */}
           {categories.map((category) => {
             const isSelected = selectedCategoryId === category.id;
-            const categoryColor = category.color || theme.colors.primary;
+            const categoryColor = category.color || theme.colors.tertiary;
             return (
               <TouchableOpacity
                 key={category.id}
@@ -376,7 +376,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
         {/* Category Cards */}
         {categories.map((category) => {
           const isSelected = selectedCategoryId === category.id;
-          const categoryColor = category.color || theme.colors.primary;
+          const categoryColor = category.color || theme.colors.tertiary;
           const itemCount = category.stats?.itemCount || 0;
 
           return (

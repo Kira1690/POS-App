@@ -7,9 +7,12 @@ export interface Table extends BaseEntity {
   status: TableStatus;
   location?: string;
   section?: string;
+  service_area?: string; // Alias for section - used in some selectors
   current_order_id?: string;
   reserved_until?: string;
   last_cleaned?: string;
+  last_cleaned_at?: string; // Alias for last_cleaned (backward compatibility)
+  last_occupied_at?: string; // Timestamp of last occupation
   notes?: string;
 }
 
@@ -48,6 +51,8 @@ export interface CreateTableRequest {
   location?: string;
   section?: string;
   position?: TablePosition;
+  service_area?: string; // Service area assignment
+  area_id?: string; // Alternative area identifier
 }
 
 export interface TableStatusUpdate {

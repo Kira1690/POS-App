@@ -125,10 +125,13 @@ export const colors = {
   status: {
     // Order Status Colors
     pending: '#FF453A',     // Apple red - urgent/pending
+    confirmed: '#34C759',   // Apple green - confirmed
     preparing: '#FF9500',   // Apple orange - in progress
     ready: '#32D74B',       // Apple green - completed/ready
     served: '#007AFF',      // Apple blue - delivered/served
     cancelled: '#8E8E93',   // Apple gray - cancelled/inactive
+    paid: '#34C759',        // Apple green - paid
+    completed: '#34C759',   // Apple green - completed
 
     // Priority Status Colors
     urgent: '#FF453A',      // Apple red - high priority
@@ -146,11 +149,11 @@ export const colors = {
     active: '#32D74B',      // Green - station active
     busy: '#FF9500',        // Orange - station busy
     break: '#8E8E93',       // Gray - on break
-    offline: '#FF453A',     // Red - offline/unavailable
+    kitchenOffline: '#FF453A',     // Red - kitchen offline/unavailable
 
     // System Status Colors
     online: '#32D74B',      // Green - system online
-    offline: '#FF453A',     // Red - system offline
+    systemOffline: '#FF453A',     // Red - system offline
     warning: '#FF9500',     // Orange - warning state
     error: '#FF453A',       // Red - error state
     success: '#32D74B',     // Green - success state
@@ -189,11 +192,11 @@ export const colors = {
     active: 'check-circle',        // active/ready icon
     busy: 'access-time',           // busy/time icon
     break: 'coffee',               // break icon
-    offline: 'error',              // error/offline icon
+    kitchenOffline: 'error',              // kitchen offline icon
 
     // System Icons
     online: 'wifi',                // online icon
-    offline: 'wifi-off',           // offline icon
+    systemOffline: 'wifi-off',           // system offline icon
     warning: 'warning',            // warning icon
     error: 'error',                // error icon
     success: 'check-circle',       // success icon

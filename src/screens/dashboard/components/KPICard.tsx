@@ -161,7 +161,7 @@ export const KPICard: React.FC<KPICardProps> = ({
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: color }]}>
-          <MaterialIcons name={getIconName(icon)} size={24} color={theme.colors.onPrimary} />
+          <MaterialIcons name={getIconName(icon) as any} size={24} color={theme.colors.onPrimary} />
         </View>
         <View style={styles.changeContainer}>
           {getChangeIcon()}

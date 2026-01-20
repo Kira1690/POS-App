@@ -102,6 +102,8 @@ export const getStatusColorKey = (status: TableStatus): string => {
     occupied: 'error',
     reserved: 'warning',
     cleaning: 'info',
+    out_of_order: 'outline',
+    out_of_service: 'outline',
   };
   return colorMap[status];
 };
@@ -115,6 +117,8 @@ export const getStatusLabel = (status: TableStatus): string => {
     occupied: 'Occupied',
     reserved: 'Reserved',
     cleaning: 'Cleaning',
+    out_of_order: 'Out of Order',
+    out_of_service: 'Out of Service',
   };
   return labelMap[status];
 };

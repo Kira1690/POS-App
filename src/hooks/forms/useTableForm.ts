@@ -33,7 +33,7 @@ export interface TableFormData {
 
 export interface TableFormState {
   data: TableFormData;
-  errors: Record<string, string>;
+  errors: Record<string, string | undefined>;
   touched: Record<string, boolean>;
   isSubmitting: boolean;
   isDirty: boolean;

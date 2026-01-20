@@ -54,6 +54,29 @@ export class MenuService implements IMenuService {
     }
   }
 
+  async getMenuItemsByCategory(restaurantId: string, categoryId: string): Promise<MenuItem[]> {
+    // Alias for getMenuByCategory
+    return this.getMenuByCategory(restaurantId, categoryId);
+  }
+
+  async getMenuItems(restaurantId: string): Promise<MenuItem[]> {
+    try {
+      // Get all menu items by fetching all categories and their items
+      const categories = await this.getCategories(restaurantId);
+      const allItems: MenuItem[] = [];
+
+      for (const category of categories) {
+        const items = await this.getMenuByCategory(restaurantId, category.id);
+        allItems.push(...items);
+      }
+
+      return allItems;
+    } catch (error: any) {
+      console.error('[MenuService] Failed to get all menu items:', error.message);
+      throw new Error(error.message || 'Failed to get menu items');
+    }
+  }
+
   async getMenuItem(itemId: string): Promise<MenuItem> {
     try {
       return await menuApiClient.getMenuItem(itemId);

@@ -4,14 +4,14 @@
  */
 
 export { serviceContainer, ServiceLifetime } from './ServiceContainer';
-export type { ServiceFactory, ServiceInstance, ServiceScope } from './ServiceContainer';
+export type { ServiceFactory as ServiceFactoryType, ServiceInstance, ServiceScope } from './ServiceContainer';
 
-export { 
-  initializeServices, 
-  registerServices, 
-  getService, 
+export {
+  initializeServices,
+  registerServices,
+  getService,
   validateServiceRegistration,
-  SERVICE_TOKENS 
+  SERVICE_TOKENS
 } from './ServiceRegistry';
 export type { ServiceToken } from './ServiceRegistry';
 

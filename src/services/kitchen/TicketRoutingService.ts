@@ -44,9 +44,18 @@ interface RoutedItem extends ExtendedOrderItem {
   ticketItem: KitchenTicketItem;
 }
 
+// Convert DEFAULT_STATION_CONFIGS array to Record
+const STATION_CONFIGS_RECORD: Record<KitchenStation, StationConfig> = DEFAULT_STATION_CONFIGS.reduce(
+  (acc, config) => {
+    acc[config.station] = config;
+    return acc;
+  },
+  {} as Record<KitchenStation, StationConfig>
+);
+
 const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
   categoryStationMap: DEFAULT_CATEGORY_STATION_MAP,
-  stationConfigs: DEFAULT_STATION_CONFIGS,
+  stationConfigs: STATION_CONFIGS_RECORD,
   defaultPriority: 'normal',
   rushOrderThresholdMinutes: 30,
 };
@@ -149,6 +158,7 @@ class TicketRoutingService {
   ): KitchenTicketItem {
     const stationConfig = this.config.stationConfigs[station];
 
+    const hasAllergens = (item.allergens && item.allergens.length > 0) || false;
     return {
       id: `ti_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       orderItemId: item.id,
@@ -159,7 +169,8 @@ class TicketRoutingService {
       status: 'pending',
       estimatedPrepTime: stationConfig.defaultPrepTime,
       allergens: item.allergens || [],
-      hasAllergens: (item.allergens && item.allergens.length > 0) || false,
+      hasAllergenWarning: hasAllergens,
+      hasAllergens,
       dietaryTags: item.dietaryTags,
     };
   }
@@ -177,23 +188,32 @@ class TicketRoutingService {
     estimatedPrepTime: number
   ): KitchenTicket {
     const now = new Date();
-    const stationConfig = this.config.stationConfigs[station];
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    const allergenItemNames = items
+      .filter((i) => i.hasAllergenWarning || i.hasAllergens)
+      .map((i) => i.name);
 
     return {
       id: generateTicketId(),
       orderId,
       orderNumber,
+      tableId: `table_${tableName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
       tableName,
       station,
       items,
+      itemCount,
+      totalItems: itemCount,
+      completedItemCount: 0,
       priority,
       status: 'pending',
       estimatedPrepTime,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
-      hasAllergens: items.some((i) => i.hasAllergens),
+      hasAllergens: allergenItemNames.length > 0,
+      allergenItems: allergenItemNames,
+      isRush: priority === 'rush' || priority === 'urgent',
       isOverdue: false,
-      totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
+      pendingSync: true,
     };
   }
 
@@ -364,7 +384,8 @@ class TicketRoutingService {
       if (existing && existing.status === 'pending' && ticket.status === 'pending') {
         // Merge items into existing ticket
         existing.items = [...existing.items, ...ticket.items];
-        existing.totalItems += ticket.totalItems;
+        existing.totalItems = (existing.totalItems ?? 0) + (ticket.totalItems ?? 0);
+        existing.itemCount = existing.itemCount + ticket.itemCount;
         existing.estimatedPrepTime = Math.max(
           existing.estimatedPrepTime,
           ticket.estimatedPrepTime

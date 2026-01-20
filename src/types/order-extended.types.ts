@@ -38,12 +38,14 @@ export const KITCHEN_STATION_ICONS: Record<KitchenStation, string> = {
 // ============== ORDER STATUS TYPES ==============
 
 export type ExtendedOrderStatus =
+  | 'pending'
   | 'draft'
   | 'confirmed'
   | 'preparing'
   | 'ready'
   | 'served'
   | 'paid'
+  | 'completed'
   | 'cancelled';
 
 export type ExtendedPaymentStatus =
@@ -75,6 +77,9 @@ export interface SelectedModifier {
   selectionType: 'single' | 'multiple';
   isRequired: boolean;
   options: SelectedModifierOption[];
+  // Convenience properties for single option access
+  name?: string; // First option name (for single selection)
+  priceAdjustment?: number; // First option price adjustment (for single selection)
 }
 
 // ============== COMBO SELECTION TYPES ==============
@@ -113,9 +118,11 @@ export interface ExtendedOrderItem {
 
   // Pricing
   basePrice: number;
+  unitPrice?: number; // Alias for basePrice
   quantity: number;
   modifierTotal: number;
   itemTotal: number; // (basePrice + modifierTotal) * quantity
+  totalPrice?: number; // Alias for itemTotal
 
   // Modifiers
   selectedModifiers: SelectedModifier[];
@@ -136,6 +143,7 @@ export interface ExtendedOrderItem {
   // Notes
   specialInstructions?: string;
   kitchenNotes?: string;
+  notes?: string; // Alias for specialInstructions
 
   // Combo
   isComboItem: boolean;

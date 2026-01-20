@@ -7,8 +7,13 @@ import { AllergenType } from './menu-management-extended.types';
 import {
   KitchenStation,
   ExtendedOrderItemStatus,
-  SelectedModifier
+  SelectedModifier,
+  KITCHEN_STATION_LABELS,
+  KITCHEN_STATION_ICONS
 } from './order-extended.types';
+
+// Re-export KitchenStation types for backwards compatibility
+export { KitchenStation, KITCHEN_STATION_LABELS, KITCHEN_STATION_ICONS };
 
 // ============== TICKET STATUS TYPES ==============
 
@@ -23,13 +28,17 @@ export type TicketPriority =
   | 'low'
   | 'normal'
   | 'high'
-  | 'urgent';
+  | 'urgent'
+  | 'rush'
+  | 'vip';
 
 export const TICKET_PRIORITY_LABELS: Record<TicketPriority, string> = {
   low: 'Low',
   normal: 'Normal',
   high: 'High',
   urgent: 'Urgent',
+  rush: 'Rush',
+  vip: 'VIP',
 };
 
 export const TICKET_PRIORITY_COLORS: Record<TicketPriority, string> = {
@@ -37,6 +46,8 @@ export const TICKET_PRIORITY_COLORS: Record<TicketPriority, string> = {
   normal: '#3B82F6',
   high: '#F59E0B',
   urgent: '#EF4444',
+  rush: '#DC2626',
+  vip: '#7C3AED',
 };
 
 export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
@@ -59,6 +70,7 @@ export const TICKET_STATUS_COLORS: Record<TicketStatus, string> = {
 
 export interface KitchenTicketItem {
   id: string; // Same as ExtendedOrderItem.id
+  orderItemId?: string; // Reference to the original order item
   name: string;
   quantity: number;
 
@@ -73,11 +85,16 @@ export interface KitchenTicketItem {
   // Warnings
   allergens: AllergenType[];
   hasAllergenWarning: boolean;
+  hasAllergens?: boolean; // Alias for hasAllergenWarning
   allergenNotes?: string;
 
   // Notes
   specialInstructions?: string;
   kitchenNotes?: string;
+  notes?: string; // Alias for specialInstructions
+
+  // Dietary Information
+  dietaryTags?: string[];
 
   // Prep Time
   estimatedPrepTime?: number;
@@ -103,6 +120,7 @@ export interface KitchenTicket {
   // Items
   items: KitchenTicketItem[];
   itemCount: number;
+  totalItems?: number; // Alias for itemCount
   completedItemCount: number;
 
   // Status
@@ -111,6 +129,7 @@ export interface KitchenTicket {
 
   // Timing
   createdAt: string;
+  updatedAt?: string;
   startedAt?: string;
   completedAt?: string;
   servedAt?: string;

@@ -240,8 +240,8 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
       borderColor: theme.colors.outline,
     },
     stepCircleActive: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
+      borderColor: theme.colors.tertiary,
     },
     stepCircleCompleted: {
       backgroundColor: theme.colors.success,
@@ -260,7 +260,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
       color: theme.colors.onSurfaceSecondary,
     },
     stepLabelActive: {
-      color: theme.colors.primary,
+      color: theme.colors.tertiary,
       fontWeight: '600',
     },
     stepConnector: {
@@ -330,8 +330,8 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
       gap: theme.spacing.xs,
     },
     categoryOptionSelected: {
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      borderColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.tertiaryContainer,
     },
     categoryDot: {
       width: 8,
@@ -386,7 +386,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
       padding: 2,
     },
     switchOn: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     switchOff: {
       backgroundColor: theme.colors.outline,
@@ -420,8 +420,8 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
       gap: theme.spacing.xs,
     },
     tagOptionSelected: {
-      backgroundColor: theme.colors.primaryLight,
-      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiaryContainer,
+      borderColor: theme.colors.tertiary,
     },
     tagText: {
       fontSize: 12,
@@ -463,7 +463,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     nextButton: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiary,
     },
     buttonDisabled: {
       opacity: 0.6,
@@ -545,7 +545,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
               <View
                 style={[
                   styles.categoryDot,
-                  { backgroundColor: category.color || theme.colors.primary },
+                  { backgroundColor: category.color || theme.colors.tertiary },
                 ]}
               />
               <Text style={styles.categoryName}>{category.name}</Text>
@@ -705,7 +705,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
                   size={16}
                   color={
                     formData.dietary_tags.includes(tag)
-                      ? theme.colors.primary
+                      ? theme.colors.tertiary
                       : theme.colors.onSurfaceSecondary
                   }
                   accessibilityLabel=""
