@@ -4,13 +4,18 @@
  * Desktop-style interface with fixed toolbar and scrollable canvas
  */
 
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing } from '@/design-system/theme/spacing';
-import { MOCK_TABLES, MockTable } from '@/data/tables';
 import { MOCK_FLOORS, MOCK_TABLE_POSITIONS, MOCK_ZONES } from '@/data/tables/mockFloorPlans';
 import { FloorZone, ZoneType, TableShape } from '@/types/settings/table-management.types';
+import { useTable } from '@/context/table/TableContext';
+import { useAuth } from '@/context/auth/AuthContext';
+import { tableStorageService, StoredArea } from '@/services/storage/TableStorageService';
+import { Table } from '@/types/table.types';
+import { TableStatus } from '@/types/common.types';
+import { MockTable } from '@/data/tables/mockTables';
 
 // Floor plan modular components
 import {
@@ -34,6 +39,10 @@ interface FloorPlanSettingsProps {
 const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected }) => {
   const { theme } = useTheme();
 
+  // Context hooks
+  const { state: tableState, refreshTables } = useTable();
+  const { state: authState } = useAuth();
+
   // Modal visibility states
   const [showAddTableModal, setShowAddTableModal] = useState(false);
   const [showAddZoneModal, setShowAddZoneModal] = useState(false);
@@ -44,13 +53,38 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   const [pendingTablePosition, setPendingTablePosition] = useState<{ x: number; y: number } | null>(null);
   const [pendingZonePosition, setPendingZonePosition] = useState<{ x: number; y: number } | null>(null);
 
-  // Track locally added tables (since MOCK_TABLES is static)
-  const [addedTables, setAddedTables] = useState<MockTable[]>([]);
+  // Load areas from storage
+  const [areas, setAreas] = useState<StoredArea[]>([]);
 
-  // Combine MOCK_TABLES with locally added tables
-  const allTables = useMemo(
-    () => [...MOCK_TABLES, ...addedTables],
-    [addedTables]
+  useEffect(() => {
+    const loadAreas = async () => {
+      const storedAreas = await tableStorageService.getAreas();
+      setAreas(storedAreas);
+    };
+    loadAreas();
+  }, []);
+
+  // Use tables from context (AsyncStorage)
+  const allTables = useMemo(() => tableState.tables, [tableState.tables]);
+
+  // Adapter: Convert Table to MockTable format for FloorPlanCanvas
+  const adaptTableToMockTable = (table: Table): MockTable => ({
+    id: table.id,
+    number: table.table_number,
+    capacity: table.capacity,
+    status: table.status,
+    area: table.section || 'Unknown',
+    areaId: table.section || 'unknown',
+    positionX: table.position_x,
+    positionY: table.position_y,
+    shape: table.shape,
+    notes: table.notes,
+  });
+
+  // Convert tables to MockTable format
+  const mockTables = useMemo(
+    () => allTables.map(adaptTableToMockTable),
+    [allTables]
   );
 
   // Use the centralized floor plan state hook
@@ -108,8 +142,8 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   );
 
   const selectedTable = useMemo(
-    () => allTables.find(t => t.id === state.selectedTableId),
-    [allTables, state.selectedTableId]
+    () => mockTables.find(t => t.id === state.selectedTableId),
+    [mockTables, state.selectedTableId]
   );
 
   // Get selected zone data
@@ -279,46 +313,66 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   }, [state.activeTool]);
 
   // Add table modal confirm handler
-  const handleAddTableConfirm = useCallback((config: NewTableConfig) => {
-    // Convert TableShape enum to MockTable shape union type
-    const shapeMap: Record<TableShape, 'square' | 'round' | 'rectangle'> = {
-      [TableShape.ROUND]: 'round',
-      [TableShape.SQUARE]: 'square',
-      [TableShape.RECTANGLE]: 'rectangle',
-      [TableShape.OVAL]: 'round', // Oval falls back to round for MockTable
-    };
+  const handleAddTableConfirm = useCallback(async (config: NewTableConfig) => {
+    try {
+      const restaurantId = authState.restaurant?.id || 'rest_001';
 
-    // Create new table entry
-    const newTable: MockTable = {
-      id: `new-${Date.now()}`,
-      number: config.tableNumber,
-      capacity: config.capacity,
-      shape: shapeMap[config.shape],
-      status: 'available',
-      area: 'New Tables',
-      areaId: state.activeFloorId,
-      positionX: config.x,
-      positionY: config.y,
-    };
+      // Find area name for section (use first area or default)
+      const area = areas.find(a => a.id === state.activeFloorId);
+      const section = area?.name || 'Main Dining';
 
-    // Add to local tables list
-    setAddedTables(prev => [...prev, newTable]);
+      // Map TableShape enum to shape type
+      const shapeMap: Record<TableShape, 'square' | 'round' | 'rectangle'> = {
+        [TableShape.ROUND]: 'round',
+        [TableShape.SQUARE]: 'square',
+        [TableShape.RECTANGLE]: 'rectangle',
+        [TableShape.OVAL]: 'round', // Oval falls back to round
+      };
 
-    // Add position to floor plan state
-    addTable({
-      table_id: newTable.id,
-      floor_id: state.activeFloorId,
-      x: config.x,
-      y: config.y,
-      rotation: 0,
-    });
+      // Create table object following Table interface
+      const newTable: Table = {
+        id: `t-${Date.now()}`,
+        restaurant_id: restaurantId,
+        table_number: config.tableNumber,
+        capacity: config.capacity,
+        status: TableStatus.AVAILABLE,
+        section: section,
+        position_x: config.x,
+        position_y: config.y,
+        shape: shapeMap[config.shape],
+        is_active: true,
+        is_deleted: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-    // Close modal and reset state
-    setShowAddTableModal(false);
-    setPendingTablePosition(null);
-    setActiveTool('select');
-    onChangesDetected?.(true);
-  }, [state.activeFloorId, addTable, setActiveTool, onChangesDetected]);
+      // Save to AsyncStorage via service
+      await tableStorageService.addTable(newTable);
+
+      // Refresh context to reflect changes
+      await refreshTables();
+
+      // Add position to floor plan state
+      addTable({
+        table_id: newTable.id,
+        floor_id: state.activeFloorId,
+        x: config.x,
+        y: config.y,
+        rotation: 0,
+      });
+
+      // Close modal and reset state
+      setShowAddTableModal(false);
+      setPendingTablePosition(null);
+      setActiveTool('select');
+      onChangesDetected?.(true);
+
+      console.log('[FloorPlanSettings] Table created and saved to AsyncStorage:', newTable);
+    } catch (error) {
+      console.error('[FloorPlanSettings] Failed to create table:', error);
+      Alert.alert('Error', 'Failed to create table. Please try again.');
+    }
+  }, [state.activeFloorId, areas, authState.restaurant?.id, refreshTables, addTable, setActiveTool, onChangesDetected]);
 
   // Add table modal cancel handler
   const handleAddTableCancel = useCallback(() => {
@@ -470,7 +524,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
                 floor={currentFloor}
                 zones={currentZones}
                 tablePositions={currentTablePositions}
-                tables={allTables}
+                tables={mockTables}
                 selectedTableId={state.selectedTableId}
                 selectedZoneId={state.selectedZoneId}
                 gridEnabled={state.gridEnabled}
@@ -499,7 +553,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
             selectedTablePosition={selectedTablePosition}
             selectedZone={selectedZone}
             floor={currentFloor}
-            tables={allTables}
+            tables={mockTables}
             zones={currentZones}
             tablePositions={currentTablePositions}
             onCloseSelection={selectedZone ? handleCloseZoneSelection : handleCloseSelection}

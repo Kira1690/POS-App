@@ -1,0 +1,86 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                    POS App - Quick Start Guide                   ║
+║                                                                  ║
+║  All scripts are ready to use in:                               ║
+║  /home/kira/Documents/Github/POS/POS-App/                       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🚀 MAIN COMMAND (Start here!)                                    │
+└──────────────────────────────────────────────────────────────────┘
+
+    ./test-on-emulator.sh
+
+    This will:
+    ✓ Start the Android tablet emulator (if not running)
+    ✓ Build your POS app
+    ✓ Deploy it to the emulator
+    ✓ Launch the app automatically
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📋 OTHER USEFUL COMMANDS                                         │
+└──────────────────────────────────────────────────────────────────┘
+
+    ./test-on-emulator.sh --clean        # Clean build
+    ./test-on-emulator.sh --restart      # Restart emulator first
+    ./test-on-emulator.sh --logs         # Show logs after deploy
+
+    ./view-logs.sh                       # View app logs
+    ./stop-emulator.sh                   # Stop the emulator
+    ./clean-all.sh                       # Clean all caches
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🔑 LOGIN CREDENTIALS                                             │
+└──────────────────────────────────────────────────────────────────┘
+
+    Restaurant Staff:
+    • Employee ID: EMP001
+    • Password:    staff123
+
+    Manager:
+    • Email:    manager@foodcorner.com
+    • Password: manager123
+
+    Admin:
+    • Email:    admin@foodcorner.com
+    • Password: admin123
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│ ⏱️  TIMING EXPECTATIONS                                          │
+└──────────────────────────────────────────────────────────────────┘
+
+    • Emulator Start:      30-40 seconds
+    • First Build:         5-10 minutes ☕
+    • Subsequent Builds:   2-3 minutes
+    • App Launch:          ~30 seconds
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📖 FULL DOCUMENTATION                                            │
+└──────────────────────────────────────────────────────────────────┘
+
+    Read TESTING-GUIDE.md for complete documentation
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🆘 TROUBLESHOOTING                                               │
+└──────────────────────────────────────────────────────────────────┘
+
+    If something goes wrong:
+
+    ./stop-emulator.sh
+    ./clean-all.sh
+    ./test-on-emulator.sh --restart --clean
+
+
+═══════════════════════════════════════════════════════════════════
+
+Ready to start? Just run:
+
+    cd /home/kira/Documents/Github/POS/POS-App
+    ./test-on-emulator.sh
+
+Happy Testing! 🚀

@@ -12,6 +12,8 @@
 import { Table } from '@/types/table.types';
 import { TableStatus } from '@/types/common.types';
 import { storageService, STORAGE_KEYS } from './StorageService';
+import { MOCK_TABLES } from '@/data/tables/mockTables';
+import { MOCK_AREAS } from '@/data/tables/mockAreas';
 
 // Area interface for storage (matches MockArea structure)
 export interface StoredArea {
@@ -342,8 +344,8 @@ class TableStorageService {
   }
 
   /**
-   * Initialize storage - returns existing data or empty state
-   * NO mock data seeding - tables created via Settings > Table Management
+   * Initialize storage - returns existing data or seeds mock data on first launch
+   * Seeding mock data for development/demo purposes
    */
   async initialize(restaurantId: string = this.DEFAULT_RESTAURANT_ID): Promise<TableStorageData> {
     if (__DEV__) {
@@ -359,17 +361,11 @@ class TableStorageService {
       return data;
     }
 
-    // Return empty state - user creates tables via Settings
+    // Seed mock data on first launch for demo/development
     if (__DEV__) {
-      console.log('[TableStorageService] No tables found. Create tables in Settings > Table Management');
+      console.log('[TableStorageService] No tables found. Seeding mock data...');
     }
-
-    return {
-      tables: [],
-      areas: [],
-      lastUpdated: new Date().toISOString(),
-      restaurantId,
-    };
+    return await this.seedMockData(restaurantId);
   }
 
   /**
@@ -403,6 +399,55 @@ class TableStorageService {
       console.log('[TableStorageService] forceReseed called - returning current data (no mock seeding)');
     }
     return this.initialize(restaurantId);
+  }
+
+  /**
+   * Seed mock data on first launch for development/demo
+   * Transforms MOCK_TABLES format to Table format and saves to AsyncStorage
+   */
+  private async seedMockData(restaurantId: string): Promise<TableStorageData> {
+    console.log('[TableStorageService] Seeding mock data for first launch...');
+
+    // Transform MOCK_TABLES to Table format
+    const tables: Table[] = MOCK_TABLES.map((mockTable): Table => ({
+      id: mockTable.id,
+      restaurant_id: restaurantId,
+      table_number: mockTable.number,
+      capacity: mockTable.capacity,
+      status: mockTable.status as TableStatus, // Cast mock status to enum
+      section: mockTable.area,
+      position_x: mockTable.positionX || 0,
+      position_y: mockTable.positionY || 0,
+      shape: mockTable.shape,
+      is_active: true,
+      is_deleted: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+    // Transform MOCK_AREAS to StoredArea format
+    const areas: StoredArea[] = MOCK_AREAS.map((mockArea) => ({
+      id: mockArea.id,
+      name: mockArea.name,
+      description: mockArea.description,
+      icon: mockArea.icon,
+      isActive: mockArea.isActive,
+      color: mockArea.color,
+    }));
+
+    const data: TableStorageData = {
+      tables,
+      areas,
+      lastUpdated: new Date().toISOString(),
+      restaurantId,
+    };
+
+    // Save to AsyncStorage
+    await this.saveTableData(data);
+
+    console.log(`[TableStorageService] Seeded ${tables.length} tables and ${areas.length} areas`);
+
+    return data;
   }
 }
 
