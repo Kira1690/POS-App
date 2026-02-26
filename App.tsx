@@ -7,6 +7,7 @@ import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 import { RootNavigator } from '@/navigation';
 import { ThemeProvider } from '@/providers/ThemeProvider';
+import { DatabaseProvider } from '@/services/database';
 import { OptimizedAppProviders } from '@/providers/OptimizedAppProviders';
 import { MenuProvider } from '@/context/menu';
 
@@ -53,16 +54,18 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <OptimizedAppProviders>
+        <DatabaseProvider>
+          <ThemeProvider>
+            <OptimizedAppProviders>
             <MenuProvider>
               <NavigationContainer>
                 <RootNavigator />
                 <StatusBar style="auto" />
               </NavigationContainer>
             </MenuProvider>
-          </OptimizedAppProviders>
-        </ThemeProvider>
+            </OptimizedAppProviders>
+          </ThemeProvider>
+        </DatabaseProvider>
       </SafeAreaProvider>
       <Toast config={toastConfig} />
     </GestureHandlerRootView>

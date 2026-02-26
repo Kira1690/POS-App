@@ -23,9 +23,9 @@ import { PaymentProvider } from '@/context/payment/PaymentProvider';
 import { EnhancedKitchenProvider } from '@/context/kitchen';
 import {
   tableStorageService,
-  paymentStorageService,
-  syncQueueService,
-  unifiedOrderStorageService,
+  kitchenStorageService,
+  authStorageService,
+  menuStorageService,
 } from '@/services/storage';
 
 interface AppProvidersProps {
@@ -73,36 +73,29 @@ BusinessStateProviders.displayName = 'BusinessStateProviders';
  * - Kitchen updates flow through unified order events
  */
 const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children }) => {
-  // Initialize storage services on mount
+  // Initialize storage services that need seeding on mount
+  // Database tables are created by DatabaseService; these calls seed mock/default data
   useEffect(() => {
-    const initializeAllStorage = async () => {
+    const initializeStorageServices = async () => {
       const restaurantId = 'rest_001'; // Default restaurant ID
 
       try {
-        // Initialize storage services in parallel
         await Promise.all([
-          unifiedOrderStorageService.initialize(),
           tableStorageService.initialize(restaurantId),
-          paymentStorageService.initialize(),
-          syncQueueService.initialize(),
+          kitchenStorageService.initialize(),
+          authStorageService.seedDummyUsers(),
+          menuStorageService.initialize(restaurantId),
         ]);
 
         if (__DEV__) {
-          console.log('[OptimizedAppProviders] Storage services initialized:');
-          console.log('  - unifiedOrderStorageService: ready');
-          console.log('  - tableStorageService: ready');
-          console.log('  - paymentStorageService: ready');
-          console.log('  - syncQueueService: ready');
+          console.log('[OptimizedAppProviders] Storage services initialized (seeding complete)');
         }
       } catch (error) {
         console.error('[OptimizedAppProviders] Storage initialization failed:', error);
-        if (error instanceof Error) {
-          console.error('  Error details:', error.message);
-        }
       }
     };
 
-    initializeAllStorage();
+    initializeStorageServices();
   }, []);
 
   return (

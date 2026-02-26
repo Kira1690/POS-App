@@ -1,0 +1,79 @@
+appId: host.exp.exponent
+name: "Full Offline Test Suite"
+tags:
+  - offline
+  - full
+---
+
+# ============================================================
+# COMPREHENSIVE OFFLINE TEST SUITE
+# Tests: session persistence, all tabs navigate correctly
+# ============================================================
+
+# Open app - session persisted from previous manager login
+- openLink: "exp://192.168.1.9:8081"
+
+# TEST 1: Session persists - lands on dashboard without login
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 60000
+
+- takeScreenshot: "01_session_persisted"
+
+# TEST 2: Order Management tab loads
+- tapOn: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "02_order_management"
+
+# TEST 3: Kitchen Operations tab loads
+- tapOn: "Kitchen Operations"
+
+- extendedWaitUntil:
+    visible: "Kitchen Display"
+    timeout: 10000
+
+- takeScreenshot: "03_kitchen_operations"
+
+# TEST 4: Menu Management tab loads (seeded data)
+- tapOn: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 15000
+
+- takeScreenshot: "04_menu_management"
+
+# TEST 5: Settings tab loads
+- tapOn: "Settings"
+
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+
+- takeScreenshot: "05_settings"
+
+# TEST 6: Back to Dashboard
+- tapOn: "Dashboard"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 10000
+
+- takeScreenshot: "06_back_to_dashboard"
+
+# TEST 7: Re-open app - session still alive
+- openLink: "exp://192.168.1.9:8081"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000
+
+- takeScreenshot: "07_session_still_alive"
+
+# ============================================================
+# ALL OFFLINE TESTS PASSED
+# ============================================================

@@ -3,7 +3,7 @@
  * Professional payment confirmation with receipt options
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,6 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useReceiptManagement } from '@/context/payment';
 import { useUnifiedOrder } from '@/context/unified-order';
+import { paymentStorageService } from '@/services/storage/PaymentStorageService';
 import { Order } from '@/types/order.types';
 import { ProfessionalPayment, ReceiptType } from '@/types/payment.types';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
@@ -32,6 +33,11 @@ interface PaymentConfirmationScreenProps {
       payment: ProfessionalPayment;
       order: Order;
       orderId: string;
+      splitPayment?: {
+        guestId: string;
+        guestName: string;
+        amount: number;
+      };
     };
   };
 }
@@ -50,21 +56,39 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   } = useReceiptManagement();
   const { processPayment } = useUnifiedOrder();
 
-  const { payment, order, orderId } = route.params;
+  const { payment, order, orderId, splitPayment } = route.params;
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
   const [receiptId, setReceiptId] = useState<string | null>(null);
 
-  // Mark order as paid when payment confirmation screen loads
+  // Mark order/guest paid when payment confirmation screen loads
   useEffect(() => {
-    const markOrderPaid = async () => {
-      if (orderId && payment?.id) {
-        // Process payment through unified order context
-        // This updates order status to 'paid' and emits ORDER_PAID event to release table
+    const markPaid = async () => {
+      if (splitPayment) {
+        // Per-guest split: update only this guest's status in storage
+        const existing = await paymentStorageService.getSplit(orderId);
+        if (existing?.guests && existing.guests.length > 0) {
+          const updatedGuests = existing.guests.map((g) =>
+            g.id === splitPayment.guestId
+              ? { ...g, paymentStatus: 'paid' as const, paidAt: new Date().toISOString() }
+              : g
+          );
+          const paidAmount = updatedGuests
+            .filter((g) => g.paymentStatus === 'paid')
+            .reduce((sum, g) => sum + g.total, 0);
+          await paymentStorageService.updateSplit(orderId, {
+            guests: updatedGuests,
+            paidAmount,
+            remainingAmount: Math.max(0, (existing.totalAmount || 0) - paidAmount),
+          });
+        }
+      } else if (orderId && payment?.id) {
+        // Full payment: mark entire order paid and release table
         await processPayment(orderId, payment.method, payment.transactionId || payment.id);
       }
     };
-    markOrderPaid();
-  }, [orderId, payment?.id, payment?.method, payment?.transactionId, processPayment]);
+    markPaid();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-generate receipt on screen load
   useEffect(() => {
@@ -149,13 +173,19 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   };
 
   // Handle navigation back to main flow
-  const handleContinue = () => {
-    // Navigate back to dashboard or order management
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Dashboard' }],
-    });
-  };
+  const handleContinue = useCallback(() => {
+    if (splitPayment) {
+      // Return to BillSplitScreen so staff can pay the next guest.
+      // Stack: BillSplit → PaymentProcessing (replaced) → here
+      // goBack() takes us to BillSplit.
+      navigation.goBack();
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Dashboard' }],
+      });
+    }
+  }, [splitPayment, navigation]);
 
   // Handle new order
   const handleNewOrder = () => {
@@ -175,7 +205,9 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
           Payment Successful
         </Text>
         <Text style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
-          Transaction completed successfully
+          {splitPayment
+            ? `${splitPayment.guestName} — ${formatCurrency(splitPayment.amount)} paid`
+            : 'Transaction completed successfully'}
         </Text>
       </View>
     </View>
@@ -194,7 +226,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             Order Number
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {order.order_number}
+            {(order as any).orderNumber || (order as any).order_number || orderId}
           </Text>
         </View>
         
@@ -361,7 +393,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
       >
         <MaterialIcons name="check" size={20} color={theme.colors.onPrimary} />
         <Text style={[styles.actionButtonText, { color: theme.colors.onPrimary }]}>
-          Continue
+          {splitPayment ? 'Back to Bill Split' : 'Continue'}
         </Text>
       </TouchableOpacity>
     </View>

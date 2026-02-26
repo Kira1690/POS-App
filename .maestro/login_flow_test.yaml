@@ -1,0 +1,71 @@
+appId: host.exp.exponent
+name: "Login Flow Test - Fresh Manager Login"
+tags:
+  - offline
+  - auth
+---
+
+# Test fresh login after logout
+# First logout from Settings, then login as manager
+
+# Open app
+- openLink: "exp://192.168.1.9:8081"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 60000
+
+# Navigate to Settings to find logout
+- tapOn: "Settings"
+
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+
+- takeScreenshot: "login_01_settings_before_logout"
+
+# Look for logout/sign out button and tap it
+- tapOn:
+    text: ".*Logout.*|.*Log Out.*|.*Sign Out.*"
+    optional: true
+
+- takeScreenshot: "login_02_after_logout_tap"
+
+# If there's a confirmation dialog, confirm it
+- tapOn:
+    text: ".*Confirm.*|.*Yes.*|.*Logout.*|.*Log Out.*"
+    optional: true
+
+# Wait to arrive at Welcome screen
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 15000
+
+- takeScreenshot: "login_03_welcome_after_logout"
+
+# Now do fresh manager login
+- tapOn:
+    text: ".*Manager Login.*"
+
+- extendedWaitUntil:
+    visible: "Manager Login"
+    timeout: 10000
+
+- tapOn:
+    id: "email-input"
+- inputText: "manager@foodcorner.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "manager123"
+
+- hideKeyboard
+
+- tapOn:
+    text: ".*Sign In.*"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000
+
+- takeScreenshot: "login_04_fresh_login_success"

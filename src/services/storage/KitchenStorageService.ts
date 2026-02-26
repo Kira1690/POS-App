@@ -1,10 +1,10 @@
 /**
- * Kitchen Storage Service
- * Handles all kitchen ticket data persistence using AsyncStorage
+ * Kitchen Storage Service - SQLite Implementation
+ * Handles all kitchen ticket data persistence via expo-sqlite.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS } from './StorageService';
+import { databaseService } from '@/services/database/DatabaseService';
+import { parseJsonColumn, fromSqlBool, toSqlBool, now } from '@/services/database/helpers';
 import {
   KitchenTicket,
   TicketStatus,
@@ -15,504 +15,337 @@ import {
   KitchenStation,
 } from '@/types/kitchen-ticket.types';
 
-// Kitchen storage data structure
-interface KitchenStorageData {
-  tickets: Record<string, KitchenTicket>;
-  activeTicketIds: string[];
-  completedTicketIds: string[];
-  lastUpdated: string;
+// Row types
+interface TicketRow {
+  id: string; order_id: string; order_number: string;
+  table_id: string; table_name: string;
+  station: string; items: string;
+  item_count: number; completed_item_count: number;
+  status: string; priority: string;
+  has_allergens: number; allergen_items: string | null;
+  is_rush: number; is_overdue: number; overdue_by: number | null;
+  special_instructions: string | null; delay_reason: string | null;
+  assigned_to: string | null; assigned_to_name: string | null;
+  estimated_prep_time: number; actual_prep_time: number | null;
+  started_at: string | null; completed_at: string | null; served_at: string | null;
+  pending_sync: number; synced_at: string | null;
+  created_at: string; updated_at: string | null;
 }
 
-interface StationConfigStorageData {
-  configs: StationConfig[];
-  lastUpdated: string;
+interface StationConfigRow {
+  station: string; name: string; is_active: number;
+  color: string | null; icon: string | null;
+  default_prep_time: number; updated_at: string;
 }
 
-// Default empty storage
-const EMPTY_KITCHEN_STORAGE: KitchenStorageData = {
-  tickets: {},
-  activeTicketIds: [],
-  completedTicketIds: [],
-  lastUpdated: new Date().toISOString(),
-};
-
-const DEFAULT_STATION_CONFIG_STORAGE: StationConfigStorageData = {
-  configs: DEFAULT_STATION_CONFIGS,
-  lastUpdated: new Date().toISOString(),
-};
-
-/**
- * KitchenStorageService - Manages kitchen ticket persistence
- */
 class KitchenStorageService {
-  private ticketsCache: KitchenStorageData | null = null;
-  private stationConfigCache: StationConfigStorageData | null = null;
+  private get db() {
+    return databaseService.getDatabase();
+  }
+
+  // ============== CONVERTERS ==============
+
+  private ticketFromRow(row: TicketRow): KitchenTicket {
+    return {
+      id: row.id,
+      orderId: row.order_id,
+      orderNumber: row.order_number,
+      tableId: row.table_id,
+      tableName: row.table_name,
+      station: row.station as KitchenStation,
+      items: parseJsonColumn(row.items, []),
+      itemCount: row.item_count,
+      completedItemCount: row.completed_item_count,
+      status: row.status as TicketStatus,
+      priority: row.priority as TicketPriority,
+      hasAllergens: fromSqlBool(row.has_allergens),
+      allergenItems: parseJsonColumn(row.allergen_items, []),
+      isRush: fromSqlBool(row.is_rush),
+      isOverdue: fromSqlBool(row.is_overdue),
+      overdueBy: row.overdue_by || undefined,
+      specialInstructions: row.special_instructions || undefined,
+      delayReason: row.delay_reason || undefined,
+      assignedTo: row.assigned_to || undefined,
+      assignedToName: row.assigned_to_name || undefined,
+      estimatedPrepTime: row.estimated_prep_time,
+      actualPrepTime: row.actual_prep_time || undefined,
+      startedAt: row.started_at || undefined,
+      completedAt: row.completed_at || undefined,
+      servedAt: row.served_at || undefined,
+      pendingSync: fromSqlBool(row.pending_sync),
+      syncedAt: row.synced_at || undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at || undefined,
+    } as KitchenTicket;
+  }
+
+  private stationConfigFromRow(row: StationConfigRow): StationConfig {
+    return {
+      station: row.station as KitchenStation,
+      name: row.name,
+      isActive: fromSqlBool(row.is_active),
+      color: row.color || undefined,
+      icon: row.icon || undefined,
+      defaultPrepTime: row.default_prep_time,
+    } as StationConfig;
+  }
 
   // ============== INITIALIZATION ==============
 
-  /**
-   * Initialize storage and load data into cache
-   */
   async initialize(): Promise<void> {
-    try {
-      await this.loadTicketsFromStorage();
-      await this.loadStationConfigFromStorage();
-    } catch (error) {
-      console.error('[KitchenStorage] Initialization error:', error);
-      this.ticketsCache = { ...EMPTY_KITCHEN_STORAGE };
-      this.stationConfigCache = { ...DEFAULT_STATION_CONFIG_STORAGE };
-    }
-  }
-
-  /**
-   * Load tickets from AsyncStorage
-   */
-  private async loadTicketsFromStorage(): Promise<void> {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.KITCHEN_TICKETS);
-      if (data) {
-        this.ticketsCache = JSON.parse(data);
-      } else {
-        this.ticketsCache = { ...EMPTY_KITCHEN_STORAGE };
-      }
-    } catch (error) {
-      console.error('[KitchenStorage] Error loading tickets:', error);
-      this.ticketsCache = { ...EMPTY_KITCHEN_STORAGE };
-    }
-  }
-
-  /**
-   * Load station config from AsyncStorage
-   */
-  private async loadStationConfigFromStorage(): Promise<void> {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.KITCHEN_STATION_CONFIG);
-      if (data) {
-        this.stationConfigCache = JSON.parse(data);
-      } else {
-        this.stationConfigCache = { ...DEFAULT_STATION_CONFIG_STORAGE };
-      }
-    } catch (error) {
-      console.error('[KitchenStorage] Error loading station config:', error);
-      this.stationConfigCache = { ...DEFAULT_STATION_CONFIG_STORAGE };
-    }
-  }
-
-  /**
-   * Save tickets to AsyncStorage
-   */
-  private async saveTicketsToStorage(): Promise<void> {
-    if (!this.ticketsCache) return;
-
-    try {
-      this.ticketsCache.lastUpdated = new Date().toISOString();
-      await AsyncStorage.setItem(STORAGE_KEYS.KITCHEN_TICKETS, JSON.stringify(this.ticketsCache));
-    } catch (error) {
-      console.error('[KitchenStorage] Error saving tickets:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save station config to AsyncStorage
-   */
-  private async saveStationConfigToStorage(): Promise<void> {
-    if (!this.stationConfigCache) return;
-
-    try {
-      this.stationConfigCache.lastUpdated = new Date().toISOString();
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.KITCHEN_STATION_CONFIG,
-        JSON.stringify(this.stationConfigCache)
-      );
-    } catch (error) {
-      console.error('[KitchenStorage] Error saving station config:', error);
-      throw error;
-    }
-  }
-
-  // ============== TICKET CRUD OPERATIONS ==============
-
-  /**
-   * Save a new ticket or update existing
-   */
-  async saveTicket(ticket: KitchenTicket): Promise<void> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return;
-
-    this.ticketsCache.tickets[ticket.id] = ticket;
-
-    // Update active/completed lists
-    if (this.isActiveTicket(ticket)) {
-      if (!this.ticketsCache.activeTicketIds.includes(ticket.id)) {
-        this.ticketsCache.activeTicketIds.push(ticket.id);
-      }
-      // Remove from completed if exists
-      this.ticketsCache.completedTicketIds = this.ticketsCache.completedTicketIds.filter(
-        (id) => id !== ticket.id
-      );
-    } else {
-      if (!this.ticketsCache.completedTicketIds.includes(ticket.id)) {
-        this.ticketsCache.completedTicketIds.push(ticket.id);
-      }
-      // Remove from active if exists
-      this.ticketsCache.activeTicketIds = this.ticketsCache.activeTicketIds.filter(
-        (id) => id !== ticket.id
-      );
-    }
-
-    await this.saveTicketsToStorage();
-  }
-
-  /**
-   * Get ticket by ID
-   */
-  async getTicket(ticketId: string): Promise<KitchenTicket | null> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    return this.ticketsCache?.tickets[ticketId] || null;
-  }
-
-  /**
-   * Get all active tickets
-   */
-  async getActiveTickets(): Promise<KitchenTicket[]> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return [];
-
-    return this.ticketsCache.activeTicketIds
-      .map((id) => this.ticketsCache!.tickets[id])
-      .filter(Boolean)
-      .sort((a, b) => {
-        // Sort by priority first, then by creation time
-        const priorityOrder: Record<TicketPriority, number> = {
-          vip: 0, rush: 1, urgent: 2, high: 3, normal: 4, low: 5
-        };
-        const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-        if (priorityDiff !== 0) return priorityDiff;
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      });
-  }
-
-  /**
-   * Get tickets by order ID
-   */
-  async getTicketsByOrder(orderId: string): Promise<KitchenTicket[]> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return [];
-
-    return Object.values(this.ticketsCache.tickets).filter((t) => t.orderId === orderId);
-  }
-
-  /**
-   * Get tickets by station
-   */
-  async getTicketsByStation(station: KitchenStation): Promise<KitchenTicket[]> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return [];
-
-    return Object.values(this.ticketsCache.tickets)
-      .filter((t) => t.station === station && this.isActiveTicket(t))
-      .sort((a, b) => {
-        const priorityOrder: Record<TicketPriority, number> = {
-          vip: 0, rush: 1, urgent: 2, high: 3, normal: 4, low: 5
-        };
-        const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-        if (priorityDiff !== 0) return priorityDiff;
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      });
-  }
-
-  /**
-   * Get tickets with filters
-   */
-  async getTickets(filters?: TicketFilters): Promise<KitchenTicket[]> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return [];
-
-    let tickets = Object.values(this.ticketsCache.tickets);
-
-    if (filters) {
-      // Filter by station
-      if (filters.station && filters.station !== 'all') {
-        tickets = tickets.filter((t) => t.station === filters.station);
-      }
-
-      // Filter by status
-      if (filters.status && filters.status !== 'all') {
-        tickets = tickets.filter((t) => t.status === filters.status);
-      }
-
-      // Filter by priority
-      if (filters.priority && filters.priority !== 'all') {
-        tickets = tickets.filter((t) => t.priority === filters.priority);
-      }
-
-      // Filter by allergens
-      if (filters.hasAllergens !== undefined) {
-        tickets = tickets.filter((t) => t.hasAllergens === filters.hasAllergens);
-      }
-
-      // Filter by overdue
-      if (filters.isOverdue !== undefined) {
-        tickets = tickets.filter((t) => t.isOverdue === filters.isOverdue);
-      }
-
-      // Filter by search query
-      if (filters.searchQuery) {
-        const query = filters.searchQuery.toLowerCase();
-        tickets = tickets.filter(
-          (t) =>
-            t.orderNumber.toLowerCase().includes(query) ||
-            t.tableName.toLowerCase().includes(query) ||
-            t.items.some((item) => item.name.toLowerCase().includes(query))
+    // Seed default station configs if empty
+    const configCount = await this.db.getFirstAsync<{ cnt: number }>(
+      'SELECT COUNT(*) as cnt FROM station_configs'
+    );
+    if ((configCount?.cnt || 0) === 0) {
+      for (const config of DEFAULT_STATION_CONFIGS) {
+        await this.db.runAsync(
+          `INSERT OR REPLACE INTO station_configs (station, name, is_active, color, icon, default_prep_time, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          config.station, config.name, toSqlBool(config.isActive),
+          config.color || null, config.icon || null, config.defaultPrepTime || 15, now()
         );
       }
     }
-
-    return tickets.sort((a, b) => {
-      const priorityOrder: Record<TicketPriority, number> = {
-        vip: 0,
-        rush: 1,
-        urgent: 2,
-        high: 3,
-        normal: 4,
-        low: 5
-      };
-      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-      if (priorityDiff !== 0) return priorityDiff;
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    });
   }
 
-  /**
-   * Update a ticket
-   */
-  async updateTicket(
-    ticketId: string,
-    updates: Partial<KitchenTicket>
-  ): Promise<KitchenTicket | null> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return null;
+  // ============== TICKET CRUD ==============
 
-    const existingTicket = this.ticketsCache.tickets[ticketId];
-    if (!existingTicket) return null;
-
-    const updatedTicket: KitchenTicket = {
-      ...existingTicket,
-      ...updates,
-    };
-
-    await this.saveTicket(updatedTicket);
-    return updatedTicket;
+  async saveTicket(ticket: KitchenTicket): Promise<void> {
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO kitchen_tickets (id, order_id, order_number, table_id, table_name,
+        station, items, item_count, completed_item_count,
+        status, priority, has_allergens, allergen_items,
+        is_rush, is_overdue, overdue_by, special_instructions, delay_reason,
+        assigned_to, assigned_to_name, estimated_prep_time, actual_prep_time,
+        started_at, completed_at, served_at,
+        pending_sync, synced_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ticket.id, ticket.orderId, ticket.orderNumber,
+      ticket.tableId, ticket.tableName,
+      ticket.station, JSON.stringify(ticket.items || []),
+      ticket.itemCount || 0, ticket.completedItemCount || 0,
+      ticket.status, ticket.priority || 'normal',
+      toSqlBool(ticket.hasAllergens), ticket.allergenItems ? JSON.stringify(ticket.allergenItems) : null,
+      toSqlBool(ticket.isRush), toSqlBool(ticket.isOverdue), ticket.overdueBy || null,
+      ticket.specialInstructions || null, ticket.delayReason || null,
+      ticket.assignedTo || null, ticket.assignedToName || null,
+      ticket.estimatedPrepTime || 15, ticket.actualPrepTime || null,
+      ticket.startedAt || null, ticket.completedAt || null, ticket.servedAt || null,
+      toSqlBool(ticket.pendingSync), ticket.syncedAt || null,
+      ticket.createdAt || now(), ticket.updatedAt || now()
+    );
   }
 
-  /**
-   * Delete a ticket
-   */
+  async getTicket(ticketId: string): Promise<KitchenTicket | null> {
+    const row = await this.db.getFirstAsync<TicketRow>(
+      'SELECT * FROM kitchen_tickets WHERE id = ?', ticketId
+    );
+    return row ? this.ticketFromRow(row) : null;
+  }
+
+  async getActiveTickets(): Promise<KitchenTicket[]> {
+    const rows = await this.db.getAllAsync<TicketRow>(
+      `SELECT * FROM kitchen_tickets WHERE status NOT IN ('served', 'cancelled')
+       ORDER BY
+         CASE priority
+           WHEN 'vip' THEN 0 WHEN 'rush' THEN 1 WHEN 'urgent' THEN 2
+           WHEN 'high' THEN 3 WHEN 'normal' THEN 4 WHEN 'low' THEN 5
+         END,
+         created_at ASC`
+    );
+    return rows.map((r) => this.ticketFromRow(r));
+  }
+
+  async getTicketsByOrder(orderId: string): Promise<KitchenTicket[]> {
+    const rows = await this.db.getAllAsync<TicketRow>(
+      'SELECT * FROM kitchen_tickets WHERE order_id = ?', orderId
+    );
+    return rows.map((r) => this.ticketFromRow(r));
+  }
+
+  async getTicketsByStation(station: KitchenStation): Promise<KitchenTicket[]> {
+    const rows = await this.db.getAllAsync<TicketRow>(
+      `SELECT * FROM kitchen_tickets WHERE station = ? AND status NOT IN ('served', 'cancelled')
+       ORDER BY
+         CASE priority
+           WHEN 'vip' THEN 0 WHEN 'rush' THEN 1 WHEN 'urgent' THEN 2
+           WHEN 'high' THEN 3 WHEN 'normal' THEN 4 WHEN 'low' THEN 5
+         END,
+         created_at ASC`,
+      station
+    );
+    return rows.map((r) => this.ticketFromRow(r));
+  }
+
+  async getTickets(filters?: TicketFilters): Promise<KitchenTicket[]> {
+    let sql = 'SELECT * FROM kitchen_tickets';
+    const conditions: string[] = [];
+    const params: (string | number | null)[] = [];
+
+    if (filters) {
+      if (filters.station && filters.station !== 'all') {
+        conditions.push('station = ?');
+        params.push(filters.station);
+      }
+      if (filters.status && filters.status !== 'all') {
+        conditions.push('status = ?');
+        params.push(filters.status);
+      }
+      if (filters.priority && filters.priority !== 'all') {
+        conditions.push('priority = ?');
+        params.push(filters.priority);
+      }
+      if (filters.hasAllergens !== undefined) {
+        conditions.push('has_allergens = ?');
+        params.push(filters.hasAllergens ? 1 : 0);
+      }
+      if (filters.isOverdue !== undefined) {
+        conditions.push('is_overdue = ?');
+        params.push(filters.isOverdue ? 1 : 0);
+      }
+    }
+
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    sql += ` ORDER BY
+      CASE priority
+        WHEN 'vip' THEN 0 WHEN 'rush' THEN 1 WHEN 'urgent' THEN 2
+        WHEN 'high' THEN 3 WHEN 'normal' THEN 4 WHEN 'low' THEN 5
+      END,
+      created_at ASC`;
+
+    const rows = await this.db.getAllAsync<TicketRow>(sql, ...params);
+    let tickets = rows.map((r) => this.ticketFromRow(r));
+
+    // Handle search query in JS (needs item name matching)
+    if (filters?.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      tickets = tickets.filter(
+        (t) =>
+          t.orderNumber.toLowerCase().includes(query) ||
+          t.tableName.toLowerCase().includes(query) ||
+          t.items.some((item: { name: string }) => item.name.toLowerCase().includes(query))
+      );
+    }
+
+    return tickets;
+  }
+
+  async updateTicket(ticketId: string, updates: Partial<KitchenTicket>): Promise<KitchenTicket | null> {
+    const existing = await this.getTicket(ticketId);
+    if (!existing) return null;
+
+    const updated: KitchenTicket = { ...existing, ...updates };
+    await this.saveTicket(updated);
+    return updated;
+  }
+
   async deleteTicket(ticketId: string): Promise<void> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return;
-
-    // Remove from all lists
-    this.ticketsCache.activeTicketIds = this.ticketsCache.activeTicketIds.filter(
-      (id) => id !== ticketId
-    );
-    this.ticketsCache.completedTicketIds = this.ticketsCache.completedTicketIds.filter(
-      (id) => id !== ticketId
-    );
-    delete this.ticketsCache.tickets[ticketId];
-
-    await this.saveTicketsToStorage();
+    await this.db.runAsync('DELETE FROM kitchen_tickets WHERE id = ?', ticketId);
   }
 
   // ============== BULK OPERATIONS ==============
 
-  /**
-   * Save multiple tickets at once
-   */
   async saveTickets(tickets: KitchenTicket[]): Promise<void> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return;
-
     for (const ticket of tickets) {
-      this.ticketsCache.tickets[ticket.id] = ticket;
-
-      if (this.isActiveTicket(ticket)) {
-        if (!this.ticketsCache.activeTicketIds.includes(ticket.id)) {
-          this.ticketsCache.activeTicketIds.push(ticket.id);
-        }
-      } else {
-        if (!this.ticketsCache.completedTicketIds.includes(ticket.id)) {
-          this.ticketsCache.completedTicketIds.push(ticket.id);
-        }
-      }
+      await this.saveTicket(ticket);
     }
-
-    await this.saveTicketsToStorage();
   }
 
-  /**
-   * Delete tickets by order ID
-   */
   async deleteTicketsByOrder(orderId: string): Promise<void> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return;
-
-    const ticketIds = Object.values(this.ticketsCache.tickets)
-      .filter((t) => t.orderId === orderId)
-      .map((t) => t.id);
-
-    for (const ticketId of ticketIds) {
-      this.ticketsCache.activeTicketIds = this.ticketsCache.activeTicketIds.filter(
-        (id) => id !== ticketId
-      );
-      this.ticketsCache.completedTicketIds = this.ticketsCache.completedTicketIds.filter(
-        (id) => id !== ticketId
-      );
-      delete this.ticketsCache.tickets[ticketId];
-    }
-
-    await this.saveTicketsToStorage();
+    await this.db.runAsync('DELETE FROM kitchen_tickets WHERE order_id = ?', orderId);
   }
 
-  /**
-   * Clear old tickets (completed, older than specified date)
-   */
   async clearOldTickets(beforeDate: Date): Promise<number> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return 0;
-
-    const cutoffTime = beforeDate.getTime();
-    let deletedCount = 0;
-
-    // Only clear from completed tickets
-    const ticketsToDelete = this.ticketsCache.completedTicketIds.filter((id) => {
-      const ticket = this.ticketsCache!.tickets[id];
-      if (ticket && new Date(ticket.createdAt).getTime() < cutoffTime) {
-        return true;
-      }
-      return false;
-    });
-
-    for (const ticketId of ticketsToDelete) {
-      delete this.ticketsCache.tickets[ticketId];
-      deletedCount++;
-    }
-
-    this.ticketsCache.completedTicketIds = this.ticketsCache.completedTicketIds.filter(
-      (id) => !ticketsToDelete.includes(id)
+    const result = await this.db.runAsync(
+      `DELETE FROM kitchen_tickets WHERE status IN ('served', 'cancelled') AND created_at < ?`,
+      beforeDate.toISOString()
     );
-
-    await this.saveTicketsToStorage();
-    return deletedCount;
+    return result.changes;
   }
 
   // ============== STATION CONFIG ==============
 
-  /**
-   * Get all station configs
-   */
   async getStationConfigs(): Promise<StationConfig[]> {
-    if (!this.stationConfigCache) await this.loadStationConfigFromStorage();
-    return this.stationConfigCache?.configs || DEFAULT_STATION_CONFIGS;
+    const rows = await this.db.getAllAsync<StationConfigRow>(
+      'SELECT * FROM station_configs ORDER BY station'
+    );
+    return rows.length > 0
+      ? rows.map((r) => this.stationConfigFromRow(r))
+      : DEFAULT_STATION_CONFIGS;
   }
 
-  /**
-   * Get station config by station
-   */
   async getStationConfig(station: KitchenStation): Promise<StationConfig | null> {
-    if (!this.stationConfigCache) await this.loadStationConfigFromStorage();
-    return (
-      this.stationConfigCache?.configs.find((c) => c.station === station) ||
-      DEFAULT_STATION_CONFIGS.find((c) => c.station === station) ||
-      null
+    const row = await this.db.getFirstAsync<StationConfigRow>(
+      'SELECT * FROM station_configs WHERE station = ?', station
+    );
+    if (row) return this.stationConfigFromRow(row);
+    return DEFAULT_STATION_CONFIGS.find((c) => c.station === station) || null;
+  }
+
+  async updateStationConfig(station: KitchenStation, updates: Partial<StationConfig>): Promise<void> {
+    const existing = await this.getStationConfig(station);
+    if (!existing) return;
+
+    const updated = { ...existing, ...updates };
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO station_configs (station, name, is_active, color, icon, default_prep_time, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      updated.station, updated.name, toSqlBool(updated.isActive),
+      updated.color || null, updated.icon || null, updated.defaultPrepTime || 15, now()
     );
   }
 
-  /**
-   * Update station config
-   */
-  async updateStationConfig(station: KitchenStation, updates: Partial<StationConfig>): Promise<void> {
-    if (!this.stationConfigCache) await this.loadStationConfigFromStorage();
-    if (!this.stationConfigCache) return;
-
-    const index = this.stationConfigCache.configs.findIndex((c) => c.station === station);
-    if (index !== -1) {
-      this.stationConfigCache.configs[index] = {
-        ...this.stationConfigCache.configs[index],
-        ...updates,
-      };
-      await this.saveStationConfigToStorage();
-    }
-  }
-
-  /**
-   * Reset station configs to defaults
-   */
   async resetStationConfigs(): Promise<void> {
-    this.stationConfigCache = { ...DEFAULT_STATION_CONFIG_STORAGE };
-    await this.saveStationConfigToStorage();
+    await this.db.execAsync('DELETE FROM station_configs');
+    for (const config of DEFAULT_STATION_CONFIGS) {
+      await this.db.runAsync(
+        `INSERT INTO station_configs (station, name, is_active, color, icon, default_prep_time, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        config.station, config.name, toSqlBool(config.isActive),
+        config.color || null, config.icon || null, config.defaultPrepTime || 15, now()
+      );
+    }
   }
 
   // ============== SYNC OPERATIONS ==============
 
-  /**
-   * Get tickets pending sync
-   */
   async getUnsyncedTickets(): Promise<KitchenTicket[]> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return [];
-
-    return Object.values(this.ticketsCache.tickets).filter((t) => t.pendingSync);
+    const rows = await this.db.getAllAsync<TicketRow>(
+      'SELECT * FROM kitchen_tickets WHERE pending_sync = 1'
+    );
+    return rows.map((r) => this.ticketFromRow(r));
   }
 
-  /**
-   * Mark tickets as synced
-   */
   async markAsSynced(ticketIds: string[]): Promise<void> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) return;
-
-    const now = new Date().toISOString();
-
-    for (const ticketId of ticketIds) {
-      if (this.ticketsCache.tickets[ticketId]) {
-        this.ticketsCache.tickets[ticketId].pendingSync = false;
-        this.ticketsCache.tickets[ticketId].syncedAt = now;
-      }
-    }
-
-    await this.saveTicketsToStorage();
+    if (ticketIds.length === 0) return;
+    const ts = now();
+    const placeholders = ticketIds.map(() => '?').join(', ');
+    await this.db.runAsync(
+      `UPDATE kitchen_tickets SET pending_sync = 0, synced_at = ? WHERE id IN (${placeholders})`,
+      ts, ...ticketIds
+    );
   }
 
-  /**
-   * Get last sync time
-   */
   async getLastSyncTime(): Promise<string | null> {
-    try {
-      return await AsyncStorage.getItem(STORAGE_KEYS.KITCHEN_LAST_SYNC);
-    } catch (error) {
-      console.error('[KitchenStorage] Error getting last sync time:', error);
-      return null;
-    }
+    const row = await this.db.getFirstAsync<{ value: string }>(
+      `SELECT value FROM sync_metadata WHERE key = 'kitchen_last_sync'`
+    );
+    return row?.value || null;
   }
 
-  /**
-   * Update last sync time
-   */
   async updateLastSyncTime(): Promise<void> {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.KITCHEN_LAST_SYNC, new Date().toISOString());
-    } catch (error) {
-      console.error('[KitchenStorage] Error updating last sync time:', error);
-    }
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('kitchen_last_sync', ?, ?)`,
+      now(), now()
+    );
   }
 
   // ============== STATISTICS ==============
 
-  /**
-   * Get kitchen statistics
-   */
   async getStats(): Promise<{
     totalTickets: number;
     pendingTickets: number;
@@ -521,74 +354,46 @@ class KitchenStorageService {
     overdueTickets: number;
     byStation: Record<KitchenStation, number>;
   }> {
-    if (!this.ticketsCache) await this.loadTicketsFromStorage();
-    if (!this.ticketsCache) {
-      return {
-        totalTickets: 0,
-        pendingTickets: 0,
-        preparingTickets: 0,
-        readyTickets: 0,
-        overdueTickets: 0,
-        byStation: {
-          hot_kitchen: 0,
-          cold_kitchen: 0,
-          grill: 0,
-          desserts: 0,
-          beverages: 0,
-          bar: 0,
-        },
-      };
-    }
-
-    const activeTickets = Object.values(this.ticketsCache.tickets).filter((t) =>
-      this.isActiveTicket(t)
+    const activeRows = await this.db.getAllAsync<{ station: string; status: string; is_overdue: number }>(
+      `SELECT station, status, is_overdue FROM kitchen_tickets WHERE status NOT IN ('served', 'cancelled')`
     );
 
     const byStation: Record<KitchenStation, number> = {
-      hot_kitchen: 0,
-      cold_kitchen: 0,
-      grill: 0,
-      desserts: 0,
-      beverages: 0,
-      bar: 0,
+      hot_kitchen: 0, cold_kitchen: 0, grill: 0, desserts: 0, beverages: 0, bar: 0,
     };
 
-    for (const ticket of activeTickets) {
-      byStation[ticket.station]++;
+    let pending = 0;
+    let preparing = 0;
+    let ready = 0;
+    let overdue = 0;
+
+    for (const row of activeRows) {
+      if (row.station in byStation) {
+        byStation[row.station as KitchenStation]++;
+      }
+      if (row.status === 'pending') pending++;
+      if (row.status === 'preparing') preparing++;
+      if (row.status === 'ready') ready++;
+      if (row.is_overdue === 1) overdue++;
     }
 
     return {
-      totalTickets: activeTickets.length,
-      pendingTickets: activeTickets.filter((t) => t.status === 'pending').length,
-      preparingTickets: activeTickets.filter((t) => t.status === 'preparing').length,
-      readyTickets: activeTickets.filter((t) => t.status === 'ready').length,
-      overdueTickets: activeTickets.filter((t) => t.isOverdue).length,
+      totalTickets: activeRows.length,
+      pendingTickets: pending,
+      preparingTickets: preparing,
+      readyTickets: ready,
+      overdueTickets: overdue,
       byStation,
     };
   }
 
-  // ============== UTILITY METHODS ==============
+  // ============== UTILITY ==============
 
-  /**
-   * Check if ticket is active
-   */
-  private isActiveTicket(ticket: KitchenTicket): boolean {
-    const completedStatuses: TicketStatus[] = ['served', 'cancelled'];
-    return !completedStatuses.includes(ticket.status);
-  }
-
-  /**
-   * Clear all kitchen data (use with caution)
-   */
   async clearAll(): Promise<void> {
-    this.ticketsCache = { ...EMPTY_KITCHEN_STORAGE };
-    this.stationConfigCache = { ...DEFAULT_STATION_CONFIG_STORAGE };
-
-    await Promise.all([
-      AsyncStorage.removeItem(STORAGE_KEYS.KITCHEN_TICKETS),
-      AsyncStorage.removeItem(STORAGE_KEYS.KITCHEN_STATION_CONFIG),
-      AsyncStorage.removeItem(STORAGE_KEYS.KITCHEN_LAST_SYNC),
-    ]);
+    await this.db.execAsync('DELETE FROM kitchen_tickets');
+    // Reset station configs to defaults
+    await this.resetStationConfigs();
+    await this.db.runAsync(`DELETE FROM sync_metadata WHERE key = 'kitchen_last_sync'`);
   }
 }
 

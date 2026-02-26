@@ -42,6 +42,19 @@ interface PaymentProcessingScreenProps {
     params: {
       order: Order;
       orderId: string;
+      /** Present when paying a single guest's share */
+      splitPayment?: {
+        guestId: string;
+        guestName: string;
+        amount: number;
+      };
+      /** Pre-built splits from the "Payment" tab in BillSplitScreen */
+      splitPayments?: Array<{
+        id: string;
+        method: string;
+        amount: number;
+        status: string;
+      }>;
     };
   };
 }
@@ -78,11 +91,20 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
   // Get order from route params
   const order = route?.params?.order;
   const orderId = route?.params?.orderId || order?.id;
+  const splitPayment = route?.params?.splitPayment;
+  const splitPayments = route?.params?.splitPayments;
 
   // Reset processing status on mount to clear any previous FAILED status
   useEffect(() => {
     resetProcessingStatus();
   }, [resetProcessingStatus]);
+
+  // Auto-open split modal when pre-built splits are passed from BillSplitScreen "Payment" tab
+  useEffect(() => {
+    if (splitPayments && splitPayments.length > 0) {
+      openSplitPaymentModal();
+    }
+  }, [splitPayments, openSplitPaymentModal]);
 
   useEffect(() => {
     if (!order && !orderId) {
@@ -98,14 +120,19 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
   // Calculate order totals
   const calculateTotals = useCallback(() => {
     if (!order) return { subtotal: 0, tax: 0, tip: 0, total: 0 };
-    
+
+    // Guest split: tax already included in equalSplitCalculator output
+    if (splitPayment) {
+      return { subtotal: splitPayment.amount, tax: 0, tip: 0, total: splitPayment.amount };
+    }
+
     const subtotal = order.subtotal || 0;
     const tax = order.tax_amount || 0;
     const tip = tipAmount;
     const total = subtotal + tax + tip;
-    
+
     return { subtotal, tax, tip, total };
-  }, [order, tipAmount]);
+  }, [order, tipAmount, splitPayment]);
 
   const totals = calculateTotals();
 
@@ -151,12 +178,13 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
       };
 
       const payment = await processCardPayment(request);
-      
+
       // Navigate to payment confirmation
       navigation.replace('PaymentConfirmation', {
         payment,
         order,
         orderId,
+        splitPayment,
       });
     } catch (error) {
       console.error('Card payment failed:', error);
@@ -179,14 +207,15 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
       };
 
       const payment = await processCashPayment(request);
-      
+
       setShowCashModal(false);
-      
+
       // Navigate to payment confirmation
       navigation.replace('PaymentConfirmation', {
         payment,
         order,
         orderId,
+        splitPayment,
       });
     } catch (error) {
       console.error('Cash payment failed:', error);
@@ -209,14 +238,15 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
       };
 
       const payment = await processSplitPayment(request);
-      
+
       closeSplitPaymentModal();
-      
+
       // Navigate to payment confirmation
       navigation.replace('PaymentConfirmation', {
         payment,
         order,
         orderId,
+        splitPayment,
       });
     } catch (error) {
       console.error('Split payment failed:', error);
@@ -250,7 +280,9 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
           Payment Processing
         </Text>
         <Text style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
-          {order?.table_id ? `Table ${order.table_id}` : 'Takeaway'} - Order #{order?.order_number}
+          {splitPayment
+            ? `${splitPayment.guestName} — ${formatCurrency(splitPayment.amount)}`
+            : `${order?.table_id ? `Table ${order.table_id}` : 'Takeaway'} - Order #${order?.order_number}`}
         </Text>
       </View>
     </View>
@@ -342,6 +374,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
           tipAmount={tipAmount}
           tipPercentage={tipPercentage}
           onTipCalculation={handleTipCalculation}
+          overrideTotal={splitPayment ? splitPayment.amount : undefined}
         />
         
         {/* Payment Methods */}
@@ -374,6 +407,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         totalAmount={totals.total}
         onPayment={handleSplitPayment}
         onCancel={closeSplitPaymentModal}
+        initialSplits={splitPayments}
       />
       
       <VP3350PaymentModal
@@ -381,11 +415,11 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         totalAmount={totals.total}
         onPayment={(result) => {
           setShowVP3350Modal(false);
-          // Handle VP3350 payment result
           navigation.replace('PaymentConfirmation', {
             payment: result,
             order,
             orderId,
+            splitPayment,
           });
         }}
         onCancel={() => setShowVP3350Modal(false)}

@@ -1,0 +1,40 @@
+appId: host.exp.exponent
+name: "03 - Kitchen Staff Login Offline (CHEF001)"
+tags:
+  - offline
+  - auth
+---
+
+# Test: Kitchen staff can log in offline
+# Credential: CHEF001 / kitchen123 (Chef Mike Wilson - Kitchen Staff)
+
+- openLink: "exp://192.168.1.9:8081"
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 30000
+
+- tapOn: "Continue as Staff Member"
+
+- extendedWaitUntil:
+    visible: "Staff Login"
+    timeout: 10000
+
+- tapOn:
+    id: "employee-id-input"
+- inputText: "CHEF001"
+
+- tapOn:
+    id: "password-input"
+- inputText: "kitchen123"
+
+- tapOn: "Clock In"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Kitchen"
+        - "Dashboard"
+    timeout: 15000
+
+- takeScreenshot: "03_kitchen_staff_login_success"

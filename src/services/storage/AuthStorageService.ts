@@ -1,13 +1,15 @@
 /**
- * Auth Storage Service
- * Handles persistence of authentication data
+ * Auth Storage Service - SQLite Implementation
+ * Handles persistence of authentication data via expo-sqlite.
  *
- * Current: Uses AsyncStorage for local persistence
- * Future: Can integrate with secure backend token storage
+ * Session metadata (user, restaurant, expiry) stored in auth_session table.
+ * Auth tokens stay in SecureStore for security (managed by tokenManager.ts).
  */
 
 import { User, Restaurant, LoginResponse } from '@/types';
-import { storageService, STORAGE_KEYS } from './StorageService';
+import { databaseService } from '@/services/database/DatabaseService';
+import { parseJsonColumn, now } from '@/services/database/helpers';
+import { DUMMY_CREDENTIALS, DUMMY_RESTAURANTS } from '@/constants/dummyData';
 
 // Auth session structure
 export interface AuthSession {
@@ -26,32 +28,32 @@ export interface AuthTokens {
   expiresAt: string;
 }
 
-/**
- * AuthStorageService - Manages auth persistence
- * Designed to work with both local storage and future API integration
- */
+// Row type
+interface AuthSessionRow {
+  id: string;
+  user_id: string | null;
+  restaurant_id: string | null;
+  user_data: string | null;
+  restaurant_data: string | null;
+  access_token: string | null;
+  refresh_token: string | null;
+  login_timestamp: string | null;
+  expires_at: string | null;
+}
+
 class AuthStorageService {
-  /**
-   * Save complete auth session after login
-   */
+  private get db() {
+    return databaseService.getDatabase();
+  }
+
   async saveSession(loginResponse: LoginResponse): Promise<void> {
-    // expiresAt is a Unix timestamp in seconds or already an ISO string
     let expiresAt: string;
     if (typeof loginResponse.expiresAt === 'number') {
       expiresAt = new Date(loginResponse.expiresAt * 1000).toISOString();
     } else {
-      // Fallback: 1 hour from now
       expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
     }
 
-    console.log('[AuthStorage] saveSession:', {
-      userId: loginResponse.user?.id,
-      expiresAtRaw: loginResponse.expiresAt,
-      expiresAtConverted: expiresAt,
-      hasRestaurant: !!loginResponse.restaurant,
-    });
-
-    // Handle optional restaurant with a default
     const restaurant: Restaurant = loginResponse.restaurant || {
       id: 'unknown',
       name: 'Unknown Restaurant',
@@ -59,149 +61,124 @@ class AuthStorageService {
       is_active: true,
     };
 
-    const session: AuthSession = {
-      user: loginResponse.user,
-      restaurant,
-      accessToken: loginResponse.accessToken,
-      refreshToken: loginResponse.refreshToken,
-      expiresAt,
-      loginTimestamp: new Date().toISOString(),
-    };
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO auth_session (id, user_id, restaurant_id, user_data, restaurant_data, access_token, refresh_token, login_timestamp, expires_at)
+       VALUES ('current', ?, ?, ?, ?, ?, ?, ?, ?)`,
+      loginResponse.user?.id || null,
+      restaurant.id || null,
+      JSON.stringify(loginResponse.user),
+      JSON.stringify(restaurant),
+      loginResponse.accessToken,
+      loginResponse.refreshToken,
+      now(),
+      expiresAt
+    );
 
-    // Store everything together for session restoration
-    await storageService.set(STORAGE_KEYS.AUTH_SESSION, session);
+    // Also save user and restaurant to their reference tables
+    if (loginResponse.user) {
+      const u = loginResponse.user;
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO users (id, first_name, last_name, email, phone_number, role, employee_id, default_restaurant_id, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+        u.id, u.first_name || '', u.last_name || '',
+        u.email || '', u.phone_number || null,
+        u.role || '', u.employeeId || u.employee_id || null,
+        u.default_restaurant_id || null,
+        now(), now()
+      );
+    }
 
-    // Also store separately for quick access
-    await storageService.multiSet([
-      { key: STORAGE_KEYS.AUTH_USER, value: loginResponse.user },
-      { key: STORAGE_KEYS.AUTH_RESTAURANT, value: loginResponse.restaurant },
-      {
-        key: STORAGE_KEYS.AUTH_TOKENS,
-        value: {
-          accessToken: loginResponse.accessToken,
-          refreshToken: loginResponse.refreshToken,
-          expiresAt,
-        } as AuthTokens,
-      },
-    ]);
+    if (restaurant && restaurant.id !== 'unknown') {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO restaurants (id, name, address, phone, email, timezone, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+        restaurant.id, restaurant.name,
+        restaurant.address || null, restaurant.phone || null, restaurant.email || null,
+        restaurant.timezone || 'America/New_York',
+        now(), now()
+      );
+    }
   }
 
-  /**
-   * Get stored auth session
-   */
   async getSession(): Promise<AuthSession | null> {
-    return storageService.get<AuthSession>(STORAGE_KEYS.AUTH_SESSION);
+    const row = await this.db.getFirstAsync<AuthSessionRow>(
+      `SELECT * FROM auth_session WHERE id = 'current'`
+    );
+    if (!row || !row.user_data) return null;
+
+    const user = parseJsonColumn<User>(row.user_data, null as unknown as User);
+    const restaurant = parseJsonColumn<Restaurant>(row.restaurant_data, null as unknown as Restaurant);
+
+    if (!user) return null;
+
+    return {
+      user,
+      restaurant: restaurant || { id: 'unknown', name: 'Unknown', timezone: 'America/New_York', is_active: true } as Restaurant,
+      accessToken: row.access_token || '',
+      refreshToken: row.refresh_token || '',
+      expiresAt: row.expires_at || '',
+      loginTimestamp: row.login_timestamp || '',
+    };
   }
 
-  /**
-   * Check if user has a valid stored session
-   */
   async hasValidSession(): Promise<boolean> {
     const session = await this.getSession();
+    if (!session) return false;
 
-    if (!session) {
-      console.log('[AuthStorage] hasValidSession: No session found');
-      return false;
-    }
-
-    // Check if session has expired
     const expiresAt = new Date(session.expiresAt);
-    const now = new Date();
-    const timeRemaining = expiresAt.getTime() - now.getTime();
+    const timeRemaining = expiresAt.getTime() - Date.now();
 
-    console.log('[AuthStorage] hasValidSession:', {
-      expiresAt: session.expiresAt,
-      now: now.toISOString(),
-      timeRemainingMs: timeRemaining,
-      timeRemainingMin: Math.round(timeRemaining / 60000),
-      isValid: timeRemaining > 30000,
-    });
-
-    // Session is valid if not expired
-    // Adding 30 second buffer before actual expiry
-    return expiresAt.getTime() > now.getTime() + 30000;
+    return timeRemaining > 30000; // 30 second buffer
   }
 
-  /**
-   * Get stored user
-   */
   async getUser(): Promise<User | null> {
-    return storageService.get<User>(STORAGE_KEYS.AUTH_USER);
+    const session = await this.getSession();
+    return session?.user || null;
   }
 
-  /**
-   * Get stored restaurant
-   */
   async getRestaurant(): Promise<Restaurant | null> {
-    return storageService.get<Restaurant>(STORAGE_KEYS.AUTH_RESTAURANT);
+    const session = await this.getSession();
+    return session?.restaurant || null;
   }
 
-  /**
-   * Get stored tokens
-   */
   async getTokens(): Promise<AuthTokens | null> {
-    return storageService.get<AuthTokens>(STORAGE_KEYS.AUTH_TOKENS);
+    const row = await this.db.getFirstAsync<AuthSessionRow>(
+      `SELECT * FROM auth_session WHERE id = 'current'`
+    );
+    if (!row || !row.access_token) return null;
+
+    return {
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token || '',
+      expiresAt: row.expires_at || '',
+    };
   }
 
-  /**
-   * Update tokens after refresh
-   */
   async updateTokens(tokens: AuthTokens): Promise<void> {
-    await storageService.set(STORAGE_KEYS.AUTH_TOKENS, tokens);
-
-    // Also update in session
-    const session = await this.getSession();
-    if (session) {
-      session.accessToken = tokens.accessToken;
-      session.refreshToken = tokens.refreshToken;
-      session.expiresAt = tokens.expiresAt;
-      await storageService.set(STORAGE_KEYS.AUTH_SESSION, session);
-    }
+    await this.db.runAsync(
+      `UPDATE auth_session SET access_token = ?, refresh_token = ?, expires_at = ? WHERE id = 'current'`,
+      tokens.accessToken, tokens.refreshToken, tokens.expiresAt
+    );
   }
 
-  /**
-   * Update user data
-   */
   async updateUser(user: User): Promise<void> {
-    await storageService.set(STORAGE_KEYS.AUTH_USER, user);
-
-    // Also update in session
-    const session = await this.getSession();
-    if (session) {
-      session.user = user;
-      await storageService.set(STORAGE_KEYS.AUTH_SESSION, session);
-    }
+    await this.db.runAsync(
+      `UPDATE auth_session SET user_data = ?, user_id = ? WHERE id = 'current'`,
+      JSON.stringify(user), user.id
+    );
   }
 
-  /**
-   * Update restaurant data
-   */
   async updateRestaurant(restaurant: Restaurant): Promise<void> {
-    await storageService.set(STORAGE_KEYS.AUTH_RESTAURANT, restaurant);
-
-    // Also update in session
-    const session = await this.getSession();
-    if (session) {
-      session.restaurant = restaurant;
-      await storageService.set(STORAGE_KEYS.AUTH_SESSION, session);
-    }
+    await this.db.runAsync(
+      `UPDATE auth_session SET restaurant_data = ?, restaurant_id = ? WHERE id = 'current'`,
+      JSON.stringify(restaurant), restaurant.id
+    );
   }
 
-  /**
-   * Clear all auth data (logout)
-   */
   async clearSession(): Promise<void> {
-    await Promise.all([
-      storageService.remove(STORAGE_KEYS.AUTH_SESSION),
-      storageService.remove(STORAGE_KEYS.AUTH_USER),
-      storageService.remove(STORAGE_KEYS.AUTH_TOKENS),
-      storageService.remove(STORAGE_KEYS.AUTH_RESTAURANT),
-    ]);
+    await this.db.runAsync(`DELETE FROM auth_session WHERE id = 'current'`);
   }
 
-  /**
-   * Get session info (for debugging/display)
-   */
   async getSessionInfo(): Promise<{
     isValid: boolean;
     expiresAt: string | null;
@@ -211,17 +188,11 @@ class AuthStorageService {
     const session = await this.getSession();
 
     if (!session) {
-      return {
-        isValid: false,
-        expiresAt: null,
-        loginTimestamp: null,
-        remainingTime: null,
-      };
+      return { isValid: false, expiresAt: null, loginTimestamp: null, remainingTime: null };
     }
 
     const expiresAt = new Date(session.expiresAt);
-    const now = new Date();
-    const remainingTime = Math.max(0, expiresAt.getTime() - now.getTime());
+    const remainingTime = Math.max(0, expiresAt.getTime() - Date.now());
 
     return {
       isValid: remainingTime > 0,
@@ -229,6 +200,53 @@ class AuthStorageService {
       loginTimestamp: session.loginTimestamp,
       remainingTime,
     };
+  }
+
+  /**
+   * Seed all dummy users and restaurants into SQLite.
+   * Skips if users already exist (idempotent).
+   */
+  async seedDummyUsers(): Promise<void> {
+    const existing = await this.db.getFirstAsync<{ cnt: number }>(
+      'SELECT COUNT(*) as cnt FROM users'
+    );
+    if ((existing?.cnt || 0) >= DUMMY_CREDENTIALS.length) {
+      if (__DEV__) {
+        console.log('[AuthStorage] Dummy users already seeded');
+      }
+      return;
+    }
+
+    for (const user of DUMMY_CREDENTIALS) {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO users (id, first_name, last_name, email, phone_number, role, employee_id, default_restaurant_id, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+        user.id,
+        user.name.split(' ')[0] || user.name,
+        user.name.split(' ').slice(1).join(' ') || '',
+        user.email || '',
+        '+1234567890',
+        user.role,
+        user.employeeId || null,
+        user.restaurantId,
+        now(), now()
+      );
+    }
+
+    for (const restaurant of DUMMY_RESTAURANTS) {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO restaurants (id, name, address, phone, email, timezone, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+        restaurant.id, restaurant.name,
+        restaurant.address || null, restaurant.phone || null, null,
+        'America/New_York',
+        now(), now()
+      );
+    }
+
+    if (__DEV__) {
+      console.log(`[AuthStorage] Seeded ${DUMMY_CREDENTIALS.length} dummy users and ${DUMMY_RESTAURANTS.length} restaurants`);
+    }
   }
 }
 

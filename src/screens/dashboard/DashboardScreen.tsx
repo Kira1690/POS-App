@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,107 +18,126 @@ import {
 import { KPISection } from './components/KPISection';
 import { QuickActionsSection } from './components/QuickActionsSection';
 import { ChartsSection } from './components/ChartsSection';
-import { MockAnalyticsService } from '@/services/analytics/MockAnalyticsService';
 import { KPIMetrics, QuickActionData } from '@/types/dashboard.types';
+import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
+import { useTableStats } from '@/hooks/context/useTableSelectors';
+import { useKitchenTickets } from '@/context/kitchen/EnhancedKitchenContext';
+
+const formatCurrency = (amount: number) =>
+  `$${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
 export const DashboardScreen: React.FC = () => {
-  // State management
-  const [kpis, setKpis] = useState<KPIMetrics | null>(null);
-  const [quickActions, setQuickActions] = useState<QuickActionData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { theme, isDark } = useTheme();
 
-  // Services
-  const analyticsService = MockAnalyticsService.getInstance();
+  // Real data hooks
+  const { orders, activeOrders, refreshOrders, isLoading } = useUnifiedOrder();
+  const tableStats = useTableStats();
+  const { stats: kitchenStats } = useKitchenTickets();
 
-  // Mock restaurant ID (would come from auth context in real app)
+  // Mock restaurant ID for ChartsSection (still uses mock analytics)
   const restaurantId = 'rest_001';
 
-  /**
-   * Load dashboard data
-   */
-  const loadDashboardData = useCallback(async (isRefresh = false) => {
-    try {
-      if (!isRefresh) setLoading(true);
-      setError(null);
-
-      const [kpiData, quickActionData] = await Promise.all([
-        analyticsService.getKPIMetrics(restaurantId, {
-          start: new Date().toISOString().split('T')[0],
-          end: new Date().toISOString().split('T')[0],
-        }),
-        analyticsService.getQuickActionData(restaurantId),
-      ]);
-
-      setKpis(kpiData);
-      setQuickActions(quickActionData);
-    } catch (err) {
-      setError('Failed to load dashboard data');
-      console.error('Dashboard data loading error:', err);
-    } finally {
-      setLoading(false);
-      if (isRefresh) setRefreshing(false);
-    }
-  }, [analyticsService, restaurantId]);
-
-  /**
-   * Handle pull-to-refresh
-   */
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadDashboardData(true);
-  }, [loadDashboardData]);
-
-  /**
-   * Handle real-time updates
-   */
-  useEffect(() => {
-    const unsubscribe = analyticsService.subscribeToRealTimeUpdates(
-      restaurantId,
-      (updates) => {
-        if (updates.kpis) {
-          setKpis(updates.kpis);
-        }
-        if (updates.quickActions) {
-          setQuickActions(updates.quickActions);
-        }
-      }
-    );
-
-    return unsubscribe;
-  }, [analyticsService, restaurantId]);
-
-  /**
-   * Load data when screen is focused
-   */
+  // Refresh on screen focus
   useFocusEffect(
     useCallback(() => {
-      loadDashboardData();
-    }, [loadDashboardData])
+      refreshOrders();
+    }, [refreshOrders])
   );
 
-  /**
-   * Navigation handlers for quick actions
-   */
-  const handleNavigateToTables = () => {
-    // TODO: Navigate to tables screen
-    Alert.alert('Navigation', 'Navigate to Tables screen');
-  };
+  // Compute today's start timestamp
+  const todayStart = useMemo(() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+  }, []);
 
-  const handleNavigateToKitchen = () => {
-    // TODO: Navigate to kitchen screen
-    Alert.alert('Navigation', 'Navigate to Kitchen screen');
-  };
+  // Compute KPI metrics from real data
+  const kpis = useMemo((): KPIMetrics | null => {
+    if (isLoading && orders.length === 0) return null;
 
-  const handleNavigateToStaff = () => {
-    // TODO: Navigate to staff screen
-    Alert.alert('Navigation', 'Navigate to Staff screen');
-  };
+    const todaysOrders = orders.filter(o =>
+      new Date(o.createdAt).getTime() >= todayStart
+    );
+    const paidOrders = todaysOrders.filter(o => o.status === 'paid');
+    const todaysSales = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    const avgOrderValue = todaysOrders.length > 0
+      ? todaysOrders.reduce((sum, o) => sum + o.totalAmount, 0) / todaysOrders.length
+      : 0;
 
-  /**
-   * Get current time greeting
-   */
+    return {
+      sales: {
+        value: formatCurrency(todaysSales),
+        change: 0,
+        changeDirection: 'neutral',
+        period: 'Today',
+      },
+      orders: {
+        value: todaysOrders.length,
+        change: 0,
+        changeDirection: 'neutral',
+        period: 'Today',
+      },
+      revenue: {
+        value: formatCurrency(todaysSales),
+        change: 0,
+        changeDirection: 'neutral',
+        period: 'Today',
+      },
+      averageOrderValue: {
+        value: formatCurrency(avgOrderValue),
+        change: 0,
+        changeDirection: 'neutral',
+        period: 'Today',
+      },
+    };
+  }, [orders, todayStart, isLoading]);
+
+  // Compute quick action data from real sources
+  const quickActions = useMemo((): QuickActionData => ({
+    tables: {
+      total: tableStats.total,
+      occupied: tableStats.occupied,
+      available: tableStats.available,
+    },
+    kitchen: {
+      pendingOrders: kitchenStats.pendingCount,
+      avgCookTime: kitchenStats.avgPrepTime > 0 ? `${kitchenStats.avgPrepTime}m` : 'N/A',
+      alerts: kitchenStats.overdueCount,
+    },
+    staff: {
+      onDuty: 0,
+      total: 0,
+      breaks: 0,
+    },
+  }), [tableStats, kitchenStats]);
+
+  // Compute progress values
+  const salesTarget = 5000;
+  const todaysSales = useMemo(() => {
+    return orders
+      .filter(o => o.status === 'paid' && new Date(o.createdAt).getTime() >= todayStart)
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+  }, [orders, todayStart]);
+
+  const salesProgress = useMemo(() =>
+    Math.min(todaysSales / salesTarget, 1), [todaysSales]);
+
+  const completionRate = useMemo(() => {
+    const todaysOrders = orders.filter(o =>
+      new Date(o.createdAt).getTime() >= todayStart
+    );
+    if (todaysOrders.length === 0) return 0;
+    const completed = todaysOrders.filter(o => o.status === 'paid').length;
+    return completed / todaysOrders.length;
+  }, [orders, todayStart]);
+
+  const loading = isLoading && orders.length === 0;
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshOrders();
+    setRefreshing(false);
+  }, [refreshOrders]);
+
   const getTimeGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -126,44 +145,18 @@ export const DashboardScreen: React.FC = () => {
     return 'Good Evening';
   };
 
-  const { theme, isDark } = useTheme();
+  const handleNavigateToTables = () => {
+    Alert.alert('Navigation', 'Navigate to Tables screen');
+  };
 
-  /**
-   * APPLE ERROR STATE (using universal components)
-   */
-  if (error && !loading) {
-    return (
-      <View style={{
-        flex: 1,
-        backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
-      }}>
-        <AppleCard layer="surface" size="large" style={{ alignItems: 'center' }}>
-          <Text style={{
-            color: theme.colors.onSurface,
-            fontSize: 18,
-            fontWeight: '600',
-            marginBottom: 16,
-            textAlign: 'center'
-          }}>
-            {error}
-          </Text>
-          <AppleButton
-            title="Retry"
-            variant="primary"
-            size="large"
-            onPress={() => loadDashboardData()}
-          />
-        </AppleCard>
-      </View>
-    );
-  }
+  const handleNavigateToKitchen = () => {
+    Alert.alert('Navigation', 'Navigate to Kitchen screen');
+  };
 
-  /**
-   * APPLE DASHBOARD HEADER ACTIONS (using universal components)
-   */
+  const handleNavigateToStaff = () => {
+    Alert.alert('Navigation', 'Navigate to Staff screen');
+  };
+
   const headerActions = (
     <View style={{ flexDirection: 'row', gap: 12 }}>
       <AppleStatusPill status="online" size="small" />
@@ -172,14 +165,11 @@ export const DashboardScreen: React.FC = () => {
         icon={<MaterialIcons name="refresh" size={16} color={theme.colors.onSecondary} />}
         variant="secondary"
         size="medium"
-        onPress={() => loadDashboardData(true)}
+        onPress={onRefresh}
       />
     </View>
   );
 
-  /**
-   * APPLE QUICK ACTIONS (using universal components)
-   */
   const renderQuickActions = () => (
     <AppleCard layer="surface" size="large" style={{
       marginBottom: 20,
@@ -223,13 +213,10 @@ export const DashboardScreen: React.FC = () => {
     </AppleCard>
   );
 
-  /**
-   * APPLE DASHBOARD LAYOUT (using universal AppleDashboardPanel)
-   */
   return (
     <AppleDashboardPanel
       title={`${getTimeGreeting()}, Manager`}
-      subtitle={`The Food Corner • ${new Date().toLocaleDateString()}`}
+      subtitle={`The Food Corner \u2022 ${new Date().toLocaleDateString()}`}
       headerActions={headerActions}
       refreshControl={
         <RefreshControl
@@ -240,7 +227,6 @@ export const DashboardScreen: React.FC = () => {
         />
       }
     >
-      {/* APPLE KPI METRICS SECTION (using universal components) */}
       <AppleCard layer="surfaceVariant" size="large" style={{ marginBottom: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <MaterialIcons name="trending-up" size={20} color={theme.colors.primary} />
@@ -255,15 +241,12 @@ export const DashboardScreen: React.FC = () => {
         <KPISection kpis={kpis} loading={loading} />
       </AppleCard>
 
-      {/* APPLE CHARTS SECTION (with Apple card wrapper) */}
       <AppleCard layer="surface" size="large" style={{ marginBottom: 20 }}>
         <ChartsSection restaurantId={restaurantId} loading={loading} />
       </AppleCard>
 
-      {/* APPLE QUICK ACTIONS SECTION */}
       {renderQuickActions()}
 
-      {/* APPLE STATUS INDICATORS (demonstrating status pills) */}
       <AppleCard layer="surfaceVariant" size="medium" style={{ marginBottom: 20 }}>
         <Text style={{
           fontSize: 16,
@@ -275,13 +258,20 @@ export const DashboardScreen: React.FC = () => {
         </Text>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           <AppleStatusPill status="active" text="POS System" size="small" />
-          <AppleStatusPill status="online" text="Kitchen" size="small" />
+          <AppleStatusPill
+            status={kitchenStats.pendingCount > 0 ? 'active' : 'online'}
+            text={`Kitchen (${kitchenStats.pendingCount} pending)`}
+            size="small"
+          />
           <AppleStatusPill status="success" text="Payments" size="small" />
-          <AppleStatusPill status="warning" text="Low Stock" size="small" />
+          <AppleStatusPill
+            status={tableStats.available <= 2 ? 'warning' : 'online'}
+            text={`Tables (${tableStats.available} free)`}
+            size="small"
+          />
         </View>
       </AppleCard>
 
-      {/* APPLE PROGRESS INDICATORS (demonstrating progress bars) */}
       <AppleCard layer="surface" size="medium">
         <Text style={{
           fontSize: 16,
@@ -293,22 +283,22 @@ export const DashboardScreen: React.FC = () => {
         </Text>
         <View style={{ gap: 12 }}>
           <AppleProgressBar
-            progress={0.75}
-            label="Sales Target"
+            progress={salesProgress}
+            label={`Sales Target (${formatCurrency(todaysSales)} / ${formatCurrency(salesTarget)})`}
             color="success"
             showPercentage
             size="medium"
           />
           <AppleProgressBar
-            progress={0.92}
+            progress={completionRate}
             label="Order Completion"
             color="primary"
             showPercentage
             size="medium"
           />
           <AppleProgressBar
-            progress={0.68}
-            label="Customer Satisfaction"
+            progress={tableStats.total > 0 ? tableStats.occupied / tableStats.total : 0}
+            label="Table Utilization"
             color="warning"
             showPercentage
             size="medium"

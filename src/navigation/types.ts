@@ -15,7 +15,6 @@ export type MainTabParamList = {
   Dashboard: NavigatorScreenParams<DashboardStackParamList>;
   Orders: NavigatorScreenParams<OrdersStackParamList>;
   Kitchen: NavigatorScreenParams<KitchenStackParamList>;
-  Menu: undefined;
   Settings: undefined;
 };
 
@@ -115,6 +114,11 @@ export type OrdersStackParamList = {
     order: any;
     orderId: string;
     splitId?: string;
+    splitPayment?: {
+      guestId: string;
+      guestName: string;
+      amount: number;
+    };
   };
   // Receipt screen
   Receipt: {

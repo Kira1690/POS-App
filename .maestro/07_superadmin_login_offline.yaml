@@ -1,0 +1,38 @@
+appId: host.exp.exponent
+name: "07 - Superadmin Login Offline"
+tags:
+  - offline
+  - auth
+---
+
+# Test: Superadmin can log in fully offline
+# Credential: superadmin@foodpos.com / super123
+
+- openLink: "exp://192.168.1.9:8081"
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 30000
+
+- tapOn: "Manager Login"
+
+- extendedWaitUntil:
+    visible: "Manager Login"
+    timeout: 10000
+
+- tapOn:
+    id: "email-input"
+- inputText: "superadmin@foodpos.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "super123"
+
+- tapOn: "Sign In"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 15000
+
+- assertVisible: "Dashboard"
+- takeScreenshot: "07_superadmin_login_success"

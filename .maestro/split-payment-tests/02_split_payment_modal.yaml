@@ -1,0 +1,139 @@
+appId: host.exp.exponent
+name: "Split Bill - Payment Method Split (Cash + Card via SplitPaymentModal)"
+tags:
+  - split-payment
+  - offline
+---
+
+# ============================================================
+# TEST: Single bill split across multiple payment methods
+# Uses the "Payment" tab → SplitPaymentModal
+# $X cash + remaining card → Process Payments
+# ============================================================
+
+# Navigate to Order Management
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 15000
+- takeScreenshot: "modal_01_order_management"
+
+# Open confirmed order
+- tapOn:
+    text: ".*View.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Order Details"
+        - "ORD-"
+        - "Pay Now"
+    timeout: 15000
+- takeScreenshot: "modal_02_order_details"
+
+# Tap Bill / Pay Now
+- tapOn:
+    anyOf:
+      - text: ".*Pay Now.*"
+      - text: ".*Bill.*"
+      - text: ".*Proceed to Payment.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Bill"
+        - "Total"
+    timeout: 15000
+- takeScreenshot: "modal_03_bill_screen"
+
+# Tap Split Bill
+- tapOn:
+    anyOf:
+      - text: ".*Split Bill.*"
+      - text: ".*Split.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Split Bill"
+        - "Equal"
+    timeout: 15000
+- takeScreenshot: "modal_04_bill_split_screen"
+
+# Switch to Payment tab
+- tapOn:
+    text: "Payment"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Payment Methods"
+        - "Add Payment"
+        - "Cash"
+        - "Card"
+    timeout: 10000
+- takeScreenshot: "modal_05_payment_tab"
+
+# Add payment splits and tap Process
+- tapOn:
+    anyOf:
+      - text: ".*Complete Split Payment.*"
+      - text: ".*Process.*"
+      - text: ".*Pay.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Split Payment"
+        - "Bill Total"
+        - "Select Payment Method"
+        - "Remaining"
+    timeout: 15000
+- takeScreenshot: "modal_06_split_payment_modal_open"
+
+# Select Cash method
+- tapOn:
+    text: "Cash"
+- takeScreenshot: "modal_07_cash_selected"
+
+# Enter cash amount
+- tapOn:
+    anyOf:
+      - id: "amount-input"
+      - text: ".*0\.00.*"
+- inputText: "3"
+- hideKeyboard
+- takeScreenshot: "modal_08_amount_entered"
+
+# Add the cash split
+- tapOn:
+    text: "Add"
+- takeScreenshot: "modal_09_cash_split_added"
+
+# Select Card method
+- tapOn:
+    text: "Card"
+- takeScreenshot: "modal_10_card_selected"
+
+# Enter remaining amount (fill the rest)
+- tapOn:
+    anyOf:
+      - id: "amount-input"
+      - text: ".*0\.00.*"
+- inputText: "4"
+- hideKeyboard
+- takeScreenshot: "modal_11_card_amount_entered"
+
+# Add the card split
+- tapOn:
+    text: "Add"
+- takeScreenshot: "modal_12_card_split_added"
+
+# Process Payments button should now be enabled
+- takeScreenshot: "modal_13_process_button_enabled"
+- tapOn:
+    text: ".*Process Payments.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Payment Successful"
+        - "Order Management"
+        - "Confirmation"
+    timeout: 20000
+- takeScreenshot: "modal_14_payment_complete"

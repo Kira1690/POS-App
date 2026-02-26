@@ -4,14 +4,14 @@
  * Following SOLID principles - Single Responsibility
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { databaseService } from '@/services/database/DatabaseService';
+import { now } from '@/services/database/helpers';
 import { Easing } from 'react-native';
 
 // Constants
 export const SIDEBAR_EXPANDED_WIDTH = 280;
 export const SIDEBAR_COLLAPSED_WIDTH = 64; // Per wireframe specification
 export const SIDEBAR_ANIMATION_DURATION = 300;
-export const SIDEBAR_STATE_KEY = '@pos_app_sidebar_collapsed_v2';
 
 /**
  * Get sidebar width based on collapsed state
@@ -32,41 +32,51 @@ export const getSidebarTransition = () => {
 };
 
 /**
- * Save sidebar collapsed state to AsyncStorage
+ * Save sidebar collapsed state to SQLite sync_metadata
  */
 export const saveSidebarState = async (isCollapsed: boolean): Promise<void> => {
   try {
-    await AsyncStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(isCollapsed));
+    if (!databaseService.isInitialized()) return;
+    const db = databaseService.getDatabase();
+    await db.runAsync(
+      `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('sidebar_collapsed', ?, ?)`,
+      JSON.stringify(isCollapsed), now()
+    );
   } catch (error) {
     console.error('Failed to save sidebar state:', error);
-    // Non-critical error, continue silently
   }
 };
 
 /**
- * Load sidebar collapsed state from AsyncStorage
+ * Load sidebar collapsed state from SQLite
  * Returns null if no saved state (so caller can use defaultCollapsed)
  */
 export const loadSidebarState = async (): Promise<boolean | null> => {
   try {
-    const savedState = await AsyncStorage.getItem(SIDEBAR_STATE_KEY);
-    if (savedState !== null) {
-      return JSON.parse(savedState);
+    if (!databaseService.isInitialized()) return null;
+    const db = databaseService.getDatabase();
+    const row = await db.getFirstAsync<{ value: string }>(
+      `SELECT value FROM sync_metadata WHERE key = 'sidebar_collapsed'`
+    );
+    if (row?.value) {
+      return JSON.parse(row.value);
     }
-    return null; // No saved state, use default
+    return null;
   } catch (error) {
     console.error('Failed to load sidebar state:', error);
-    return null; // Use default on error
+    return null;
   }
 };
 
 /**
- * Clear sidebar state from AsyncStorage
+ * Clear sidebar state from SQLite
  * Useful for resetting to default behavior
  */
 export const clearSidebarState = async (): Promise<void> => {
   try {
-    await AsyncStorage.removeItem(SIDEBAR_STATE_KEY);
+    if (!databaseService.isInitialized()) return;
+    const db = databaseService.getDatabase();
+    await db.runAsync(`DELETE FROM sync_metadata WHERE key = 'sidebar_collapsed'`);
   } catch (error) {
     console.error('Failed to clear sidebar state:', error);
   }

@@ -1,0 +1,51 @@
+appId: host.exp.exponent
+name: "06 - Menu Items Seeded and Visible"
+tags:
+  - offline
+  - menu
+---
+
+# Test: After staff login, seeded menu items are visible in POS
+
+- openLink: "exp://192.168.1.9:8081"
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 30000
+
+- tapOn: "Continue as Staff Member"
+
+- extendedWaitUntil:
+    visible: "Staff Login"
+    timeout: 10000
+
+- tapOn:
+    id: "employee-id-input"
+- inputText: "EMP001"
+
+- tapOn:
+    id: "password-input"
+- inputText: "staff123"
+
+- tapOn: "Clock In"
+
+- extendedWaitUntil:
+    visible: "Staff Dashboard"
+    timeout: 15000
+
+# Navigate to POS tab
+- tapOn:
+    anyOf:
+      - "POS"
+      - "New Order"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "BEVERAGES"
+        - "VEG"
+        - "NON VEG"
+        - "Menu"
+    timeout: 10000
+
+- takeScreenshot: "06_menu_items_visible"

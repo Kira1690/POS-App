@@ -1,9 +1,6 @@
 /**
- * Menu Storage Service
- * Handles persistence of menu management data
- *
- * Current: Uses AsyncStorage for local persistence
- * Future: Can integrate with Menu Management API
+ * Menu Storage Service - SQLite Implementation
+ * Handles persistence of menu management data via expo-sqlite.
  */
 
 import { MenuCategory } from '@/types/menu.types';
@@ -13,7 +10,8 @@ import {
   ModifierGroup,
   ComboDeal,
 } from '@/types/menu-management-extended.types';
-import { storageService, STORAGE_KEYS } from './StorageService';
+import { databaseService } from '@/services/database/DatabaseService';
+import { fromSqlBool, toSqlBool, parseJsonColumn, now } from '@/services/database/helpers';
 
 // Menu data structure for storage
 export interface MenuStorageData {
@@ -25,533 +23,589 @@ export interface MenuStorageData {
   restaurantId: string;
 }
 
-/**
- * MenuStorageService - Manages menu data persistence
- * Designed to work with both local storage and future API integration
- */
-class MenuStorageService {
-  /**
-   * Save all menu data
-   */
-  async saveMenuData(data: MenuStorageData): Promise<void> {
-    const dataWithTimestamp = {
-      ...data,
-      lastUpdated: new Date().toISOString(),
-    };
+// Row types
+interface CategoryRow {
+  id: string; restaurant_id: string; name: string; description: string | null;
+  sort_order: number; is_active: number; color: string | null; icon: string | null;
+  item_count: number; available_count: number;
+  created_at: string; updated_at: string;
+}
 
-    // Save all data together
-    await storageService.multiSet([
-      { key: STORAGE_KEYS.MENU_CATEGORIES, value: data.categories },
-      { key: STORAGE_KEYS.MENU_ITEMS, value: data.menuItems },
-      { key: STORAGE_KEYS.MENU_MODIFIERS, value: data.modifierGroups },
-      { key: STORAGE_KEYS.MENU_COMBOS, value: data.combos },
-      { key: STORAGE_KEYS.MENU_LAST_SYNC, value: dataWithTimestamp.lastUpdated },
-    ]);
+interface MenuItemRow {
+  id: string; restaurant_id: string; category_id: string;
+  name: string; description: string | null; price: number; image_url: string | null;
+  is_available: number; preparation_time_minutes: number | null;
+  sort_order: number; cost_price: number | null; tax_rate: number | null;
+  calories: number | null; sku: string | null;
+  dietary_tags: string | null; allergens: string | null;
+  created_at: string; updated_at: string;
+}
+
+interface ModifierGroupRow {
+  id: string; restaurant_id: string; name: string; selection_type: string;
+  is_required: number; min_selections: number | null; max_selections: number | null;
+  is_active: number; sort_order: number; options: string | null;
+  created_at: string; updated_at: string;
+}
+
+interface ComboRow {
+  id: string; restaurant_id: string; name: string; description: string | null;
+  image_url: string | null; regular_price: number; combo_price: number;
+  savings_amount: number; savings_percentage: number; is_active: number;
+  availability: string | null; items: string | null;
+  created_at: string; updated_at: string;
+}
+
+interface AssignmentRow {
+  id: string; menu_item_id: string; modifier_group_id: string;
+  sort_order: number; created_at: string;
+}
+
+class MenuStorageService {
+  private get db() {
+    return databaseService.getDatabase();
   }
 
-  /**
-   * Get all menu data
-   */
-  async getMenuData(restaurantId: string): Promise<MenuStorageData | null> {
-    const [categories, menuItems, modifierGroups, combos, lastUpdated] =
-      await Promise.all([
-        storageService.get<CategoryWithStats[]>(STORAGE_KEYS.MENU_CATEGORIES),
-        storageService.get<MenuItemExtended[]>(STORAGE_KEYS.MENU_ITEMS),
-        storageService.get<ModifierGroup[]>(STORAGE_KEYS.MENU_MODIFIERS),
-        storageService.get<ComboDeal[]>(STORAGE_KEYS.MENU_COMBOS),
-        storageService.get<string>(STORAGE_KEYS.MENU_LAST_SYNC),
-      ]);
+  // ============== CONVERTERS ==============
 
-    if (!categories || !menuItems) {
-      return null;
-    }
+  private categoryFromRow(row: CategoryRow): CategoryWithStats {
+    return {
+      id: row.id,
+      restaurant_id: row.restaurant_id,
+      name: row.name,
+      description: row.description || undefined,
+      sort_order: row.sort_order,
+      is_active: fromSqlBool(row.is_active),
+      color: row.color || undefined,
+      icon: row.icon || undefined,
+      item_count: row.item_count,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      stats: {
+        itemCount: row.item_count,
+        todayRevenue: 0,
+        avgPrice: 0,
+        popularItems: [],
+        lastUpdated: row.updated_at,
+      },
+    } as CategoryWithStats;
+  }
+
+  private menuItemFromRow(
+    row: MenuItemRow,
+    assignments: AssignmentRow[],
+    modifierGroups: ModifierGroup[]
+  ): MenuItemExtended {
+    const itemAssignments = assignments.filter((a) => a.menu_item_id === row.id);
+    const itemModifierGroups = itemAssignments
+      .map((a) => modifierGroups.find((g) => g.id === a.modifier_group_id))
+      .filter((g): g is ModifierGroup => g !== undefined);
 
     return {
-      categories: categories || [],
-      menuItems: menuItems || [],
-      modifierGroups: modifierGroups || [],
-      combos: combos || [],
-      lastUpdated: lastUpdated || new Date().toISOString(),
+      id: row.id,
+      restaurant_id: row.restaurant_id,
+      category_id: row.category_id,
+      name: row.name,
+      description: row.description || undefined,
+      price: row.price,
+      image_url: row.image_url || undefined,
+      is_available: fromSqlBool(row.is_available),
+      preparation_time_minutes: row.preparation_time_minutes || undefined,
+      sort_order: row.sort_order,
+      cost_price: row.cost_price || undefined,
+      tax_rate: row.tax_rate || undefined,
+      calories: row.calories || undefined,
+      sku: row.sku || undefined,
+      dietary_tags: parseJsonColumn(row.dietary_tags, []),
+      allergens: parseJsonColumn(row.allergens, []),
+      modifier_groups: itemModifierGroups,
+      modifier_assignments: itemAssignments.map((a) => ({
+        id: a.id,
+        menu_item_id: a.menu_item_id,
+        modifier_group_id: a.modifier_group_id,
+        sort_order: a.sort_order,
+        created_at: a.created_at,
+      })),
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    } as MenuItemExtended;
+  }
+
+  private modifierGroupFromRow(row: ModifierGroupRow): ModifierGroup {
+    return {
+      id: row.id,
+      restaurant_id: row.restaurant_id,
+      name: row.name,
+      selection_type: row.selection_type,
+      is_required: fromSqlBool(row.is_required),
+      min_selections: row.min_selections || undefined,
+      max_selections: row.max_selections || undefined,
+      is_active: fromSqlBool(row.is_active),
+      sort_order: row.sort_order,
+      options: parseJsonColumn(row.options, []),
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    } as ModifierGroup;
+  }
+
+  private comboFromRow(row: ComboRow): ComboDeal {
+    return {
+      id: row.id,
+      restaurant_id: row.restaurant_id,
+      name: row.name,
+      description: row.description || undefined,
+      image_url: row.image_url || undefined,
+      regular_price: row.regular_price,
+      combo_price: row.combo_price,
+      savings_amount: row.savings_amount,
+      savings_percentage: row.savings_percentage,
+      is_active: fromSqlBool(row.is_active),
+      availability: parseJsonColumn(row.availability, { always_available: true }),
+      combo_items: parseJsonColumn(row.items, []),
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    } as ComboDeal;
+  }
+
+  // ============== FULL MENU DATA ==============
+
+  async saveMenuData(data: MenuStorageData): Promise<void> {
+    await this.saveCategories(data.categories);
+    await this.saveMenuItems(data.menuItems);
+    await this.saveModifierGroups(data.modifierGroups);
+    await this.saveCombos(data.combos);
+  }
+
+  async getMenuData(restaurantId: string): Promise<MenuStorageData | null> {
+    const [categories, modifierGroups, combos] = await Promise.all([
+      this.getCategories(),
+      this.getModifierGroups(),
+      this.getCombos(),
+    ]);
+
+    // Get all items with modifier assemblies
+    const itemRows = await this.db.getAllAsync<MenuItemRow>(
+      'SELECT * FROM menu_items ORDER BY sort_order, name'
+    );
+    const assignmentRows = await this.db.getAllAsync<AssignmentRow>(
+      'SELECT * FROM menu_item_modifier_assignments ORDER BY sort_order'
+    );
+
+    const menuItems = itemRows.map((r) => this.menuItemFromRow(r, assignmentRows, modifierGroups));
+
+    if (categories.length === 0 && menuItems.length === 0) return null;
+
+    return {
+      categories,
+      menuItems,
+      modifierGroups,
+      combos,
+      lastUpdated: now(),
       restaurantId,
     };
   }
 
-  /**
-   * Check if menu data exists in storage
-   */
   async hasMenuData(): Promise<boolean> {
-    const lastSync = await storageService.get<string>(STORAGE_KEYS.MENU_LAST_SYNC);
-    return lastSync !== null;
+    const row = await this.db.getFirstAsync<{ cnt: number }>(
+      'SELECT COUNT(*) as cnt FROM menu_categories'
+    );
+    return (row?.cnt || 0) > 0;
   }
 
-  /**
-   * Get last sync timestamp
-   */
   async getLastSyncTime(): Promise<string | null> {
-    return storageService.get<string>(STORAGE_KEYS.MENU_LAST_SYNC);
+    const row = await this.db.getFirstAsync<{ value: string }>(
+      `SELECT value FROM sync_metadata WHERE key = 'menu_last_sync'`
+    );
+    return row?.value || null;
   }
 
   // ============== CATEGORIES ==============
 
-  /**
-   * Save categories
-   */
   async saveCategories(categories: CategoryWithStats[]): Promise<void> {
-    await storageService.set(STORAGE_KEYS.MENU_CATEGORIES, categories);
+    for (const c of categories) {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO menu_categories (id, restaurant_id, name, description, sort_order, is_active, color, icon, item_count, available_count, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        c.id, c.restaurant_id || 'rest_001', c.name, c.description || null,
+        c.sort_order || 0, toSqlBool(c.is_active), c.color || null, c.icon || null,
+        c.stats?.itemCount || c.item_count || 0, c.stats?.itemCount || c.item_count || 0,
+        c.created_at || now(), c.updated_at || now()
+      );
+    }
     await this.updateLastSync();
   }
 
-  /**
-   * Get categories
-   */
   async getCategories(): Promise<CategoryWithStats[]> {
-    const categories = await storageService.get<CategoryWithStats[]>(
-      STORAGE_KEYS.MENU_CATEGORIES
+    const rows = await this.db.getAllAsync<CategoryRow>(
+      'SELECT * FROM menu_categories ORDER BY sort_order, name'
     );
-    return categories || [];
+    return rows.map((r) => this.categoryFromRow(r));
   }
 
-  /**
-   * Add a category
-   */
   async addCategory(category: CategoryWithStats): Promise<void> {
-    const categories = await this.getCategories();
-    categories.push(category);
-    await this.saveCategories(categories);
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO menu_categories (id, restaurant_id, name, description, sort_order, is_active, color, icon, item_count, available_count, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      category.id, category.restaurant_id || 'rest_001', category.name, category.description || null,
+      category.sort_order || 0, toSqlBool(category.is_active), category.color || null, category.icon || null,
+      category.stats?.itemCount || category.item_count || 0, category.stats?.itemCount || category.item_count || 0,
+      category.created_at || now(), category.updated_at || now()
+    );
+    await this.updateLastSync();
   }
 
-  /**
-   * Update a category
-   */
-  async updateCategory(
-    id: string,
-    data: Partial<CategoryWithStats>
-  ): Promise<void> {
-    const categories = await this.getCategories();
-    const index = categories.findIndex((c) => c.id === id);
-    if (index !== -1) {
-      categories[index] = { ...categories[index], ...data };
-      await this.saveCategories(categories);
-    }
+  async updateCategory(id: string, data: Partial<CategoryWithStats>): Promise<void> {
+    const existing = await this.db.getFirstAsync<CategoryRow>(
+      'SELECT * FROM menu_categories WHERE id = ?', id
+    );
+    if (!existing) return;
+
+    const current = this.categoryFromRow(existing);
+    const updated = { ...current, ...data, updated_at: now() };
+    await this.addCategory(updated as CategoryWithStats);
   }
 
-  /**
-   * Delete a category
-   */
   async deleteCategory(id: string): Promise<void> {
-    const categories = await this.getCategories();
-    const filtered = categories.filter((c) => c.id !== id);
-    await this.saveCategories(filtered);
+    await this.db.runAsync('DELETE FROM menu_categories WHERE id = ?', id);
+    await this.updateLastSync();
   }
 
   // ============== MENU ITEMS ==============
 
-  /**
-   * Save menu items
-   */
   async saveMenuItems(items: MenuItemExtended[]): Promise<void> {
-    await storageService.set(STORAGE_KEYS.MENU_ITEMS, items);
+    for (const item of items) {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO menu_items (id, restaurant_id, category_id, name, description, price, image_url, is_available, preparation_time_minutes, sort_order, cost_price, tax_rate, calories, sku, dietary_tags, allergens, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        item.id, item.restaurant_id || 'rest_001', item.category_id,
+        item.name, item.description || null, item.price, item.image_url || null,
+        toSqlBool(item.is_available), item.preparation_time_minutes || null,
+        item.sort_order || 0, item.cost_price || null, item.tax_rate || null,
+        item.calories || null, item.sku || null,
+        item.dietary_tags ? JSON.stringify(item.dietary_tags) : null,
+        item.allergens ? JSON.stringify(item.allergens) : null,
+        item.created_at || now(), item.updated_at || now()
+      );
+
+      // Save modifier assignments
+      if (item.modifier_assignments) {
+        // Clear existing assignments for this item
+        await this.db.runAsync(
+          'DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', item.id
+        );
+
+        for (const assignment of item.modifier_assignments) {
+          await this.db.runAsync(
+            `INSERT OR REPLACE INTO menu_item_modifier_assignments (id, menu_item_id, modifier_group_id, sort_order, created_at)
+             VALUES (?, ?, ?, ?, ?)`,
+            assignment.id, assignment.menu_item_id || item.id,
+            assignment.modifier_group_id, assignment.sort_order || 0,
+            assignment.created_at || now()
+          );
+        }
+      }
+    }
     await this.updateLastSync();
   }
 
-  /**
-   * Get menu items
-   */
   async getMenuItems(): Promise<MenuItemExtended[]> {
-    const items = await storageService.get<MenuItemExtended[]>(
-      STORAGE_KEYS.MENU_ITEMS
-    );
-    return items || [];
+    const [itemRows, assignmentRows, modifierGroups] = await Promise.all([
+      this.db.getAllAsync<MenuItemRow>('SELECT * FROM menu_items ORDER BY sort_order, name'),
+      this.db.getAllAsync<AssignmentRow>('SELECT * FROM menu_item_modifier_assignments ORDER BY sort_order'),
+      this.getModifierGroups(),
+    ]);
+    return itemRows.map((r) => this.menuItemFromRow(r, assignmentRows, modifierGroups));
   }
 
-  /**
-   * Add a menu item
-   */
   async addMenuItem(item: MenuItemExtended): Promise<void> {
-    const items = await this.getMenuItems();
-    items.push(item);
-    await this.saveMenuItems(items);
+    await this.saveMenuItems([item]);
   }
 
-  /**
-   * Update a menu item
-   */
-  async updateMenuItem(
-    id: string,
-    data: Partial<MenuItemExtended>
-  ): Promise<void> {
-    const items = await this.getMenuItems();
-    const index = items.findIndex((i) => i.id === id);
-    if (index !== -1) {
-      items[index] = { ...items[index], ...data };
-      await this.saveMenuItems(items);
-    }
+  async updateMenuItem(id: string, data: Partial<MenuItemExtended>): Promise<void> {
+    const existing = await this.db.getFirstAsync<MenuItemRow>(
+      'SELECT * FROM menu_items WHERE id = ?', id
+    );
+    if (!existing) return;
+
+    const modifierGroups = await this.getModifierGroups();
+    const assignments = await this.db.getAllAsync<AssignmentRow>(
+      'SELECT * FROM menu_item_modifier_assignments WHERE menu_item_id = ?', id
+    );
+    const current = this.menuItemFromRow(existing, assignments, modifierGroups);
+    const updated = { ...current, ...data, updated_at: now() };
+    await this.saveMenuItems([updated as MenuItemExtended]);
   }
 
-  /**
-   * Delete a menu item
-   */
   async deleteMenuItem(id: string): Promise<void> {
-    const items = await this.getMenuItems();
-    const filtered = items.filter((i) => i.id !== id);
-    await this.saveMenuItems(filtered);
+    await this.db.runAsync('DELETE FROM menu_items WHERE id = ?', id);
+    await this.db.runAsync('DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', id);
+    await this.updateLastSync();
   }
 
-  /**
-   * Get a single menu item by ID
-   * This is used by order services to look up menu item details
-   */
   async getMenuItemById(id: string): Promise<MenuItemExtended | null> {
-    const items = await this.getMenuItems();
-    return items.find((i) => i.id === id) || null;
+    const row = await this.db.getFirstAsync<MenuItemRow>(
+      'SELECT * FROM menu_items WHERE id = ?', id
+    );
+    if (!row) return null;
+
+    const [assignments, modifierGroups] = await Promise.all([
+      this.db.getAllAsync<AssignmentRow>(
+        'SELECT * FROM menu_item_modifier_assignments WHERE menu_item_id = ?', id
+      ),
+      this.getModifierGroups(),
+    ]);
+    return this.menuItemFromRow(row, assignments, modifierGroups);
   }
 
-  /**
-   * Get multiple menu items by IDs
-   * Efficient batch lookup for order creation
-   */
   async getMenuItemsByIds(ids: string[]): Promise<Map<string, MenuItemExtended>> {
     const items = await this.getMenuItems();
     const itemMap = new Map<string, MenuItemExtended>();
-
     for (const item of items) {
       if (ids.includes(item.id)) {
         itemMap.set(item.id, item);
       }
     }
-
     return itemMap;
   }
 
   // ============== MODIFIER GROUPS ==============
 
-  /**
-   * Save modifier groups
-   */
   async saveModifierGroups(groups: ModifierGroup[]): Promise<void> {
-    await storageService.set(STORAGE_KEYS.MENU_MODIFIERS, groups);
+    for (const g of groups) {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO modifier_groups (id, restaurant_id, name, selection_type, is_required, min_selections, max_selections, is_active, sort_order, options, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        g.id, g.restaurant_id || 'rest_001', g.name, g.selection_type || 'single',
+        toSqlBool(g.is_required), g.min_selections || null, g.max_selections || null,
+        toSqlBool(g.is_active), g.sort_order || 0,
+        g.options ? JSON.stringify(g.options) : null,
+        g.created_at || now(), g.updated_at || now()
+      );
+    }
     await this.updateLastSync();
   }
 
-  /**
-   * Get modifier groups
-   */
   async getModifierGroups(): Promise<ModifierGroup[]> {
-    const groups = await storageService.get<ModifierGroup[]>(
-      STORAGE_KEYS.MENU_MODIFIERS
+    const rows = await this.db.getAllAsync<ModifierGroupRow>(
+      'SELECT * FROM modifier_groups ORDER BY sort_order, name'
     );
-    return groups || [];
+    return rows.map((r) => this.modifierGroupFromRow(r));
   }
 
-  /**
-   * Add a modifier group
-   */
   async addModifierGroup(group: ModifierGroup): Promise<void> {
-    const groups = await this.getModifierGroups();
-    groups.push(group);
-    await this.saveModifierGroups(groups);
+    await this.saveModifierGroups([group]);
   }
 
-  /**
-   * Update a modifier group
-   */
-  async updateModifierGroup(
-    id: string,
-    data: Partial<ModifierGroup>
-  ): Promise<void> {
-    const groups = await this.getModifierGroups();
-    const index = groups.findIndex((g) => g.id === id);
-    if (index !== -1) {
-      groups[index] = { ...groups[index], ...data };
-      await this.saveModifierGroups(groups);
-    }
+  async updateModifierGroup(id: string, data: Partial<ModifierGroup>): Promise<void> {
+    const existing = await this.db.getFirstAsync<ModifierGroupRow>(
+      'SELECT * FROM modifier_groups WHERE id = ?', id
+    );
+    if (!existing) return;
+
+    const current = this.modifierGroupFromRow(existing);
+    const updated = { ...current, ...data, updated_at: now() };
+    await this.saveModifierGroups([updated as ModifierGroup]);
   }
 
-  /**
-   * Delete a modifier group
-   */
   async deleteModifierGroup(id: string): Promise<void> {
-    const groups = await this.getModifierGroups();
-    const filtered = groups.filter((g) => g.id !== id);
-    await this.saveModifierGroups(filtered);
+    await this.db.runAsync('DELETE FROM modifier_groups WHERE id = ?', id);
+    await this.db.runAsync('DELETE FROM menu_item_modifier_assignments WHERE modifier_group_id = ?', id);
+    await this.updateLastSync();
   }
 
   // ============== COMBOS ==============
 
-  /**
-   * Save combos
-   */
   async saveCombos(combos: ComboDeal[]): Promise<void> {
-    await storageService.set(STORAGE_KEYS.MENU_COMBOS, combos);
+    for (const combo of combos) {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO combo_deals (id, restaurant_id, name, description, image_url, regular_price, combo_price, savings_amount, savings_percentage, is_active, availability, items, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        combo.id, combo.restaurant_id || 'rest_001', combo.name, combo.description || null,
+        combo.image_url || null, combo.regular_price || 0, combo.combo_price || 0,
+        combo.savings_amount || 0, combo.savings_percentage || 0,
+        toSqlBool(combo.is_active), combo.availability ? JSON.stringify(combo.availability) : null,
+        combo.combo_items ? JSON.stringify(combo.combo_items) : null,
+        combo.created_at || now(), combo.updated_at || now()
+      );
+    }
     await this.updateLastSync();
   }
 
-  /**
-   * Get combos
-   */
   async getCombos(): Promise<ComboDeal[]> {
-    const combos = await storageService.get<ComboDeal[]>(STORAGE_KEYS.MENU_COMBOS);
-    return combos || [];
+    const rows = await this.db.getAllAsync<ComboRow>(
+      'SELECT * FROM combo_deals ORDER BY name'
+    );
+    return rows.map((r) => this.comboFromRow(r));
   }
 
-  /**
-   * Add a combo
-   */
   async addCombo(combo: ComboDeal): Promise<void> {
-    const combos = await this.getCombos();
-    combos.push(combo);
-    await this.saveCombos(combos);
+    await this.saveCombos([combo]);
   }
 
-  /**
-   * Update a combo
-   */
   async updateCombo(id: string, data: Partial<ComboDeal>): Promise<void> {
-    const combos = await this.getCombos();
-    const index = combos.findIndex((c) => c.id === id);
-    if (index !== -1) {
-      combos[index] = { ...combos[index], ...data };
-      await this.saveCombos(combos);
-    }
+    const existing = await this.db.getFirstAsync<ComboRow>(
+      'SELECT * FROM combo_deals WHERE id = ?', id
+    );
+    if (!existing) return;
+
+    const current = this.comboFromRow(existing);
+    const updated = { ...current, ...data, updated_at: now() };
+    await this.saveCombos([updated as ComboDeal]);
   }
 
-  /**
-   * Delete a combo
-   */
   async deleteCombo(id: string): Promise<void> {
-    const combos = await this.getCombos();
-    const filtered = combos.filter((c) => c.id !== id);
-    await this.saveCombos(filtered);
+    await this.db.runAsync('DELETE FROM combo_deals WHERE id = ?', id);
+    await this.updateLastSync();
   }
 
   // ============== MODIFIER ASSIGNMENTS ==============
 
-  /**
-   * Get modifier assignments for a menu item
-   * Extracts from the menu item's modifier_assignments array
-   */
-  async getModifierAssignments(menuItemId: string): Promise<any[]> {
-    const items = await this.getMenuItems();
-    const item = items.find((i) => i.id === menuItemId);
-    return item?.modifier_assignments || [];
+  async getModifierAssignments(menuItemId: string): Promise<AssignmentRow[]> {
+    return this.db.getAllAsync<AssignmentRow>(
+      'SELECT * FROM menu_item_modifier_assignments WHERE menu_item_id = ? ORDER BY sort_order',
+      menuItemId
+    );
   }
 
-  /**
-   * Get populated modifier groups for a menu item
-   * Returns full ModifierGroup objects based on assignments
-   */
   async getModifiersForMenuItem(menuItemId: string): Promise<ModifierGroup[]> {
-    const items = await this.getMenuItems();
-    const item = items.find((i) => i.id === menuItemId);
+    const assignments = await this.getModifierAssignments(menuItemId);
+    if (assignments.length === 0) return [];
 
-    if (!item || !item.modifier_assignments || item.modifier_assignments.length === 0) {
-      return [];
-    }
-
-    const allModifierGroups = await this.getModifierGroups();
-
-    // Map assignments to full modifier groups
-    const modifiers = item.modifier_assignments
-      .map((assignment) => {
-        const group = allModifierGroups.find((g) => g.id === assignment.modifier_group_id);
-        return group;
-      })
+    const allGroups = await this.getModifierGroups();
+    return assignments
+      .map((a) => allGroups.find((g) => g.id === a.modifier_group_id))
       .filter((g): g is ModifierGroup => g !== undefined);
-
-    return modifiers;
   }
 
-  /**
-   * Assign modifier groups to a menu item
-   * Replaces existing assignments with new ones
-   * Also populates modifier_groups for consistency
-   */
-  async assignModifiersToMenuItem(
-    menuItemId: string,
-    modifierGroupIds: string[]
-  ): Promise<void> {
-    const items = await this.getMenuItems();
-    const itemIndex = items.findIndex((i) => i.id === menuItemId);
-
-    if (itemIndex === -1) {
-      throw new Error(`Menu item with ID ${menuItemId} not found`);
-    }
-
-    // Create new assignments
-    const newAssignments = modifierGroupIds.map((groupId, index) => ({
-      id: `assignment_${menuItemId}_${groupId}_${Date.now()}`,
-      menu_item_id: menuItemId,
-      modifier_group_id: groupId,
-      sort_order: index,
-      created_at: new Date().toISOString(),
-    }));
-
-    // Get modifier groups to populate modifier_groups array
-    const allModifierGroups = await this.getModifierGroups();
-    const assignedModifierGroups = modifierGroupIds
-      .map((groupId) => allModifierGroups.find((g) => g.id === groupId))
-      .filter((g): g is ModifierGroup => g !== undefined);
-
-    // Update the menu item with both assignments and populated modifier_groups
-    items[itemIndex] = {
-      ...items[itemIndex],
-      modifier_assignments: newAssignments,
-      modifier_groups: assignedModifierGroups,
-    };
-
-    await this.saveMenuItems(items);
-  }
-
-  /**
-   * Add a modifier group to a menu item
-   * Appends to existing assignments
-   * Also updates modifier_groups for consistency
-   */
-  async addModifierToMenuItem(
-    menuItemId: string,
-    modifierGroupId: string
-  ): Promise<void> {
-    const items = await this.getMenuItems();
-    const itemIndex = items.findIndex((i) => i.id === menuItemId);
-
-    if (itemIndex === -1) {
-      throw new Error(`Menu item with ID ${menuItemId} not found`);
-    }
-
-    const item = items[itemIndex];
-    const existingAssignments = item.modifier_assignments || [];
-
-    // Check if already assigned
-    const alreadyAssigned = existingAssignments.some(
-      (a) => a.modifier_group_id === modifierGroupId
+  async assignModifiersToMenuItem(menuItemId: string, modifierGroupIds: string[]): Promise<void> {
+    // Clear existing assignments
+    await this.db.runAsync(
+      'DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', menuItemId
     );
 
-    if (alreadyAssigned) {
-      return; // Already assigned, do nothing
+    // Insert new assignments
+    for (let i = 0; i < modifierGroupIds.length; i++) {
+      const groupId = modifierGroupIds[i];
+      await this.db.runAsync(
+        `INSERT INTO menu_item_modifier_assignments (id, menu_item_id, modifier_group_id, sort_order, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        `assignment_${menuItemId}_${groupId}_${Date.now()}`,
+        menuItemId, groupId, i, now()
+      );
     }
-
-    // Create new assignment
-    const newAssignment = {
-      id: `assignment_${menuItemId}_${modifierGroupId}_${Date.now()}`,
-      menu_item_id: menuItemId,
-      modifier_group_id: modifierGroupId,
-      sort_order: existingAssignments.length,
-      created_at: new Date().toISOString(),
-    };
-
-    const updatedAssignments = [...existingAssignments, newAssignment];
-
-    // Get modifier groups to populate modifier_groups array
-    const allModifierGroups = await this.getModifierGroups();
-    const assignedModifierGroups = updatedAssignments
-      .map((a) => allModifierGroups.find((g) => g.id === a.modifier_group_id))
-      .filter((g): g is ModifierGroup => g !== undefined);
-
-    // Update the menu item with both assignments and populated modifier_groups
-    items[itemIndex] = {
-      ...items[itemIndex],
-      modifier_assignments: updatedAssignments,
-      modifier_groups: assignedModifierGroups,
-    };
-
-    await this.saveMenuItems(items);
+    await this.updateLastSync();
   }
 
-  /**
-   * Remove a modifier group from a menu item
-   * Also updates modifier_groups for consistency
-   */
-  async removeModifierFromMenuItem(
-    menuItemId: string,
-    modifierGroupId: string
-  ): Promise<void> {
-    const items = await this.getMenuItems();
-    const itemIndex = items.findIndex((i) => i.id === menuItemId);
+  async addModifierToMenuItem(menuItemId: string, modifierGroupId: string): Promise<void> {
+    const existing = await this.db.getFirstAsync<AssignmentRow>(
+      'SELECT * FROM menu_item_modifier_assignments WHERE menu_item_id = ? AND modifier_group_id = ?',
+      menuItemId, modifierGroupId
+    );
+    if (existing) return; // Already assigned
 
-    if (itemIndex === -1) {
-      throw new Error(`Menu item with ID ${menuItemId} not found`);
-    }
-
-    const item = items[itemIndex];
-    const existingAssignments = item.modifier_assignments || [];
-
-    // Filter out the assignment
-    const updatedAssignments = existingAssignments.filter(
-      (a) => a.modifier_group_id !== modifierGroupId
+    const countRow = await this.db.getFirstAsync<{ cnt: number }>(
+      'SELECT COUNT(*) as cnt FROM menu_item_modifier_assignments WHERE menu_item_id = ?',
+      menuItemId
     );
 
-    // Reorder sort_order
-    const reorderedAssignments = updatedAssignments.map((a, index) => ({
-      ...a,
-      sort_order: index,
-    }));
-
-    // Get modifier groups to populate modifier_groups array
-    const allModifierGroups = await this.getModifierGroups();
-    const assignedModifierGroups = reorderedAssignments
-      .map((a) => allModifierGroups.find((g) => g.id === a.modifier_group_id))
-      .filter((g): g is ModifierGroup => g !== undefined);
-
-    // Update the menu item with both assignments and populated modifier_groups
-    items[itemIndex] = {
-      ...items[itemIndex],
-      modifier_assignments: reorderedAssignments,
-      modifier_groups: assignedModifierGroups,
-    };
-
-    await this.saveMenuItems(items);
+    await this.db.runAsync(
+      `INSERT INTO menu_item_modifier_assignments (id, menu_item_id, modifier_group_id, sort_order, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      `assignment_${menuItemId}_${modifierGroupId}_${Date.now()}`,
+      menuItemId, modifierGroupId, countRow?.cnt || 0, now()
+    );
+    await this.updateLastSync();
   }
 
-  /**
-   * Clear all modifier assignments from a menu item
-   * Also clears modifier_groups for consistency
-   */
+  async removeModifierFromMenuItem(menuItemId: string, modifierGroupId: string): Promise<void> {
+    await this.db.runAsync(
+      'DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ? AND modifier_group_id = ?',
+      menuItemId, modifierGroupId
+    );
+    await this.updateLastSync();
+  }
+
   async clearModifierAssignments(menuItemId: string): Promise<void> {
-    const items = await this.getMenuItems();
-    const itemIndex = items.findIndex((i) => i.id === menuItemId);
+    await this.db.runAsync(
+      'DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', menuItemId
+    );
+    await this.updateLastSync();
+  }
 
-    if (itemIndex === -1) {
-      throw new Error(`Menu item with ID ${menuItemId} not found`);
+  // ============== INITIALIZATION ==============
+
+  /**
+   * Initialize menu storage - seeds mock data on first launch.
+   * Pattern matches TableStorageService.initialize().
+   */
+  async initialize(restaurantId: string = 'rest_001'): Promise<void> {
+    if (__DEV__) {
+      console.log('[MenuStorageService] Initializing...');
     }
 
-    // Update the menu item - clear both assignments and groups
-    items[itemIndex] = {
-      ...items[itemIndex],
-      modifier_assignments: [],
-      modifier_groups: [],
-    };
+    const hasData = await this.hasMenuData();
+    if (hasData) {
+      if (__DEV__) {
+        const info = await this.getStorageInfo();
+        console.log(`[MenuStorageService] Loaded ${info.categoriesCount} categories, ${info.itemsCount} items`);
+      }
+      return;
+    }
 
-    await this.saveMenuItems(items);
+    if (__DEV__) {
+      console.log('[MenuStorageService] No menu data found. Seeding mock data...');
+    }
+    await this.seedMockMenuData(restaurantId);
+  }
+
+  /**
+   * Seed mock menu categories and items into SQLite.
+   * Uses the same data as MockMenuApiClient for consistency.
+   */
+  private async seedMockMenuData(restaurantId: string): Promise<void> {
+    const categories: CategoryWithStats[] = [
+      { id: 'cat_1', restaurant_id: restaurantId, name: 'BEVERAGES', description: 'Hot and cold beverages', sort_order: 1, is_active: true, item_count: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z', stats: { itemCount: 2, todayRevenue: 0, avgPrice: 3.75, popularItems: [], lastUpdated: now() } },
+      { id: 'cat_2', restaurant_id: restaurantId, name: 'CHINESE', description: 'Chinese cuisine', sort_order: 2, is_active: true, item_count: 0, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z', stats: { itemCount: 0, todayRevenue: 0, avgPrice: 0, popularItems: [], lastUpdated: now() } },
+      { id: 'cat_3', restaurant_id: restaurantId, name: 'NON VEG', description: 'Non-vegetarian dishes', sort_order: 3, is_active: true, item_count: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z', stats: { itemCount: 2, todayRevenue: 0, avgPrice: 20.49, popularItems: [], lastUpdated: now() } },
+      { id: 'cat_4', restaurant_id: restaurantId, name: 'SPECIAL', description: 'Chef special dishes', sort_order: 4, is_active: true, item_count: 0, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z', stats: { itemCount: 0, todayRevenue: 0, avgPrice: 0, popularItems: [], lastUpdated: now() } },
+      { id: 'cat_5', restaurant_id: restaurantId, name: 'VEG', description: 'Vegetarian dishes', sort_order: 5, is_active: true, item_count: 3, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z', stats: { itemCount: 3, todayRevenue: 0, avgPrice: 11.16, popularItems: [], lastUpdated: now() } },
+    ] as CategoryWithStats[];
+
+    const menuItems: MenuItemExtended[] = [
+      { id: 'item_1', restaurant_id: restaurantId, category_id: 'cat_1', name: 'Coffee', description: 'Hot black coffee', price: 4.50, is_available: true, preparation_time_minutes: 5, sort_order: 1, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+      { id: 'item_2', restaurant_id: restaurantId, category_id: 'cat_1', name: 'Tea', description: 'Hot chai tea', price: 3.00, is_available: true, preparation_time_minutes: 3, sort_order: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+      { id: 'item_3', restaurant_id: restaurantId, category_id: 'cat_5', name: 'Paneer Butter Masala', description: 'Creamy paneer curry', price: 16.99, is_available: true, preparation_time_minutes: 15, sort_order: 1, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+      { id: 'item_4', restaurant_id: restaurantId, category_id: 'cat_5', name: 'Dal Makhani', description: 'Rich black lentil curry', price: 13.99, is_available: true, preparation_time_minutes: 12, sort_order: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+      { id: 'item_5', restaurant_id: restaurantId, category_id: 'cat_5', name: 'Roti', description: 'Fresh wheat bread', price: 2.50, is_available: true, preparation_time_minutes: 3, sort_order: 3, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+      { id: 'item_6', restaurant_id: restaurantId, category_id: 'cat_3', name: 'Chicken Curry', description: 'Spicy chicken curry', price: 18.99, is_available: true, preparation_time_minutes: 20, sort_order: 1, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+      { id: 'item_7', restaurant_id: restaurantId, category_id: 'cat_3', name: 'Fish Fry', description: 'Crispy fried fish', price: 21.99, is_available: true, preparation_time_minutes: 18, sort_order: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+    ] as MenuItemExtended[];
+
+    await this.saveCategories(categories);
+    await this.saveMenuItems(menuItems);
+
+    console.log(`[MenuStorageService] Seeded ${categories.length} categories and ${menuItems.length} menu items`);
   }
 
   // ============== UTILITIES ==============
 
-  /**
-   * Update last sync timestamp
-   */
   private async updateLastSync(): Promise<void> {
-    await storageService.set(
-      STORAGE_KEYS.MENU_LAST_SYNC,
-      new Date().toISOString()
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('menu_last_sync', ?, ?)`,
+      now(), now()
     );
   }
 
-  /**
-   * Clear all menu data
-   */
   async clearMenuData(): Promise<void> {
-    await Promise.all([
-      storageService.remove(STORAGE_KEYS.MENU_CATEGORIES),
-      storageService.remove(STORAGE_KEYS.MENU_ITEMS),
-      storageService.remove(STORAGE_KEYS.MENU_MODIFIERS),
-      storageService.remove(STORAGE_KEYS.MENU_COMBOS),
-      storageService.remove(STORAGE_KEYS.MENU_LAST_SYNC),
-    ]);
+    await this.db.execAsync('DELETE FROM menu_categories');
+    await this.db.execAsync('DELETE FROM menu_items');
+    await this.db.execAsync('DELETE FROM modifier_groups');
+    await this.db.execAsync('DELETE FROM modifier_options');
+    await this.db.execAsync('DELETE FROM menu_item_modifier_assignments');
+    await this.db.execAsync('DELETE FROM combo_deals');
+    await this.db.runAsync(`DELETE FROM sync_metadata WHERE key = 'menu_last_sync'`);
   }
 
-  /**
-   * Get storage info (for debugging)
-   */
   async getStorageInfo(): Promise<{
     hasData: boolean;
     lastSync: string | null;
@@ -560,21 +614,21 @@ class MenuStorageService {
     modifiersCount: number;
     combosCount: number;
   }> {
-    const [categories, items, modifiers, combos, lastSync] = await Promise.all([
-      this.getCategories(),
-      this.getMenuItems(),
-      this.getModifierGroups(),
-      this.getCombos(),
+    const [cats, items, mods, combos, lastSync] = await Promise.all([
+      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM menu_categories'),
+      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM menu_items'),
+      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM modifier_groups'),
+      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM combo_deals'),
       this.getLastSyncTime(),
     ]);
 
     return {
-      hasData: lastSync !== null,
+      hasData: (cats?.cnt || 0) > 0,
       lastSync,
-      categoriesCount: categories.length,
-      itemsCount: items.length,
-      modifiersCount: modifiers.length,
-      combosCount: combos.length,
+      categoriesCount: cats?.cnt || 0,
+      itemsCount: items?.cnt || 0,
+      modifiersCount: mods?.cnt || 0,
+      combosCount: combos?.cnt || 0,
     };
   }
 }

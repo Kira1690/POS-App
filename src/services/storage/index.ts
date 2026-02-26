@@ -1,15 +1,11 @@
 /**
  * Storage Services Index
- * Centralized exports for all storage services
+ * Centralized exports for all storage services (SQLite-backed)
  */
 
 export {
-  storageService,
-  AsyncStorageService,
   STORAGE_KEYS,
   type StorageKey,
-  type StorageConfig,
-  type IStorageService,
 } from './StorageService';
 
 export {
@@ -36,9 +32,6 @@ export { unifiedOrderStorageService } from './UnifiedOrderStorageService';
 
 // Kitchen Storage - Ticket management
 export { kitchenStorageService } from './KitchenStorageService';
-
-// Legacy Order Storage (for kitchen sync)
-export { orderStorageService } from './OrderStorageService';
 
 // Payment & Sync Services
 export { paymentStorageService } from './PaymentStorageService';

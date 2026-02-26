@@ -1,95 +1,136 @@
 /**
  * Staff Dashboard - Staff-focused interface with tasks and shift management
  * Matches wireframe 2.2 Staff Dashboard
- * Under 300 lines, focused on staff-specific functionality
+ * Uses real data from UnifiedOrder and TableStats
  */
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  StyleSheet, 
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
   Dimensions,
   TouchableOpacity,
   RefreshControl
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/context/auth/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
-import {
-  getStaffDashboardData,
-  getTasksByPriority,
-  getShiftProgress,
-  getEfficiencyBadge,
-  type StaffDashboardData
-} from '@/data/dashboard/staffDashboard';
+import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
+import { useTableStats } from '@/hooks/context/useTableSelectors';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
 
-interface StaffDashboardProps {}
+const formatCurrency = (amount: number) =>
+  `$${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
-const StaffDashboard: React.FC<StaffDashboardProps> = () => {
+const StaffDashboard: React.FC = () => {
   const navigation = useNavigation();
   const { state: authState } = useAuth();
   const { theme } = useTheme();
-  
+
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
 
-  // Get centralized staff dashboard data
-  const staffData = useMemo(() => {
-    // Use employee ID from auth state, fallback to EMP001 for demo
-    const employeeId = authState.user?.employeeId || 'EMP001';
-    const data = getStaffDashboardData(employeeId);
+  // Real data hooks
+  const { orders, refreshOrders, isLoading } = useUnifiedOrder();
+  const tableStats = useTableStats();
 
-    // Update with current user info from auth state
-    return {
-      ...data,
-      restaurant: {
-        ...data.restaurant,
-        name: authState.restaurant?.name || data.restaurant.name,
-      },
-      staff: {
-        ...data.staff,
-        name: authState.user?.name || data.staff.name,
-        employeeId: authState.user?.employeeId || data.staff.employeeId,
-      },
-    };
-  }, [authState]);
+  // Refresh on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshOrders();
+    }, [refreshOrders])
+  );
+
+  // Compute today's start timestamp
+  const todayStart = useMemo(() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+  }, []);
+
+  // Compute staff metrics from real data
+  const todaysOrders = useMemo(() => {
+    return orders.filter(o => new Date(o.createdAt).getTime() >= todayStart);
+  }, [orders, todayStart]);
+
+  const todaysOrderTotal = useMemo(() => {
+    return todaysOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  }, [todaysOrders]);
+
+  const avgOrderValue = useMemo(() => {
+    if (todaysOrders.length === 0) return 0;
+    return todaysOrderTotal / todaysOrders.length;
+  }, [todaysOrders, todaysOrderTotal]);
+
+  const staffName = authState.user?.name || 'Staff';
+  const staffEmployeeId = authState.user?.employeeId || '--';
+  const staffRole = authState.user?.role || 'Staff';
+  const restaurantName = authState.restaurant?.name || 'Restaurant';
+
+  const loading = isLoading && orders.length === 0;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // TODO: Implement actual data refresh
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    await refreshOrders();
+    setRefreshing(false);
+  }, [refreshOrders]);
 
   const tabItems = [
-    { label: 'Dashboard', icon: 'dashboard', active: true },
-    { label: 'Orders', icon: 'receipt-long' },
-    { label: 'Tables', icon: 'table-restaurant' },
-    { label: 'POS', icon: 'point-of-sale' },
+    { label: 'Dashboard', icon: 'dashboard', active: activeTab === 'Dashboard' },
+    { label: 'Orders', icon: 'receipt-long', active: activeTab === 'Orders' },
+    { label: 'Tables', icon: 'table-restaurant', active: activeTab === 'Tables' },
+    { label: 'POS', icon: 'point-of-sale', active: activeTab === 'POS' },
   ];
 
-  // Use centralized quick actions data
-  const quickActions = useMemo(() => staffData.quickActions, [staffData]);
+  const quickActions = useMemo(() => [
+    { label: 'New Order', icon: 'add-circle', color: theme.colors.success },
+    { label: 'View Tables', icon: 'table-restaurant', color: theme.colors.primary },
+    { label: 'My Orders', icon: 'receipt-long', color: theme.colors.warning },
+    { label: 'Call Manager', icon: 'support-agent', color: theme.colors.tertiary },
+  ], [theme]);
+
+  // Static tasks as prompts (no task tracking context exists)
+  const tasks = useMemo(() => [
+    {
+      id: '1',
+      priority: 'info' as const,
+      message: 'Check assigned tables for new guests',
+      color: theme.colors.info,
+      bgColor: theme.colors.surfaceVariant,
+    },
+    {
+      id: '2',
+      priority: 'medium' as const,
+      message: 'Clear completed orders from table view',
+      color: theme.colors.warning,
+      bgColor: theme.colors.surfaceVariant,
+    },
+    {
+      id: '3',
+      priority: 'low' as const,
+      message: 'Review menu specials for today',
+      color: theme.colors.success,
+      bgColor: theme.colors.surfaceVariant,
+    },
+  ], [theme]);
 
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: theme.colors.success }]}>
       <View style={styles.headerLeft}>
-        <MaterialIcons name="restaurant" size={24} color="white" />
-        <Text style={styles.headerTitle}>
-          🍽️ {staffData.restaurant.name} - Staff Dashboard
+        <MaterialIcons name="restaurant" size={24} color={theme.colors.onPrimary} />
+        <Text style={[styles.headerTitle, { color: theme.colors.onPrimary }]}>
+          {restaurantName} - Staff Dashboard
         </Text>
       </View>
 
       <View style={styles.headerRight}>
-        <Text style={styles.headerUser}>
-          👥 {staffData.staff.name} ({staffData.staff.employeeId}) | {staffData.staff.role}
+        <Text style={[styles.headerUser, { color: theme.colors.onPrimary }]}>
+          {staffName} ({staffEmployeeId}) | {staffRole}
         </Text>
       </View>
     </View>
@@ -106,14 +147,14 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
           ]}
           onPress={() => setActiveTab(tab.label)}
         >
-          <MaterialIcons 
-            name={tab.icon as any} 
-            size={24} 
-            color={tab.active ? 'white' : theme.colors.onSurfaceVariant} 
+          <MaterialIcons
+            name={tab.icon as keyof typeof MaterialIcons.glyphMap}
+            size={24}
+            color={tab.active ? theme.colors.onPrimary : theme.colors.onSurfaceVariant}
           />
           <Text style={[
             styles.tabLabel,
-            { color: tab.active ? 'white' : theme.colors.onSurfaceVariant }
+            { color: tab.active ? theme.colors.onPrimary : theme.colors.onSurfaceVariant }
           ]}>
             {tab.label}
           </Text>
@@ -124,59 +165,56 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
 
   const renderStaffMetrics = () => (
     <View style={styles.metricsRow}>
-      {/* My Shift Card */}
-      <View style={[styles.metricCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.metricCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
         <Text style={[styles.metricTitle, { color: theme.colors.onSurface }]}>
           My Shift
         </Text>
         <Text style={[styles.metricValue, { color: theme.colors.onSurface }]}>
-          Started: {staffData.shift.startTime} | Duration: {staffData.shift.duration}
+          Active
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          Scheduled End: {staffData.shift.scheduledEnd}
+          No shift tracking available
         </Text>
       </View>
 
-      {/* My Orders Card */}
-      <View style={[styles.metricCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.metricCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
         <Text style={[styles.metricTitle, { color: theme.colors.onSurface }]}>
           My Orders Today
         </Text>
         <Text style={[styles.metricValue, { color: theme.colors.success }]}>
-          {staffData.myOrders.count} Orders | {staffData.myOrders.totalValue} Total
+          {loading ? '--' : `${todaysOrders.length} Orders | ${formatCurrency(todaysOrderTotal)} Total`}
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          Average Order: {staffData.myOrders.averageOrder}
+          Average Order: {loading ? '--' : formatCurrency(avgOrderValue)}
         </Text>
       </View>
 
-      {/* Assigned Tables Card */}
-      <View style={[styles.metricCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.metricCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
         <Text style={[styles.metricTitle, { color: theme.colors.onSurface }]}>
-          Assigned Tables
+          Table Status
         </Text>
         <Text style={[styles.metricValue, { color: theme.colors.onSurface }]}>
-          Tables: {staffData.assignedTables.tables.join(', ')}
+          {tableStats.total} Tables
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          {staffData.assignedTables.occupied} Occupied | {staffData.assignedTables.available} Available
+          {tableStats.occupied} Occupied | {tableStats.available} Available
         </Text>
       </View>
     </View>
   );
 
   const renderTasksSection = () => (
-    <View style={[styles.tasksContainer, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.tasksContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-        Current Tasks & Notifications
+        Current Tasks & Reminders
       </Text>
-      
-      {staffData.tasks.map((task) => (
+
+      {tasks.map((task) => (
         <View
           key={task.id}
           style={[
             styles.taskItem,
-            { 
+            {
               backgroundColor: task.bgColor,
               borderColor: task.color,
             }
@@ -185,10 +223,6 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
           <View style={styles.taskIndicator}>
             <View style={[styles.priorityDot, { backgroundColor: task.color }]} />
             <Text style={[styles.taskText, { color: theme.colors.onSurface }]}>
-              {task.priority === 'urgent' && '🔴 URGENT: '}
-              {task.priority === 'medium' && '🟡 '}
-              {task.priority === 'low' && '🟢 '}
-              {task.priority === 'info' && '🔵 '}
               {task.message}
             </Text>
           </View>
@@ -198,11 +232,11 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
   );
 
   const renderQuickActions = () => (
-    <View style={[styles.quickActionsContainer, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.quickActionsContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
         Quick Actions
       </Text>
-      
+
       <View style={styles.actionsGrid}>
         {quickActions.map((action, index) => (
           <TouchableOpacity
@@ -212,38 +246,22 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
               { backgroundColor: action.color }
             ]}
           >
-            <MaterialIcons name={action.icon as any} size={24} color="white" />
-            <Text style={styles.actionText}>{action.label}</Text>
+            <MaterialIcons name={action.icon as keyof typeof MaterialIcons.glyphMap} size={24} color={theme.colors.onPrimary} />
+            <Text style={[styles.actionText, { color: theme.colors.onPrimary }]}>{action.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
     </View>
   );
 
-  const renderPerformanceIndicator = () => (
-    <View style={styles.performanceContainer}>
-      <Text style={[styles.performanceText, { color: theme.colors.success }]}>
-        ⭐ Today's Performance: {staffData.performance.status} ({staffData.performance.rating})
-      </Text>
-    </View>
-  );
-
   const renderContent = () => (
-    <ScrollView 
+    <ScrollView
       style={styles.mainContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
-      {/* Staff Metrics Cards */}
       {renderStaffMetrics()}
-      
-      {/* Performance Indicator */}
-      {renderPerformanceIndicator()}
-      
-      {/* Tasks Section */}
       {renderTasksSection()}
-      
-      {/* Quick Actions */}
       {renderQuickActions()}
     </ScrollView>
   );
@@ -251,11 +269,11 @@ const StaffDashboard: React.FC<StaffDashboardProps> = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {renderHeader()}
-      
+
       <View style={styles.body}>
         {renderContent()}
       </View>
-      
+
       {renderBottomTabs()}
     </View>
   );
@@ -281,7 +299,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...typography.headlineSmall,
     fontWeight: '700',
-    color: 'white',
     marginLeft: spacing.sm,
   },
   headerRight: {
@@ -289,7 +306,6 @@ const styles = StyleSheet.create({
   },
   headerUser: {
     ...typography.bodyMedium,
-    color: 'white',
     fontWeight: '500',
   },
   body: {
@@ -298,7 +314,7 @@ const styles = StyleSheet.create({
   mainContent: {
     flex: 1,
     padding: spacing.lg,
-    marginBottom: 80, // Space for bottom tabs
+    marginBottom: 80,
   },
   metricsRow: {
     gap: spacing.lg,
@@ -308,7 +324,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
     minHeight: 120,
   },
   metricTitle: {
@@ -324,19 +339,10 @@ const styles = StyleSheet.create({
   metricSubtext: {
     ...typography.bodyMedium,
   },
-  performanceContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  performanceText: {
-    ...typography.titleMedium,
-    fontWeight: '700',
-  },
   tasksContainer: {
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
     marginBottom: spacing.xl,
   },
   sectionTitle: {
@@ -370,7 +376,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
     marginBottom: spacing.xl,
   },
   actionsGrid: {
@@ -386,7 +391,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   actionText: {
-    color: 'white',
     ...typography.titleMedium,
     fontWeight: '700',
     marginLeft: spacing.md,

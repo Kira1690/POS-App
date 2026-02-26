@@ -9,7 +9,7 @@
 import { authApiClient } from '@/services/api/authApiClient';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User, Restaurant } from '@/types';
 import { RegisterUserRequest } from '@/interfaces';
-import { findUserByCredentials, generateDummyTokens, DUMMY_RESTAURANTS } from '@/constants/dummyData';
+import { findUserByCredentials, generateDummyTokens, DUMMY_CREDENTIALS, DUMMY_RESTAURANTS } from '@/constants/dummyData';
 import { authStorageService } from '@/services/storage';
 
 export class CoreAuthService {
@@ -139,10 +139,55 @@ export class CoreAuthService {
 
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
     try {
+      // Check if current session is a dummy user - refresh locally
+      if (this.useLocalStorage) {
+        const refreshed = await this.tryLocalDummyRefresh();
+        if (refreshed) return refreshed;
+      }
+
       return await authApiClient.refreshTokenManually(refreshToken);
-    } catch (error: any) {
-      console.error('Token refresh failed:', error.message);
-      throw new Error(error.message || 'Token refresh failed');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Token refresh failed';
+      console.error('Token refresh failed:', message);
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Attempt to refresh tokens locally for dummy users.
+   * Returns new tokens if the stored user is a dummy user, null otherwise.
+   */
+  private async tryLocalDummyRefresh(): Promise<RefreshTokenResponse | null> {
+    try {
+      const session = await authStorageService.getSession();
+      if (!session?.user) return null;
+
+      const isDummy = DUMMY_CREDENTIALS.some(d => d.id === session.user.id);
+      if (!isDummy) return null;
+
+      const dummyUser = DUMMY_CREDENTIALS.find(d => d.id === session.user.id);
+      if (!dummyUser) return null;
+
+      const tokens = generateDummyTokens(dummyUser);
+      const expiresAt = new Date(Date.now() + tokens.expiresIn * 1000).toISOString();
+
+      await authStorageService.updateTokens({
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresAt,
+      });
+
+      if (__DEV__) {
+        console.log('[DUMMY AUTH] Token refreshed locally for:', dummyUser.name);
+      }
+
+      return {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresAt: Math.floor(Date.now() / 1000) + tokens.expiresIn,
+      };
+    } catch {
+      return null;
     }
   }
 
@@ -154,12 +199,15 @@ export class CoreAuthService {
         if (hasValidSession) {
           return true;
         }
+
+        // Session expired - try local dummy refresh before hitting API
+        const refreshed = await this.tryLocalDummyRefresh();
+        if (refreshed) return true;
       }
 
       // Fall back to API validation
       return await authApiClient.validateToken();
-    } catch (error: any) {
-      console.error('Token validation failed:', error.message);
+    } catch {
       return false;
     }
   }
@@ -172,11 +220,15 @@ export class CoreAuthService {
         if (hasValidSession) {
           return true;
         }
+
+        // Session expired - try local dummy refresh before hitting API
+        const refreshed = await this.tryLocalDummyRefresh();
+        if (refreshed) return true;
       }
 
       // Fall back to API check
       return await authApiClient.isAuthenticated();
-    } catch (error: any) {
+    } catch {
       return false;
     }
   }
