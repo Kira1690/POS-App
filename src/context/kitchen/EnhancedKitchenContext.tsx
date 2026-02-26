@@ -28,11 +28,10 @@ import {
   formatModifiersForDisplay,
 } from '@/types/kitchen-ticket.types';
 
-import { kitchenStorageService, orderStorageService, unifiedOrderStorageService } from '@/services/storage';
+import { kitchenStorageService, unifiedOrderStorageService } from '@/services/storage';
 import { ticketRoutingService } from '@/services/kitchen/TicketRoutingService';
 import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
-import { UnifiedOrderItem } from '@/types/unified-order.types';
-import { ExtendedOrderStatus } from '@/types/order-extended.types';
+import { UnifiedOrderItem, UnifiedOrderStatus } from '@/types/unified-order.types';
 import { generateTicketId } from '@/types/kitchen-ticket.types';
 
 // Convert DEFAULT_STATION_CONFIGS array to Record for type compatibility
@@ -216,21 +215,21 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
             const anyPreparing = updatedOrderTickets.some(t => t.status === 'preparing');
             const allCancelled = updatedOrderTickets.every(t => t.status === 'cancelled');
 
-            let orderStatus: ExtendedOrderStatus;
+            let orderStatus: UnifiedOrderStatus;
             if (allCancelled) {
               orderStatus = 'cancelled';
             } else if (allServed) {
-              orderStatus = 'completed';
+              orderStatus = 'served';
             } else if (allReadyOrServed) {
               orderStatus = 'ready';
             } else if (anyPreparing) {
               orderStatus = 'preparing';
             } else {
-              orderStatus = 'pending';
+              orderStatus = 'confirmed';
             }
 
             // Update order status in storage
-            await orderStorageService.updateOrder(ticket.orderId, { status: orderStatus });
+            await unifiedOrderStorageService.updateOrder(ticket.orderId, { status: orderStatus });
 
             // Emit event for real-time cross-context sync
             orderEventEmitter.emit('ORDER_STATUS_CHANGED', ticket.orderId, {

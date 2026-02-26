@@ -58,8 +58,7 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
 
   const handlePaymentNavigation = useCallback(() => {
     if (!order) return;
-    navigation.navigate('PaymentProcessing', {
-      order: order,
+    navigation.navigate('Bill', {
       orderId: order.id,
     });
   }, [order, navigation]);
@@ -114,7 +113,7 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
         <OrderActionPanel
           order={order as any}
           onPrint={handlePrint}
-          onPayment={order.status === 'ready' ? handlePaymentNavigation : undefined}
+          onPayment={(order.status === 'ready' || order.status === 'served') ? handlePaymentNavigation : undefined}
           onCancelOrder={(orderId) => cancelOrder(orderId, 'Cancelled by user')}
           loading={isLoadingDetails}
         />

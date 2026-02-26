@@ -1,0 +1,47 @@
+appId: host.exp.exponent
+name: "02 - Manager Login Offline"
+tags:
+  - offline
+  - auth
+---
+
+# Test: Manager can log in fully offline with dummy credentials
+# Credential: manager@foodcorner.com / manager123 (Alice Johnson - Manager)
+
+- openLink: "exp://192.168.1.9:8081"
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 90000
+
+# Navigate to manager login
+- tapOn:
+    text: ".*Manager Login.*"
+
+- extendedWaitUntil:
+    visible: "Manager Login"
+    timeout: 10000
+
+# Fill in credentials
+- tapOn:
+    id: "email-input"
+- inputText: "manager@foodcorner.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "manager123"
+
+# Dismiss keyboard
+- hideKeyboard
+
+# Submit login
+- tapOn:
+    text: ".*Sign In.*"
+
+# Wait for dashboard with enough time for auth + navigation
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000
+
+- assertVisible: "Dashboard"
+- takeScreenshot: "02_manager_login_success"

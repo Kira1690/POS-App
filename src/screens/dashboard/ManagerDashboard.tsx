@@ -1,83 +1,125 @@
 /**
  * Manager Dashboard - Executive overview with KPIs and analytics
  * Matches wireframe 2.1 Visual Dashboard Overview
- * Under 300 lines, focused on layout composition
+ * Uses real data from UnifiedOrder, TableStats, and KitchenTickets
  */
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  StyleSheet, 
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
   Dimensions,
   TouchableOpacity,
   RefreshControl
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/context/auth/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
-import {
-  getManagerDashboardData,
-  getSalesGrowthPercentage,
-  getOrderCompletionRate,
-  type ManagerDashboardData
-} from '@/data/dashboard/managerDashboard';
-import { WEEKLY_SALES_DATA, CATEGORY_SALES_DATA } from '@/data/charts/salesChartData';
+import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
+import { useTableStats } from '@/hooks/context/useTableSelectors';
+import { useKitchenTickets } from '@/context/kitchen/EnhancedKitchenContext';
+import { UNIFIED_ORDER_STATUS_LABELS } from '@/types/unified-order.types';
 import { SimpleLineChart } from './components/SimpleLineChart';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
 
-interface ManagerDashboardProps {}
+const formatCurrency = (amount: number) =>
+  `$${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
-const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
+const getStatusColor = (status: string, theme: ReturnType<typeof useTheme>['theme']) => {
+  const map: Record<string, string> = {
+    confirmed: theme.colors.info,
+    preparing: theme.colors.warning,
+    ready: theme.colors.success,
+    served: theme.colors.tertiary,
+    paid: theme.colors.success,
+    cancelled: theme.colors.error,
+  };
+  return map[status] ?? theme.colors.onSurfaceVariant;
+};
+
+const ManagerDashboard: React.FC = () => {
   const navigation = useNavigation();
   const { state: authState } = useAuth();
   const { theme } = useTheme();
-  
+
   const [refreshing, setRefreshing] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(isTablet);
 
-  // Get centralized dashboard data
-  const dashboardData = useMemo(() => {
-    const data = getManagerDashboardData(authState.restaurant?.id);
+  // Real data hooks
+  const { orders, activeOrders, refreshOrders, isLoading } = useUnifiedOrder();
+  const tableStats = useTableStats();
+  const { stats: kitchenStats } = useKitchenTickets();
 
-    // Update with current user info
-    return {
-      ...data,
-      restaurant: {
-        ...data.restaurant,
-        name: authState.restaurant?.name || data.restaurant.name,
-      },
-      user: authState.user,
-      currentDate: new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }),
-      currentTime: new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-    };
-  }, [authState]);
+  // Refresh on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshOrders();
+    }, [refreshOrders])
+  );
+
+  // Compute today's start timestamp
+  const todayStart = useMemo(() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+  }, []);
+
+  // Compute dashboard metrics from real data
+  const todaysSales = useMemo(() => {
+    return orders
+      .filter(o => o.status === 'paid' && new Date(o.createdAt).getTime() >= todayStart)
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+  }, [orders, todayStart]);
+
+  const recentOrders = useMemo(() => {
+    return [...orders]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5);
+  }, [orders]);
+
+  // Sales chart: last 7 days of paid orders grouped by day
+  const salesChartData = useMemo(() => {
+    const days: { label: string; value: number; date: string }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(d);
+      dayEnd.setHours(23, 59, 59, 999);
+      const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const daySales = orders
+        .filter(o => o.status === 'paid' &&
+          new Date(o.createdAt).getTime() >= d.getTime() &&
+          new Date(o.createdAt).getTime() <= dayEnd.getTime())
+        .reduce((sum, o) => sum + o.totalAmount, 0);
+      days.push({ label: dayLabel, value: daySales, date: dayLabel });
+    }
+    return days;
+  }, [orders]);
+
+  const currentDate = useMemo(() =>
+    new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    }), []);
+
+  const currentTime = useMemo(() =>
+    new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // TODO: Implement actual data refresh
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    await refreshOrders();
+    setRefreshing(false);
+  }, [refreshOrders]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarVisible(prev => !prev);
   }, []);
 
-  // Navigation items for sidebar
   const navigationItems = [
     { label: 'Dashboard', icon: 'dashboard', active: true },
     { label: 'Orders', icon: 'receipt-long' },
@@ -86,33 +128,41 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
     { label: 'Reports', icon: 'analytics' },
   ];
 
-  // Use centralized quick actions data
-  const quickActions = useMemo(() => dashboardData.quickActions, [dashboardData]);
+  const quickActions = useMemo(() => [
+    { label: 'New Order', icon: 'add-circle', color: theme.colors.primary },
+    { label: 'View Tables', icon: 'table-restaurant', color: theme.colors.success },
+    { label: 'Kitchen', icon: 'kitchen', color: theme.colors.warning },
+    { label: 'Reports', icon: 'analytics', color: theme.colors.tertiary },
+  ], [theme]);
+
+  const loading = isLoading && orders.length === 0;
 
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
       <View style={styles.headerLeft}>
         <MaterialIcons name="restaurant" size={24} color={theme.colors.onPrimary} />
         <Text style={[styles.headerTitle, { color: theme.colors.onPrimary }]}>
-          🍽️ {dashboardData.restaurant.name} - Dashboard
+          {authState.restaurant?.name || 'Restaurant'} - Dashboard
         </Text>
       </View>
-      
+
       <View style={styles.headerCenter}>
         <Text style={[styles.headerDate, { color: theme.colors.onPrimary }]}>
-          📅 {dashboardData.currentDate} | 🕐 {dashboardData.currentTime}
+          {currentDate} | {currentTime}
         </Text>
       </View>
-      
+
       <View style={styles.headerRight}>
         <Text style={[styles.headerUser, { color: theme.colors.onPrimary }]}>
-          👨‍💼 {dashboardData.user?.name} (Manager)
+          {authState.user?.name} (Manager)
         </Text>
         <TouchableOpacity style={styles.notificationBadge}>
           <MaterialIcons name="notifications" size={24} color={theme.colors.onPrimary} />
-          {dashboardData.notifications > 0 && (
+          {kitchenStats.overdueCount > 0 && (
             <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
-              <Text style={styles.badgeText}>{dashboardData.notifications}</Text>
+              <Text style={[styles.badgeText, { color: theme.colors.onPrimary }]}>
+                {kitchenStats.overdueCount}
+              </Text>
             </View>
           )}
         </TouchableOpacity>
@@ -131,10 +181,10 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
             { borderColor: theme.colors.outline }
           ]}
         >
-          <MaterialIcons 
-            name={item.icon as any} 
-            size={20} 
-            color={item.active ? theme.colors.onPrimary : theme.colors.onSurface} 
+          <MaterialIcons
+            name={item.icon as keyof typeof MaterialIcons.glyphMap}
+            size={20}
+            color={item.active ? theme.colors.onPrimary : theme.colors.onSurface}
           />
           <Text style={[
             styles.navText,
@@ -149,98 +199,83 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
 
   const renderStatsCards = () => (
     <View style={styles.statsRow}>
-      {/* Today's Sales Card */}
       <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.statsHeader}>
-          <Text style={styles.statsIcon}>💰</Text>
+          <MaterialIcons name="attach-money" size={24} color={theme.colors.success} />
           <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
             Today's Sales
           </Text>
         </View>
         <Text style={[styles.statsValue, { color: theme.colors.success }]}>
-          {dashboardData.stats.todaysSales.value}
-        </Text>
-        <Text style={[styles.statsChange, { color: theme.colors.success }]}>
-          ↗️ {dashboardData.stats.todaysSales.change} from yesterday
+          {loading ? '--' : formatCurrency(todaysSales)}
         </Text>
       </View>
 
-      {/* Active Orders Card */}
       <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.statsHeader}>
-          <Text style={styles.statsIcon}>📋</Text>
+          <MaterialIcons name="receipt-long" size={24} color={theme.colors.tertiary} />
           <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
             Active Orders
           </Text>
         </View>
         <Text style={[styles.statsValue, { color: theme.colors.tertiary }]}>
-          {dashboardData.stats.activeOrders.value}
+          {loading ? '--' : activeOrders.length}
         </Text>
         <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          {dashboardData.stats.activeOrders.breakdown}
+          {orders.length} total today
         </Text>
       </View>
 
-      {/* Table Occupancy Card */}
       <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.statsHeader}>
-          <Text style={styles.statsIcon}>🪑</Text>
+          <MaterialIcons name="table-restaurant" size={24} color={theme.colors.warning} />
           <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
             Table Occupancy
           </Text>
         </View>
         <Text style={[styles.statsValue, { color: theme.colors.warning }]}>
-          {dashboardData.stats.tableOccupancy.value}
+          {tableStats.occupied}/{tableStats.total}
         </Text>
         <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          {dashboardData.stats.tableOccupancy.percentage}
+          {tableStats.occupancyRate}% occupied
         </Text>
       </View>
 
-      {/* Staff On Duty Card */}
       <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.statsHeader}>
-          <Text style={styles.statsIcon}>👥</Text>
+          <MaterialIcons name="group" size={24} color={theme.colors.tertiary} />
           <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
             Staff On Duty
           </Text>
         </View>
         <Text style={[styles.statsValue, { color: theme.colors.tertiary }]}>
-          {dashboardData.stats.staffOnDuty.value}
+          --
         </Text>
         <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          {dashboardData.stats.staffOnDuty.breakdown}
+          No staff tracking available
         </Text>
       </View>
     </View>
   );
 
   const renderContent = () => (
-    <ScrollView 
+    <ScrollView
       style={styles.mainContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       showsVerticalScrollIndicator={false}
     >
-      {/* Stats Cards */}
       {renderStatsCards()}
-      
-      {/* Charts and Orders Row */}
+
       <View style={styles.middleRow}>
-        {/* Sales Chart */}
         <View style={[styles.chartContainer, { backgroundColor: 'transparent' }]}>
           <SimpleLineChart
-            data={WEEKLY_SALES_DATA.map(day => ({
-              label: day.date,
-              value: day.sales,
-              date: day.date,
-            }))}
+            data={salesChartData}
             title="Sales Trend (Last 7 Days)"
             height={320}
             accentColor={theme.colors.tertiary}
           />
         </View>
 
-        {/* Recent Orders */}
         <View style={[styles.ordersContainer, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.ordersHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
@@ -248,48 +283,58 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
             </Text>
             <TouchableOpacity>
               <Text style={[styles.viewAllText, { color: theme.colors.primary }]}>
-                View All →
+                View All
               </Text>
             </TouchableOpacity>
           </View>
-          
-          {dashboardData.recentOrders.map((order, index) => (
-            <View key={order.id}>
-              <View style={[styles.orderItem, { backgroundColor: theme.colors.surface }]}>
-                <View style={styles.orderContent}>
-                  <View style={styles.orderHeader}>
-                    <Text style={[styles.orderTitle, { color: theme.colors.onSurface }]}>
-                      {order.table}
-                    </Text>
-                    <Text style={[styles.orderAmount, { color: theme.colors.onSurface }]}>
-                      {order.amount}
-                    </Text>
-                  </View>
-                  <View style={styles.orderStatus}>
-                    <View
-                      style={[
-                        styles.statusIndicator,
-                        { backgroundColor: order.statusColor }
-                      ]}
-                    />
-                    <Text style={[styles.statusText, { color: theme.colors.onSurfaceVariant }]}>
-                      {order.status}
-                    </Text>
-                    <Text style={[styles.orderTime, { color: theme.colors.onSurfaceVariant }]}>
-                      • {order.time}
-                    </Text>
+
+          {recentOrders.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialIcons name="receipt" size={40} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}>
+                No orders yet today
+              </Text>
+            </View>
+          ) : (
+            recentOrders.map((order, index) => (
+              <View key={order.id}>
+                <View style={[styles.orderItem, { backgroundColor: theme.colors.surface }]}>
+                  <View style={styles.orderContent}>
+                    <View style={styles.orderHeader}>
+                      <Text style={[styles.orderTitle, { color: theme.colors.onSurface }]}>
+                        {order.tableName} ({order.orderNumber})
+                      </Text>
+                      <Text style={[styles.orderAmount, { color: theme.colors.onSurface }]}>
+                        {formatCurrency(order.totalAmount)}
+                      </Text>
+                    </View>
+                    <View style={styles.orderStatus}>
+                      <View
+                        style={[
+                          styles.statusIndicator,
+                          { backgroundColor: getStatusColor(order.status, theme) }
+                        ]}
+                      />
+                      <Text style={[styles.statusText, { color: theme.colors.onSurfaceVariant }]}>
+                        {UNIFIED_ORDER_STATUS_LABELS[order.status]}
+                      </Text>
+                      <Text style={[styles.orderTime, { color: theme.colors.onSurfaceVariant }]}>
+                        {new Date(order.createdAt).toLocaleTimeString('en-US', {
+                          hour: '2-digit', minute: '2-digit'
+                        })}
+                      </Text>
+                    </View>
                   </View>
                 </View>
+                {index < recentOrders.length - 1 && (
+                  <View style={[styles.orderSeparator, { backgroundColor: theme.colors.outline }]} />
+                )}
               </View>
-              {index < dashboardData.recentOrders.length - 1 && (
-                <View style={[styles.orderSeparator, { backgroundColor: theme.colors.outline }]} />
-              )}
-            </View>
-          ))}
+            ))
+          )}
         </View>
       </View>
 
-      {/* Quick Actions */}
       <View style={[styles.quickActionsContainer, { backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
           Quick Actions
@@ -303,21 +348,11 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
                 { backgroundColor: action.color }
               ]}
             >
-              <MaterialIcons name={action.icon as any} size={20} color="white" />
-              <Text style={styles.actionText}>{action.label}</Text>
+              <MaterialIcons name={action.icon as keyof typeof MaterialIcons.glyphMap} size={20} color={theme.colors.onPrimary} />
+              <Text style={[styles.actionText, { color: theme.colors.onPrimary }]}>{action.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
-      </View>
-
-      {/* Category Breakdown - Temporarily removed */}
-      <View style={[styles.categoryChartContainer, { backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface, textAlign: 'center' }]}>
-          📊 Category Analytics
-        </Text>
-        <Text style={[styles.placeholderText, { color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: theme.spacing.md }]}>
-          Advanced category breakdown chart will be restored after resolving Metro bundler compatibility.
-        </Text>
       </View>
     </ScrollView>
   );
@@ -325,12 +360,12 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {renderHeader()}
-      
+
       <View style={styles.body}>
         {(sidebarVisible || isTablet) && renderSidebar()}
         {renderContent()}
       </View>
-      
+
       {!isTablet && (
         <TouchableOpacity
           style={[styles.menuToggle, { backgroundColor: theme.colors.primary }]}
@@ -397,7 +432,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgeText: {
-    color: '#FFFFFF', // onPrimary color
     fontSize: 12,
     fontWeight: '700',
   },
@@ -445,22 +479,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  statsIcon: {
-    fontSize: 24,
-    marginRight: spacing.sm,
-  },
   statsTitle: {
     ...typography.titleMedium,
     fontWeight: '600',
+    marginLeft: spacing.sm,
   },
   statsValue: {
     ...typography.headlineLarge,
     fontWeight: '700',
     marginBottom: spacing.xs,
-  },
-  statsChange: {
-    ...typography.bodySmall,
-    fontWeight: '500',
   },
   statsSubtext: {
     ...typography.bodySmall,
@@ -498,15 +525,15 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     textDecorationLine: 'underline',
   },
-  chartPlaceholder: {
+  emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: spacing.xl,
   },
-  placeholderText: {
+  emptyStateText: {
     ...typography.bodyMedium,
-    textAlign: 'center',
-    lineHeight: 22,
+    marginTop: spacing.md,
   },
   orderItem: {
     padding: spacing.md,
@@ -559,11 +586,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: spacing.xl,
   },
-  categoryChartContainer: {
-    marginBottom: spacing.xl,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-  },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -579,7 +601,6 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   actionText: {
-    color: '#FFFFFF', // onPrimary color
     ...typography.bodyMedium,
     fontWeight: '600',
     marginLeft: spacing.xs,

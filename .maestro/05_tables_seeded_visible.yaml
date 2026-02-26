@@ -1,0 +1,47 @@
+appId: host.exp.exponent
+name: "05 - Tables Seeded and Visible"
+tags:
+  - offline
+  - tables
+---
+
+# Test: After staff login, seeded tables are visible
+
+- openLink: "exp://192.168.1.9:8081"
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 30000
+
+- tapOn: "Continue as Staff Member"
+
+- extendedWaitUntil:
+    visible: "Staff Login"
+    timeout: 10000
+
+- tapOn:
+    id: "employee-id-input"
+- inputText: "EMP001"
+
+- tapOn:
+    id: "password-input"
+- inputText: "staff123"
+
+- tapOn: "Clock In"
+
+- extendedWaitUntil:
+    visible: "Staff Dashboard"
+    timeout: 15000
+
+# Navigate to Tables tab
+- tapOn: "Tables"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Table"
+        - "Available"
+        - "Tables"
+    timeout: 10000
+
+- takeScreenshot: "05_tables_seeded_visible"

@@ -167,5 +167,5 @@ export const getRestaurantsForSuperadmin = () => {
 export const generateDummyTokens = (user: DummyUser) => ({
   accessToken: `dummy_access_token_${user.id}_${Date.now()}`,
   refreshToken: `dummy_refresh_token_${user.id}_${Date.now()}`,
-  expiresIn: 3600, // 1 hour
+  expiresIn: 86400, // 24 hours (offline-friendly)
 });

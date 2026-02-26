@@ -80,6 +80,8 @@ interface PaymentSummaryProps {
   tipAmount: number;
   tipPercentage: number;
   onTipCalculation: (percentage: number, amount?: number) => void;
+  /** Override subtotal+tax display (e.g. for per-guest split amounts) */
+  overrideTotal?: number;
 }
 
 export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
@@ -87,6 +89,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   tipAmount,
   tipPercentage,
   onTipCalculation,
+  overrideTotal,
 }) => {
   const { theme } = useTheme();
   const { defaultTipRates, taxRate } = usePaymentConfiguration();
@@ -108,9 +111,9 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   // Get order totals using helper (supports both formats)
   const orderTotals = getOrderTotals(order);
 
-  // Calculate totals
-  const subtotal = orderTotals.subtotal;
-  const tax = orderTotals.taxAmount || subtotal * taxRate;
+  // Calculate totals (override when a per-guest split amount is provided)
+  const subtotal = overrideTotal !== undefined ? overrideTotal : orderTotals.subtotal;
+  const tax = overrideTotal !== undefined ? 0 : (orderTotals.taxAmount || subtotal * taxRate);
   const total = subtotal + tax + tipAmount;
 
   // Render order items

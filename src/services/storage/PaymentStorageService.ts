@@ -1,10 +1,10 @@
 /**
- * Payment Storage Service
- * Handles all payment-related data persistence using AsyncStorage
+ * Payment Storage Service - SQLite Implementation
+ * Handles all payment-related data persistence via expo-sqlite.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS } from './StorageService';
+import { databaseService } from '@/services/database/DatabaseService';
+import { parseJsonColumn, fromSqlBool, toSqlBool, now } from '@/services/database/helpers';
 import {
   PaymentRecord,
   PaymentTransaction,
@@ -13,683 +13,42 @@ import {
 } from '@/types/payment-extended.types';
 import { BillSplit } from '@/types/billing.types';
 
-// Payment storage data structure
-interface PaymentStorageData {
-  payments: Record<string, PaymentRecord>;
-  pendingPaymentIds: string[];
-  completedPaymentIds: string[];
-  lastUpdated: string;
+// Row types
+interface PaymentRow {
+  id: string; order_id: string; order_number: string;
+  restaurant_id: string; table_id: string; table_name: string;
+  subtotal: number; tax_amount: number; discount_amount: number;
+  tip_amount: number; total_amount: number;
+  payment_method: string; is_split_payment: number;
+  status: string; paid_amount: number; remaining_amount: number;
+  transactions: string | null;
+  processed_by: string; processed_by_name: string;
+  receipt_id: string | null; completed_at: string | null;
+  pending_sync: number; synced_at: string | null;
+  created_at: string; updated_at: string;
 }
 
-interface SplitBillStorageData {
-  splits: Record<string, BillSplit>;
-  lastUpdated: string;
+interface BillSplitRow {
+  id: string; order_id: string; order_number: string;
+  split_type: string; original_total: number;
+  guest_count: number | null; guests: string | null; payment_splits: string | null;
+  total_amount: number; paid_amount: number; remaining_amount: number;
+  is_complete: number; created_at: string; updated_at: string;
 }
 
-interface ReceiptStorageData {
-  receipts: Record<string, Receipt>;
-  lastUpdated: string;
+interface ReceiptRow {
+  id: string; receipt_number: string;
+  order_id: string; order_number: string;
+  restaurant_id: string; restaurant_name: string;
+  table_name: string; items: string;
+  subtotal: number; tax_amount: number;
+  discount_amount: number; tip_amount: number; total_amount: number;
+  payments: string; served_by_name: string; processed_by_name: string;
+  order_created_at: string; payment_completed_at: string;
+  printed_at: string | null; emailed_to: string | null; emailed_at: string | null;
 }
 
-// Default empty storage
-const EMPTY_PAYMENT_STORAGE: PaymentStorageData = {
-  payments: {},
-  pendingPaymentIds: [],
-  completedPaymentIds: [],
-  lastUpdated: new Date().toISOString(),
-};
-
-const EMPTY_SPLIT_STORAGE: SplitBillStorageData = {
-  splits: {},
-  lastUpdated: new Date().toISOString(),
-};
-
-const EMPTY_RECEIPT_STORAGE: ReceiptStorageData = {
-  receipts: {},
-  lastUpdated: new Date().toISOString(),
-};
-
-/**
- * PaymentStorageService - Manages payment and receipt persistence
- */
-class PaymentStorageService {
-  private paymentsCache: PaymentStorageData | null = null;
-  private splitsCache: SplitBillStorageData | null = null;
-  private receiptsCache: ReceiptStorageData | null = null;
-
-  // ============== INITIALIZATION ==============
-
-  /**
-   * Initialize storage and load data into cache
-   */
-  async initialize(): Promise<void> {
-    try {
-      await Promise.all([
-        this.loadPaymentsFromStorage(),
-        this.loadSplitsFromStorage(),
-        this.loadReceiptsFromStorage(),
-      ]);
-    } catch (error) {
-      console.error('[PaymentStorage] Initialization error:', error);
-      this.paymentsCache = { ...EMPTY_PAYMENT_STORAGE };
-      this.splitsCache = { ...EMPTY_SPLIT_STORAGE };
-      this.receiptsCache = { ...EMPTY_RECEIPT_STORAGE };
-    }
-  }
-
-  /**
-   * Load payments from AsyncStorage
-   */
-  private async loadPaymentsFromStorage(): Promise<void> {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.PAYMENT_HISTORY);
-      if (data) {
-        this.paymentsCache = JSON.parse(data);
-      } else {
-        this.paymentsCache = { ...EMPTY_PAYMENT_STORAGE };
-      }
-    } catch (error) {
-      console.error('[PaymentStorage] Error loading payments:', error);
-      this.paymentsCache = { ...EMPTY_PAYMENT_STORAGE };
-    }
-  }
-
-  /**
-   * Load split bills from AsyncStorage
-   */
-  private async loadSplitsFromStorage(): Promise<void> {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.SPLIT_BILLS);
-      if (data) {
-        this.splitsCache = JSON.parse(data);
-      } else {
-        this.splitsCache = { ...EMPTY_SPLIT_STORAGE };
-      }
-    } catch (error) {
-      console.error('[PaymentStorage] Error loading splits:', error);
-      this.splitsCache = { ...EMPTY_SPLIT_STORAGE };
-    }
-  }
-
-  /**
-   * Load receipts from AsyncStorage
-   */
-  private async loadReceiptsFromStorage(): Promise<void> {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.RECEIPTS);
-      if (data) {
-        this.receiptsCache = JSON.parse(data);
-      } else {
-        this.receiptsCache = { ...EMPTY_RECEIPT_STORAGE };
-      }
-    } catch (error) {
-      console.error('[PaymentStorage] Error loading receipts:', error);
-      this.receiptsCache = { ...EMPTY_RECEIPT_STORAGE };
-    }
-  }
-
-  /**
-   * Save payments to AsyncStorage
-   */
-  private async savePaymentsToStorage(): Promise<void> {
-    if (!this.paymentsCache) return;
-
-    try {
-      this.paymentsCache.lastUpdated = new Date().toISOString();
-      await AsyncStorage.setItem(STORAGE_KEYS.PAYMENT_HISTORY, JSON.stringify(this.paymentsCache));
-    } catch (error) {
-      console.error('[PaymentStorage] Error saving payments:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save splits to AsyncStorage
-   */
-  private async saveSplitsToStorage(): Promise<void> {
-    if (!this.splitsCache) return;
-
-    try {
-      this.splitsCache.lastUpdated = new Date().toISOString();
-      await AsyncStorage.setItem(STORAGE_KEYS.SPLIT_BILLS, JSON.stringify(this.splitsCache));
-    } catch (error) {
-      console.error('[PaymentStorage] Error saving splits:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save receipts to AsyncStorage
-   */
-  private async saveReceiptsToStorage(): Promise<void> {
-    if (!this.receiptsCache) return;
-
-    try {
-      this.receiptsCache.lastUpdated = new Date().toISOString();
-      await AsyncStorage.setItem(STORAGE_KEYS.RECEIPTS, JSON.stringify(this.receiptsCache));
-    } catch (error) {
-      console.error('[PaymentStorage] Error saving receipts:', error);
-      throw error;
-    }
-  }
-
-  // ============== PAYMENT CRUD OPERATIONS ==============
-
-  /**
-   * Save a payment record
-   */
-  async savePayment(payment: PaymentRecord): Promise<void> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return;
-
-    this.paymentsCache.payments[payment.id] = payment;
-
-    // Update pending/completed lists
-    if (this.isPendingPayment(payment)) {
-      if (!this.paymentsCache.pendingPaymentIds.includes(payment.id)) {
-        this.paymentsCache.pendingPaymentIds.push(payment.id);
-      }
-      this.paymentsCache.completedPaymentIds = this.paymentsCache.completedPaymentIds.filter(
-        (id) => id !== payment.id
-      );
-    } else {
-      if (!this.paymentsCache.completedPaymentIds.includes(payment.id)) {
-        this.paymentsCache.completedPaymentIds.push(payment.id);
-      }
-      this.paymentsCache.pendingPaymentIds = this.paymentsCache.pendingPaymentIds.filter(
-        (id) => id !== payment.id
-      );
-    }
-
-    await this.savePaymentsToStorage();
-  }
-
-  /**
-   * Get payment by ID
-   */
-  async getPayment(paymentId: string): Promise<PaymentRecord | null> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    return this.paymentsCache?.payments[paymentId] || null;
-  }
-
-  /**
-   * Get payment by order ID
-   */
-  async getPaymentByOrder(orderId: string): Promise<PaymentRecord | null> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return null;
-
-    return (
-      Object.values(this.paymentsCache.payments).find((p) => p.orderId === orderId) || null
-    );
-  }
-
-  /**
-   * Get all pending payments
-   */
-  async getPendingPayments(): Promise<PaymentRecord[]> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return [];
-
-    return this.paymentsCache.pendingPaymentIds
-      .map((id) => this.paymentsCache!.payments[id])
-      .filter(Boolean)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  /**
-   * Get payment history
-   */
-  async getPaymentHistory(
-    filters?: {
-      startDate?: string;
-      endDate?: string;
-      status?: PaymentTransactionStatus;
-      minAmount?: number;
-      maxAmount?: number;
-    }
-  ): Promise<PaymentRecord[]> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return [];
-
-    let payments = Object.values(this.paymentsCache.payments);
-
-    if (filters) {
-      if (filters.startDate) {
-        const start = new Date(filters.startDate).getTime();
-        payments = payments.filter((p) => new Date(p.createdAt).getTime() >= start);
-      }
-
-      if (filters.endDate) {
-        const end = new Date(filters.endDate).getTime();
-        payments = payments.filter((p) => new Date(p.createdAt).getTime() <= end);
-      }
-
-      if (filters.status) {
-        payments = payments.filter((p) => p.status === filters.status);
-      }
-
-      if (filters.minAmount !== undefined) {
-        payments = payments.filter((p) => p.totalAmount >= filters.minAmount!);
-      }
-
-      if (filters.maxAmount !== undefined) {
-        payments = payments.filter((p) => p.totalAmount <= filters.maxAmount!);
-      }
-    }
-
-    return payments.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }
-
-  /**
-   * Update a payment
-   */
-  async updatePayment(
-    paymentId: string,
-    updates: Partial<PaymentRecord>
-  ): Promise<PaymentRecord | null> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return null;
-
-    const existingPayment = this.paymentsCache.payments[paymentId];
-    if (!existingPayment) return null;
-
-    const updatedPayment: PaymentRecord = {
-      ...existingPayment,
-      ...updates,
-      updated_at: new Date().toISOString(),
-    };
-
-    await this.savePayment(updatedPayment);
-    return updatedPayment;
-  }
-
-  /**
-   * Add transaction to payment
-   */
-  async addTransaction(
-    paymentId: string,
-    transaction: PaymentTransaction
-  ): Promise<PaymentRecord | null> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return null;
-
-    const payment = this.paymentsCache.payments[paymentId];
-    if (!payment) return null;
-
-    payment.transactions.push(transaction);
-    payment.paidAmount = payment.transactions
-      .filter((t) => t.status === 'completed')
-      .reduce((sum, t) => sum + t.amount, 0);
-    payment.remainingAmount = payment.totalAmount - payment.paidAmount;
-
-    if (payment.remainingAmount <= 0) {
-      payment.status = 'completed';
-      payment.completedAt = new Date().toISOString();
-    }
-
-    await this.savePayment(payment);
-    return payment;
-  }
-
-  // ============== SPLIT BILL OPERATIONS ==============
-
-  /**
-   * Save a bill split
-   */
-  async saveSplit(split: BillSplit): Promise<void> {
-    if (!this.splitsCache) await this.loadSplitsFromStorage();
-    if (!this.splitsCache) return;
-
-    this.splitsCache.splits[split.orderId] = split;
-    await this.saveSplitsToStorage();
-  }
-
-  /**
-   * Get split by order ID
-   */
-  async getSplit(orderId: string): Promise<BillSplit | null> {
-    if (!this.splitsCache) await this.loadSplitsFromStorage();
-    return this.splitsCache?.splits[orderId] || null;
-  }
-
-  /**
-   * Update a split
-   */
-  async updateSplit(orderId: string, updates: Partial<BillSplit>): Promise<BillSplit | null> {
-    if (!this.splitsCache) await this.loadSplitsFromStorage();
-    if (!this.splitsCache) return null;
-
-    const existingSplit = this.splitsCache.splits[orderId];
-    if (!existingSplit) return null;
-
-    const updatedSplit: BillSplit = {
-      ...existingSplit,
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await this.saveSplit(updatedSplit);
-    return updatedSplit;
-  }
-
-  /**
-   * Delete a split
-   */
-  async deleteSplit(orderId: string): Promise<void> {
-    if (!this.splitsCache) await this.loadSplitsFromStorage();
-    if (!this.splitsCache) return;
-
-    delete this.splitsCache.splits[orderId];
-    await this.saveSplitsToStorage();
-  }
-
-  // ============== RECEIPT OPERATIONS ==============
-
-  /**
-   * Save a receipt
-   */
-  async saveReceipt(receipt: Receipt): Promise<void> {
-    if (!this.receiptsCache) await this.loadReceiptsFromStorage();
-    if (!this.receiptsCache) return;
-
-    this.receiptsCache.receipts[receipt.id] = receipt;
-    await this.saveReceiptsToStorage();
-  }
-
-  /**
-   * Get receipt by ID
-   */
-  async getReceipt(receiptId: string): Promise<Receipt | null> {
-    if (!this.receiptsCache) await this.loadReceiptsFromStorage();
-    return this.receiptsCache?.receipts[receiptId] || null;
-  }
-
-  /**
-   * Get receipt by order ID
-   */
-  async getReceiptByOrder(orderId: string): Promise<Receipt | null> {
-    if (!this.receiptsCache) await this.loadReceiptsFromStorage();
-    if (!this.receiptsCache) return null;
-
-    return (
-      Object.values(this.receiptsCache.receipts).find((r) => r.orderId === orderId) || null
-    );
-  }
-
-  /**
-   * Get all receipts for a date range
-   */
-  async getReceipts(startDate?: string, endDate?: string): Promise<Receipt[]> {
-    if (!this.receiptsCache) await this.loadReceiptsFromStorage();
-    if (!this.receiptsCache) return [];
-
-    let receipts = Object.values(this.receiptsCache.receipts);
-
-    if (startDate) {
-      const start = new Date(startDate).getTime();
-      receipts = receipts.filter((r) => new Date(r.orderCreatedAt).getTime() >= start);
-    }
-
-    if (endDate) {
-      const end = new Date(endDate).getTime();
-      receipts = receipts.filter((r) => new Date(r.orderCreatedAt).getTime() <= end);
-    }
-
-    return receipts.sort(
-      (a, b) =>
-        new Date(b.paymentCompletedAt).getTime() - new Date(a.paymentCompletedAt).getTime()
-    );
-  }
-
-  /**
-   * Mark receipt as printed
-   */
-  async markReceiptPrinted(receiptId: string): Promise<void> {
-    if (!this.receiptsCache) await this.loadReceiptsFromStorage();
-    if (!this.receiptsCache) return;
-
-    const receipt = this.receiptsCache.receipts[receiptId];
-    if (receipt) {
-      receipt.printedAt = new Date().toISOString();
-      await this.saveReceiptsToStorage();
-    }
-  }
-
-  /**
-   * Mark receipt as emailed
-   */
-  async markReceiptEmailed(receiptId: string, email: string): Promise<void> {
-    if (!this.receiptsCache) await this.loadReceiptsFromStorage();
-    if (!this.receiptsCache) return;
-
-    const receipt = this.receiptsCache.receipts[receiptId];
-    if (receipt) {
-      receipt.emailedTo = email;
-      receipt.emailedAt = new Date().toISOString();
-      await this.saveReceiptsToStorage();
-    }
-  }
-
-  // ============== SYNC OPERATIONS ==============
-
-  /**
-   * Get payments pending sync
-   */
-  async getUnsyncedPayments(): Promise<PaymentRecord[]> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return [];
-
-    return Object.values(this.paymentsCache.payments).filter((p) => p.pendingSync);
-  }
-
-  /**
-   * Mark payments as synced
-   */
-  async markAsSynced(paymentIds: string[]): Promise<void> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return;
-
-    const now = new Date().toISOString();
-
-    for (const paymentId of paymentIds) {
-      if (this.paymentsCache.payments[paymentId]) {
-        this.paymentsCache.payments[paymentId].pendingSync = false;
-        this.paymentsCache.payments[paymentId].syncedAt = now;
-      }
-    }
-
-    await this.savePaymentsToStorage();
-  }
-
-  /**
-   * Get last sync time
-   */
-  async getLastSyncTime(): Promise<string | null> {
-    try {
-      return await AsyncStorage.getItem(STORAGE_KEYS.PAYMENT_LAST_SYNC);
-    } catch (error) {
-      console.error('[PaymentStorage] Error getting last sync time:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Update last sync time
-   */
-  async updateLastSyncTime(): Promise<void> {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.PAYMENT_LAST_SYNC, new Date().toISOString());
-    } catch (error) {
-      console.error('[PaymentStorage] Error updating last sync time:', error);
-    }
-  }
-
-  // ============== STATISTICS ==============
-
-  /**
-   * Get payment statistics
-   */
-  async getStats(
-    startDate?: string,
-    endDate?: string
-  ): Promise<{
-    totalPayments: number;
-    totalRevenue: number;
-    avgPaymentAmount: number;
-    byMethod: Record<string, { count: number; total: number }>;
-    pendingPayments: number;
-    completedPayments: number;
-  }> {
-    const payments = await this.getPaymentHistory({ startDate, endDate });
-
-    const byMethod: Record<string, { count: number; total: number }> = {};
-
-    for (const payment of payments) {
-      const method = payment.paymentMethod;
-      if (!byMethod[method]) {
-        byMethod[method] = { count: 0, total: 0 };
-      }
-      byMethod[method].count++;
-      byMethod[method].total += payment.totalAmount;
-    }
-
-    const totalRevenue = payments.reduce((sum, p) => sum + p.paidAmount, 0);
-
-    return {
-      totalPayments: payments.length,
-      totalRevenue,
-      avgPaymentAmount: payments.length > 0 ? totalRevenue / payments.length : 0,
-      byMethod,
-      pendingPayments: payments.filter((p) => this.isPendingPayment(p)).length,
-      completedPayments: payments.filter((p) => !this.isPendingPayment(p)).length,
-    };
-  }
-
-  // ============== UTILITY METHODS ==============
-
-  /**
-   * Check if payment is pending
-   */
-  private isPendingPayment(payment: PaymentRecord): boolean {
-    const completedStatuses: PaymentTransactionStatus[] = ['completed', 'refunded'];
-    return !completedStatuses.includes(payment.status);
-  }
-
-  /**
-   * Clear old payment data (use with caution)
-   */
-  async clearOldData(beforeDate: Date): Promise<number> {
-    if (!this.paymentsCache) await this.loadPaymentsFromStorage();
-    if (!this.paymentsCache) return 0;
-
-    const cutoffTime = beforeDate.getTime();
-    let deletedCount = 0;
-
-    // Only clear completed payments
-    const paymentsToDelete = this.paymentsCache.completedPaymentIds.filter((id) => {
-      const payment = this.paymentsCache!.payments[id];
-      if (payment && new Date(payment.createdAt).getTime() < cutoffTime) {
-        return true;
-      }
-      return false;
-    });
-
-    for (const paymentId of paymentsToDelete) {
-      delete this.paymentsCache.payments[paymentId];
-      deletedCount++;
-    }
-
-    this.paymentsCache.completedPaymentIds = this.paymentsCache.completedPaymentIds.filter(
-      (id) => !paymentsToDelete.includes(id)
-    );
-
-    await this.savePaymentsToStorage();
-    return deletedCount;
-  }
-
-  /**
-   * Clear all payment data (use with caution)
-   */
-  async clearAll(): Promise<void> {
-    this.paymentsCache = { ...EMPTY_PAYMENT_STORAGE };
-    this.splitsCache = { ...EMPTY_SPLIT_STORAGE };
-    this.receiptsCache = { ...EMPTY_RECEIPT_STORAGE };
-
-    await Promise.all([
-      AsyncStorage.removeItem(STORAGE_KEYS.PAYMENT_HISTORY),
-      AsyncStorage.removeItem(STORAGE_KEYS.PENDING_PAYMENTS),
-      AsyncStorage.removeItem(STORAGE_KEYS.SPLIT_BILLS),
-      AsyncStorage.removeItem(STORAGE_KEYS.RECEIPTS),
-      AsyncStorage.removeItem(STORAGE_KEYS.PAYMENT_LAST_SYNC),
-    ]);
-  }
-
-  // ============== PAYMENT CONFIGURATION ==============
-
-  /**
-   * Save payment configuration (tax rate, tip rates, etc.)
-   */
-  async savePaymentConfig(config: PaymentConfig): Promise<void> {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.PAYMENT_CONFIG, JSON.stringify(config));
-    } catch (error) {
-      console.error('[PaymentStorage] Error saving payment config:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get payment configuration
-   */
-  async getPaymentConfig(): Promise<PaymentConfig | null> {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.PAYMENT_CONFIG);
-      if (data) {
-        return JSON.parse(data);
-      }
-      return null;
-    } catch (error) {
-      console.error('[PaymentStorage] Error getting payment config:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Update tax rate
-   */
-  async updateTaxRate(rate: number): Promise<void> {
-    try {
-      const config = await this.getPaymentConfig();
-      const updatedConfig: PaymentConfig = {
-        ...config,
-        taxRate: rate,
-        updatedAt: new Date().toISOString(),
-      };
-      await this.savePaymentConfig(updatedConfig);
-    } catch (error) {
-      console.error('[PaymentStorage] Error updating tax rate:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get tax rate from storage
-   */
-  async getTaxRate(): Promise<number | null> {
-    try {
-      const config = await this.getPaymentConfig();
-      return config?.taxRate ?? null;
-    } catch (error) {
-      console.error('[PaymentStorage] Error getting tax rate:', error);
-      return null;
-    }
-  }
-}
-
-// Payment configuration interface
+// Payment config interface
 interface PaymentConfig {
   taxRate?: number;
   defaultTipRates?: number[];
@@ -702,6 +61,466 @@ interface PaymentConfig {
     receiptTemplate?: string;
   };
   updatedAt?: string;
+}
+
+class PaymentStorageService {
+  private get db() {
+    return databaseService.getDatabase();
+  }
+
+  // ============== CONVERTERS ==============
+
+  private paymentFromRow(row: PaymentRow): PaymentRecord {
+    return {
+      id: row.id,
+      orderId: row.order_id,
+      orderNumber: row.order_number,
+      restaurantId: row.restaurant_id,
+      tableId: row.table_id,
+      tableName: row.table_name,
+      subtotal: row.subtotal,
+      taxAmount: row.tax_amount,
+      discountAmount: row.discount_amount,
+      tipAmount: row.tip_amount,
+      totalAmount: row.total_amount,
+      paymentMethod: row.payment_method,
+      isSplitPayment: fromSqlBool(row.is_split_payment),
+      status: row.status as PaymentTransactionStatus,
+      paidAmount: row.paid_amount,
+      remainingAmount: row.remaining_amount,
+      transactions: parseJsonColumn(row.transactions, []),
+      processedBy: row.processed_by,
+      processedByName: row.processed_by_name,
+      receiptId: row.receipt_id || undefined,
+      completedAt: row.completed_at || undefined,
+      receiptPrinted: false,
+      receiptEmailed: false,
+      pendingSync: fromSqlBool(row.pending_sync),
+      syncedAt: row.synced_at || undefined,
+      createdAt: row.created_at,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    } as PaymentRecord;
+  }
+
+  private splitFromRow(row: BillSplitRow): BillSplit {
+    return {
+      orderId: row.order_id,
+      orderNumber: row.order_number,
+      splitType: row.split_type as BillSplit['splitType'],
+      originalSubtotal: row.original_total,
+      originalTaxAmount: 0,
+      originalTipAmount: 0,
+      originalTotal: row.original_total,
+      guestCount: row.guest_count || undefined,
+      guests: parseJsonColumn(row.guests, []),
+      paymentSplits: parseJsonColumn(row.payment_splits, []),
+      unassignedItems: [],
+      totalAmount: row.total_amount,
+      paidAmount: row.paid_amount,
+      remainingAmount: row.remaining_amount,
+      isComplete: fromSqlBool(row.is_complete),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    } as BillSplit;
+  }
+
+  private receiptFromRow(row: ReceiptRow): Receipt {
+    return {
+      id: row.id,
+      receiptNumber: row.receipt_number,
+      orderId: row.order_id,
+      orderNumber: row.order_number,
+      restaurantId: row.restaurant_id,
+      restaurantName: row.restaurant_name,
+      restaurantAddress: '',
+      restaurantPhone: '',
+      tableId: '',
+      tableName: row.table_name,
+      guestCount: 1,
+      items: parseJsonColumn(row.items, []),
+      subtotal: row.subtotal,
+      taxRate: 0,
+      taxAmount: row.tax_amount,
+      discountAmount: row.discount_amount,
+      tipAmount: row.tip_amount,
+      totalAmount: row.total_amount,
+      payments: parseJsonColumn(row.payments, []),
+      isSplitPayment: false,
+      servedBy: '',
+      servedByName: row.served_by_name,
+      processedBy: '',
+      processedByName: row.processed_by_name,
+      orderCreatedAt: row.order_created_at,
+      paymentCompletedAt: row.payment_completed_at,
+      printedAt: row.printed_at || undefined,
+      emailedTo: row.emailed_to || undefined,
+      emailedAt: row.emailed_at || undefined,
+    } as Receipt;
+  }
+
+  // ============== INITIALIZATION ==============
+
+  async initialize(): Promise<void> {
+    // No-op: SQLite tables are created by DatabaseService
+  }
+
+  // ============== PAYMENT CRUD ==============
+
+  async savePayment(payment: PaymentRecord): Promise<void> {
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO payment_records (id, order_id, order_number, restaurant_id,
+        table_id, table_name, subtotal, tax_amount, discount_amount, tip_amount, total_amount,
+        payment_method, is_split_payment, status, paid_amount, remaining_amount,
+        transactions, processed_by, processed_by_name, receipt_id, completed_at,
+        pending_sync, synced_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      payment.id, payment.orderId, payment.orderNumber, payment.restaurantId || 'rest_001',
+      payment.tableId, payment.tableName,
+      payment.subtotal || 0, payment.taxAmount || 0, payment.discountAmount || 0,
+      payment.tipAmount || 0, payment.totalAmount || 0,
+      payment.paymentMethod, toSqlBool(payment.isSplitPayment),
+      payment.status || 'pending', payment.paidAmount || 0, payment.remainingAmount || 0,
+      payment.transactions ? JSON.stringify(payment.transactions) : null,
+      payment.processedBy, payment.processedByName,
+      payment.receiptId || null, payment.completedAt || null,
+      toSqlBool(payment.pendingSync), payment.syncedAt || null,
+      payment.createdAt || now(), payment.updated_at || now()
+    );
+  }
+
+  async getPayment(paymentId: string): Promise<PaymentRecord | null> {
+    const row = await this.db.getFirstAsync<PaymentRow>(
+      'SELECT * FROM payment_records WHERE id = ?', paymentId
+    );
+    return row ? this.paymentFromRow(row) : null;
+  }
+
+  async getPaymentByOrder(orderId: string): Promise<PaymentRecord | null> {
+    const row = await this.db.getFirstAsync<PaymentRow>(
+      'SELECT * FROM payment_records WHERE order_id = ?', orderId
+    );
+    return row ? this.paymentFromRow(row) : null;
+  }
+
+  async getPendingPayments(): Promise<PaymentRecord[]> {
+    const rows = await this.db.getAllAsync<PaymentRow>(
+      `SELECT * FROM payment_records WHERE status NOT IN ('completed', 'refunded')
+       ORDER BY created_at DESC`
+    );
+    return rows.map((r) => this.paymentFromRow(r));
+  }
+
+  async getPaymentHistory(filters?: {
+    startDate?: string;
+    endDate?: string;
+    status?: PaymentTransactionStatus;
+    minAmount?: number;
+    maxAmount?: number;
+  }): Promise<PaymentRecord[]> {
+    let sql = 'SELECT * FROM payment_records';
+    const conditions: string[] = [];
+    const params: (string | number | null)[] = [];
+
+    if (filters) {
+      if (filters.startDate) {
+        conditions.push('created_at >= ?');
+        params.push(filters.startDate);
+      }
+      if (filters.endDate) {
+        conditions.push('created_at <= ?');
+        params.push(filters.endDate);
+      }
+      if (filters.status) {
+        conditions.push('status = ?');
+        params.push(filters.status);
+      }
+      if (filters.minAmount !== undefined) {
+        conditions.push('total_amount >= ?');
+        params.push(filters.minAmount);
+      }
+      if (filters.maxAmount !== undefined) {
+        conditions.push('total_amount <= ?');
+        params.push(filters.maxAmount);
+      }
+    }
+
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    sql += ' ORDER BY created_at DESC';
+
+    const rows = await this.db.getAllAsync<PaymentRow>(sql, ...params);
+    return rows.map((r) => this.paymentFromRow(r));
+  }
+
+  async updatePayment(paymentId: string, updates: Partial<PaymentRecord>): Promise<PaymentRecord | null> {
+    const existing = await this.getPayment(paymentId);
+    if (!existing) return null;
+
+    const updated: PaymentRecord = { ...existing, ...updates, updated_at: now() };
+    await this.savePayment(updated);
+    return updated;
+  }
+
+  async addTransaction(paymentId: string, transaction: PaymentTransaction): Promise<PaymentRecord | null> {
+    const payment = await this.getPayment(paymentId);
+    if (!payment) return null;
+
+    payment.transactions.push(transaction);
+    payment.paidAmount = payment.transactions
+      .filter((t: PaymentTransaction) => t.status === 'completed')
+      .reduce((sum: number, t: PaymentTransaction) => sum + t.amount, 0);
+    payment.remainingAmount = payment.totalAmount - payment.paidAmount;
+
+    if (payment.remainingAmount <= 0) {
+      payment.status = 'completed' as PaymentTransactionStatus;
+      payment.completedAt = now();
+    }
+
+    await this.savePayment(payment);
+    return payment;
+  }
+
+  // ============== SPLIT BILL OPERATIONS ==============
+
+  async saveSplit(split: BillSplit): Promise<void> {
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO bill_splits (id, order_id, order_number, split_type, original_total,
+        guest_count, guests, payment_splits, total_amount, paid_amount, remaining_amount,
+        is_complete, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `split_${split.orderId}`, split.orderId, split.orderNumber || '',
+      split.splitType, split.originalTotal || 0,
+      split.guestCount || null,
+      split.guests ? JSON.stringify(split.guests) : null,
+      split.paymentSplits ? JSON.stringify(split.paymentSplits) : null,
+      split.totalAmount || 0, split.paidAmount || 0, split.remainingAmount || 0,
+      toSqlBool(split.isComplete),
+      split.createdAt || now(), split.updatedAt || now()
+    );
+  }
+
+  async getSplit(orderId: string): Promise<BillSplit | null> {
+    const row = await this.db.getFirstAsync<BillSplitRow>(
+      'SELECT * FROM bill_splits WHERE order_id = ?', orderId
+    );
+    return row ? this.splitFromRow(row) : null;
+  }
+
+  async updateSplit(orderId: string, updates: Partial<BillSplit>): Promise<BillSplit | null> {
+    const existing = await this.getSplit(orderId);
+    if (!existing) return null;
+
+    const updated: BillSplit = { ...existing, ...updates, updatedAt: now() };
+    await this.saveSplit(updated);
+    return updated;
+  }
+
+  async deleteSplit(orderId: string): Promise<void> {
+    await this.db.runAsync('DELETE FROM bill_splits WHERE order_id = ?', orderId);
+  }
+
+  // ============== RECEIPT OPERATIONS ==============
+
+  async saveReceipt(receipt: Receipt): Promise<void> {
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO receipts (id, receipt_number, order_id, order_number,
+        restaurant_id, restaurant_name, table_name, items,
+        subtotal, tax_amount, discount_amount, tip_amount, total_amount,
+        payments, served_by_name, processed_by_name,
+        order_created_at, payment_completed_at, printed_at, emailed_to, emailed_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      receipt.id, receipt.receiptNumber, receipt.orderId, receipt.orderNumber,
+      receipt.restaurantId, receipt.restaurantName,
+      receipt.tableName, JSON.stringify(receipt.items || []),
+      receipt.subtotal || 0, receipt.taxAmount || 0,
+      receipt.discountAmount || 0, receipt.tipAmount || 0, receipt.totalAmount || 0,
+      JSON.stringify(receipt.payments || []),
+      receipt.servedByName, receipt.processedByName,
+      receipt.orderCreatedAt, receipt.paymentCompletedAt,
+      receipt.printedAt || null, receipt.emailedTo || null, receipt.emailedAt || null
+    );
+  }
+
+  async getReceipt(receiptId: string): Promise<Receipt | null> {
+    const row = await this.db.getFirstAsync<ReceiptRow>(
+      'SELECT * FROM receipts WHERE id = ?', receiptId
+    );
+    return row ? this.receiptFromRow(row) : null;
+  }
+
+  async getReceiptByOrder(orderId: string): Promise<Receipt | null> {
+    const row = await this.db.getFirstAsync<ReceiptRow>(
+      'SELECT * FROM receipts WHERE order_id = ?', orderId
+    );
+    return row ? this.receiptFromRow(row) : null;
+  }
+
+  async getReceipts(startDate?: string, endDate?: string): Promise<Receipt[]> {
+    let sql = 'SELECT * FROM receipts';
+    const conditions: string[] = [];
+    const params: (string | number | null)[] = [];
+
+    if (startDate) {
+      conditions.push('order_created_at >= ?');
+      params.push(startDate);
+    }
+    if (endDate) {
+      conditions.push('order_created_at <= ?');
+      params.push(endDate);
+    }
+
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    sql += ' ORDER BY payment_completed_at DESC';
+
+    const rows = await this.db.getAllAsync<ReceiptRow>(sql, ...params);
+    return rows.map((r) => this.receiptFromRow(r));
+  }
+
+  async markReceiptPrinted(receiptId: string): Promise<void> {
+    await this.db.runAsync(
+      'UPDATE receipts SET printed_at = ? WHERE id = ?', now(), receiptId
+    );
+  }
+
+  async markReceiptEmailed(receiptId: string, email: string): Promise<void> {
+    await this.db.runAsync(
+      'UPDATE receipts SET emailed_to = ?, emailed_at = ? WHERE id = ?',
+      email, now(), receiptId
+    );
+  }
+
+  // ============== SYNC OPERATIONS ==============
+
+  async getUnsyncedPayments(): Promise<PaymentRecord[]> {
+    const rows = await this.db.getAllAsync<PaymentRow>(
+      'SELECT * FROM payment_records WHERE pending_sync = 1'
+    );
+    return rows.map((r) => this.paymentFromRow(r));
+  }
+
+  async markAsSynced(paymentIds: string[]): Promise<void> {
+    if (paymentIds.length === 0) return;
+    const ts = now();
+    const placeholders = paymentIds.map(() => '?').join(', ');
+    await this.db.runAsync(
+      `UPDATE payment_records SET pending_sync = 0, synced_at = ? WHERE id IN (${placeholders})`,
+      ts, ...paymentIds
+    );
+  }
+
+  async getLastSyncTime(): Promise<string | null> {
+    const row = await this.db.getFirstAsync<{ value: string }>(
+      `SELECT value FROM sync_metadata WHERE key = 'payment_last_sync'`
+    );
+    return row?.value || null;
+  }
+
+  async updateLastSyncTime(): Promise<void> {
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('payment_last_sync', ?, ?)`,
+      now(), now()
+    );
+  }
+
+  // ============== STATISTICS ==============
+
+  async getStats(startDate?: string, endDate?: string): Promise<{
+    totalPayments: number;
+    totalRevenue: number;
+    avgPaymentAmount: number;
+    byMethod: Record<string, { count: number; total: number }>;
+    pendingPayments: number;
+    completedPayments: number;
+  }> {
+    const payments = await this.getPaymentHistory({ startDate, endDate });
+    const byMethod: Record<string, { count: number; total: number }> = {};
+
+    for (const payment of payments) {
+      const method = payment.paymentMethod;
+      if (!byMethod[method]) byMethod[method] = { count: 0, total: 0 };
+      byMethod[method].count++;
+      byMethod[method].total += payment.totalAmount;
+    }
+
+    const totalRevenue = payments.reduce((sum, p) => sum + p.paidAmount, 0);
+    const completedStatuses = ['completed', 'refunded'];
+
+    return {
+      totalPayments: payments.length,
+      totalRevenue,
+      avgPaymentAmount: payments.length > 0 ? totalRevenue / payments.length : 0,
+      byMethod,
+      pendingPayments: payments.filter((p) => !completedStatuses.includes(p.status)).length,
+      completedPayments: payments.filter((p) => completedStatuses.includes(p.status)).length,
+    };
+  }
+
+  // ============== PAYMENT CONFIGURATION ==============
+
+  async savePaymentConfig(config: PaymentConfig): Promise<void> {
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO payment_config (id, tax_rate, default_tip_rates, minimum_tip_amount, maximum_cash_payment, receipt_settings, updated_at)
+       VALUES ('default', ?, ?, ?, ?, ?, ?)`,
+      config.taxRate || null,
+      config.defaultTipRates ? JSON.stringify(config.defaultTipRates) : null,
+      config.minimumTipAmount || null,
+      config.maximumCashPayment || null,
+      config.receiptSettings ? JSON.stringify(config.receiptSettings) : null,
+      config.updatedAt || now()
+    );
+  }
+
+  async getPaymentConfig(): Promise<PaymentConfig | null> {
+    const row = await this.db.getFirstAsync<{
+      tax_rate: number | null; default_tip_rates: string | null;
+      minimum_tip_amount: number | null; maximum_cash_payment: number | null;
+      receipt_settings: string | null; updated_at: string;
+    }>('SELECT * FROM payment_config WHERE id = ?', 'default');
+
+    if (!row) return null;
+
+    return {
+      taxRate: row.tax_rate || undefined,
+      defaultTipRates: parseJsonColumn(row.default_tip_rates, undefined),
+      minimumTipAmount: row.minimum_tip_amount || undefined,
+      maximumCashPayment: row.maximum_cash_payment || undefined,
+      receiptSettings: parseJsonColumn(row.receipt_settings, undefined),
+      updatedAt: row.updated_at,
+    };
+  }
+
+  async updateTaxRate(rate: number): Promise<void> {
+    const config = await this.getPaymentConfig();
+    await this.savePaymentConfig({ ...config, taxRate: rate, updatedAt: now() });
+  }
+
+  async getTaxRate(): Promise<number | null> {
+    const config = await this.getPaymentConfig();
+    return config?.taxRate ?? null;
+  }
+
+  // ============== CLEANUP ==============
+
+  async clearOldData(beforeDate: Date): Promise<number> {
+    const cutoff = beforeDate.toISOString();
+    const result = await this.db.runAsync(
+      `DELETE FROM payment_records WHERE status IN ('completed', 'refunded') AND created_at < ?`,
+      cutoff
+    );
+    return result.changes;
+  }
+
+  async clearAll(): Promise<void> {
+    await this.db.execAsync('DELETE FROM payment_records');
+    await this.db.execAsync('DELETE FROM payment_transactions');
+    await this.db.execAsync('DELETE FROM bill_splits');
+    await this.db.execAsync('DELETE FROM receipts');
+    await this.db.runAsync(`DELETE FROM sync_metadata WHERE key = 'payment_last_sync'`);
+  }
 }
 
 // Export singleton instance

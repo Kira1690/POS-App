@@ -7,7 +7,7 @@
  * - Split by Payment: Pay with multiple payment methods
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -18,13 +18,15 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '@/hooks/useTheme';
 import { OrdersStackParamList } from '@/navigation/types';
 import { useUnifiedOrder } from '@/context/unified-order';
 import { useBillSplit } from '@/context/billing';
-import { SplitType, GuestSplit, BillItem, PaymentMethodSplit } from '@/types/billing.types';
+import { paymentStorageService } from '@/services/storage/PaymentStorageService';
+import { showToast } from '@/utils/toast';
+import { SplitType, GuestSplit, BillItem, BillSplit, PaymentMethodSplit } from '@/types/billing.types';
 import {
   equalSplitCalculator,
   itemSplitCalculator,
@@ -40,7 +42,7 @@ export const BillSplitScreen: React.FC = () => {
   const route = useRoute<BillSplitRouteProp>();
   const { orderId, splitType: initialSplitType, guestCount: initialGuestCount } = route.params;
 
-  const { orders } = useUnifiedOrder();
+  const { orders, processPayment } = useUnifiedOrder();
   const { state: billState, setSplitType, setGuestCount } = useBillSplit();
 
   // Local state
@@ -49,6 +51,8 @@ export const BillSplitScreen: React.FC = () => {
   const [guestCountInput, setGuestCountInput] = useState(initialGuestCount || 2);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [payments, setPayments] = useState<PaymentMethodSplit[]>([]);
+  // Tracks whether the initial split has been saved to storage
+  const splitSavedRef = useRef(false);
 
   // Find the order
   const order = useMemo(
@@ -93,11 +97,80 @@ export const BillSplitScreen: React.FC = () => {
         guestCountInput
       );
       setGuests(result.guests);
+      splitSavedRef.current = false; // mark for re-save when count/tab changes
     } else if (activeTab === 'by_items') {
       const result = itemSplitCalculator.initialize(billItems, guestCountInput, taxRate);
       setGuests(result.guests);
+      splitSavedRef.current = false;
     }
   }, [activeTab, guestCountInput, totalAmount, taxAmount, billItems, taxRate]);
+
+  // Persist split to storage so PaymentConfirmationScreen can update guest statuses
+  useEffect(() => {
+    if (!order || guests.length === 0 || splitSavedRef.current) return;
+
+    const split: BillSplit = {
+      orderId,
+      orderNumber: order.orderNumber || '',
+      splitType: activeTab,
+      originalSubtotal: subtotal,
+      originalTaxAmount: taxAmount,
+      originalTipAmount: 0,
+      originalTotal: totalAmount,
+      guestCount: guestCountInput,
+      guests,
+      paymentSplits: [],
+      unassignedItems: [],
+      totalAmount,
+      paidAmount: 0,
+      remainingAmount: totalAmount,
+      isComplete: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    paymentStorageService.saveSplit(split).then(() => {
+      splitSavedRef.current = true;
+    });
+  }, [guests, order, orderId, activeTab, subtotal, taxAmount, totalAmount, guestCountInput]);
+
+  // On every focus: reload guest payment statuses from storage and check for completion
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+
+      const reloadAndCheck = async () => {
+        const split = await paymentStorageService.getSplit(orderId);
+        if (cancelled || !split?.guests || split.guests.length === 0) return;
+
+        // Merge stored payment statuses into current guest state
+        setGuests((prevGuests) =>
+          prevGuests.map((g) => {
+            const stored = split.guests!.find((sg) => sg.id === g.id);
+            return stored ? { ...g, paymentStatus: stored.paymentStatus } : g;
+          })
+        );
+
+        // Check if all guests have paid
+        const allPaid = split.guests.every((g) => g.paymentStatus === 'paid');
+        if (allPaid && !split.isComplete) {
+          // Mark split complete and finalize the order
+          await paymentStorageService.updateSplit(orderId, { isComplete: true });
+          await processPayment(orderId, 'split');
+          showToast({
+            type: 'success',
+            title: 'All guests paid',
+            message: 'Order is now complete',
+          });
+          // Navigate to OrderManagement — replace so BillSplit isn't in stack
+          navigation.replace('OrderManagement');
+        }
+      };
+
+      reloadAndCheck();
+      return () => { cancelled = true; };
+    }, [orderId, processPayment, navigation])
+  );
 
   const styles = StyleSheet.create({
     container: {

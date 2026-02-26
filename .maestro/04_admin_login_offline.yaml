@@ -1,0 +1,38 @@
+appId: host.exp.exponent
+name: "04 - Admin Login Offline"
+tags:
+  - offline
+  - auth
+---
+
+# Test: Admin can log in fully offline
+# Credential: admin@foodcorner.com / admin123 (David Admin)
+
+- openLink: "exp://192.168.1.9:8081"
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 30000
+
+- tapOn: "Manager Login"
+
+- extendedWaitUntil:
+    visible: "Manager Login"
+    timeout: 10000
+
+- tapOn:
+    id: "email-input"
+- inputText: "admin@foodcorner.com"
+
+- tapOn:
+    id: "password-input"
+- inputText: "admin123"
+
+- tapOn: "Sign In"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 15000
+
+- assertVisible: "Dashboard"
+- takeScreenshot: "04_admin_login_success"

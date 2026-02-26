@@ -1,17 +1,16 @@
 /**
- * Table Storage Service
- * Handles persistence of table management data
+ * Table Storage Service - SQLite Implementation
+ * Handles persistence of table management data via expo-sqlite.
  *
- * SINGLE SOURCE OF TRUTH: AsyncStorage ONLY
+ * SINGLE SOURCE OF TRUTH: SQLite ONLY
  * Tables are created via Settings > Table Management
  * Table STATUS is computed at runtime from orders (not stored here)
- *
- * NO MOCK DATA - Production ready
  */
 
 import { Table } from '@/types/table.types';
 import { TableStatus } from '@/types/common.types';
-import { storageService, STORAGE_KEYS } from './StorageService';
+import { databaseService } from '@/services/database/DatabaseService';
+import { fromSqlBool, toSqlBool, now } from '@/services/database/helpers';
 import { MOCK_TABLES } from '@/data/tables/mockTables';
 import { MOCK_AREAS } from '@/data/tables/mockAreas';
 
@@ -46,234 +45,300 @@ export interface FloorPlanData {
   lastUpdated: string;
 }
 
+// SQLite row types
+interface TableRow {
+  id: string;
+  restaurant_id: string;
+  table_number: string;
+  capacity: number;
+  status: string;
+  section: string | null;
+  current_order_id: string | null;
+  notes: string | null;
+  position_x: number;
+  position_y: number;
+  shape: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AreaRow {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  icon: string | null;
+  description: string | null;
+  is_active: number;
+  color: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /**
- * TableStorageService - Manages table data persistence
- *
- * SINGLE SOURCE OF TRUTH: AsyncStorage ONLY
- * - Tables are created via Settings > Table Management
- * - NO mock data seeding
- * - Table status is computed at runtime from orders
+ * TableStorageService - Manages table data persistence via SQLite
  */
 class TableStorageService {
   private readonly DEFAULT_RESTAURANT_ID = 'rest_001';
 
-  /**
-   * Save all table data
-   */
-  async saveTableData(data: TableStorageData): Promise<void> {
-    const dataWithTimestamp = {
-      ...data,
-      lastUpdated: new Date().toISOString(),
-    };
-
-    await storageService.multiSet([
-      { key: STORAGE_KEYS.TABLE_DATA, value: data.tables },
-      { key: STORAGE_KEYS.TABLE_AREAS, value: data.areas },
-      { key: STORAGE_KEYS.TABLE_LAST_SYNC, value: dataWithTimestamp.lastUpdated },
-    ]);
+  private get db() {
+    return databaseService.getDatabase();
   }
 
-  /**
-   * Get all table data
-   */
-  async getTableData(restaurantId: string = this.DEFAULT_RESTAURANT_ID): Promise<TableStorageData | null> {
-    const [tables, areas, lastUpdated] = await Promise.all([
-      storageService.get<Table[]>(STORAGE_KEYS.TABLE_DATA),
-      storageService.get<StoredArea[]>(STORAGE_KEYS.TABLE_AREAS),
-      storageService.get<string>(STORAGE_KEYS.TABLE_LAST_SYNC),
-    ]);
+  // ============== HELPERS ==============
 
-    if (!tables || tables.length === 0) {
-      return null;
-    }
+  private tableFromRow(row: TableRow): Table {
+    return {
+      id: row.id,
+      restaurant_id: row.restaurant_id,
+      table_number: row.table_number,
+      capacity: row.capacity,
+      status: row.status as TableStatus,
+      section: row.section || undefined,
+      current_order_id: row.current_order_id || undefined,
+      notes: row.notes || undefined,
+      position_x: row.position_x,
+      position_y: row.position_y,
+      shape: row.shape as Table['shape'],
+      is_active: fromSqlBool(row.is_active),
+      is_deleted: false,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    };
+  }
+
+  private areaFromRow(row: AreaRow): StoredArea {
+    return {
+      id: row.id,
+      name: row.name,
+      icon: row.icon || '',
+      description: row.description || '',
+      isActive: fromSqlBool(row.is_active),
+      color: row.color || undefined,
+    };
+  }
+
+  // ============== BULK SAVE ==============
+
+  async saveTableData(data: TableStorageData): Promise<void> {
+    await this.saveTables(data.tables);
+    await this.saveAreas(data.areas);
+  }
+
+  async getTableData(restaurantId: string = this.DEFAULT_RESTAURANT_ID): Promise<TableStorageData | null> {
+    const tables = await this.getTables();
+    const areas = await this.getAreas();
+
+    if (tables.length === 0) return null;
 
     return {
-      tables: tables || [],
-      areas: areas || [],
-      lastUpdated: lastUpdated || new Date().toISOString(),
+      tables,
+      areas,
+      lastUpdated: now(),
       restaurantId,
     };
   }
 
-  /**
-   * Check if table data exists in storage
-   */
   async hasTableData(): Promise<boolean> {
-    // Check both that we have a sync timestamp AND that tables actually exist
-    const [lastSync, tables] = await Promise.all([
-      storageService.get<string>(STORAGE_KEYS.TABLE_LAST_SYNC),
-      storageService.get<Table[]>(STORAGE_KEYS.TABLE_DATA),
-    ]);
-    return lastSync !== null && tables !== null && tables.length > 0;
+    const row = await this.db.getFirstAsync<{ cnt: number }>(
+      'SELECT COUNT(*) as cnt FROM tables'
+    );
+    return (row?.cnt || 0) > 0;
   }
 
-  /**
-   * Get last sync timestamp
-   */
   async getLastSyncTime(): Promise<string | null> {
-    return storageService.get<string>(STORAGE_KEYS.TABLE_LAST_SYNC);
+    const row = await this.db.getFirstAsync<{ value: string }>(
+      `SELECT value FROM sync_metadata WHERE key = 'table_last_sync'`
+    );
+    return row?.value || null;
   }
 
   // ============== TABLES ==============
 
-  /**
-   * Save tables
-   */
   async saveTables(tables: Table[]): Promise<void> {
-    await storageService.set(STORAGE_KEYS.TABLE_DATA, tables);
+    for (const t of tables) {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO tables (id, restaurant_id, table_number, capacity, status, section,
+          current_order_id, notes, position_x, position_y, shape, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        t.id, t.restaurant_id, t.table_number, t.capacity,
+        t.status, t.section || null,
+        t.current_order_id || null, t.notes || null,
+        t.position_x || 0, t.position_y || 0, t.shape || 'square',
+        toSqlBool(t.is_active), t.created_at || now(), t.updated_at || now()
+      );
+    }
     await this.updateLastSync();
   }
 
-  /**
-   * Get tables
-   */
   async getTables(): Promise<Table[]> {
-    const tables = await storageService.get<Table[]>(STORAGE_KEYS.TABLE_DATA);
-    return tables || [];
+    const rows = await this.db.getAllAsync<TableRow>(
+      'SELECT * FROM tables ORDER BY table_number'
+    );
+    return rows.map((r) => this.tableFromRow(r));
   }
 
-  /**
-   * Get tables by area/section
-   */
   async getTablesByArea(areaId: string): Promise<Table[]> {
-    const tables = await this.getTables();
-    return tables.filter(t => t.section === areaId);
+    const rows = await this.db.getAllAsync<TableRow>(
+      'SELECT * FROM tables WHERE section = ? ORDER BY table_number',
+      areaId
+    );
+    return rows.map((r) => this.tableFromRow(r));
   }
 
-  /**
-   * Get tables by status
-   */
   async getTablesByStatus(status: TableStatus): Promise<Table[]> {
-    const tables = await this.getTables();
-    return tables.filter(t => t.status === status);
+    const rows = await this.db.getAllAsync<TableRow>(
+      'SELECT * FROM tables WHERE status = ? ORDER BY table_number',
+      status
+    );
+    return rows.map((r) => this.tableFromRow(r));
   }
 
-  /**
-   * Add a table
-   */
   async addTable(table: Table): Promise<void> {
-    const tables = await this.getTables();
-    tables.push(table);
-    await this.saveTables(tables);
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO tables (id, restaurant_id, table_number, capacity, status, section,
+        current_order_id, notes, position_x, position_y, shape, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      table.id, table.restaurant_id, table.table_number, table.capacity,
+      table.status, table.section || null,
+      table.current_order_id || null, table.notes || null,
+      table.position_x || 0, table.position_y || 0, table.shape || 'square',
+      toSqlBool(table.is_active), table.created_at || now(), table.updated_at || now()
+    );
+    await this.updateLastSync();
   }
 
-  /**
-   * Update a table
-   */
   async updateTable(id: string, data: Partial<Table>): Promise<void> {
-    const tables = await this.getTables();
-    const index = tables.findIndex(t => t.id === id);
-    if (index !== -1) {
-      tables[index] = {
-        ...tables[index],
-        ...data,
-        updated_at: new Date().toISOString(),
-      };
-      await this.saveTables(tables);
-    }
+    const existing = await this.db.getFirstAsync<TableRow>(
+      'SELECT * FROM tables WHERE id = ?', id
+    );
+    if (!existing) return;
+
+    const updated = { ...this.tableFromRow(existing), ...data, updated_at: now() };
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO tables (id, restaurant_id, table_number, capacity, status, section,
+        current_order_id, notes, position_x, position_y, shape, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      updated.id, updated.restaurant_id, updated.table_number, updated.capacity,
+      updated.status, updated.section || null,
+      updated.current_order_id || null, updated.notes || null,
+      updated.position_x || 0, updated.position_y || 0, updated.shape || 'square',
+      toSqlBool(updated.is_active), updated.created_at, updated.updated_at
+    );
+    await this.updateLastSync();
   }
 
-  /**
-   * Delete a table
-   */
   async deleteTable(id: string): Promise<void> {
-    const tables = await this.getTables();
-    const filtered = tables.filter(t => t.id !== id);
-    await this.saveTables(filtered);
+    await this.db.runAsync('DELETE FROM tables WHERE id = ?', id);
+    await this.updateLastSync();
   }
 
-  /**
-   * Update table status
-   */
   async updateTableStatus(id: string, status: TableStatus): Promise<void> {
-    await this.updateTable(id, { status });
+    await this.db.runAsync(
+      'UPDATE tables SET status = ?, updated_at = ? WHERE id = ?',
+      status, now(), id
+    );
   }
 
   // ============== AREAS ==============
 
-  /**
-   * Save areas
-   */
   async saveAreas(areas: StoredArea[]): Promise<void> {
-    await storageService.set(STORAGE_KEYS.TABLE_AREAS, areas);
+    for (const a of areas) {
+      await this.db.runAsync(
+        `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, color, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        a.id, this.DEFAULT_RESTAURANT_ID, a.name, a.icon || null, a.description || null,
+        toSqlBool(a.isActive), a.color || null, now(), now()
+      );
+    }
     await this.updateLastSync();
   }
 
-  /**
-   * Get areas
-   */
   async getAreas(): Promise<StoredArea[]> {
-    const areas = await storageService.get<StoredArea[]>(STORAGE_KEYS.TABLE_AREAS);
-    return areas || [];
+    const rows = await this.db.getAllAsync<AreaRow>(
+      'SELECT * FROM table_areas ORDER BY name'
+    );
+    return rows.map((r) => this.areaFromRow(r));
   }
 
-  /**
-   * Get active areas
-   */
   async getActiveAreas(): Promise<StoredArea[]> {
-    const areas = await this.getAreas();
-    return areas.filter(a => a.isActive);
+    const rows = await this.db.getAllAsync<AreaRow>(
+      'SELECT * FROM table_areas WHERE is_active = 1 ORDER BY name'
+    );
+    return rows.map((r) => this.areaFromRow(r));
   }
 
-  /**
-   * Add an area
-   */
   async addArea(area: StoredArea): Promise<void> {
-    const areas = await this.getAreas();
-    areas.push(area);
-    await this.saveAreas(areas);
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, color, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      area.id, this.DEFAULT_RESTAURANT_ID, area.name, area.icon || null, area.description || null,
+      toSqlBool(area.isActive), area.color || null, now(), now()
+    );
+    await this.updateLastSync();
   }
 
-  /**
-   * Update an area
-   */
   async updateArea(id: string, data: Partial<StoredArea>): Promise<void> {
-    const areas = await this.getAreas();
-    const index = areas.findIndex(a => a.id === id);
-    if (index !== -1) {
-      areas[index] = { ...areas[index], ...data };
-      await this.saveAreas(areas);
-    }
+    const existing = await this.db.getFirstAsync<AreaRow>(
+      'SELECT * FROM table_areas WHERE id = ?', id
+    );
+    if (!existing) return;
+
+    const current = this.areaFromRow(existing);
+    const updated = { ...current, ...data };
+
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, color, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, existing.restaurant_id, updated.name, updated.icon || null, updated.description || null,
+      toSqlBool(updated.isActive), updated.color || null, existing.created_at, now()
+    );
+    await this.updateLastSync();
   }
 
-  /**
-   * Delete an area
-   */
   async deleteArea(id: string): Promise<void> {
-    const areas = await this.getAreas();
-    const filtered = areas.filter(a => a.id !== id);
-    await this.saveAreas(filtered);
+    await this.db.runAsync('DELETE FROM table_areas WHERE id = ?', id);
+    await this.updateLastSync();
   }
 
   // ============== FLOOR PLAN ==============
 
-  /**
-   * Save floor plan positions
-   */
   async saveFloorPlan(data: FloorPlanData): Promise<void> {
-    await storageService.set(STORAGE_KEYS.TABLE_FLOOR_PLAN, data);
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('floor_plan', ?, ?)`,
+      JSON.stringify(data), now()
+    );
   }
 
-  /**
-   * Get floor plan positions
-   */
   async getFloorPlan(): Promise<FloorPlanData | null> {
-    return storageService.get<FloorPlanData>(STORAGE_KEYS.TABLE_FLOOR_PLAN);
+    const row = await this.db.getFirstAsync<{ value: string }>(
+      `SELECT value FROM sync_metadata WHERE key = 'floor_plan'`
+    );
+    if (!row?.value) return null;
+    try {
+      return JSON.parse(row.value) as FloorPlanData;
+    } catch {
+      return null;
+    }
   }
 
-  /**
-   * Update table position
-   */
   async updateTablePosition(
     tableId: string,
     positionX: number,
     positionY: number,
     shape?: 'square' | 'round' | 'rectangle'
   ): Promise<void> {
+    // Update table position directly in the tables table
+    await this.db.runAsync(
+      `UPDATE tables SET position_x = ?, position_y = ?, shape = COALESCE(?, shape), updated_at = ? WHERE id = ?`,
+      positionX, positionY, shape || null, now(), tableId
+    );
+
+    // Also update floor plan metadata
     const floorPlan = await this.getFloorPlan();
     const positions = floorPlan?.positions || [];
 
-    const index = positions.findIndex(p => p.tableId === tableId);
+    const index = positions.findIndex((p) => p.tableId === tableId);
     const newPosition: FloorPlanPosition = {
       tableId,
       positionX,
@@ -287,39 +352,24 @@ class TableStorageService {
       positions.push(newPosition);
     }
 
-    await this.saveFloorPlan({
-      positions,
-      lastUpdated: new Date().toISOString(),
-    });
+    await this.saveFloorPlan({ positions, lastUpdated: now() });
   }
 
   // ============== UTILITIES ==============
 
-  /**
-   * Update last sync timestamp
-   */
   private async updateLastSync(): Promise<void> {
-    await storageService.set(
-      STORAGE_KEYS.TABLE_LAST_SYNC,
-      new Date().toISOString()
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('table_last_sync', ?, ?)`,
+      now(), now()
     );
   }
 
-  /**
-   * Clear all table data
-   */
   async clearTableData(): Promise<void> {
-    await Promise.all([
-      storageService.remove(STORAGE_KEYS.TABLE_DATA),
-      storageService.remove(STORAGE_KEYS.TABLE_AREAS),
-      storageService.remove(STORAGE_KEYS.TABLE_FLOOR_PLAN),
-      storageService.remove(STORAGE_KEYS.TABLE_LAST_SYNC),
-    ]);
+    await this.db.execAsync('DELETE FROM tables');
+    await this.db.execAsync('DELETE FROM table_areas');
+    await this.db.runAsync(`DELETE FROM sync_metadata WHERE key IN ('table_last_sync', 'floor_plan')`);
   }
 
-  /**
-   * Get storage info (for debugging)
-   */
   async getStorageInfo(): Promise<{
     hasData: boolean;
     lastSync: string | null;
@@ -335,7 +385,7 @@ class TableStorageService {
     ]);
 
     return {
-      hasData: lastSync !== null,
+      hasData: tables.length > 0,
       lastSync,
       tablesCount: tables.length,
       areasCount: areas.length,
@@ -343,10 +393,6 @@ class TableStorageService {
     };
   }
 
-  /**
-   * Initialize storage - returns existing data or seeds mock data on first launch
-   * Seeding mock data for development/demo purposes
-   */
   async initialize(restaurantId: string = this.DEFAULT_RESTAURANT_ID): Promise<TableStorageData> {
     if (__DEV__) {
       console.log('[TableStorageService] Initializing...');
@@ -368,64 +414,44 @@ class TableStorageService {
     return await this.seedMockData(restaurantId);
   }
 
-  /**
-   * Reset all table statuses to AVAILABLE
-   * Used when clearing order data to ensure tables are not stuck as OCCUPIED
-   */
   async resetAllTableStatuses(): Promise<void> {
-    const tables = await this.getTables();
-    if (tables.length === 0) return;
-
-    const resetTables = tables.map(table => ({
-      ...table,
-      status: TableStatus.AVAILABLE,
-      current_order_id: undefined,
-      updated_at: new Date().toISOString(),
-    }));
-
-    await this.saveTables(resetTables);
+    await this.db.runAsync(
+      `UPDATE tables SET status = ?, current_order_id = NULL, updated_at = ?`,
+      TableStatus.AVAILABLE, now()
+    );
 
     if (__DEV__) {
-      console.log(`[TableStorageService] Reset ${resetTables.length} tables to AVAILABLE`);
+      const row = await this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM tables');
+      console.log(`[TableStorageService] Reset ${row?.cnt || 0} tables to AVAILABLE`);
     }
   }
 
-  /**
-   * Force reseed - DEPRECATED (no mock data)
-   * Now just clears data and returns empty state
-   */
   async forceReseed(restaurantId: string = this.DEFAULT_RESTAURANT_ID): Promise<TableStorageData> {
     if (__DEV__) {
-      console.log('[TableStorageService] forceReseed called - returning current data (no mock seeding)');
+      console.log('[TableStorageService] forceReseed called');
     }
     return this.initialize(restaurantId);
   }
 
-  /**
-   * Seed mock data on first launch for development/demo
-   * Transforms MOCK_TABLES format to Table format and saves to AsyncStorage
-   */
   private async seedMockData(restaurantId: string): Promise<TableStorageData> {
     console.log('[TableStorageService] Seeding mock data for first launch...');
 
-    // Transform MOCK_TABLES to Table format
     const tables: Table[] = MOCK_TABLES.map((mockTable): Table => ({
       id: mockTable.id,
       restaurant_id: restaurantId,
       table_number: mockTable.number,
       capacity: mockTable.capacity,
-      status: mockTable.status as TableStatus, // Cast mock status to enum
+      status: mockTable.status as TableStatus,
       section: mockTable.area,
       position_x: mockTable.positionX || 0,
       position_y: mockTable.positionY || 0,
       shape: mockTable.shape,
       is_active: true,
       is_deleted: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now(),
+      updated_at: now(),
     }));
 
-    // Transform MOCK_AREAS to StoredArea format
     const areas: StoredArea[] = MOCK_AREAS.map((mockArea) => ({
       id: mockArea.id,
       name: mockArea.name,
@@ -438,13 +464,11 @@ class TableStorageService {
     const data: TableStorageData = {
       tables,
       areas,
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: now(),
       restaurantId,
     };
 
-    // Save to AsyncStorage
     await this.saveTableData(data);
-
     console.log(`[TableStorageService] Seeded ${tables.length} tables and ${areas.length} areas`);
 
     return data;

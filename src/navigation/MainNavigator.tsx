@@ -6,7 +6,6 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -121,25 +120,6 @@ const DashboardWithProvider = () => (
 
 // Remove old OrdersScreen as we now use OrdersStackNavigator
 
-const MenuScreen = () => {
-  const { theme } = useTheme();
-  return (
-    <View style={[styles.placeholderContainer, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.placeholderText, { color: theme.colors.onSurfaceVariant }]}>Menu Screen</Text>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  placeholderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: 18,
-  },
-});
 
 export const MainNavigator: React.FC = () => {
   const { theme } = useTheme();
@@ -161,9 +141,6 @@ export const MainNavigator: React.FC = () => {
               break;
             case 'Kitchen':
               iconName = 'restaurant';
-              break;
-            case 'Menu':
-              iconName = 'menu-book';
               break;
             case 'Settings':
               iconName = 'settings';
@@ -197,11 +174,6 @@ export const MainNavigator: React.FC = () => {
         name="Kitchen" 
         component={KitchenStackNavigator}
         options={{ title: 'Kitchen Operations', headerShown: false }}
-      />
-      <Tab.Screen 
-        name="Menu" 
-        component={MenuScreen}
-        options={{ title: 'Menu Management' }}
       />
       <Tab.Screen
         name="Settings"

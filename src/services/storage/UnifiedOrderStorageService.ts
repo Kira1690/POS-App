@@ -1,17 +1,12 @@
 /**
- * Unified Order Storage Service
- * Single storage service for all order-related data
+ * Unified Order Storage Service - SQLite Implementation
+ * Single storage service for all order-related data.
  *
- * Core Principle: Single source of truth with single cache
- *
- * Key Features:
- * - clearAll() resets BOTH AsyncStorage AND in-memory cache
- * - resetCache() for context state sync
- * - Single cache for all order data
+ * Orders and order_items are normalized into separate tables.
+ * Carts are stored in the carts table.
+ * No in-memory cache - SQLite queries are fast enough.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS } from './StorageService';
 import {
   UnifiedOrder,
   UnifiedOrderFilters,
@@ -19,539 +14,513 @@ import {
   isActiveOrder,
   getActiveStatuses,
 } from '@/types/unified-order.types';
+import { databaseService } from '@/services/database/DatabaseService';
+import { parseJsonColumn, now } from '@/services/database/helpers';
 
-// ============== STORAGE KEY ==============
+// ============== ROW TYPES ==============
 
-const UNIFIED_ORDERS_KEY = '@unified_orders';
-const UNIFIED_CARTS_KEY = '@unified_carts';
-
-// ============== STORAGE DATA STRUCTURE ==============
-
-interface UnifiedOrderStorageData {
-  orders: Record<string, UnifiedOrder>;
-  activeOrderIds: string[];
-  historyOrderIds: string[];
-  lastUpdated: string;
+interface OrderRow {
+  id: string; order_number: string; restaurant_id: string;
+  table_id: string; table_name: string; guest_count: number;
+  customer_id: string | null; created_by: string; created_by_name: string;
+  served_by: string | null; served_by_name: string | null;
+  subtotal: number; tax_rate: number; tax_amount: number;
+  discount_type: string | null; discount_value: number | null; discount_amount: number;
+  tip_amount: number; total_amount: number;
+  status: string; payment_status: string;
+  special_instructions: string | null; cancellation_reason: string | null;
+  submitted_at: string | null; paid_at: string | null; cancelled_at: string | null;
+  pending_sync: number; synced_at: string | null;
+  created_at: string; updated_at: string;
 }
 
-interface UnifiedCartStorageData {
-  carts: Record<string, UnifiedCartState>; // Keyed by tableId
-  lastUpdated: string;
+interface OrderItemRow {
+  id: string; order_id: string; menu_item_id: string; name: string;
+  category: string | null; category_id: string | null;
+  base_price: number; quantity: number;
+  modifier_total: number; item_total: number;
+  selected_modifiers: string | null;
+  dietary_tags: string | null; allergens: string | null;
+  has_allergen_warning: number; kitchen_station: string | null;
+  item_status: string | null;
+  special_instructions: string | null; kitchen_notes: string | null;
+  is_combo_item: number; combo_id: string | null; combo_name: string | null;
+  added_at: string; modified_at: string | null;
 }
 
-// ============== DEFAULT EMPTY DATA ==============
-
-const EMPTY_ORDER_STORAGE: UnifiedOrderStorageData = {
-  orders: {},
-  activeOrderIds: [],
-  historyOrderIds: [],
-  lastUpdated: new Date().toISOString(),
-};
-
-const EMPTY_CART_STORAGE: UnifiedCartStorageData = {
-  carts: {},
-  lastUpdated: new Date().toISOString(),
-};
+interface CartRow {
+  id: string; table_id: string; table_name: string;
+  guest_count: number; items: string;
+  subtotal: number; total_amount: number; updated_at: string;
+}
 
 // ============== SERVICE CLASS ==============
 
 class UnifiedOrderStorageService {
-  private ordersCache: UnifiedOrderStorageData | null = null;
-  private cartsCache: UnifiedCartStorageData | null = null;
   private initialized = false;
+
+  private get db() {
+    return databaseService.getDatabase();
+  }
+
+  // ============== CONVERTERS ==============
+
+  private orderFromRow(row: OrderRow, items: OrderItemRow[]): UnifiedOrder {
+    const orderItems = items
+      .filter((i) => i.order_id === row.id)
+      .map((i) => ({
+        id: i.id,
+        orderId: i.order_id,
+        menuItemId: i.menu_item_id,
+        name: i.name,
+        category: i.category || undefined,
+        categoryId: i.category_id || undefined,
+        basePrice: i.base_price,
+        quantity: i.quantity,
+        modifierTotal: i.modifier_total,
+        itemTotal: i.item_total,
+        selectedModifiers: parseJsonColumn(i.selected_modifiers, []),
+        dietaryTags: parseJsonColumn(i.dietary_tags, []),
+        allergens: parseJsonColumn(i.allergens, []),
+        hasAllergenWarning: i.has_allergen_warning === 1,
+        kitchenStation: i.kitchen_station || undefined,
+        itemStatus: i.item_status || 'pending',
+        specialInstructions: i.special_instructions || undefined,
+        kitchenNotes: i.kitchen_notes || undefined,
+        isComboItem: i.is_combo_item === 1,
+        comboId: i.combo_id || undefined,
+        comboName: i.combo_name || undefined,
+        addedAt: i.added_at,
+        modifiedAt: i.modified_at || undefined,
+      }));
+
+    return {
+      id: row.id,
+      orderNumber: row.order_number,
+      restaurantId: row.restaurant_id,
+      tableId: row.table_id,
+      tableName: row.table_name,
+      guestCount: row.guest_count,
+      customerId: row.customer_id || undefined,
+      createdBy: row.created_by,
+      createdByName: row.created_by_name,
+      servedBy: row.served_by || undefined,
+      servedByName: row.served_by_name || undefined,
+      subtotal: row.subtotal,
+      taxRate: row.tax_rate,
+      taxAmount: row.tax_amount,
+      discountType: row.discount_type || undefined,
+      discountValue: row.discount_value || undefined,
+      discountAmount: row.discount_amount,
+      tipAmount: row.tip_amount,
+      totalAmount: row.total_amount,
+      status: row.status as UnifiedOrder['status'],
+      paymentStatus: row.payment_status as UnifiedOrder['paymentStatus'],
+      specialInstructions: row.special_instructions || undefined,
+      cancellationReason: row.cancellation_reason || undefined,
+      submittedAt: row.submitted_at || undefined,
+      paidAt: row.paid_at || undefined,
+      cancelledAt: row.cancelled_at || undefined,
+      pendingSync: row.pending_sync === 1,
+      syncedAt: row.synced_at || undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      items: orderItems,
+    } as UnifiedOrder;
+  }
 
   // ============== INITIALIZATION ==============
 
-  /**
-   * Initialize storage and load data into cache
-   */
   async initialize(): Promise<void> {
     if (this.initialized) return;
+    this.initialized = true;
 
-    try {
-      await Promise.all([
-        this.loadOrdersFromStorage(),
-        this.loadCartsFromStorage(),
-      ]);
-      this.initialized = true;
-
-      if (__DEV__) {
-        console.log('[UnifiedOrderStorage] Initialized successfully');
-        console.log('[UnifiedOrderStorage] Active orders:', this.ordersCache?.activeOrderIds.length ?? 0);
-        console.log('[UnifiedOrderStorage] History orders:', this.ordersCache?.historyOrderIds.length ?? 0);
-      }
-    } catch (error) {
-      console.error('[UnifiedOrderStorage] Initialization error:', error);
-      this.ordersCache = { ...EMPTY_ORDER_STORAGE };
-      this.cartsCache = { ...EMPTY_CART_STORAGE };
-      this.initialized = true;
-    }
-  }
-
-  /**
-   * Load orders from AsyncStorage into cache
-   */
-  private async loadOrdersFromStorage(): Promise<void> {
-    try {
-      const data = await AsyncStorage.getItem(UNIFIED_ORDERS_KEY);
-      if (data) {
-        this.ordersCache = JSON.parse(data);
-      } else {
-        this.ordersCache = { ...EMPTY_ORDER_STORAGE };
-      }
-    } catch (error) {
-      console.error('[UnifiedOrderStorage] Error loading orders:', error);
-      this.ordersCache = { ...EMPTY_ORDER_STORAGE };
-    }
-  }
-
-  /**
-   * Load carts from AsyncStorage into cache
-   */
-  private async loadCartsFromStorage(): Promise<void> {
-    try {
-      const data = await AsyncStorage.getItem(UNIFIED_CARTS_KEY);
-      if (data) {
-        this.cartsCache = JSON.parse(data);
-      } else {
-        this.cartsCache = { ...EMPTY_CART_STORAGE };
-      }
-    } catch (error) {
-      console.error('[UnifiedOrderStorage] Error loading carts:', error);
-      this.cartsCache = { ...EMPTY_CART_STORAGE };
-    }
-  }
-
-  /**
-   * Save orders to AsyncStorage
-   */
-  private async saveOrdersToStorage(): Promise<void> {
-    if (!this.ordersCache) return;
-
-    try {
-      this.ordersCache.lastUpdated = new Date().toISOString();
-      await AsyncStorage.setItem(UNIFIED_ORDERS_KEY, JSON.stringify(this.ordersCache));
-    } catch (error) {
-      console.error('[UnifiedOrderStorage] Error saving orders:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save carts to AsyncStorage
-   */
-  private async saveCartsToStorage(): Promise<void> {
-    if (!this.cartsCache) return;
-
-    try {
-      this.cartsCache.lastUpdated = new Date().toISOString();
-      await AsyncStorage.setItem(UNIFIED_CARTS_KEY, JSON.stringify(this.cartsCache));
-    } catch (error) {
-      console.error('[UnifiedOrderStorage] Error saving carts:', error);
-      throw error;
+    if (__DEV__) {
+      const activeRow = await this.db.getFirstAsync<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM orders WHERE status NOT IN ('paid', 'cancelled')`
+      );
+      const historyRow = await this.db.getFirstAsync<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM orders WHERE status IN ('paid', 'cancelled')`
+      );
+      console.log('[UnifiedOrderStorage] Initialized successfully');
+      console.log('[UnifiedOrderStorage] Active orders:', activeRow?.cnt || 0);
+      console.log('[UnifiedOrderStorage] History orders:', historyRow?.cnt || 0);
     }
   }
 
   // ============== ORDER CRUD OPERATIONS ==============
 
-  /**
-   * Save a new order or update existing
-   */
   async saveOrder(order: UnifiedOrder): Promise<void> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return;
+    const ts = now();
 
-    this.ordersCache.orders[order.id] = order;
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO orders (id, order_number, restaurant_id, table_id, table_name,
+        guest_count, customer_id, created_by, created_by_name, served_by, served_by_name,
+        subtotal, tax_rate, tax_amount, discount_type, discount_value, discount_amount,
+        tip_amount, total_amount, status, payment_status,
+        special_instructions, cancellation_reason, submitted_at, paid_at, cancelled_at,
+        pending_sync, synced_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      order.id, order.orderNumber, order.restaurantId || 'rest_001',
+      order.tableId, order.tableName, order.guestCount || 1,
+      order.customerId || null, order.createdBy, order.createdByName,
+      order.servedBy || null, order.servedByName || null,
+      order.subtotal || 0, order.taxRate || 0, order.taxAmount || 0,
+      order.discountType || null, order.discountValue || null, order.discountAmount || 0,
+      order.tipAmount || 0, order.totalAmount || 0,
+      order.status, order.paymentStatus || 'pending',
+      order.specialInstructions || null, order.cancellationReason || null,
+      order.submittedAt || null, order.paidAt || null, order.cancelledAt || null,
+      order.pendingSync !== false ? 1 : 0, order.syncedAt || null,
+      order.createdAt || ts, order.updatedAt || ts
+    );
 
-    // Update active/history lists based on status
-    if (isActiveOrder(order)) {
-      if (!this.ordersCache.activeOrderIds.includes(order.id)) {
-        this.ordersCache.activeOrderIds.push(order.id);
+    // Save order items
+    if (order.items) {
+      // Remove existing items for this order then re-insert
+      await this.db.runAsync('DELETE FROM order_items WHERE order_id = ?', order.id);
+
+      for (const item of order.items) {
+        await this.db.runAsync(
+          `INSERT INTO order_items (id, order_id, menu_item_id, name, category, category_id,
+            base_price, quantity, modifier_total, item_total, selected_modifiers,
+            dietary_tags, allergens, has_allergen_warning, kitchen_station, item_status,
+            special_instructions, kitchen_notes, is_combo_item, combo_id, combo_name,
+            added_at, modified_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          item.id, order.id, item.menuItemId, item.name,
+          item.category || null, item.categoryId || null,
+          item.basePrice || 0, item.quantity || 1,
+          item.modifierTotal || 0, item.itemTotal || 0,
+          item.selectedModifiers ? JSON.stringify(item.selectedModifiers) : null,
+          item.dietaryTags ? JSON.stringify(item.dietaryTags) : null,
+          item.allergens ? JSON.stringify(item.allergens) : null,
+          item.hasAllergenWarning ? 1 : 0,
+          item.kitchenStation || null, item.itemStatus || 'pending',
+          item.specialInstructions || null, item.kitchenNotes || null,
+          item.isComboItem ? 1 : 0, item.comboId || null, item.comboName || null,
+          item.addedAt || ts, item.modifiedAt || null
+        );
       }
-      // Remove from history if exists
-      this.ordersCache.historyOrderIds = this.ordersCache.historyOrderIds.filter(
-        (id) => id !== order.id
-      );
-    } else {
-      if (!this.ordersCache.historyOrderIds.includes(order.id)) {
-        this.ordersCache.historyOrderIds.push(order.id);
-      }
-      // Remove from active
-      this.ordersCache.activeOrderIds = this.ordersCache.activeOrderIds.filter(
-        (id) => id !== order.id
-      );
     }
-
-    await this.saveOrdersToStorage();
   }
 
-  /**
-   * Get order by ID
-   */
   async getOrder(orderId: string): Promise<UnifiedOrder | null> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    return this.ordersCache?.orders[orderId] || null;
+    const row = await this.db.getFirstAsync<OrderRow>(
+      'SELECT * FROM orders WHERE id = ?', orderId
+    );
+    if (!row) return null;
+
+    const items = await this.db.getAllAsync<OrderItemRow>(
+      'SELECT * FROM order_items WHERE order_id = ?', orderId
+    );
+    return this.orderFromRow(row, items);
   }
 
-  /**
-   * Get order by ID (sync version - use after initialize)
-   */
   getOrderSync(orderId: string): UnifiedOrder | null {
-    return this.ordersCache?.orders[orderId] || null;
+    // For sync access, we need to fall back to async. Return null as sync isn't possible with SQLite.
+    // Callers should migrate to async version.
+    return null;
   }
 
-  /**
-   * Get all orders
-   */
   async getAllOrders(): Promise<UnifiedOrder[]> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return [];
+    const rows = await this.db.getAllAsync<OrderRow>(
+      'SELECT * FROM orders ORDER BY created_at DESC'
+    );
+    if (rows.length === 0) return [];
 
-    return Object.values(this.ordersCache.orders)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const items = await this.db.getAllAsync<OrderItemRow>(
+      'SELECT * FROM order_items'
+    );
+    return rows.map((r) => this.orderFromRow(r, items));
   }
 
-  /**
-   * Get all active orders (not paid/cancelled)
-   */
   async getActiveOrders(): Promise<UnifiedOrder[]> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return [];
+    const activeStatuses = getActiveStatuses();
+    const placeholders = activeStatuses.map(() => '?').join(', ');
 
-    return this.ordersCache.activeOrderIds
-      .map((id) => this.ordersCache!.orders[id])
-      .filter(Boolean)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const rows = await this.db.getAllAsync<OrderRow>(
+      `SELECT * FROM orders WHERE status IN (${placeholders}) ORDER BY created_at DESC`,
+      ...activeStatuses
+    );
+    if (rows.length === 0) return [];
+
+    const orderIds = rows.map((r) => r.id);
+    const idPlaceholders = orderIds.map(() => '?').join(', ');
+    const items = await this.db.getAllAsync<OrderItemRow>(
+      `SELECT * FROM order_items WHERE order_id IN (${idPlaceholders})`,
+      ...orderIds
+    );
+    return rows.map((r) => this.orderFromRow(r, items));
   }
 
-  /**
-   * Get all active orders (sync version)
-   */
   getActiveOrdersSync(): UnifiedOrder[] {
-    if (!this.ordersCache) return [];
-
-    return this.ordersCache.activeOrderIds
-      .map((id) => this.ordersCache!.orders[id])
-      .filter(Boolean)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Sync not available with SQLite. Return empty - callers should use async.
+    return [];
   }
 
-  /**
-   * Get orders with filters
-   */
   async getOrders(filters?: UnifiedOrderFilters): Promise<UnifiedOrder[]> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return [];
-
-    let orders = Object.values(this.ordersCache.orders);
+    let sql = 'SELECT * FROM orders';
+    const conditions: string[] = [];
+    const params: (string | number | null)[] = [];
 
     if (filters) {
-      // Filter by status
       if (filters.status) {
         if (filters.status === 'active') {
           const activeStatuses = getActiveStatuses();
-          orders = orders.filter((o) => activeStatuses.includes(o.status));
+          conditions.push(`status IN (${activeStatuses.map(() => '?').join(', ')})`);
+          params.push(...activeStatuses);
         } else if (filters.status !== 'all') {
-          orders = orders.filter((o) => o.status === filters.status);
+          conditions.push('status = ?');
+          params.push(filters.status);
         }
       }
 
-      // Filter by payment status
       if (filters.paymentStatus && filters.paymentStatus !== 'all') {
-        orders = orders.filter((o) => o.paymentStatus === filters.paymentStatus);
+        conditions.push('payment_status = ?');
+        params.push(filters.paymentStatus);
       }
 
-      // Filter by table
       if (filters.tableId) {
-        orders = orders.filter((o) => o.tableId === filters.tableId);
+        conditions.push('table_id = ?');
+        params.push(filters.tableId);
       }
 
-      // Filter by date range
       if (filters.dateRange) {
-        const startDate = new Date(filters.dateRange.startDate).getTime();
-        const endDate = new Date(filters.dateRange.endDate).getTime();
-        orders = orders.filter((o) => {
-          const orderDate = new Date(o.createdAt).getTime();
-          return orderDate >= startDate && orderDate <= endDate;
-        });
+        conditions.push('created_at >= ? AND created_at <= ?');
+        params.push(filters.dateRange.startDate, filters.dateRange.endDate);
       }
 
-      // Filter by search query
-      if (filters.searchQuery) {
-        const query = filters.searchQuery.toLowerCase();
-        orders = orders.filter(
-          (o) =>
-            o.orderNumber.toLowerCase().includes(query) ||
-            o.tableName.toLowerCase().includes(query) ||
-            o.items.some((item) => item.name.toLowerCase().includes(query))
-        );
-      }
-
-      // Filter by amount range
       if (filters.minAmount !== undefined) {
-        orders = orders.filter((o) => o.totalAmount >= filters.minAmount!);
+        conditions.push('total_amount >= ?');
+        params.push(filters.minAmount);
       }
+
       if (filters.maxAmount !== undefined) {
-        orders = orders.filter((o) => o.totalAmount <= filters.maxAmount!);
+        conditions.push('total_amount <= ?');
+        params.push(filters.maxAmount);
       }
     }
 
-    return orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    sql += ' ORDER BY created_at DESC';
+
+    const rows = await this.db.getAllAsync<OrderRow>(sql, ...params);
+    if (rows.length === 0) return [];
+
+    const items = await this.db.getAllAsync<OrderItemRow>('SELECT * FROM order_items');
+    let orders = rows.map((r) => this.orderFromRow(r, items));
+
+    // Handle search query in JS (needs item name matching)
+    if (filters?.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      orders = orders.filter(
+        (o) =>
+          o.orderNumber.toLowerCase().includes(query) ||
+          o.tableName.toLowerCase().includes(query) ||
+          o.items.some((item) => item.name.toLowerCase().includes(query))
+      );
+    }
+
+    return orders;
   }
 
-  /**
-   * Update an order
-   */
   async updateOrder(orderId: string, updates: Partial<UnifiedOrder>): Promise<UnifiedOrder | null> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return null;
-
-    const existingOrder = this.ordersCache.orders[orderId];
-    if (!existingOrder) return null;
+    const existing = await this.getOrder(orderId);
+    if (!existing) return null;
 
     const updatedOrder: UnifiedOrder = {
-      ...existingOrder,
+      ...existing,
       ...updates,
-      updatedAt: new Date().toISOString(),
+      updatedAt: now(),
     };
 
     await this.saveOrder(updatedOrder);
     return updatedOrder;
   }
 
-  /**
-   * Delete an order permanently
-   */
   async deleteOrder(orderId: string): Promise<void> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return;
-
-    // Remove from all lists
-    this.ordersCache.activeOrderIds = this.ordersCache.activeOrderIds.filter((id) => id !== orderId);
-    this.ordersCache.historyOrderIds = this.ordersCache.historyOrderIds.filter((id) => id !== orderId);
-    delete this.ordersCache.orders[orderId];
-
-    await this.saveOrdersToStorage();
+    await this.db.runAsync('DELETE FROM order_items WHERE order_id = ?', orderId);
+    await this.db.runAsync('DELETE FROM orders WHERE id = ?', orderId);
   }
 
-  /**
-   * Get orders by table ID
-   */
   async getOrdersByTable(tableId: string): Promise<UnifiedOrder[]> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return [];
+    const rows = await this.db.getAllAsync<OrderRow>(
+      'SELECT * FROM orders WHERE table_id = ? ORDER BY created_at DESC',
+      tableId
+    );
+    if (rows.length === 0) return [];
 
-    return Object.values(this.ordersCache.orders)
-      .filter((o) => o.tableId === tableId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const orderIds = rows.map((r) => r.id);
+    const placeholders = orderIds.map(() => '?').join(', ');
+    const items = await this.db.getAllAsync<OrderItemRow>(
+      `SELECT * FROM order_items WHERE order_id IN (${placeholders})`,
+      ...orderIds
+    );
+    return rows.map((r) => this.orderFromRow(r, items));
   }
 
-  /**
-   * Get active order for a table (there should only be one)
-   */
   async getActiveOrderForTable(tableId: string): Promise<UnifiedOrder | null> {
-    const activeOrders = await this.getActiveOrders();
-    return activeOrders.find((o) => o.tableId === tableId) || null;
+    const activeStatuses = getActiveStatuses();
+    const placeholders = activeStatuses.map(() => '?').join(', ');
+
+    const row = await this.db.getFirstAsync<OrderRow>(
+      `SELECT * FROM orders WHERE table_id = ? AND status IN (${placeholders}) ORDER BY created_at DESC LIMIT 1`,
+      tableId, ...activeStatuses
+    );
+    if (!row) return null;
+
+    const items = await this.db.getAllAsync<OrderItemRow>(
+      'SELECT * FROM order_items WHERE order_id = ?', row.id
+    );
+    return this.orderFromRow(row, items);
   }
 
-  /**
-   * Get active order for a table (sync version)
-   */
   getActiveOrderForTableSync(tableId: string): UnifiedOrder | null {
-    const activeOrders = this.getActiveOrdersSync();
-    return activeOrders.find((o) => o.tableId === tableId) || null;
+    return null; // Sync not available, use async
   }
 
   // ============== CART OPERATIONS ==============
 
-  /**
-   * Save cart for a table
-   */
   async saveCart(tableId: string, cart: UnifiedCartState): Promise<void> {
-    if (!this.cartsCache) await this.loadCartsFromStorage();
-    if (!this.cartsCache) return;
-
-    this.cartsCache.carts[tableId] = cart;
-    await this.saveCartsToStorage();
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO carts (id, table_id, table_name, guest_count, items, subtotal, total_amount, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `cart_${tableId}`, tableId, cart.tableName || '',
+      cart.guestCount || 1, JSON.stringify(cart.items || []),
+      cart.subtotal || 0, cart.totalAmount || 0, now()
+    );
   }
 
-  /**
-   * Get cart for a table
-   */
   async getCart(tableId: string): Promise<UnifiedCartState | null> {
-    if (!this.cartsCache) await this.loadCartsFromStorage();
-    return this.cartsCache?.carts[tableId] || null;
+    const row = await this.db.getFirstAsync<CartRow>(
+      'SELECT * FROM carts WHERE table_id = ?', tableId
+    );
+    if (!row) return null;
+
+    return {
+      tableId: row.table_id,
+      tableName: row.table_name,
+      guestCount: row.guest_count,
+      items: parseJsonColumn(row.items, []),
+      subtotal: row.subtotal,
+      taxRate: 0,
+      taxAmount: 0,
+      discountAmount: 0,
+      totalAmount: row.total_amount,
+    } as UnifiedCartState;
   }
 
-  /**
-   * Delete cart for a table
-   */
   async deleteCart(tableId: string): Promise<void> {
-    if (!this.cartsCache) await this.loadCartsFromStorage();
-    if (!this.cartsCache) return;
-
-    delete this.cartsCache.carts[tableId];
-    await this.saveCartsToStorage();
+    await this.db.runAsync('DELETE FROM carts WHERE table_id = ?', tableId);
   }
 
-  /**
-   * Get all carts
-   */
   async getAllCarts(): Promise<Record<string, UnifiedCartState>> {
-    if (!this.cartsCache) await this.loadCartsFromStorage();
-    return this.cartsCache?.carts || {};
+    const rows = await this.db.getAllAsync<CartRow>('SELECT * FROM carts');
+    const carts: Record<string, UnifiedCartState> = {};
+
+    for (const row of rows) {
+      carts[row.table_id] = {
+        tableId: row.table_id,
+        tableName: row.table_name,
+        guestCount: row.guest_count,
+        items: parseJsonColumn(row.items, []),
+        subtotal: row.subtotal,
+        taxRate: 0,
+        taxAmount: 0,
+        discountAmount: 0,
+        totalAmount: row.total_amount,
+      } as UnifiedCartState;
+    }
+
+    return carts;
   }
 
   // ============== BULK OPERATIONS ==============
 
-  /**
-   * Save multiple orders at once
-   */
   async saveOrders(orders: UnifiedOrder[]): Promise<void> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return;
-
     for (const order of orders) {
-      this.ordersCache.orders[order.id] = order;
-
-      if (isActiveOrder(order)) {
-        if (!this.ordersCache.activeOrderIds.includes(order.id)) {
-          this.ordersCache.activeOrderIds.push(order.id);
-        }
-      } else {
-        if (!this.ordersCache.historyOrderIds.includes(order.id)) {
-          this.ordersCache.historyOrderIds.push(order.id);
-        }
-      }
+      await this.saveOrder(order);
     }
-
-    await this.saveOrdersToStorage();
   }
 
-  /**
-   * Clear old orders (older than specified date)
-   */
   async clearOldOrders(beforeDate: Date): Promise<number> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return 0;
+    const cutoff = beforeDate.toISOString();
 
-    const cutoffTime = beforeDate.getTime();
-    let deletedCount = 0;
-
-    // Only clear from history, not active orders
-    const ordersToDelete = this.ordersCache.historyOrderIds.filter((id) => {
-      const order = this.ordersCache!.orders[id];
-      if (order && new Date(order.createdAt).getTime() < cutoffTime) {
-        return true;
-      }
-      return false;
-    });
-
-    for (const orderId of ordersToDelete) {
-      delete this.ordersCache.orders[orderId];
-      deletedCount++;
-    }
-
-    this.ordersCache.historyOrderIds = this.ordersCache.historyOrderIds.filter(
-      (id) => !ordersToDelete.includes(id)
+    // Only clear completed/cancelled orders
+    const result = await this.db.runAsync(
+      `DELETE FROM orders WHERE status IN ('paid', 'cancelled') AND created_at < ?`,
+      cutoff
     );
 
-    await this.saveOrdersToStorage();
-    return deletedCount;
+    // Also clean up orphaned order_items
+    await this.db.execAsync(
+      `DELETE FROM order_items WHERE order_id NOT IN (SELECT id FROM orders)`
+    );
+
+    return result.changes;
   }
 
   // ============== SYNC OPERATIONS ==============
 
-  /**
-   * Get orders pending sync
-   */
   async getUnsyncedOrders(): Promise<UnifiedOrder[]> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return [];
+    const rows = await this.db.getAllAsync<OrderRow>(
+      'SELECT * FROM orders WHERE pending_sync = 1'
+    );
+    if (rows.length === 0) return [];
 
-    return Object.values(this.ordersCache.orders).filter((o) => o.pendingSync);
+    const items = await this.db.getAllAsync<OrderItemRow>('SELECT * FROM order_items');
+    return rows.map((r) => this.orderFromRow(r, items));
   }
 
-  /**
-   * Mark orders as synced
-   */
   async markAsSynced(orderIds: string[]): Promise<void> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.ordersCache) return;
+    if (orderIds.length === 0) return;
 
-    const now = new Date().toISOString();
-
-    for (const orderId of orderIds) {
-      if (this.ordersCache.orders[orderId]) {
-        this.ordersCache.orders[orderId].pendingSync = false;
-        this.ordersCache.orders[orderId].syncedAt = now;
-      }
-    }
-
-    await this.saveOrdersToStorage();
+    const ts = now();
+    const placeholders = orderIds.map(() => '?').join(', ');
+    await this.db.runAsync(
+      `UPDATE orders SET pending_sync = 0, synced_at = ? WHERE id IN (${placeholders})`,
+      ts, ...orderIds
+    );
   }
 
   // ============== CLEAR AND RESET OPERATIONS ==============
 
-  /**
-   * CRITICAL: Clear ALL order data from BOTH AsyncStorage AND in-memory cache
-   * This ensures proper state reset without app restart
-   */
   async clearAll(): Promise<void> {
-    // Reset in-memory caches FIRST
-    this.ordersCache = { ...EMPTY_ORDER_STORAGE };
-    this.cartsCache = { ...EMPTY_CART_STORAGE };
-
-    // Then clear AsyncStorage
-    await Promise.all([
-      AsyncStorage.removeItem(UNIFIED_ORDERS_KEY),
-      AsyncStorage.removeItem(UNIFIED_CARTS_KEY),
-      // Also clear legacy keys for migration
-      AsyncStorage.removeItem(STORAGE_KEYS.ORDERS),
-      AsyncStorage.removeItem(STORAGE_KEYS.ORDER_DRAFTS),
-      AsyncStorage.removeItem(STORAGE_KEYS.KITCHEN_TICKETS),
-      AsyncStorage.removeItem(STORAGE_KEYS.PENDING_PAYMENTS),
-    ]);
+    await this.db.execAsync('DELETE FROM order_items');
+    await this.db.execAsync('DELETE FROM orders');
+    await this.db.execAsync('DELETE FROM carts');
 
     if (__DEV__) {
-      console.log('[UnifiedOrderStorage] ✅ All data cleared (storage + cache)');
+      console.log('[UnifiedOrderStorage] All data cleared');
     }
   }
 
-  /**
-   * Reset only the in-memory cache (for context state sync)
-   * Call this when context needs to refresh from storage
-   */
   resetCache(): void {
-    this.ordersCache = { ...EMPTY_ORDER_STORAGE };
-    this.cartsCache = { ...EMPTY_CART_STORAGE };
+    // No-op: SQLite doesn't need cache reset
     this.initialized = false;
-
     if (__DEV__) {
-      console.log('[UnifiedOrderStorage] Cache reset - will reload on next access');
+      console.log('[UnifiedOrderStorage] Cache reset (no-op for SQLite)');
     }
   }
 
-  /**
-   * Get current cache state (for debugging/context sync)
-   */
   getCacheState(): {
     orders: UnifiedOrder[];
     activeOrderIds: string[];
     initialized: boolean;
   } {
+    // Cannot return sync data from SQLite
     return {
-      orders: this.ordersCache ? Object.values(this.ordersCache.orders) : [],
-      activeOrderIds: this.ordersCache?.activeOrderIds || [],
+      orders: [],
+      activeOrderIds: [],
       initialized: this.initialized,
     };
   }
 
   // ============== STATISTICS ==============
 
-  /**
-   * Get storage statistics
-   */
   async getStats(): Promise<{
     totalOrders: number;
     activeOrders: number;
@@ -559,23 +528,29 @@ class UnifiedOrderStorageService {
     carts: number;
     unsyncedOrders: number;
   }> {
-    if (!this.ordersCache) await this.loadOrdersFromStorage();
-    if (!this.cartsCache) await this.loadCartsFromStorage();
-
-    const unsynced = await this.getUnsyncedOrders();
+    const [total, active, history, carts, unsynced] = await Promise.all([
+      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM orders'),
+      this.db.getFirstAsync<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM orders WHERE status NOT IN ('paid', 'cancelled')`
+      ),
+      this.db.getFirstAsync<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM orders WHERE status IN ('paid', 'cancelled')`
+      ),
+      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM carts'),
+      this.db.getFirstAsync<{ cnt: number }>(
+        'SELECT COUNT(*) as cnt FROM orders WHERE pending_sync = 1'
+      ),
+    ]);
 
     return {
-      totalOrders: Object.keys(this.ordersCache?.orders || {}).length,
-      activeOrders: this.ordersCache?.activeOrderIds.length || 0,
-      historyOrders: this.ordersCache?.historyOrderIds.length || 0,
-      carts: Object.keys(this.cartsCache?.carts || {}).length,
-      unsyncedOrders: unsynced.length,
+      totalOrders: total?.cnt || 0,
+      activeOrders: active?.cnt || 0,
+      historyOrders: history?.cnt || 0,
+      carts: carts?.cnt || 0,
+      unsyncedOrders: unsynced?.cnt || 0,
     };
   }
 
-  /**
-   * Check if storage is initialized
-   */
   isInitialized(): boolean {
     return this.initialized;
   }

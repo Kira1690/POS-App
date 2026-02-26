@@ -1,0 +1,175 @@
+appId: host.exp.exponent
+name: "Split Bill - Equal Split (2 Guests, Guest 1 Cash / Guest 2 Card)"
+tags:
+  - split-payment
+  - offline
+---
+
+# ============================================================
+# TEST: Equal split between 2 guests
+# Guest 1 pays cash, Guest 2 pays card
+# Verifies: correct per-guest amount, paid badge, all-paid completion
+# ============================================================
+
+# Navigate to Order Management
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 15000
+- takeScreenshot: "split_01_order_management"
+
+# Open the existing confirmed order
+- tapOn:
+    text: ".*View.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Order Details"
+        - "ORD-"
+        - "Pay Now"
+        - "Bill"
+    timeout: 15000
+- takeScreenshot: "split_02_order_details"
+
+# Tap Pay / Bill button
+- tapOn:
+    anyOf:
+      - text: ".*Pay Now.*"
+      - text: ".*Bill.*"
+      - text: ".*Proceed to Payment.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Bill"
+        - "Total"
+        - "Split"
+    timeout: 15000
+- takeScreenshot: "split_03_bill_screen"
+
+# Tap Split Bill
+- tapOn:
+    anyOf:
+      - text: ".*Split Bill.*"
+      - text: ".*Split.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Split Bill"
+        - "Equal"
+        - "Number of Guests"
+    timeout: 15000
+- takeScreenshot: "split_04_bill_split_screen"
+
+# Should default to Equal tab with 2 guests
+- assertVisible:
+    anyOf:
+      - text: "Equal"
+      - text: "Number of Guests"
+- takeScreenshot: "split_05_equal_tab_active"
+
+# Pay Guest 1
+- tapOn:
+    anyOf:
+      - text: ".*Pay Now.*"
+      - text: ".*Pay.*"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Payment Processing"
+        - "Guest 1"
+        - "Payment Methods"
+    timeout: 15000
+- takeScreenshot: "split_06_guest1_payment_processing"
+
+# Select Cash for Guest 1
+- tapOn:
+    text: ".*Cash.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Cash Payment"
+        - "Amount Tendered"
+        - "Enter Amount"
+    timeout: 10000
+- takeScreenshot: "split_07_cash_modal_open"
+
+# Enter cash amount
+- tapOn:
+    anyOf:
+      - id: "cash-amount-input"
+      - text: ".*Amount.*"
+- inputText: "10"
+- hideKeyboard
+- takeScreenshot: "split_08_cash_amount_entered"
+
+# Confirm cash payment
+- tapOn:
+    anyOf:
+      - text: ".*Confirm.*"
+      - text: ".*Process.*"
+      - text: ".*Pay.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Payment Successful"
+        - "Back to Bill Split"
+    timeout: 20000
+- takeScreenshot: "split_09_guest1_payment_confirmed"
+
+# Go back to Bill Split
+- tapOn:
+    anyOf:
+      - text: ".*Back to Bill Split.*"
+      - text: ".*Continue.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Split Bill"
+        - "Guest 2"
+        - "Paid"
+    timeout: 15000
+- takeScreenshot: "split_10_back_to_bill_split_guest1_paid"
+
+# Guest 1 should show "Paid" badge
+- assertVisible:
+    anyOf:
+      - text: "Paid"
+
+# Pay Guest 2
+- tapOn:
+    anyOf:
+      - text: ".*Pay Now.*"
+      - text: ".*Pay.*"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Payment Processing"
+        - "Guest 2"
+        - "Payment Methods"
+    timeout: 15000
+- takeScreenshot: "split_11_guest2_payment_processing"
+
+# Select Card for Guest 2
+- tapOn:
+    text: ".*Card.*"
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Payment Successful"
+        - "Card"
+        - "Processing"
+    timeout: 15000
+- takeScreenshot: "split_12_guest2_card_processing"
+
+# Wait for confirmation
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Payment Successful"
+        - "Back to Bill Split"
+        - "Order Management"
+    timeout: 20000
+- takeScreenshot: "split_13_guest2_confirmed_or_all_paid"

@@ -67,8 +67,8 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
     }
   }, [order.id, order.order_number, cancelReason, onCancelOrder]);
 
-  // Show limited actions for completed/cancelled orders
-  if (order.status === OrderStatus.SERVED || order.status === OrderStatus.CANCELLED) {
+  // Show limited actions for cancelled orders only
+  if (order.status === OrderStatus.CANCELLED) {
     return (
       <View style={styles.actionsContainer}>
         <TouchableOpacity
@@ -97,8 +97,8 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
           </Text>
         </TouchableOpacity>
         
-        {/* Payment Button - Available when order is ready */}
-        {order.status === OrderStatus.READY && onPayment && (
+        {/* Payment Button - Available when order is ready or served */}
+        {(order.status === OrderStatus.READY || order.status === OrderStatus.SERVED) && onPayment && (
           <TouchableOpacity
             style={[styles.actionButton, styles.paymentButton, { backgroundColor: theme.colors.secondary }]}
             onPress={onPayment}
