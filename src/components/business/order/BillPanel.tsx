@@ -56,6 +56,7 @@ interface BillPanelProps {
   onSplit: () => void;
   onEditItemModifiers?: (itemId: string) => void; // Optional: Edit modifiers for cart item
   isProcessing?: boolean;
+  panelWidth?: number; // Override default fixed width (for portrait full-width layout)
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -81,6 +82,7 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
   onSplit,
   onEditItemModifiers,
   isProcessing = false,
+  panelWidth,
 }) => {
   const { theme } = useTheme();
 
@@ -320,7 +322,7 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surface, width: BILL_PANEL_WIDTH }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surface, width: panelWidth ?? BILL_PANEL_WIDTH }]}>
       {renderBillHeader()}
       
       <ScrollView style={styles.itemsContainer} showsVerticalScrollIndicator={false}>

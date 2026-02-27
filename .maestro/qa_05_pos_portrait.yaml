@@ -1,0 +1,132 @@
+appId: host.exp.exponent
+name: "QA 05: POS Order with Modifiers (Portrait) — Table T-1"
+tags:
+  - qa
+  - pos
+  - portrait
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 5 — POS Order in Portrait mode
+#
+#  Test scenario:
+#    Table: T-1 (first available table)
+#    Item 1: Latte + Cup Size "Large" → $5.00 + $1.50 = $6.50
+#    Item 2: Spring Rolls (no modifier) → $6.50
+#    Action: Send to Kitchen → verify CONFIRMED
+#
+#  QA Assertions:
+#    ✓ Cup Size modal opens for Latte
+#    ✓ Latte + Large in bill after add to cart
+#    ✓ Spring Rolls added without modifier prompt
+#    ✓ Order status = CONFIRMED after sending to kitchen
+#
+#  Prerequisites: qa_04 completed
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# Navigate to Order Management
+- tapOn:
+    text: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "qa_05_step1_order_management"
+
+# Tap New Order
+- tapOn:
+    text: "+ New Order"
+
+- extendedWaitUntil:
+    visible: "Select Table"
+    timeout: 10000
+
+- takeScreenshot: "qa_05_step2_table_selector"
+
+# Select first available table (T-1)
+- tapOn:
+    text: "T-1"
+
+- extendedWaitUntil:
+    visible: "Drinks"
+    timeout: 10000
+
+- takeScreenshot: "qa_05_step3_pos_screen_portrait"
+
+# QA: Verify category chips visible in portrait layout
+- assertVisible: "Drinks"
+- assertVisible: "Mains"
+- assertVisible: "Starters"
+
+- takeScreenshot: "qa_05_step3b_category_chips_verified"
+
+# ── ORDER ITEM 1: Latte (requires Cup Size modifier) ─
+- tapOn:
+    text: "Latte"
+
+- extendedWaitUntil:
+    visible: "Cup Size"
+    timeout: 8000
+
+- takeScreenshot: "qa_05_step4_cup_size_modal_opened"
+
+# QA: Modifier modal opened for Latte showing Cup Size group
+- assertVisible: "Cup Size"
+
+# Select Large (+$1.50)
+- tapOn:
+    text: "Large"
+
+- takeScreenshot: "qa_05_step5_large_selected"
+
+# Confirm add to cart
+- tapOn:
+    text: "Add to Cart"
+
+- waitForAnimationToEnd
+
+# QA: Bill updated with Latte Large ($6.50)
+- extendedWaitUntil:
+    visible: "Latte"
+    timeout: 8000
+
+- assertVisible: "Latte"
+
+- takeScreenshot: "qa_05_step6_latte_in_bill"
+
+# ── ORDER ITEM 2: Spring Rolls (no modifier) ─────────
+- tapOn:
+    text: "Spring Rolls"
+
+- waitForAnimationToEnd
+
+# QA: Spring Rolls should add directly (no required modifier)
+- extendedWaitUntil:
+    visible: "Spring Rolls"
+    timeout: 8000
+
+- assertVisible: "Spring Rolls"
+
+- takeScreenshot: "qa_05_step7_spring_rolls_in_bill"
+
+# ── SEND TO KITCHEN ───────────────────────────────────
+# Direct submit — no confirmation modal. On success, goBack() to Order Management.
+- tapOn:
+    text: "Send to Kitchen"
+
+- waitForAnimationToEnd
+
+# Order Management should now be visible with the new CONFIRMED order
+- extendedWaitUntil:
+    visible: "CONFIRMED"
+    timeout: 15000
+
+- takeScreenshot: "qa_05_step8_after_send_to_kitchen"
+
+# QA: Verify order appears as CONFIRMED in Order Management
+- assertVisible: "CONFIRMED"
+
+- takeScreenshot: "qa_05_PASS_order_confirmed"

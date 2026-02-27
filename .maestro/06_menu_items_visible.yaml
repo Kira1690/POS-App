@@ -7,7 +7,7 @@ tags:
 
 # Test: After staff login, seeded menu items are visible in POS
 
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 - extendedWaitUntil:
     visible: "Welcome to FoodPOS"

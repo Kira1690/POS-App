@@ -1,0 +1,26 @@
+appId: host.exp.exponent
+---
+# Helper: Handle modifier selection modal if it appears
+# Selects the first available option in each required group and confirms
+
+- optional:
+    - extendedWaitUntil:
+        visible:
+          anyOf:
+            - "Add-ons"
+            - "Select one"
+            - "Required"
+            - "Drink Size"
+            - "Spice Level"
+            - "Side Dish"
+        timeout: 2000
+    - scrollDown
+    - tapOn:
+        anyOf:
+          - text: "Small"
+          - text: "Regular"
+          - text: "Medium"
+          - text: "Mild"
+          - text: "Fries"
+    - tapOn:
+        text: "Add to Cart"

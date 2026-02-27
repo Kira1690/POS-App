@@ -1,0 +1,37 @@
+appId: host.exp.exponent
+name: "Helper: Ensure on Dashboard (session already exists)"
+---
+
+# Used for qa_02 through qa_07.
+# After qa_01 runs, the user is logged in with a session in AsyncStorage.
+# This helper opens the app and navigates to the Dashboard tab.
+#
+# Handles multiple states:
+#   (a) App not open → openLink launches it fresh on Dashboard
+#   (b) App open with a modal → pressKey back closes it, then openLink refocuses
+#   (c) App open on some Settings screen → openLink brings to front, Dashboard tap navigates
+#
+# NOTE: pressKey: back closes any open modal, then the second openLink ensures
+#       the app is still in foreground (back may have sent it to background).
+
+- openLink: "exp://10.0.2.2:8081"
+
+- waitForAnimationToEnd
+
+# Close any open modal (Add Menu Item, etc. left open from previous run)
+- pressKey: back
+
+- waitForAnimationToEnd
+
+# Re-open app in case pressKey:back sent Expo Go to background
+- openLink: "exp://10.0.2.2:8081"
+
+- waitForAnimationToEnd
+
+# Tap the Dashboard tab in the bottom navigation
+- tapOn:
+    text: "Dashboard"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 15000

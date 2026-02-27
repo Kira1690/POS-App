@@ -445,7 +445,7 @@ export const AddModifierOptionModal: React.FC<AddModifierOptionModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
             {errors.submit && (
               <View style={styles.submitError}>
                 <Text style={styles.submitErrorText}>{errors.submit}</Text>
@@ -462,6 +462,7 @@ export const AddModifierOptionModal: React.FC<AddModifierOptionModalProps> = ({
                 placeholderTextColor={theme.colors.onSurfaceSecondary}
                 maxLength={50}
                 accessibilityLabel="Option name"
+                testID="input-modifier-option-name"
               />
               {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
             </View>
@@ -497,6 +498,7 @@ export const AddModifierOptionModal: React.FC<AddModifierOptionModalProps> = ({
                   placeholderTextColor={theme.colors.onSurfaceSecondary}
                   keyboardType="decimal-pad"
                   accessibilityLabel="Price adjustment"
+                  testID="input-modifier-option-price"
                 />
                 <View style={styles.priceButtons}>
                   <TouchableOpacity
@@ -645,6 +647,7 @@ export const AddModifierOptionModal: React.FC<AddModifierOptionModalProps> = ({
               onPress={handleSave}
               disabled={isSubmitting}
               accessibilityLabel={isEditMode ? 'Save changes' : 'Add option'}
+              testID="btn-save-modifier-option"
             >
               <Text style={styles.saveButtonText}>
                 {isSubmitting

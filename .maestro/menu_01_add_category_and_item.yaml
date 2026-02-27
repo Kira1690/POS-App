@@ -1,0 +1,167 @@
+appId: host.exp.exponent
+name: "Menu - 01: Add Category and Add Item"
+tags:
+  - menu
+  - manual-flow
+---
+
+# ─────────────────────────────────────────────────────
+#  Test: Settings > Menu Management
+#   1. Open app and navigate to Settings
+#   2. Open Menu Management
+#   3. Add a new category "Test Beverages"
+#   4. Add a new item "Iced Coffee" at $4.50 in that category
+#      (4-step wizard: Basic Info → Pricing → Modifiers → Nutrition)
+#   5. Verify item appears in the grid
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/open_app.yaml
+
+# Step 1 — Navigate to Settings tab
+- tapOn:
+    text: "Settings"
+
+- extendedWaitUntil:
+    visible: "System Settings"
+    timeout: 10000
+
+- takeScreenshot: "menu_01_step1_settings_open"
+
+# Step 2 — Tap Menu Management
+- tapOn:
+    text: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Items"
+    timeout: 10000
+
+- takeScreenshot: "menu_01_step2_menu_management_open"
+
+# Step 3 — Tap "+" FAB to open Add Category modal
+# The blue "+" circle button is in the collapsed category sidebar
+- tapOn:
+    anyOf:
+      - id: "add-category-btn"
+      - text: "+"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Add Category"
+        - "Enter category name"
+        - "Category Name"
+    timeout: 8000
+
+- takeScreenshot: "menu_01_step3_add_category_modal"
+
+# Step 4 — Type category name
+- tapOn:
+    anyOf:
+      - placeholder: "Enter category name"
+      - text: "Enter category name"
+
+- inputText: "Test Beverages"
+
+- takeScreenshot: "menu_01_step4_category_name_typed"
+
+# Step 5 — Save category
+- tapOn:
+    text: "Save Category"
+
+- extendedWaitUntil:
+    visible: "Test Beverages"
+    timeout: 8000
+
+- takeScreenshot: "menu_01_step5_category_created"
+
+# Step 6 — Tap "+ Add Item" toolbar button
+- tapOn:
+    anyOf:
+      - text: "Add Item"
+      - text: "+ Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- takeScreenshot: "menu_01_step6_wizard_step1"
+
+# Step 7 — Wizard Step 1: Basic Info
+# Type item name
+- tapOn:
+    placeholder: "Enter item name"
+
+- inputText: "Iced Coffee"
+
+# Select the "Test Beverages" category chip
+- tapOn:
+    text: "Test Beverages"
+
+- takeScreenshot: "menu_01_step7_basic_info_filled"
+
+# Tap Next → Pricing
+- tapOn:
+    text: "Next"
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- takeScreenshot: "menu_01_step8_wizard_pricing"
+
+# Step 8 — Wizard Step 2: Pricing
+# Tap price field and type 4.50
+- tapOn:
+    anyOf:
+      - placeholder: "0.00"
+      - text: "Selling Price"
+
+- clearText
+- inputText: "4.50"
+
+- takeScreenshot: "menu_01_step9_price_filled"
+
+# Tap Next → Modifiers
+- tapOn:
+    text: "Next"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "No modifier groups available"
+        - "Modifier Groups"
+        - "Modifiers"
+    timeout: 8000
+
+- takeScreenshot: "menu_01_step10_wizard_modifiers"
+
+# Step 9 — Wizard Step 3: Modifiers (skip)
+- tapOn:
+    text: "Next"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Calories"
+        - "Nutrition"
+        - "Dietary Tags"
+    timeout: 8000
+
+- takeScreenshot: "menu_01_step11_wizard_nutrition"
+
+# Step 10 — Wizard Step 4: Nutrition → Create Item
+- tapOn:
+    text: "Create Item"
+
+# Wait for item to appear in grid
+- extendedWaitUntil:
+    visible: "Iced Coffee"
+    timeout: 10000
+
+- takeScreenshot: "menu_01_step12_item_created"
+
+# Verify item shows in grid with price
+- assertVisible:
+    text: "Iced Coffee"
+
+- takeScreenshot: "menu_01_step13_final_state"

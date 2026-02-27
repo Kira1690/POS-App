@@ -1,0 +1,108 @@
+appId: host.exp.exponent
+name: "QA 07: Kitchen Operations — Full Flow (Confirmed → Served)"
+tags:
+  - qa
+  - kitchen
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 7 — Full Kitchen lifecycle for order A-1
+#
+#  Status chain:
+#    CONFIRMED → Start Preparing → PREPARING
+#               → Mark Ready     → READY
+#               → Mark Served    → SERVED
+#
+#  After SERVED, order A-1 is eligible for payment (qa_08).
+#
+#  QA Assertions:
+#    ✓ Kitchen tab shows order tickets (Latte visible)
+#    ✓ After "Start Preparing" → PREPARING label
+#    ✓ After "Mark Ready"      → READY label
+#    ✓ After "Mark Served"     → ticket disappears or SERVED
+#    ✓ Order Management shows SERVED status
+#
+#  Prerequisites: qa_05 + qa_06 completed (orders sent to kitchen)
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# Navigate to Kitchen Operations tab
+- tapOn:
+    text: "Kitchen Operations"
+
+- extendedWaitUntil:
+    visible: "Kitchen Operations"
+    timeout: 10000
+
+- takeScreenshot: "qa_07_step1_kitchen_opened"
+
+# QA: Order tickets visible
+- extendedWaitUntil:
+    visible: "Latte"
+    timeout: 10000
+
+- assertVisible: "Latte"
+
+- takeScreenshot: "qa_07_step2_tickets_visible"
+
+# ── STEP A: CONFIRMED → PREPARING ──────────────────
+- tapOn:
+    text: "Start Preparing"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_07_step3_start_preparing_tapped"
+
+# QA: Ticket now shows PREPARING
+- extendedWaitUntil:
+    visible: "PREPARING"
+    timeout: 8000
+
+- assertVisible: "PREPARING"
+
+- takeScreenshot: "qa_07_step4_status_preparing"
+
+# ── STEP B: PREPARING → READY ──────────────────────
+- tapOn:
+    text: "Mark Ready"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_07_step5_mark_ready_tapped"
+
+# QA: Ticket now shows READY
+- extendedWaitUntil:
+    visible: "READY"
+    timeout: 8000
+
+- assertVisible: "READY"
+
+- takeScreenshot: "qa_07_step6_status_ready"
+
+# ── STEP C: READY → SERVED ─────────────────────────
+- tapOn:
+    text: "Mark Served"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_07_step7_mark_served_tapped"
+
+# Navigate to Order Management to verify SERVED status
+- tapOn:
+    text: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "qa_07_step8_order_management"
+
+# QA: Order shows SERVED status
+- extendedWaitUntil:
+    visible: "SERVED"
+    timeout: 10000
+
+- assertVisible: "SERVED"
+
+- takeScreenshot: "qa_07_PASS_order_served_verified"

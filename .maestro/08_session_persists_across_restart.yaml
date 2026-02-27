@@ -7,7 +7,7 @@ tags:
 
 # Test: Session persists in SQLite across app restart (24h expiry)
 
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 # Login as staff
 - extendedWaitUntil:
@@ -37,7 +37,7 @@ tags:
 - takeScreenshot: "08a_logged_in_first_time"
 
 # Relaunch via deep link (session should persist)
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 # Should auto-login to dashboard without showing login screen
 - extendedWaitUntil:

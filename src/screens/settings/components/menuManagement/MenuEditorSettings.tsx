@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { useMenuContext } from '@/context/menu';
 import { useMenuManagementState } from './hooks/useMenuManagementState';
@@ -42,6 +42,11 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
   onChangesDetected,
 }) => {
   const { theme } = useTheme();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  // Settings sidebar is 280px; remaining space for menu editor
+  const menuEditorWidth = screenWidth - 280;
+  // Portrait: not enough room for CategorySidebar(260) + content + StatsPanel(280)
+  const isPortrait = screenHeight > screenWidth;
   const menuContext = useMenuContext();
 
   // State from hook
@@ -93,8 +98,8 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
   const [comboToEdit, setComboToEdit] = useState<ComboDeal | null>(null);
   const [comboToDelete, setComboToDelete] = useState<ComboDeal | null>(null);
 
-  // UI state
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // UI state — auto-collapse category sidebar in portrait to reclaim width
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(isPortrait);
 
   // Computed values
   const availableItems = filteredItems.filter((i) => i.is_available).length;
@@ -398,14 +403,17 @@ export const MenuEditorSettings: React.FC<MenuEditorSettingsProps> = ({
                 emptyMessage={selectedCategoryId ? 'No items in this category' : 'No menu items found'}
               />
             </View>
-            <StatsPanel
-              selectedItem={selectedItem} selectedCategory={selectedCategory}
-              totalItems={menuContext.menuItemsExtended.length} totalCategories={categories.length}
-              availableItems={availableItems} unavailableItems={unavailableItems}
-              onEditItem={selectedItem ? () => handleEditItem(selectedItem) : undefined}
-              onDeleteItem={selectedItem ? () => handleDeleteItem(selectedItem) : undefined}
-              onDuplicateItem={handleDuplicateItem} onToggleAvailability={handleToggleAvailability}
-            />
+            {/* Hide StatsPanel in portrait — saves 280px so toolbar/Add Item button is visible */}
+            {!isPortrait && (
+              <StatsPanel
+                selectedItem={selectedItem} selectedCategory={selectedCategory}
+                totalItems={menuContext.menuItemsExtended.length} totalCategories={categories.length}
+                availableItems={availableItems} unavailableItems={unavailableItems}
+                onEditItem={selectedItem ? () => handleEditItem(selectedItem) : undefined}
+                onDeleteItem={selectedItem ? () => handleDeleteItem(selectedItem) : undefined}
+                onDuplicateItem={handleDuplicateItem} onToggleAvailability={handleToggleAvailability}
+              />
+            )}
           </>
         )}
 

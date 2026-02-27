@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Buffer } from 'buffer';
 global.Buffer = Buffer;
 import { NavigationContainer } from '@react-navigation/native';
@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+import * as ScreenOrientation from 'expo-screen-orientation';
 
 import { RootNavigator } from '@/navigation';
 import { ThemeProvider } from '@/providers/ThemeProvider';
@@ -53,6 +54,10 @@ const toastConfig = {
 };
 
 export default function App() {
+  useEffect(() => {
+    ScreenOrientation.unlockAsync();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

@@ -9,7 +9,7 @@ tags:
 # First logout from Settings, then login as manager
 
 # Open app
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 - extendedWaitUntil:
     visible: "Dashboard"

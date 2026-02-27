@@ -81,6 +81,12 @@ export const APP_CONFIG = {
   },
 } as const;
 
+// Development feature flags — separate from APP_CONFIG to retain boolean type
+// (avoids TypeScript narrowing `false` to literal type under `as const`)
+export const DEV_FLAGS: { SEED_DEMO_DATA: boolean } = {
+  SEED_DEMO_DATA: false, // Set true to seed 5 categories + 7 items on first run
+};
+
 // Environment-specific configuration
 export const ENV_CONFIG = {
   isDevelopment: __DEV__,

@@ -12,6 +12,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useTRXTerminalConnection } from '@/hooks/trx/useTRXTerminalConnection';
 import { TRXTerminalList } from '@/components/business/payment/trx/TRXTerminalList';
 import { TRXManualIPInput } from '@/components/business/payment/trx/TRXManualIPInput';
+import { isTcpSocketAvailable } from '@/services/trx/pos/TcpSocketWrapper';
 
 interface TRXTerminalScreenProps {
   onClose?: () => void;
@@ -19,6 +20,7 @@ interface TRXTerminalScreenProps {
 
 export const TRXTerminalScreen: React.FC<TRXTerminalScreenProps> = ({ onClose }) => {
   const { theme } = useTheme();
+  const tcpAvailable = isTcpSocketAvailable();
 
   const {
     isScanning,
@@ -95,6 +97,21 @@ export const TRXTerminalScreen: React.FC<TRXTerminalScreenProps> = ({ onClose })
       color: theme.colors.onSurface,
       marginBottom: theme.spacing.md,
     },
+    unavailableBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      backgroundColor: theme.colors.warningContainer,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.outline,
+      gap: theme.spacing.sm,
+    },
+    unavailableBannerText: {
+      ...theme.typography.body2,
+      color: theme.colors.onSurface,
+      flex: 1,
+    },
   });
 
   return (
@@ -119,6 +136,17 @@ export const TRXTerminalScreen: React.FC<TRXTerminalScreenProps> = ({ onClose })
           </Text>
         )}
       </View>
+
+      {/* Expo Go / native module unavailable banner */}
+      {!tcpAvailable && (
+        <View style={styles.unavailableBanner}>
+          <MaterialIcons name="warning" size={18} color={theme.colors.warning} />
+          <Text style={styles.unavailableBannerText}>
+            TRX Terminal requires a custom dev build — not available in Expo Go.
+            Run: eas build --profile development --platform android
+          </Text>
+        </View>
+      )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Terminal Discovery List */}

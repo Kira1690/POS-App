@@ -11,7 +11,7 @@ tags:
 # ============================================================
 
 # Open app - session persisted from previous manager login
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 # TEST 1: Session persists - lands on dashboard without login
 - extendedWaitUntil:
@@ -66,7 +66,7 @@ tags:
 - takeScreenshot: "06_back_to_dashboard"
 
 # TEST 7: Re-open app - session still alive
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 - extendedWaitUntil:
     visible: "Dashboard"

@@ -8,7 +8,7 @@ tags:
 # Test: Kitchen staff can log in offline
 # Credential: CHEF001 / kitchen123 (Chef Mike Wilson - Kitchen Staff)
 
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 - extendedWaitUntil:
     visible: "Welcome to FoodPOS"

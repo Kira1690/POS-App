@@ -1,0 +1,144 @@
+appId: host.exp.exponent
+name: "QA 08: Billing & Cash Payment — Full Payment Flow"
+tags:
+  - qa
+  - billing
+  - payment
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 8 — Billing & Payment
+#
+#  Flow:
+#    Order Management → filter Served → tap "Pay" on A-1 order
+#    → PaymentProcessing screen
+#    → Cash Payment → CashPaymentModal
+#    → tap first quick amount ($15.00)
+#    → Confirm Payment
+#    → "Payment Successful"
+#    → Continue → Dashboard → Order Management → verify PAID
+#
+#  QA Assertions:
+#    ✓ "Pay" button visible on SERVED order
+#    ✓ PaymentProcessing screen loads
+#    ✓ Cash Payment option visible
+#    ✓ CashPaymentModal opens with "Cash Payment" title
+#    ✓ Quick amount selectable (≥ order total)
+#    ✓ "Payment Successful" shown after confirm
+#    ✓ Order Management shows PAID status
+#
+#  Prerequisites: qa_07 completed (order A-1 is SERVED)
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# Navigate to Order Management
+- tapOn:
+    text: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "qa_08_step1_order_management"
+
+# Filter to show Served orders
+- tapOn:
+    text: "Served"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_08_step2_served_filter"
+
+# QA: SERVED order is visible
+- extendedWaitUntil:
+    visible: "SERVED"
+    timeout: 8000
+
+- assertVisible: "SERVED"
+
+- takeScreenshot: "qa_08_step3_served_order_visible"
+
+# Tap the "Pay" button on the SERVED order
+- tapOn:
+    text: "Pay"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_08_step4_pay_tapped"
+
+# QA: PaymentProcessing screen loads
+- extendedWaitUntil:
+    visible: "Cash Payment"
+    timeout: 10000
+
+- takeScreenshot: "qa_08_step5_payment_methods"
+
+# Select Cash Payment
+- tapOn:
+    text: "Cash Payment"
+
+- waitForAnimationToEnd
+
+# QA: Cash Payment modal opens
+- extendedWaitUntil:
+    visible: "Total Amount"
+    timeout: 8000
+
+- takeScreenshot: "qa_08_step6_cash_modal_opened"
+
+# Tap the first quick amount ($15.00 — ceiling of ~$14.30 total)
+- tapOn:
+    text: "$15.00"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_08_step7_amount_selected"
+
+# Confirm the payment
+- tapOn:
+    text: "Confirm Payment"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_08_step8_confirm_tapped"
+
+# QA: Payment Successful screen
+- extendedWaitUntil:
+    visible: "Payment Successful"
+    timeout: 15000
+
+- assertVisible: "Payment Successful"
+
+- takeScreenshot: "qa_08_PASS_payment_successful"
+
+# Navigate back to Order Management via Continue
+- tapOn:
+    text: "Continue"
+
+- waitForAnimationToEnd
+
+# Continue navigates to Dashboard — go to Order Management
+- tapOn:
+    text: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "qa_08_step9_back_to_order_mgmt"
+
+# Filter to Paid to verify order was processed
+- tapOn:
+    text: "Paid"
+
+- waitForAnimationToEnd
+
+# QA: Paid order appears in Paid filter
+- extendedWaitUntil:
+    visible: "PAID"
+    timeout: 10000
+
+- assertVisible: "PAID"
+
+- takeScreenshot: "qa_08_PASS_order_paid_confirmed"

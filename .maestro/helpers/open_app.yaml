@@ -2,7 +2,7 @@ appId: host.exp.exponent
 ---
 
 # Helper: Open the POS app via Expo Go deep link
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 # Wait for app to load (may take time for JS bundle)
 - extendedWaitUntil:
