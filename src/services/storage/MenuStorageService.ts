@@ -12,6 +12,7 @@ import {
 } from '@/types/menu-management-extended.types';
 import { databaseService } from '@/services/database/DatabaseService';
 import { fromSqlBool, toSqlBool, parseJsonColumn, now } from '@/services/database/helpers';
+import { DEV_FLAGS } from '@/constants/config';
 
 // Menu data structure for storage
 export interface MenuStorageData {
@@ -552,6 +553,12 @@ class MenuStorageService {
       return;
     }
 
+    if (!DEV_FLAGS.SEED_DEMO_DATA) {
+      if (__DEV__) {
+        console.log('[MenuStorageService] No menu data found. SEED_DEMO_DATA=false — starting empty.');
+      }
+      return;
+    }
     if (__DEV__) {
       console.log('[MenuStorageService] No menu data found. Seeding mock data...');
     }

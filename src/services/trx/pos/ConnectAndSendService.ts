@@ -165,7 +165,10 @@ export class ConnectAndSendService {
       });
 
       if (!client) {
-        reject(new Error(`Failed to create TCP connection to ${config.host}:${config.port}`));
+        reject(new Error(
+          'TCP socket unavailable — requires a custom dev build, not Expo Go. ' +
+          `Run: eas build --profile development --platform android (target: ${config.host}:${config.port})`
+        ));
         return;
       }
 

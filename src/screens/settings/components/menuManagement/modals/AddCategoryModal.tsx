@@ -362,6 +362,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
                 maxLength={50}
                 accessibilityLabel="Category name"
+                testID="input-category-name"
               />
               {errors.name ? (
                 <Text style={styles.errorText}>{errors.name}</Text>
@@ -471,6 +472,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
               disabled={isSubmitting}
               accessibilityLabel="Save category"
               accessibilityRole="button"
+              testID="btn-save-category"
             >
               {isSubmitting ? (
                 <Icon

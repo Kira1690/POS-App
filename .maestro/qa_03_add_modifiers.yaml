@@ -1,0 +1,301 @@
+appId: host.exp.exponent
+name: "QA 03: Add Modifier Groups (Cup Size / Protein)"
+tags:
+  - qa
+  - menu-setup
+  - modifiers
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 3 — Create 2 modifier groups with options
+#
+#  Group 1: Cup Size  — Small $0 / Medium +$0.75 / Large +$1.50
+#  Group 2: Protein   — Regular $0 / Extra +$2.00
+#
+#  CRITICAL rules:
+#    - NEVER tapOn: label: for TextInputs → opens Google Search
+#    - NEVER tapOn: label: for small icon buttons → may hit Android nav bar
+#    - NEVER tapOn: text: "Add Option" → hits modal TITLE, not the button
+#    - ALWAYS use tapOn: id: (testID) for TextInputs and icon buttons
+#    - ALWAYS use tapOn: id: "btn-save-modifier-option" to submit option form
+#    - waitForAnimationToEnd after hideKeyboard (KeyboardAvoidingView settle)
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Settings"
+
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 15000
+
+- tapOn:
+    text: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Items"
+    timeout: 10000
+
+- tapOn:
+    text: "Modifiers"
+
+- extendedWaitUntil:
+    visible: "Add Group"
+    timeout: 8000
+
+- takeScreenshot: "qa_03_step1_modifiers_tab"
+
+# ── Clear any modifier groups from previous test runs ──
+- runFlow: helpers/clear_modifier_groups.yaml
+
+- waitForAnimationToEnd
+
+# ════════════════════════════════════════════════════
+# GROUP 1: Cup Size
+# ════════════════════════════════════════════════════
+- tapOn:
+    text: "Add Group"
+
+- extendedWaitUntil:
+    visible: "Group Name *"
+    timeout: 8000
+
+- tapOn:
+    id: "input-modifier-group-name"
+
+- inputText: "Cup Size"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_03_cup_size_config"
+
+- tapOn:
+    text: "Create Group"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Cup Size"
+    timeout: 10000
+
+- assertVisible: "Cup Size"
+
+- takeScreenshot: "qa_03_cup_size_group_created"
+
+# ── Option 1: Small — $0.00 ──
+- tapOn:
+    id: "btn-add-option"
+
+- extendedWaitUntil:
+    visible: "Add Option"
+    timeout: 8000
+
+- tapOn:
+    id: "input-modifier-option-name"
+
+- inputText: "Small"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-save-modifier-option"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Small"
+    timeout: 5000
+
+- takeScreenshot: "qa_03_cup_size_small_added"
+
+# ── Option 2: Medium — +$0.75 ──
+- tapOn:
+    id: "btn-add-option"
+
+- extendedWaitUntil:
+    visible: "Add Option"
+    timeout: 8000
+
+- tapOn:
+    id: "input-modifier-option-name"
+
+- inputText: "Medium"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-modifier-option-price"
+
+- eraseText: 3
+
+- inputText: "0.75"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-save-modifier-option"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Medium"
+    timeout: 5000
+
+- takeScreenshot: "qa_03_cup_size_medium_added"
+
+# ── Option 3: Large — +$1.50 ──
+- tapOn:
+    id: "btn-add-option"
+
+- extendedWaitUntil:
+    visible: "Add Option"
+    timeout: 8000
+
+- tapOn:
+    id: "input-modifier-option-name"
+
+- inputText: "Large"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-modifier-option-price"
+
+- eraseText: 3
+
+- inputText: "1.50"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-save-modifier-option"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Large"
+    timeout: 5000
+
+- takeScreenshot: "qa_03_PASS_cup_size_complete"
+
+# ════════════════════════════════════════════════════
+# GROUP 2: Protein
+# ════════════════════════════════════════════════════
+- tapOn:
+    text: "Add Group"
+
+- extendedWaitUntil:
+    visible: "Group Name *"
+    timeout: 8000
+
+- tapOn:
+    id: "input-modifier-group-name"
+
+- inputText: "Protein"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Create Group"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Protein"
+    timeout: 10000
+
+- assertVisible: "Protein"
+
+- takeScreenshot: "qa_03_protein_group_created"
+
+# ── Option 1: Regular — $0.00 (index 1 = Protein card) ──
+- tapOn:
+    id: "btn-add-option"
+    index: 1
+
+- extendedWaitUntil:
+    visible: "Add Option"
+    timeout: 8000
+
+- tapOn:
+    id: "input-modifier-option-name"
+
+- inputText: "Regular"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-save-modifier-option"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Regular"
+    timeout: 5000
+
+- takeScreenshot: "qa_03_protein_regular_added"
+
+# ── Option 2: Extra — +$2.00 ──
+- tapOn:
+    id: "btn-add-option"
+    index: 1
+
+- extendedWaitUntil:
+    visible: "Add Option"
+    timeout: 8000
+
+- tapOn:
+    id: "input-modifier-option-name"
+
+- inputText: "Extra"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-modifier-option-price"
+
+- eraseText: 3
+
+- inputText: "2.00"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-save-modifier-option"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Extra"
+    timeout: 5000
+
+- takeScreenshot: "qa_03_protein_extra_added"
+
+# ── FINAL QA ──────────────────────────────────────────
+- assertVisible: "Cup Size"
+- assertVisible: "Protein"
+
+- takeScreenshot: "qa_03_PASS_both_modifier_groups"

@@ -1,0 +1,456 @@
+appId: host.exp.exponent
+name: "QA 02: Add 6 Menu Items (Drinks / Mains / Starters)"
+tags:
+  - qa
+  - menu-setup
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 2 — Add 6 items across 3 categories
+#
+#  Test Data:
+#    Latte           → Drinks    $5.00
+#    Cappuccino      → Drinks    $4.75
+#    Beef Burger     → Mains     $12.99
+#    Grilled Salmon  → Mains     $15.50
+#    Spring Rolls    → Starters  $6.50
+#    Garlic Bread    → Starters  $4.00
+#
+#  Prerequisites: qa_01 completed (Drinks/Mains/Starters categories exist)
+#
+#  Key Rules (learned from debugging):
+#    - tapOn: label: → triggers Android ACTION_CLICK which CLOSES the modal. NEVER use inside modal.
+#    - tapOn: text: → coordinate-based touch, always use for modal buttons and chips
+#    - Modifier step: "Assign Modifiers" title NOT shown when no modifier groups exist
+#      → just use waitForAnimationToEnd, skip the extendedWaitUntil check
+#    - Step 4 (Nutrition): wait for "Calories" or use "Create Item" button text
+#    - testID "input-item-name" and "input-selling-price" for text inputs
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Settings"
+
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 15000
+
+- tapOn:
+    text: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Add Item"
+    timeout: 15000
+
+- takeScreenshot: "qa_02_step0_menu_mgmt_open"
+
+# ════════════════════════════════════════════════════
+# ITEM 1: Latte — Drinks — $5.00
+# ════════════════════════════════════════════════════
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Drinks"
+    timeout: 15000
+
+- takeScreenshot: "qa_02_latte_modal_open"
+
+# Step 1: Basic Info — select category first, then type name
+- tapOn:
+    text: "Drinks"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Latte"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+# Step 2: Pricing
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "5.00"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+# Step 3: Modifiers — empty state shows "No modifier groups available", not title text
+# Just wait for animation and tap Next
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+# Step 4: Nutrition — "Create Item" button text appears when on last step
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Latte"
+    timeout: 10000
+
+- assertVisible: "Latte"
+
+- takeScreenshot: "qa_02_PASS_latte_created"
+
+# ════════════════════════════════════════════════════
+# ITEM 2: Cappuccino — Drinks — $4.75
+# ════════════════════════════════════════════════════
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Drinks"
+    timeout: 15000
+
+- tapOn:
+    text: "Drinks"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Cappuccino"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "4.75"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Cappuccino"
+    timeout: 10000
+
+- assertVisible: "Cappuccino"
+
+- takeScreenshot: "qa_02_PASS_cappuccino_created"
+
+# ════════════════════════════════════════════════════
+# ITEM 3: Beef Burger — Mains — $12.99
+# ════════════════════════════════════════════════════
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 15000
+
+- tapOn:
+    text: "Mains"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Beef Burger"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "12.99"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 10000
+
+- assertVisible: "Beef Burger"
+
+- takeScreenshot: "qa_02_PASS_beef_burger_created"
+
+# ════════════════════════════════════════════════════
+# ITEM 4: Grilled Salmon — Mains — $15.50
+# ════════════════════════════════════════════════════
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 15000
+
+- tapOn:
+    text: "Mains"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Grilled Salmon"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "15.50"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Grilled Salmon"
+    timeout: 10000
+
+- assertVisible: "Grilled Salmon"
+
+- takeScreenshot: "qa_02_PASS_grilled_salmon_created"
+
+# ════════════════════════════════════════════════════
+# ITEM 5: Spring Rolls — Starters — $6.50
+# ════════════════════════════════════════════════════
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Starters"
+    timeout: 15000
+
+- tapOn:
+    text: "Starters"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Spring Rolls"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "6.50"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Spring Rolls"
+    timeout: 10000
+
+- assertVisible: "Spring Rolls"
+
+- takeScreenshot: "qa_02_PASS_spring_rolls_created"
+
+# ════════════════════════════════════════════════════
+# ITEM 6: Garlic Bread — Starters — $4.00
+# ════════════════════════════════════════════════════
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Starters"
+    timeout: 15000
+
+- tapOn:
+    text: "Starters"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Garlic Bread"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "4.00"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 10000
+
+- assertVisible: "Garlic Bread"
+
+- takeScreenshot: "qa_02_PASS_garlic_bread_created"
+
+# ── FINAL QA: Verify all 6 items exist ───────────────
+- assertVisible: "Latte"
+- assertVisible: "Cappuccino"
+- assertVisible: "Beef Burger"
+- assertVisible: "Grilled Salmon"
+- assertVisible: "Spring Rolls"
+- assertVisible: "Garlic Bread"
+
+- takeScreenshot: "qa_02_PASS_all_6_items_created"

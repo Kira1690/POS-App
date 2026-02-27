@@ -368,7 +368,7 @@ export const AddModifierGroupModal: React.FC<AddModifierGroupModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
             {errors.submit && (
               <View style={styles.submitError}>
                 <Text style={styles.submitErrorText}>{errors.submit}</Text>
@@ -388,6 +388,7 @@ export const AddModifierGroupModal: React.FC<AddModifierGroupModalProps> = ({
                   placeholderTextColor={theme.colors.onSurfaceSecondary}
                   maxLength={50}
                   accessibilityLabel="Modifier group name"
+                  testID="input-modifier-group-name"
                 />
                 {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
               </View>
@@ -553,6 +554,7 @@ export const AddModifierGroupModal: React.FC<AddModifierGroupModalProps> = ({
               onPress={handleSave}
               disabled={isSubmitting}
               accessibilityLabel="Create modifier group"
+              testID="btn-create-modifier-group"
             >
               <Text style={styles.saveButtonText}>
                 {isSubmitting ? 'Creating...' : 'Create Group'}

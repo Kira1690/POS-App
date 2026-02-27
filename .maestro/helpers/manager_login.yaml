@@ -1,0 +1,51 @@
+appId: host.exp.exponent
+name: "Helper: Manager Login"
+---
+
+# Opens the app and logs in as Manager (dummy auth - works offline)
+# Credentials: manager@foodcorner.com / manager123
+
+- openLink: "exp://10.0.2.2:8081"
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 60000
+
+# Dismiss the Expo developer menu if it appears on fresh launch.
+# The dev menu is a bottom sheet that intercepts ALL touches even to elements above it.
+- optional:
+    - extendedWaitUntil:
+        visible: "developer menu"
+        timeout: 3000
+    - tapOn:
+        text: "Continue"
+
+- wait: 1500
+
+# Navigate to Manager Login screen
+- tapOn:
+    text: ".*Manager Login.*"
+
+# Wait for the Manager Login form to be ready (Email Address is unique to this screen)
+- extendedWaitUntil:
+    visible: "Email Address"
+    timeout: 15000
+
+- tapOn:
+    id: "email-input"
+
+- inputText: "manager@foodcorner.com"
+
+- tapOn:
+    id: "password-input"
+
+- inputText: "manager123"
+
+- hideKeyboard
+
+- tapOn:
+    text: ".*Sign In.*"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000

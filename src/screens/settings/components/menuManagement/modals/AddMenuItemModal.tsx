@@ -507,6 +507,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
           onChangeText={(text) => updateFormData({ name: text })}
           maxLength={100}
           accessibilityLabel="Item name"
+          testID="input-item-name"
         />
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
       </View>
@@ -589,6 +590,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
             }}
             keyboardType="decimal-pad"
             accessibilityLabel="Selling price"
+            testID="input-selling-price"
           />
         </View>
         {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
@@ -773,7 +775,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.overlay}
       >
         <View style={styles.container}>
@@ -836,7 +838,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
           </View>
 
           {/* Content */}
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
             {renderCurrentStep()}
           </ScrollView>
 
@@ -863,6 +865,7 @@ export const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({
               onPress={isLastStep ? handleSave : handleNext}
               disabled={isSubmitting}
               accessibilityLabel={isLastStep ? 'Create item' : 'Next step'}
+              testID="modal-next-btn"
             >
               {isSubmitting ? (
                 <Icon name="loading" size={18} color={theme.colors.white} accessibilityLabel="" />

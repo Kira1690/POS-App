@@ -45,12 +45,24 @@ class NativeTcpSocket {
         throw new Error('react-native-tcp-socket module not available');
       }
 
+      // Verify the underlying native module is truly registered.
+      // In Expo Go the JS package loads fine but TcpSockets is never registered,
+      // so getTcpSockets() returns null and any call crashes at runtime.
+      const viaInterop = TurboModuleRegistry.get && TurboModuleRegistry.get('TcpSockets');
+      const viaLegacy = NativeModules.TcpSockets;
+      const nativeModule = viaInterop || viaLegacy;
+
+      if (!nativeModule) {
+        throw new Error(
+          'TcpSockets native module not registered — ' +
+          'TCP requires a custom dev build, not Expo Go. ' +
+          'Run: eas build --profile development --platform android'
+        );
+      }
+
       this.tcpSocket = TcpSocket as unknown as TcpSocketLib;
       this.isInitialized = true;
 
-      // Diagnostic: log how the native module was resolved
-      const viaInterop = TurboModuleRegistry.get && TurboModuleRegistry.get('TcpSockets');
-      const viaLegacy = NativeModules.TcpSockets;
       this.logger.info(
         `Native TCP socket module loaded: turbo=${!!viaInterop} legacy=${!!viaLegacy}`,
         'initializeNativeModule'

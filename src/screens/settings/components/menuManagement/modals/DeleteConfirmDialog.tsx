@@ -213,6 +213,7 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
               disabled={isDeleting}
               accessibilityLabel={confirmText}
               accessibilityRole="button"
+              testID="btn-confirm-delete"
             >
               {isDeleting ? (
                 <Icon

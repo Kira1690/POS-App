@@ -322,6 +322,7 @@ export const ModifierGroupCard: React.FC<ModifierGroupCardProps> = ({
             style={styles.actionButton}
             onPress={handleAddOption}
             accessibilityLabel="Add option"
+            testID="btn-add-option"
           >
             <MaterialCommunityIcons name="plus" size={18} color={theme.colors.primary} />
           </TouchableOpacity>
@@ -347,6 +348,7 @@ export const ModifierGroupCard: React.FC<ModifierGroupCardProps> = ({
             style={[styles.actionButton, styles.actionButtonDanger]}
             onPress={handleDelete}
             accessibilityLabel="Delete modifier group"
+            testID="btn-delete-modifier-group"
           >
             <MaterialCommunityIcons name="delete" size={18} color={theme.colors.error} />
           </TouchableOpacity>

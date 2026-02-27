@@ -1,0 +1,24 @@
+appId: host.exp.exponent
+name: "Menu Full Test Suite"
+tags:
+  - menu
+  - full-suite
+---
+
+# ─────────────────────────────────────────────────────
+#  Full Menu Management Test Suite
+#  Runs all menu tests in order:
+#   1. Add category + item manually
+#   2. Add modifier group + options
+#   3. POS order flow using added items
+#
+#  Prerequisites:
+#   - App running at exp://10.0.2.2:8081
+#   - Database cleared (no existing menu items)
+#   - Run: bash scripts/seed-menu.sh  (if you want pre-seeded data)
+#     OR let this suite add items from scratch
+# ─────────────────────────────────────────────────────
+
+- runFlow: menu_01_add_category_and_item.yaml
+- runFlow: menu_02_add_modifier_group.yaml
+- runFlow: menu_03_pos_order_flow.yaml

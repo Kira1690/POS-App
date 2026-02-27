@@ -1,0 +1,71 @@
+appId: host.exp.exponent
+name: "QA Full Suite — Menu Setup + POS Orders + Kitchen + Billing"
+tags:
+  - qa
+  - full-suite
+---
+
+# ─────────────────────────────────────────────────────
+#  Full QA Test Suite
+#
+#  Test Data (different from manual baseline):
+#    Categories:  Drinks, Mains, Starters
+#    Items:       Latte $5.00, Cappuccino $4.75,
+#                 Beef Burger $12.99, Grilled Salmon $15.50,
+#                 Spring Rolls $6.50, Garlic Bread $4.00
+#    Modifiers:   Cup Size (Small/Medium/Large +$0/$0.75/$1.50)
+#                 Protein (Regular/Extra +$0/$2.00)
+#    Assignments: Cup Size → Latte, Cappuccino
+#                 Protein → Beef Burger, Grilled Salmon
+#
+#  Prerequisites (run ONCE before suite):
+#    1. Clear app data:
+#         adb shell pm clear host.exp.exponent
+#    2. Start Expo server:
+#         bun expo start --clear
+#    3. Enable emulator auto-rotate:
+#         adb shell settings put system accelerometer_rotation 1
+#         adb shell settings put system user_rotation 0
+#    4. Launch Expo Go on emulator
+#
+#  Phases:
+#    qa_01 — Add 3 categories: Drinks, Mains, Starters
+#    qa_02 — Add 6 menu items
+#    qa_03 — Add 2 modifier groups: Cup Size, Protein
+#    qa_04 — Assign modifiers to items
+#    qa_05 — POS order with modifier in portrait (Table A-1)
+#
+#    ⚠️  MANUAL STEP before qa_06:
+#         Rotate emulator to landscape:
+#           adb shell settings put system user_rotation 1
+#         OR press Ctrl+F11 in Android Studio emulator
+#
+#    qa_06 — POS order in landscape (Table A-2)
+#    qa_07 — Kitchen: Confirmed → Preparing → Ready → Served
+#    qa_08 — Billing: Pay SERVED order, Cash Payment, verify PAID
+#
+#  Screenshots saved to:
+#    ~/.maestro/tests/[timestamp]/
+# ─────────────────────────────────────────────────────
+
+- runFlow: qa_01_setup_categories.yaml
+- runFlow: qa_02_add_items.yaml
+- runFlow: qa_03_add_modifiers.yaml
+- runFlow: qa_04_assign_modifiers.yaml
+- runFlow: qa_05_pos_portrait.yaml
+
+# ─────────────────────────────────────────────────────
+#  MANUAL STEP REQUIRED before qa_06:
+#
+#  Rotate emulator to landscape:
+#    adb shell settings put system user_rotation 1
+#  OR press Ctrl+F11 in Android Studio emulator
+#
+#  Then run qa_06 and qa_07 separately:
+#    maestro test .maestro/qa_06_pos_landscape.yaml
+#    maestro test .maestro/qa_07_kitchen_ops.yaml
+# ─────────────────────────────────────────────────────
+
+- runFlow: qa_06_pos_landscape.yaml
+- runFlow: qa_07_kitchen_ops.yaml
+- runFlow: qa_08_billing_payment.yaml

@@ -1,0 +1,133 @@
+appId: host.exp.exponent
+name: "QA 06: POS Order in Landscape Mode — Table T-2"
+tags:
+  - qa
+  - pos
+  - landscape
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 6 — POS Order in Landscape mode
+#
+#  Test scenario (different table + items from portrait test):
+#    Table: T-2 (second available table)
+#    Item 1: Beef Burger + Protein "Extra" → $12.99 + $2.00 = $14.99
+#    Item 2: Garlic Bread (no modifier) → $4.00
+#    Action: Send to Kitchen → verify CONFIRMED
+#
+#  Prerequisites:
+#    - qa_05 completed (first order sent from T-1)
+#    - Emulator rotated to landscape BEFORE running:
+#        adb shell settings put system accelerometer_rotation 1
+#        adb shell settings put system user_rotation 1
+#
+#  QA Assertions:
+#    ✓ Protein modifier modal opens for Beef Burger
+#    ✓ Garlic Bread adds without modifier prompt
+#    ✓ Order CONFIRMED after sending to kitchen
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# Navigate to Order Management
+- tapOn:
+    text: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "qa_06_step1_order_management"
+
+# Tap New Order
+- tapOn:
+    text: "+ New Order"
+
+- extendedWaitUntil:
+    visible: "Select Table"
+    timeout: 10000
+
+- takeScreenshot: "qa_06_step2_table_selector"
+
+# Select second available table (T-2)
+- tapOn:
+    text: "T-2"
+
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 10000
+
+- takeScreenshot: "qa_06_step3_pos_landscape_layout"
+
+# QA: Verify menu items visible in landscape
+- assertVisible: "Mains"
+
+- takeScreenshot: "qa_06_step3b_landscape_layout_verified"
+
+# ── ORDER ITEM 1: Beef Burger (requires Protein modifier) ─
+- tapOn:
+    text: "Beef Burger"
+
+- extendedWaitUntil:
+    visible: "Protein"
+    timeout: 8000
+
+- takeScreenshot: "qa_06_step4_protein_modal"
+
+# QA: Modifier modal opened showing Protein group
+- assertVisible: "Protein"
+
+# Select Extra (+$2.00)
+- tapOn:
+    text: "Extra"
+
+- takeScreenshot: "qa_06_step5_extra_selected"
+
+# Add to cart
+- tapOn:
+    text: "Add to Cart"
+
+- waitForAnimationToEnd
+
+# QA: Beef Burger Extra in bill
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 8000
+
+- assertVisible: "Beef Burger"
+
+- takeScreenshot: "qa_06_step6_beef_burger_in_bill"
+
+# ── ORDER ITEM 2: Garlic Bread (no modifier) ─────────
+- tapOn:
+    text: "Garlic Bread"
+
+- waitForAnimationToEnd
+
+# QA: Garlic Bread should add directly (no required modifier)
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 8000
+
+- assertVisible: "Garlic Bread"
+
+- takeScreenshot: "qa_06_step7_garlic_bread_in_bill"
+
+# ── SEND TO KITCHEN ───────────────────────────────────
+# Direct submit — no confirmation modal. On success, goBack() to Order Management.
+- tapOn:
+    text: "Send to Kitchen"
+
+- waitForAnimationToEnd
+
+# Order Management should now be visible with the new CONFIRMED order
+- extendedWaitUntil:
+    visible: "CONFIRMED"
+    timeout: 15000
+
+- takeScreenshot: "qa_06_step8_order_sent"
+
+# QA: Order CONFIRMED
+- assertVisible: "CONFIRMED"
+
+- takeScreenshot: "qa_06_PASS_order_confirmed_landscape"

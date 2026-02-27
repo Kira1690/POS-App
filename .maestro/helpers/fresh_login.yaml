@@ -1,0 +1,55 @@
+appId: host.exp.exponent
+name: "Helper: Fresh Login (after pm clear)"
+---
+
+# Used for qa_01 only — app data was cleared, no stored session.
+# Credentials: manager@foodcorner.com / manager123
+#
+# Developer menu handling:
+#   After pm clear + openLink, Expo Go shows the developer menu overlay.
+#   The overlay captures ALL touches to the screen above it (transparent backdrop).
+#   First tap on "Manager Login" hits the transparent backdrop → dismisses dev menu.
+#   Second tap on "Manager Login" actually navigates to the login screen.
+
+- openLink: "exp://10.0.2.2:8081"
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 60000
+
+# Wait for developer menu to fully render
+- waitForAnimationToEnd
+
+# Tap 1: dismisses the Expo developer menu overlay (transparent backdrop intercepts touch)
+- tapOn:
+    text: ".*Manager Login.*"
+
+- waitForAnimationToEnd
+
+# Tap 2: actually navigates to Manager Login screen (dev menu now gone)
+- tapOn:
+    text: ".*Manager Login.*"
+
+# Wait for Manager Login form (Email Address label is unique to this screen)
+- extendedWaitUntil:
+    visible: "Email Address"
+    timeout: 15000
+
+- tapOn:
+    id: "email-input"
+
+- inputText: "manager@foodcorner.com"
+
+- tapOn:
+    id: "password-input"
+
+- inputText: "manager123"
+
+- hideKeyboard
+
+- tapOn:
+    text: ".*Sign In.*"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000

@@ -254,6 +254,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
           style={styles.collapsedAddButton}
           onPress={onAddCategory}
           accessibilityLabel="Add category"
+          testID="btn-add-category"
         >
           <Icon name="plus" size={20} color={theme.colors.white} accessibilityLabel="" />
         </TouchableOpacity>
@@ -335,6 +336,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
         onPress={onAddCategory}
         accessibilityLabel="Add new category"
         accessibilityRole="button"
+        testID="btn-add-category"
       >
         <Icon name="plus" size={18} color={theme.colors.white} accessibilityLabel="" />
         <Text style={styles.addButtonText}>Add Category</Text>

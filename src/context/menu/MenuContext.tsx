@@ -370,7 +370,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       // First try to load from local storage
       if (useLocalStorage) {
         const storedData = await menuStorageService.getMenuData(restaurantId);
-        if (storedData && storedData.menuItems.length > 0) {
+        if (storedData && (storedData.categories.length > 0 || storedData.menuItems.length > 0)) {
           // Convert stored items to base menu items
           const menuItems: MenuItem[] = storedData.menuItems.map((item) => ({
             id: item.id,
@@ -484,82 +484,8 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
         }
       }
 
-      // Fall back to loading from mock service
-      const categoriesWithStats = await menuService.getCategories(restaurantId);
-
-      // Convert to base categories
-      const categories: MenuCategory[] = categoriesWithStats.map((c) => ({
-        id: c.id,
-        restaurant_id: c.restaurant_id,
-        name: c.name,
-        description: c.description,
-        sort_order: c.sort_order,
-        is_active: c.is_active,
-        created_at: c.created_at,
-        updated_at: c.updated_at,
-      }));
-
-      // Get all menu items
-      const menuItemsWithStats = await menuService.getMenuItems(restaurantId);
-
-      // Convert to base menu items and extended items
-      const menuItems: MenuItem[] = menuItemsWithStats.map((item) => ({
-        id: item.id,
-        restaurant_id: item.restaurant_id,
-        category_id: item.category_id,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        image_url: item.image_url,
-        is_available: item.is_available,
-        preparation_time_minutes: item.preparation_time_minutes,
-        dietary_info: item.dietary_info,
-        ingredients: item.ingredients,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-      }));
-
-      const menuItemsExtended: MenuItemExtended[] = menuItemsWithStats.map((item) => ({
-        ...item,
-        modifier_assignments: [],
-        modifier_groups: [],
-        combo_memberships: [],
-      }));
-
-      dispatch({
-        type: 'SET_MENU_DATA',
-        payload: { menuItems, categories },
-      });
-
-      // Recalculate category stats based on actual items from mock service
-      const categoriesWithCorrectStats = recalculateCategoryStats(
-        categoriesWithStats,
-        menuItemsExtended
-      );
-
-      dispatch({
-        type: 'SET_EXTENDED_DATA',
-        payload: {
-          categoriesWithStats: categoriesWithCorrectStats,
-          menuItemsExtended,
-          modifierGroups: [],
-          combos: [],
-        },
-      });
-
-      // Save to storage for next time
-      if (useLocalStorage) {
-        await menuStorageService.saveMenuData({
-          categories: categoriesWithCorrectStats,
-          menuItems: menuItemsExtended,
-          modifierGroups: [],
-          combos: [],
-          lastUpdated: new Date().toISOString(),
-          restaurantId,
-        });
-        console.log('[Menu] Saved to storage after initial load');
-      }
-
+      // No storage data — start with empty state (UI shows "No menu items found")
+      dispatch({ type: 'SET_LOADING', payload: false });
       emitEvent('MENU_REFRESHED', {});
     } catch (error) {
       dispatch({
@@ -567,7 +493,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
         payload: error instanceof Error ? error.message : 'Failed to load menu',
       });
     }
-  }, [menuService, restaurantId, emitEvent, useLocalStorage, recalculateCategoryStats]);
+  }, [restaurantId, emitEvent, useLocalStorage, recalculateCategoryStats]);
 
   // ============== INITIAL LOAD ==============
 

@@ -1,0 +1,115 @@
+appId: host.exp.exponent
+name: "Menu - 03: POS Order Flow with Added Items"
+tags:
+  - menu
+  - pos
+  - order
+---
+
+# ─────────────────────────────────────────────────────
+#  Test: Full POS order using manually-added menu items
+#   1. Navigate to Order Management > New Order
+#   2. Select a table
+#   3. Tap a menu item (select modifier if required)
+#   4. Verify item appears in Bill Panel
+#   5. Tap "Send to Kitchen"
+#   6. Verify order created and appears in Order Management
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/open_app.yaml
+
+# Navigate to Order Management tab
+- tapOn:
+    text: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "menu_03_step1_order_management"
+
+# Tap + New Order
+- tapOn:
+    text: "New Order"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Select a Table"
+        - "Select Table"
+        - "Table"
+    timeout: 10000
+
+- takeScreenshot: "menu_03_step2_table_selector"
+
+# Select first available table
+- tapOn:
+    anyOf:
+      - text: "B-1"
+      - text: "T-1"
+      - text: "1"
+      - id: "table-item-0"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Search menu items"
+        - "All Items"
+        - "Beverages"
+    timeout: 10000
+
+- takeScreenshot: "menu_03_step3_pos_screen_open"
+
+# Tap a menu item (prefer one without required modifiers first, or handle modifier modal)
+- tapOn:
+    anyOf:
+      - text: "Iced Coffee"
+      - text: "Espresso"
+      - text: "Cold Brew"
+
+- wait: 2000
+
+# If modifier modal appears, select first option and confirm
+- runFlow: helpers/handle_modifier_modal.yaml
+
+- takeScreenshot: "menu_03_step4_after_item_tap"
+
+# Verify item appears in Bill Panel
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Iced Coffee"
+        - "Espresso"
+        - "Cold Brew"
+        - "$4.50"
+        - "$3.50"
+        - "$5.00"
+    timeout: 8000
+
+- takeScreenshot: "menu_03_step5_item_in_bill"
+
+# Tap Send to Kitchen
+- tapOn:
+    text: "Send to Kitchen"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Order Sent to Kitchen"
+        - "sent to kitchen"
+        - "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "menu_03_step6_order_sent"
+
+# Verify order appears in Order Management
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "CONFIRMED"
+        - "Confirmed"
+        - "PREPARING"
+        - "Active"
+    timeout: 10000
+
+- takeScreenshot: "menu_03_step7_order_in_list"

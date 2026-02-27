@@ -159,14 +159,10 @@ export class FixedMockTableApiClient {
       });
     } catch (error) {
       if (__DEV__) {
-        console.warn('[TableApiClient] Failed to sync table status with orders:', error);
+        console.warn('[TableApiClient] Failed to sync table status with orders — keeping existing statuses:', error);
       }
-      // On error, default all tables to AVAILABLE for safety
-      return tables.map(table => ({
-        ...table,
-        status: TableStatus.AVAILABLE,
-        current_order_id: undefined,
-      }));
+      // On error, return tables with their existing stored status (do NOT wipe to AVAILABLE)
+      return tables;
     }
   }
 

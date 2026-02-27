@@ -1,0 +1,62 @@
+appId: host.exp.exponent
+name: "Debug: Category Selection Test"
+---
+
+- runFlow: helpers/ensure_dashboard.yaml
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Settings"
+
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 15000
+
+- tapOn:
+    text: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Add Item"
+    timeout: 15000
+
+- takeScreenshot: "debug_01_menu_mgmt"
+
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+# Wait for category chips to appear inside the modal
+- extendedWaitUntil:
+    visible: "Drinks"
+    timeout: 15000
+
+- takeScreenshot: "debug_02_modal_with_categories"
+
+# Select category FIRST using visible text tap (coordinate-based, not accessibility ACTION_CLICK)
+- tapOn:
+    text: "Drinks"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "debug_03_after_category_tap"
+
+# Type item name using testID
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "TestLatte"
+
+- takeScreenshot: "debug_04_after_input"
+
+# Tap Next using visible button text (coordinate-based) — NOT label: which triggers modal close
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "debug_05_after_next"

@@ -1,0 +1,171 @@
+appId: host.exp.exponent
+name: "Menu - 02: Add Modifier Group and Options"
+tags:
+  - menu
+  - manual-flow
+---
+
+# ─────────────────────────────────────────────────────
+#  Test: Settings > Menu Management > Modifiers tab
+#   1. Navigate to Modifiers tab
+#   2. Add modifier group "Drink Size" (required, single)
+#   3. Add options: Small +$0, Medium +$0.50, Large +$1.00
+#   4. Verify group and options visible
+# ─────────────────────────────────────────────────────
+
+# Launch and navigate to Menu Management
+- runFlow: helpers/open_app.yaml
+
+- tapOn:
+    text: "Settings"
+
+- extendedWaitUntil:
+    visible: "System Settings"
+    timeout: 10000
+
+- tapOn:
+    text: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Items"
+    timeout: 10000
+
+# Switch to Modifiers tab
+- tapOn:
+    text: "Modifiers"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Modifier Groups"
+        - "Add Modifier Group"
+        - "No modifier groups"
+    timeout: 8000
+
+- takeScreenshot: "menu_02_step1_modifiers_tab"
+
+# Add a modifier group
+- tapOn:
+    anyOf:
+      - text: "Add Modifier Group"
+      - text: "+ Add Group"
+      - id: "add-modifier-group-btn"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Group Name"
+        - "Modifier Group"
+        - "Add Modifier"
+    timeout: 8000
+
+- takeScreenshot: "menu_02_step2_add_group_modal"
+
+# Fill group name
+- tapOn:
+    anyOf:
+      - placeholder: "Group Name"
+      - text: "Group Name"
+      - id: "modifier-group-name"
+
+- inputText: "Drink Size"
+
+# Set as required (if toggle visible)
+- tapOn:
+    anyOf:
+      - text: "Required"
+      - id: "required-toggle"
+
+- takeScreenshot: "menu_02_step3_group_name_filled"
+
+# Save the group
+- tapOn:
+    anyOf:
+      - text: "Save"
+      - text: "Create"
+      - text: "Add"
+
+- extendedWaitUntil:
+    visible: "Drink Size"
+    timeout: 8000
+
+- takeScreenshot: "menu_02_step4_group_created"
+
+# Add option: Small
+- tapOn:
+    anyOf:
+      - text: "Add Option"
+      - text: "+ Add Option"
+      - id: "add-option-btn"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Option Name"
+        - "Add Option"
+    timeout: 8000
+
+- tapOn:
+    anyOf:
+      - placeholder: "Option Name"
+      - text: "Option Name"
+
+- inputText: "Small"
+
+- tapOn:
+    anyOf:
+      - text: "Save"
+      - text: "Add"
+
+- extendedWaitUntil:
+    visible: "Small"
+    timeout: 5000
+
+- takeScreenshot: "menu_02_step5_small_option_added"
+
+# Add option: Large (+$1.00)
+- tapOn:
+    anyOf:
+      - text: "Add Option"
+      - text: "+ Add Option"
+      - id: "add-option-btn"
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Option Name"
+        - "Add Option"
+    timeout: 8000
+
+- tapOn:
+    anyOf:
+      - placeholder: "Option Name"
+      - text: "Option Name"
+
+- inputText: "Large"
+
+- tapOn:
+    anyOf:
+      - placeholder: "Price Adjustment"
+      - placeholder: "+0.00"
+      - id: "option-price"
+
+- clearText
+- inputText: "1.00"
+
+- tapOn:
+    anyOf:
+      - text: "Save"
+      - text: "Add"
+
+- extendedWaitUntil:
+    visible: "Large"
+    timeout: 5000
+
+- takeScreenshot: "menu_02_step6_options_added"
+
+# Verify final state
+- assertVisible:
+    text: "Drink Size"
+
+- takeScreenshot: "menu_02_step7_final"

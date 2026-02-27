@@ -1,0 +1,19 @@
+appId: host.exp.exponent
+---
+# Helper: Delete all modifier groups (up to 15)
+# Safe to run if 0 groups exist — all blocks are optional.
+# Assumes the Modifiers tab is already visible.
+
+- repeat:
+    times: 15
+    commands:
+      - optional:
+        - tapOn:
+            id: "btn-delete-modifier-group"
+            index: 0
+        - extendedWaitUntil:
+            visible: "Delete Modifier Group"
+            timeout: 5000
+        - tapOn:
+            id: "btn-confirm-delete"
+        - waitForAnimationToEnd

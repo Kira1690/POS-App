@@ -1,0 +1,23 @@
+appId: host.exp.exponent
+name: "Helper: Reset App Data"
+---
+
+# Clears all SQLite + AsyncStorage data for a clean test run.
+# This forces the app back to "first launch" state.
+
+- runScript:
+    file: "../scripts/clear_app_data.js"
+
+- launchApp:
+    appId: "host.exp.exponent"
+    clearState: true
+    clearKeychain: true
+
+- extendedWaitUntil:
+    visible:
+      anyOf:
+        - "Login"
+        - "Sign In"
+        - "Email"
+        - "Employee ID"
+    timeout: 20000

@@ -1,0 +1,161 @@
+appId: host.exp.exponent
+name: "QA 04: Assign Modifiers — Cup Size to drinks, Protein to mains"
+tags:
+  - qa
+  - menu-setup
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 4 — Assign modifier groups to items
+#
+#  Cup Size  → Latte, Cappuccino
+#  Protein   → Beef Burger, Grilled Salmon
+#
+#  Flow: Items tab → tap "Assign modifiers to X" icon
+#        → AssignModifiersModal opens
+#        → tap the modifier group name to select
+#        → tap "Save"
+#
+#  Prerequisites: qa_03 completed (Cup Size + Protein groups exist)
+#
+#  QA Assertions:
+#    ✓ Modifier assigned — item shows in items list after save
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# Navigate to Menu Management → Items tab
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Settings"
+
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 15000
+
+- tapOn:
+    text: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Items"
+    timeout: 10000
+
+# Make sure we're on Items tab
+- tapOn:
+    text: "Items"
+
+- extendedWaitUntil:
+    visible: "Latte"
+    timeout: 8000
+
+- takeScreenshot: "qa_04_step1_items_list"
+
+# ════════════════════════════════════════════════════
+# Assign Cup Size → Latte
+# ════════════════════════════════════════════════════
+- tapOn:
+    label: "Assign modifiers to Latte"
+
+- extendedWaitUntil:
+    visible: "Assign Modifiers"
+    timeout: 8000
+
+- takeScreenshot: "qa_04_latte_assign_modal"
+
+# Select Cup Size modifier group
+- tapOn:
+    text: "Cup Size"
+
+- takeScreenshot: "qa_04_latte_cup_size_selected"
+
+- tapOn:
+    text: "Save"
+
+- extendedWaitUntil:
+    visible: "Latte"
+    timeout: 10000
+
+- assertVisible: "Latte"
+
+- takeScreenshot: "qa_04_PASS_latte_cup_size_assigned"
+
+# ════════════════════════════════════════════════════
+# Assign Cup Size → Cappuccino
+# ════════════════════════════════════════════════════
+- tapOn:
+    label: "Assign modifiers to Cappuccino"
+
+- extendedWaitUntil:
+    visible: "Assign Modifiers"
+    timeout: 8000
+
+- tapOn:
+    text: "Cup Size"
+
+- tapOn:
+    text: "Save"
+
+- extendedWaitUntil:
+    visible: "Cappuccino"
+    timeout: 10000
+
+- assertVisible: "Cappuccino"
+
+- takeScreenshot: "qa_04_PASS_cappuccino_cup_size_assigned"
+
+# ════════════════════════════════════════════════════
+# Assign Protein → Beef Burger
+# ════════════════════════════════════════════════════
+- tapOn:
+    label: "Assign modifiers to Beef Burger"
+
+- extendedWaitUntil:
+    visible: "Assign Modifiers"
+    timeout: 8000
+
+- tapOn:
+    text: "Protein"
+
+- tapOn:
+    text: "Save"
+
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 10000
+
+- assertVisible: "Beef Burger"
+
+- takeScreenshot: "qa_04_PASS_beef_burger_protein_assigned"
+
+# ════════════════════════════════════════════════════
+# Assign Protein → Grilled Salmon
+# ════════════════════════════════════════════════════
+- tapOn:
+    label: "Assign modifiers to Grilled Salmon"
+
+- extendedWaitUntil:
+    visible: "Assign Modifiers"
+    timeout: 8000
+
+- tapOn:
+    text: "Protein"
+
+- tapOn:
+    text: "Save"
+
+- extendedWaitUntil:
+    visible: "Grilled Salmon"
+    timeout: 10000
+
+- assertVisible: "Grilled Salmon"
+
+- takeScreenshot: "qa_04_PASS_grilled_salmon_protein_assigned"
+
+# ── FINAL QA: All 4 modified items still in list ──────
+- assertVisible: "Latte"
+- assertVisible: "Cappuccino"
+- assertVisible: "Beef Burger"
+- assertVisible: "Grilled Salmon"
+
+- takeScreenshot: "qa_04_PASS_all_modifiers_assigned"

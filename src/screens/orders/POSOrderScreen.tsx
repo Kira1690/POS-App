@@ -7,14 +7,15 @@ import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import {
   View,
   StyleSheet,
-  Dimensions,
   SafeAreaView,
   StatusBar,
   Text,
   TouchableOpacity,
   FlatList,
+  ScrollView,
   TextInput,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -38,11 +39,11 @@ import { showToast } from '@/utils/toast';
 import { formatPrice } from '@/utils/currency';
 import { usePayment } from '@/context/payment/PaymentContext';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const isTablet = screenWidth >= 768;
-
 const POSOrderScreen: React.FC = () => {
   const { theme } = useTheme();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const isPortrait = screenHeight > screenWidth;
+  const isTablet = screenWidth >= 768;
   const route = useRoute();
   const navigation = useNavigation();
 
@@ -76,7 +77,7 @@ const POSOrderScreen: React.FC = () => {
   // Get tax rate from payment context (single source of truth)
   const { taxRate: contextTaxRate } = usePayment();
 
-  const { state: tableState, selectTable } = useTable();
+  const { state: tableState, selectTable, refreshTables } = useTable();
 
   // Use MenuContext as single source of truth for menu items
   // This ensures real-time sync with Settings > Menu Management
@@ -99,6 +100,13 @@ const POSOrderScreen: React.FC = () => {
   // Combo modal state
   const [isComboModalVisible, setIsComboModalVisible] = useState(false);
   const [selectedCombo, setSelectedCombo] = useState<ComboDeal | null>(null);
+
+  // Refresh table statuses whenever the table selector is shown to avoid stale data
+  useEffect(() => {
+    if (showTableSelector) {
+      refreshTables().catch(() => {});
+    }
+  }, [showTableSelector, refreshTables]);
 
   // Initialize order when table is provided via navigation
   // Note: Uses handleTableSelect to check for existing orders
@@ -427,7 +435,9 @@ const POSOrderScreen: React.FC = () => {
         Select a Table
       </Text>
       <FlatList
-        data={tableState.tables.filter(t => t.status === TableStatus.AVAILABLE)}
+        data={tableState.tables.filter(t =>
+          t.status === TableStatus.AVAILABLE && !getActiveOrderForTable(t.id)
+        )}
         keyExtractor={(item) => item.id}
         numColumns={4}
         renderItem={({ item }) => (
@@ -447,13 +457,13 @@ const POSOrderScreen: React.FC = () => {
     </View>
   );
 
-  // Render category sidebar
+  // Render category sidebar (landscape) — vertical list
   const renderCategorySidebar = () => (
     <View style={[styles.categorySidebar, { backgroundColor: theme.colors.surfaceVariant }]}>
       <Text style={[styles.categoryTitle, { color: theme.colors.onSurfaceVariant }]}>
         Categories
       </Text>
-      
+
       <TouchableOpacity
         style={[
           styles.categoryItem,
@@ -468,7 +478,7 @@ const POSOrderScreen: React.FC = () => {
           ALL ITEMS
         </Text>
       </TouchableOpacity>
-      
+
       {(categories || []).map((category) => (
         <TouchableOpacity
           key={category.id}
@@ -489,32 +499,79 @@ const POSOrderScreen: React.FC = () => {
     </View>
   );
 
+  // Render category chips row (portrait) — horizontal scroll
+  const renderCategoryRow = () => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={[styles.categoryRow, { backgroundColor: theme.colors.surfaceVariant }]}
+      contentContainerStyle={styles.categoryRowContent}
+    >
+      <TouchableOpacity
+        style={[
+          styles.categoryChip,
+          { backgroundColor: selectedCategory === 'ALL' ? theme.colors.primary : theme.colors.surface }
+        ]}
+        onPress={() => setSelectedCategory('ALL')}
+      >
+        <Text style={[
+          styles.categoryChipText,
+          { color: selectedCategory === 'ALL' ? theme.colors.onPrimary : theme.colors.onSurface }
+        ]}>
+          All Items
+        </Text>
+      </TouchableOpacity>
+
+      {(categories || []).map((category) => (
+        <TouchableOpacity
+          key={category.id}
+          style={[
+            styles.categoryChip,
+            { backgroundColor: selectedCategory === category.id ? theme.colors.primary : theme.colors.surface }
+          ]}
+          onPress={() => setSelectedCategory(category.id)}
+        >
+          <Text style={[
+            styles.categoryChipText,
+            { color: selectedCategory === category.id ? theme.colors.onPrimary : theme.colors.onSurface }
+          ]}>
+            {category.name}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+
   // Render menu item grid
+  const menuColumns = isPortrait ? 2 : 3;
   const renderMenuGrid = () => (
     <View style={styles.menuGrid}>
-      <View style={[styles.menuHeader, { backgroundColor: theme.colors.surface }]}>
-        <TextInput
-          style={[styles.searchInput, { backgroundColor: theme.colors.surfaceVariant }]}
-          placeholder="Search menu items..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor={theme.colors.onSurfaceVariant}
-        />
-        
-        {selectedTable && (
-          <View style={styles.tableInfo}>
-            <Text style={[styles.tableInfoText, { color: theme.colors.onSurface }]}>
-              Table {selectedTable.table_number} • {selectedTable.capacity} seats
-            </Text>
-          </View>
-        )}
-      </View>
-      
+      {/* Search bar + table info — shown in landscape only (portrait has it in posLayout header) */}
+      {!isPortrait && (
+        <View style={[styles.menuHeader, { backgroundColor: theme.colors.surface }]}>
+          <TextInput
+            style={[styles.searchInput, { backgroundColor: theme.colors.surfaceVariant }]}
+            placeholder="Search menu items..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={theme.colors.onSurfaceVariant}
+          />
+
+          {selectedTable && (
+            <View style={styles.tableInfo}>
+              <Text style={[styles.tableInfoText, { color: theme.colors.onSurface }]}>
+                Table {selectedTable.table_number} • {selectedTable.capacity} seats
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
       <FlatList
         data={filteredMenuItems}
         keyExtractor={(item) => item.id}
-        numColumns={3} // Professional three-column layout
-        key="menu-grid-3-columns" // Force re-render for consistent layout
+        numColumns={menuColumns}
+        key={`menu-grid-${menuColumns}-columns`} // Force re-render on column count change
         contentContainerStyle={styles.menuItemsContainer}
         columnWrapperStyle={styles.menuItemRow} // Professional row styling
         renderItem={({ item }) => (
@@ -695,6 +752,7 @@ const POSOrderScreen: React.FC = () => {
         onSplit={handleSplit}
         onEditItemModifiers={handleEditCartItemModifiers}
         isProcessing={false}
+        panelWidth={isPortrait ? screenWidth : undefined}
       />
     );
   };
@@ -704,17 +762,54 @@ const POSOrderScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.surface} />
-      
+
       {showTableSelector && renderTableSelector()}
-      
-      {!showTableSelector && (
+
+      {!showTableSelector && isPortrait && (
+        // Portrait layout: vertical stack
+        <View style={styles.posLayoutPortrait}>
+          {/* Top bar: search + table info */}
+          <View style={[styles.menuHeader, { backgroundColor: theme.colors.surface }]}>
+            <TextInput
+              style={[styles.searchInput, { backgroundColor: theme.colors.surfaceVariant }]}
+              placeholder="Search menu items..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={theme.colors.onSurfaceVariant}
+            />
+            {selectedTable && (
+              <View style={styles.tableInfo}>
+                <Text style={[styles.tableInfoText, { color: theme.colors.onSurface }]}>
+                  T{selectedTable.table_number}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Horizontal category chips */}
+          {renderCategoryRow()}
+
+          {/* Menu grid — takes remaining space above bill panel */}
+          <View style={styles.menuGridPortrait}>
+            {renderMenuGrid()}
+          </View>
+
+          {/* Bill panel — fixed height at bottom */}
+          <View style={[styles.billPanelPortrait, { borderTopColor: theme.colors.outline }]}>
+            {renderBillPanel()}
+          </View>
+        </View>
+      )}
+
+      {!showTableSelector && !isPortrait && (
+        // Landscape layout: 3-column side-by-side
         <View style={styles.posLayout}>
           {isTablet && renderCategorySidebar()}
-          
+
           <View style={styles.mainContent}>
             {renderMenuGrid()}
           </View>
-          
+
           {renderBillPanel()}
         </View>
       )}
@@ -780,10 +875,54 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   
-  // POS Layout
+  // POS Layout — landscape (3-panel horizontal)
   posLayout: {
     flex: 1,
     flexDirection: 'row',
+  },
+
+  // POS Layout — portrait (stacked vertical)
+  posLayoutPortrait: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+
+  // Portrait: menu grid takes remaining space
+  menuGridPortrait: {
+    flex: 1,
+  },
+
+  // Portrait: bill panel at bottom, fixed height (tall enough for all action buttons)
+  billPanelPortrait: {
+    height: 400,
+    borderTopWidth: 1,
+    overflow: 'hidden',
+  },
+
+  // Portrait: horizontal category scroll row — fixed height to prevent vertical stretch
+  categoryRow: {
+    height: 52,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  categoryRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  categoryChip: {
+    height: 36,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  categoryChipText: {
+    ...typography.labelMedium,
+    fontWeight: '600',
   },
   
   // Category sidebar

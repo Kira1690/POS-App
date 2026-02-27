@@ -8,7 +8,7 @@ tags:
 # Test: Staff member can log in fully offline with dummy credentials
 # Credential: EMP001 / staff123 (John Doe - Restaurant Staff)
 
-- openLink: "exp://192.168.1.9:8081"
+- openLink: "exp://10.0.2.2:8081"
 
 # Wait for welcome screen
 - extendedWaitUntil:
