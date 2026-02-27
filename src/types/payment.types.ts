@@ -15,6 +15,7 @@ export enum ProfessionalPaymentMethod {
   CARD = 'card',
   SPLIT = 'split',
   VP3350 = 'vp3350',
+  TRX = 'trx',
   GIFT_CARD = 'gift_card',
   LOYALTY_POINTS = 'loyalty_points',
   HOUSE_ACCOUNT = 'house_account',

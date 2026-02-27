@@ -34,7 +34,7 @@ import { PaymentSummary } from '@/components/business/payment/PaymentSummary';
 import { PaymentProgressIndicator } from '@/components/business/payment/PaymentProgressIndicator';
 import { CashPaymentModal } from '@/components/business/payment/CashPaymentModal';
 import { SplitPaymentModal } from '@/components/business/payment/SplitPaymentModal';
-import { VP3350PaymentModal } from '@/components/business/payment/VP3350PaymentModal';
+import { TRXPaymentModal } from '@/components/business/payment/TRXPaymentModal';
 
 interface PaymentProcessingScreenProps {
   navigation: any;
@@ -84,7 +84,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
   // Local state
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<ProfessionalPaymentMethod | null>(null);
   const [showCashModal, setShowCashModal] = useState(false);
-  const [showVP3350Modal, setShowVP3350Modal] = useState(false);
+  const [showTRXModal, setShowTRXModal] = useState(false);
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [tipPercentage, setTipPercentage] = useState<number>(18);
 
@@ -142,9 +142,12 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
     clearError();
 
     switch (method) {
-      case ProfessionalPaymentMethod.CARD:
-        handleCardPayment();
+      case ProfessionalPaymentMethod.CARD: {
+        // Card Payment always routes to TRX terminal (like reference app)
+        // TRXPaymentModal handles reconnect/not-connected states
+        setShowTRXModal(true);
         break;
+      }
       case ProfessionalPaymentMethod.CASH:
         setShowCashModal(true);
         break;
@@ -152,7 +155,8 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         openSplitPaymentModal();
         break;
       case ProfessionalPaymentMethod.VP3350:
-        setShowVP3350Modal(true);
+      case ProfessionalPaymentMethod.TRX:
+        setShowTRXModal(true);
         break;
       default:
         showToast({
@@ -282,7 +286,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         <Text style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
           {splitPayment
             ? `${splitPayment.guestName} — ${formatCurrency(splitPayment.amount)}`
-            : `${order?.table_id ? `Table ${order.table_id}` : 'Takeaway'} - Order #${order?.order_number}`}
+            : `${order?.tableId ? `Table ${order.tableId}` : 'Takeaway'} - Order #${order?.orderNumber}`}
         </Text>
       </View>
     </View>
@@ -410,11 +414,11 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         initialSplits={splitPayments}
       />
       
-      <VP3350PaymentModal
-        visible={showVP3350Modal}
+      <TRXPaymentModal
+        visible={showTRXModal}
         totalAmount={totals.total}
         onPayment={(result) => {
-          setShowVP3350Modal(false);
+          setShowTRXModal(false);
           navigation.replace('PaymentConfirmation', {
             payment: result,
             order,
@@ -422,7 +426,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
             splitPayment,
           });
         }}
-        onCancel={() => setShowVP3350Modal(false)}
+        onCancel={() => setShowTRXModal(false)}
       />
     </SafeAreaView>
   );

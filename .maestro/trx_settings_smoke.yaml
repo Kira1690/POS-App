@@ -1,0 +1,61 @@
+appId: com.yourcompany.posapp
+name: TRX Settings Smoke Test
+tags:
+  - trx
+  - settings
+  - offline
+---
+# ── Login ──────────────────────────────────────────────────────────────────
+- launchApp:
+    clearState: false
+- assertVisible: "Login"
+
+- tapOn: "Employee ID"
+- inputText: "EMP001"
+- tapOn: "Password"
+- inputText: "staff123"
+- tapOn: "Sign In"
+- assertVisible: "Dashboard"
+
+# ── Navigate to Settings ───────────────────────────────────────────────────
+- tapOn: "Settings"
+- assertVisible: "Settings Categories"
+
+# ── Open TRX Terminal section ─────────────────────────────────────────────
+- tapOn: "TRX Terminal"
+- assertVisible: "TRX Terminal"
+
+# ── Verify settings sections render without crash ────────────────────────
+- assertVisible: "Store & Tax"
+- assertVisible: "CC Surcharge"
+- assertVisible: "Gratuity"
+- assertVisible: "Terminal Management"
+
+# ── Toggle CC Surcharge on ────────────────────────────────────────────────
+- tapOn:
+    id: "ccSurchargeToggle"
+- assertVisible: "CC Processing Fee"
+
+# ── Change tax rate ───────────────────────────────────────────────────────
+- tapOn:
+    id: "taxRateInput"
+- clearText
+- inputText: "9.5"
+
+# ── Enable Gratuity ───────────────────────────────────────────────────────
+- tapOn:
+    id: "gratuityToggle"
+- assertVisible: "Default Tip Rates"
+
+# ── Verify tip rate chips ─────────────────────────────────────────────────
+- assertVisible: "15%"
+- assertVisible: "18%"
+- assertVisible: "20%"
+- assertVisible: "25%"
+
+# ── Open Terminal Manager ─────────────────────────────────────────────────
+- tapOn: "Manage Terminals"
+- assertVisible: "Terminal Management"
+
+# ── Close Terminal Manager ────────────────────────────────────────────────
+- back

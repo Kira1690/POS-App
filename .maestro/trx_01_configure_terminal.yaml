@@ -1,0 +1,95 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "TRX-01: Configure TRX Terminal in Settings"
+tags:
+  - trx
+  - settings
+---
+# Terminal: 192.168.1.12:1180 (confirmed live)
+
+# ── Launch app ─────────────────────────────────────────────────────────────
+- launchApp
+- extendedWaitUntil:
+    visible: "Welcome"
+    timeout: 30000
+
+# ── Login as manager ───────────────────────────────────────────────────────
+- tapOn:
+    text: ".*Manager.*"
+- extendedWaitUntil:
+    visible: "Manager Login"
+    timeout: 10000
+- tapOn:
+    id: "email-input"
+- inputText: "manager@foodcorner.com"
+- tapOn:
+    id: "password-input"
+- inputText: "manager123"
+- hideKeyboard
+- tapOn:
+    text: ".*Login.*|.*Sign In.*"
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000
+- takeScreenshot: "trx01_01_dashboard"
+
+# ── Open Settings ──────────────────────────────────────────────────────────
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+- takeScreenshot: "trx01_02_settings_loaded"
+
+# ── Select TRX Terminal ────────────────────────────────────────────────────
+- tapOn:
+    text: "TRX Terminal"
+- extendedWaitUntil:
+    visible: "TRX Terminal"
+    timeout: 10000
+- takeScreenshot: "trx01_03_trx_settings"
+
+# ── Verify sections present ────────────────────────────────────────────────
+- assertVisible: "Store & Tax"
+- assertVisible: "CC Surcharge"
+- assertVisible: "Gratuity"
+- assertVisible: "Terminal Management"
+
+# ── Enable Gratuity ────────────────────────────────────────────────────────
+- tapOn:
+    text: "Enable Tip"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "trx01_04_gratuity_enabled"
+
+# ── Open Terminal Manager ──────────────────────────────────────────────────
+- tapOn:
+    text: "Manage Terminals"
+- extendedWaitUntil:
+    visible: "Terminal Management"
+    timeout: 10000
+- takeScreenshot: "trx01_05_terminal_manager_open"
+
+# ── Scan for terminal (auto-discovers 192.168.1.12) ───────────────────────
+- tapOn:
+    text: "Scan"
+    optional: true
+- extendedWaitUntil:
+    visible: "192.168.1.12"
+    timeout: 40000
+- takeScreenshot: "trx01_06_terminal_found"
+- assertVisible: "192.168.1.12"
+
+# ── Select the discovered terminal ────────────────────────────────────────
+- tapOn:
+    text: "192.168.1.12"
+- waitForAnimationToEnd
+- takeScreenshot: "trx01_07_terminal_selected"
+
+# ── Close terminal manager ─────────────────────────────────────────────────
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "trx01_08_done"

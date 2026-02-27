@@ -10,6 +10,7 @@ import {
   SecurityBackupSettings,
   SystemLogsSettings,
   HelpSupportSettings,
+  TRXSettingsPanel,
 } from './components';
 import TableManagementSettingsContainer from './components/tableManagement';
 import MenuManagementSettingsContainer from './components/menuManagement';
@@ -56,6 +57,12 @@ export default function SettingsScreen() {
       label: 'Payment Configuration',
       icon: <Icon name="credit-card-outline" size={20} color={theme.colors.white} accessibilityLabel="Payment configuration" />,
       iconBackground: theme.colors.warning,
+    },
+    {
+      id: 'trx_payment',
+      label: 'TRX Terminal',
+      icon: <Icon name="lan-connect" size={20} color={theme.colors.white} accessibilityLabel="TRX terminal payment" />,
+      iconBackground: '#007AFF',
     },
     {
       id: 'table_management',
@@ -151,6 +158,8 @@ export default function SettingsScreen() {
         return <DeviceHardwareSettings onChangesDetected={setHasUnsavedChanges} />;
       case 'payment_config':
         return <PaymentConfigurationSettings onChangesDetected={setHasUnsavedChanges} />;
+      case 'trx_payment':
+        return <TRXSettingsPanel onChangesDetected={setHasUnsavedChanges} />;
       case 'table_management':
         return <TableManagementSettingsContainer onChangesDetected={setHasUnsavedChanges} />;
       case 'menu_management':

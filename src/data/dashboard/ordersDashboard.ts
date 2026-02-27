@@ -21,7 +21,7 @@ export interface Customer {
 export interface DashboardOrder {
   id: string;
   orderNumber: string;
-  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  status: 'pending' | 'preparing' | 'ready' | 'served' | 'paid' | 'cancelled';
   orderType: 'dine-in' | 'takeaway' | 'delivery';
   tableNumber?: string;
   customer: Customer;
@@ -50,6 +50,7 @@ export interface OrderAnalytics {
     preparing: number;
     ready: number;
     served: number;
+    paid: number;
     cancelled: number;
   };
 }
@@ -227,6 +228,7 @@ export const MOCK_ORDER_ANALYTICS: OrderAnalytics = {
     preparing: 15,
     ready: 6,
     served: 16,
+    paid: 0,
     cancelled: 2,
   },
 };

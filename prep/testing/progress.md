@@ -1,6 +1,6 @@
 # Test Suite Progress
 
-> Last updated: 2026-02-25
+> Last updated: 2026-02-27
 > Legend: ✅ Done | 🔄 In Progress | ⏳ Pending | ❌ Blocked
 
 ---
@@ -9,11 +9,11 @@
 
 | Layer | Total | Done | In Progress | Pending |
 |-------|-------|------|-------------|---------|
-| Unit Tests (Jest) | 85 | 0 | 0 | 85 |
-| Integration Tests (Jest) | 65 | 0 | 0 | 65 |
-| E2E Offline (Maestro) | 55 | 8 | 0 | 47 |
-| E2E Online (Maestro) | 30 | 0 | 0 | 30 |
-| **Total** | **235** | **8** | **0** | **227** |
+| Unit Tests (Jest) | 176 | 91 | 0 | 85 |
+| Integration Tests (Jest) | 78 | 0 | 0 | 78 |
+| E2E Offline (Maestro) | 64 | 17 | 0 | 47 |
+| E2E Online (Maestro) | 36 | 4 | 0 | 32 |
+| **Total** | **354** | **112** | **0** | **242** |
 
 ---
 
@@ -140,6 +140,36 @@
 
 **Passing assertions in full_offline_test.yaml:**
 - Settings tab loads ✅
+
+---
+
+---
+
+### 12 — TRX Payment Terminal
+| Category | Tests | Done | Notes |
+|----------|-------|------|-------|
+| Unit (MMLMessageBuilder) | 21 | 21 | ✅ ALL PASSING |
+| Unit (MMLResponseParser) | 28 | 28 | ✅ ALL PASSING (includes live terminal X3 response) |
+| Unit (AmountCalculatorService) | 42 | 42 | ✅ ALL PASSING |
+| Integration | 13 | 0 | pending |
+| E2E Offline (Maestro) | 9 | 9 | trx_settings_smoke.yaml + trx_payment_flow.yaml |
+| E2E Online (live terminal) | 6 | 4 | ✅ Full SALE approved, Card→TRX routing, persist, progress modal |
+
+**Live terminal — PAYMENTS WORKING:**
+- `192.168.1.12:1180` ✅ Payments approved
+- First successful SALE: Visa ****3619, TRX377, $5.44, 10.5s response
+- Card Payment → TRX routing: ✅ no mock fallback
+- Terminal persist after reload: ✅ AsyncStorage restore
+- Payment progress modal: ✅ ExpoBlurView fix applied
+
+**Passing Jest tests (91 total):**
+- `MMLMessageBuilder.test.ts` ✅ 21/21
+- `MMLResponseParser.test.ts` ✅ 28/28
+- `AmountCalculatorService.test.ts` ✅ 42/42
+
+**Automated test script:**
+- `scripts/test-trx-full-flow.sh` — Full flow (setup + payment)
+- `scripts/test-trx-full-flow.sh --skip-setup` — Payment only (terminal in storage)
 
 ---
 

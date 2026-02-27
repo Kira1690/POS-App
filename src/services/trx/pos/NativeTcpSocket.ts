@@ -1,0 +1,155 @@
+// Production-ready native TCP socket implementation
+
+import TcpSocket from 'react-native-tcp-socket';
+import { NativeModules, TurboModuleRegistry } from 'react-native';
+import { LoggerFactory } from '../logging/LoggingService';
+
+export interface SocketOptions {
+  port: number;
+  host: string;
+  timeout?: number;
+  keepAlive?: boolean;
+  nodelay?: boolean;
+  localAddress?: string;   // Bind to device's local IP for correct routing on multi-interface devices
+  reuseAddress?: boolean;  // Allow rapid reconnections without port wait
+  interface?: string;      // Force specific network interface (wifi/cellular)
+  localPort?: number;      // Optional local port binding
+}
+
+export interface SocketConnection {
+  write: (data: string | Buffer, encoding?: string, callback?: (error?: Error) => void) => boolean;
+  destroy: () => void;
+  on: (event: string, callback: (...args: unknown[]) => void) => void;
+  off: (event: string, callback: (...args: unknown[]) => void) => void;
+  connect: (options: SocketOptions, callback?: () => void) => void;
+}
+
+export interface TcpSocketLib {
+  createConnection: (options: SocketOptions, callback?: () => void) => SocketConnection;
+  isIP: (input: string) => number;
+}
+
+// Native TCP socket implementation
+class NativeTcpSocket {
+  private tcpSocket: TcpSocketLib | null = null;
+  private logger = LoggerFactory.createLogger('NativeTcpSocket');
+  private isInitialized = false;
+
+  constructor() {
+    this.initializeNativeModule();
+  }
+
+  private initializeNativeModule(): void {
+    try {
+      if (!TcpSocket) {
+        throw new Error('react-native-tcp-socket module not available');
+      }
+
+      this.tcpSocket = TcpSocket as unknown as TcpSocketLib;
+      this.isInitialized = true;
+
+      // Diagnostic: log how the native module was resolved
+      const viaInterop = TurboModuleRegistry.get && TurboModuleRegistry.get('TcpSockets');
+      const viaLegacy = NativeModules.TcpSockets;
+      this.logger.info(
+        `Native TCP socket module loaded: turbo=${!!viaInterop} legacy=${!!viaLegacy}`,
+        'initializeNativeModule'
+      );
+    } catch (error) {
+      this.logger.error(
+        'Failed to load react-native-tcp-socket module',
+        error instanceof Error ? error : new Error(String(error)),
+        'initializeNativeModule'
+      );
+      this.tcpSocket = null;
+      this.isInitialized = false;
+    }
+  }
+
+  public isAvailable(): boolean {
+    return this.isInitialized && this.tcpSocket !== null;
+  }
+
+  public createConnection(options: SocketOptions, callback?: () => void): SocketConnection | null {
+    if (!this.isAvailable()) {
+      this.logger.error(
+        'TCP socket not available - native module not loaded',
+        new Error('Native module unavailable'),
+        'createConnection'
+      );
+      return null;
+    }
+
+    try {
+      const socket = this.tcpSocket!.createConnection(options, callback);
+
+      this.logger.debug('TCP connection created', 'createConnection', {
+        host: options.host,
+        port: options.port,
+        timeout: options.timeout,
+        localAddress: options.localAddress,
+        reuseAddress: options.reuseAddress,
+      });
+
+      return socket;
+    } catch (error) {
+      this.logger.error(
+        'Failed to create TCP connection',
+        error instanceof Error ? error : new Error(String(error)),
+        'createConnection'
+      );
+      return null;
+    }
+  }
+
+  public validateIP(ip: string): boolean {
+    if (!this.isAvailable()) {
+      const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+      return ipRegex.test(ip);
+    }
+
+    try {
+      return this.tcpSocket!.isIP(ip) > 0;
+    } catch {
+      this.logger.warn('Failed to validate IP using native method, using fallback', 'validateIP');
+      const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+      return ipRegex.test(ip);
+    }
+  }
+
+  public getVersion(): string {
+    if (!this.isAvailable()) {
+      return 'unavailable';
+    }
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const packageInfo = require('react-native-tcp-socket/package.json');
+      return packageInfo.version || 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  public getDiagnostics(): { available: boolean; version: string; error?: string } {
+    return {
+      available: this.isAvailable(),
+      version: this.getVersion(),
+      error: !this.isAvailable() ? 'react-native-tcp-socket module not available' : undefined
+    };
+  }
+}
+
+// Export singleton instance
+export const nativeTcpSocket = new NativeTcpSocket();
+
+// Legacy compatibility exports
+export const isTcpSocketAvailable = (): boolean => {
+  return nativeTcpSocket.isAvailable();
+};
+
+export const createTcpConnection = (options: SocketOptions, callback?: () => void): SocketConnection | null => {
+  return nativeTcpSocket.createConnection(options, callback);
+};
+
+export default nativeTcpSocket;

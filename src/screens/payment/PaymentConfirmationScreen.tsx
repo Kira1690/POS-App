@@ -226,7 +226,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             Order Number
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {(order as any).orderNumber || (order as any).order_number || orderId}
+            {order?.orderNumber || orderId}
           </Text>
         </View>
         
@@ -235,7 +235,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             Table
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {order.table_id || 'Takeaway'}
+            {order?.tableId ? `Table ${order.tableId}` : 'Takeaway'}
           </Text>
         </View>
         
@@ -306,7 +306,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             Processed At
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {formatDateTime(payment.processedAt || payment.created_at)}
+            {formatDateTime(payment.processedAt || payment.created_at || new Date().toISOString())}
           </Text>
         </View>
       </View>

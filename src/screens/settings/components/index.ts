@@ -6,3 +6,4 @@ export { default as IntegrationsSettings } from './IntegrationsSettings';
 export { default as SecurityBackupSettings } from './SecurityBackupSettings';
 export { default as SystemLogsSettings } from './SystemLogsSettings';
 export { default as HelpSupportSettings } from './HelpSupportSettings';
+export { default as TRXSettingsPanel } from './TRXSettingsPanel';

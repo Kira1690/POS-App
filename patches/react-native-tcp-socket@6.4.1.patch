@@ -1,0 +1,197 @@
+--- a/src/Globals.js	2026-02-26 20:53:18.130932064 +0530
++++ b/src/Globals.js	2026-02-27 14:39:43.654197937 +0530
+@@ -1,5 +1,10 @@
+-import { NativeEventEmitter, NativeModules } from 'react-native';
+-const Sockets = NativeModules.TcpSockets;
++import { NativeEventEmitter, NativeModules, TurboModuleRegistry } from 'react-native';
++
++// Lazy getter — called at use-time, NOT at module import time.
++// This prevents null issues when TurboModule registry isn't ready at bundle parse.
++export const getTcpSockets = () =>
++  (TurboModuleRegistry.get && TurboModuleRegistry.get('TcpSockets')) ||
++  NativeModules.TcpSockets;
+ 
+ let instanceNumber = 0;
+ 
+@@ -7,6 +12,8 @@
+     return instanceNumber++;
+ }
+ 
+-const nativeEventEmitter = new NativeEventEmitter(Sockets);
++// Pass null so NativeEventEmitter uses the global DeviceEventEmitter.
++// Safe because TcpSocketModule emits via RCTDeviceEventEmitter (global channel).
++const nativeEventEmitter = new NativeEventEmitter(null);
+ 
+ export { nativeEventEmitter, getNextId };
+--- a/src/Socket.js	2026-02-26 20:53:18.130932064 +0530
++++ b/src/Socket.js	2026-02-27 14:39:54.372920979 +0530
+@@ -1,9 +1,8 @@
+ 'use strict';
+ 
+-import { NativeModules } from 'react-native';
+ import EventEmitter from 'eventemitter3';
+ import { Buffer } from 'buffer';
+-import { nativeEventEmitter, getNextId } from './Globals';
++import { nativeEventEmitter, getNextId, getTcpSockets } from './Globals';
+ 
+ /**
+  * @typedef {"ascii" | "utf8" | "utf-8" | "utf16le" | "ucs2" | "ucs-2" | "base64" | "latin1" | "binary" | "hex"} BufferEncoding
+@@ -166,7 +165,7 @@
+         });
+         this._connecting = true;
+         this._readyState = 'opening';
+-        NativeModules.TcpSockets.connect(
++        getTcpSockets().connect(
+             this._id,
+             customOptions.host,
+             customOptions.port,
+@@ -250,7 +249,7 @@
+             this.once('connect', () => this.setNoDelay(noDelay));
+             return this;
+         }
+-        NativeModules.TcpSockets.setNoDelay(this._id, noDelay);
++        getTcpSockets().setNoDelay(this._id, noDelay);
+         return this;
+     }
+ 
+@@ -274,7 +273,7 @@
+             );
+         }
+ 
+-        NativeModules.TcpSockets.setKeepAlive(this._id, enable, Math.floor(initialDelay));
++        getTcpSockets().setKeepAlive(this._id, enable, Math.floor(initialDelay));
+         return this;
+     }
+ 
+@@ -298,14 +297,14 @@
+     end(data, encoding) {
+         if (data) {
+             this.write(data, encoding, () => {
+-                NativeModules.TcpSockets.end(this._id);
++                getTcpSockets().end(this._id);
+             });
+             return this;
+         }
+         if (this._pending || this._destroyed) return this;
+ 
+         this._clearTimeout();
+-        NativeModules.TcpSockets.end(this._id);
++        getTcpSockets().end(this._id);
+         return this;
+     }
+ 
+@@ -316,7 +315,7 @@
+         if (this._destroyed) return this;
+         this._destroyed = true;
+         this._clearTimeout();
+-        NativeModules.TcpSockets.destroy(this._id);
++        getTcpSockets().destroy(this._id);
+         return this;
+     }
+ 
+@@ -364,7 +363,7 @@
+         if (!ok) this.writableNeedDrain = true;
+         this._lastSentMsgId = currentMsgId;
+         this._bytesWritten += generatedBuffer.byteLength;
+-        NativeModules.TcpSockets.write(this._id, generatedBuffer.toString('base64'), currentMsgId);
++        getTcpSockets().write(this._id, generatedBuffer.toString('base64'), currentMsgId);
+         return ok;
+     }
+ 
+@@ -374,7 +373,7 @@
+     pause() {
+         if (this._paused) return this;
+         this._paused = true;
+-        NativeModules.TcpSockets.pause(this._id);
++        getTcpSockets().pause(this._id);
+         this.emit('pause');
+         return this;
+     }
+@@ -434,7 +433,7 @@
+             }
+         }
+         this._resuming = false;
+-        NativeModules.TcpSockets.resume(this._id);
++        getTcpSockets().resume(this._id);
+     }
+ 
+     /**
+--- a/src/Server.js	2026-02-26 20:53:18.130932064 +0530
++++ b/src/Server.js	2026-02-27 14:40:03.331690945 +0530
+@@ -1,13 +1,10 @@
+ 'use strict';
+ 
+-import { getNextId, nativeEventEmitter } from './Globals';
++import { getNextId, nativeEventEmitter, getTcpSockets } from './Globals';
+ 
+ import EventEmitter from 'eventemitter3';
+-import { NativeModules } from 'react-native';
+ import Socket from './Socket';
+ 
+-const Sockets = NativeModules.TcpSockets;
+-
+ /**
+  * @typedef {object} ServerOptions
+  * @property {boolean} [noDelay]
+@@ -124,7 +121,7 @@
+             this.listening = true;
+         });
+ 
+-        Sockets.listen(this._id, listenOptions);
++        getTcpSockets().listen(this._id, listenOptions);
+         return this;
+     }
+ 
+@@ -157,7 +154,7 @@
+         }
+         if (callback) this.once('close', callback);
+         this.listening = false;
+-        Sockets.close(this._id);
++        getTcpSockets().close(this._id);
+         if (this._connections.size === 0) this.emit('close');
+         return this;
+     }
+--- a/src/TLSSocket.js	2026-02-26 20:53:18.130932064 +0530
++++ b/src/TLSSocket.js	2026-02-27 14:40:12.153465692 +0530
+@@ -1,7 +1,7 @@
+ 'use strict';
+ 
+-import { Image, NativeModules } from 'react-native';
+-const Sockets = NativeModules.TcpSockets;
++import { Image } from 'react-native';
++import { getTcpSockets } from './Globals';
+ import Socket from './Socket';
+ 
+ /**
+@@ -63,7 +63,7 @@
+      * @private
+      */
+     _startTLS() {
+-        Sockets.startTLS(this._id, this._options);
++        getTcpSockets().startTLS(this._id, this._options);
+     }
+ 
+     /**
+@@ -75,7 +75,7 @@
+      * @returns {Promise<boolean>} Promise resolving to true if identity exists
+      */
+     static hasIdentity(options = {}) {
+-        return Sockets.hasIdentity({
++        return getTcpSockets().hasIdentity({
+             androidKeyStore: options.androidKeyStore,
+             certAlias: options.certAlias,
+             keyAlias: options.keyAlias,
+@@ -83,11 +83,11 @@
+     }
+ 
+     getCertificate() {
+-        return Sockets.getCertificate(this._id);
++        return getTcpSockets().getCertificate(this._id);
+     }
+ 
+     getPeerCertificate() {
+-        return Sockets.getPeerCertificate(this._id);
++        return getTcpSockets().getPeerCertificate(this._id);
+     }
+ 
+     /**
