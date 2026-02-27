@@ -1,0 +1,60 @@
+appId: com.yourcompany.posapp
+name: TRX Payment Flow (requires terminal at 192.168.1.12:1180)
+tags:
+  - trx
+  - payment
+  - terminal
+---
+# ── Prerequisites ──────────────────────────────────────────────────────────
+# TRX terminal must be on same WiFi as device (192.168.1.12:1180)
+# Order must be in SERVED status before payment
+
+# ── Login ──────────────────────────────────────────────────────────────────
+- launchApp:
+    clearState: false
+- assertVisible: "Login"
+
+- tapOn: "Employee ID"
+- inputText: "EMP001"
+- tapOn: "Password"
+- inputText: "staff123"
+- tapOn: "Sign In"
+- assertVisible: "Dashboard"
+
+# ── Navigate to Order Management ──────────────────────────────────────────
+- tapOn: "Order Management"
+- assertVisible: "Order Management"
+
+# ── Find a served order and start payment ─────────────────────────────────
+# NOTE: Requires at least one order in SERVED status on the device
+- tapOn:
+    text: "Process Payment"
+    index: 0
+- assertVisible: "Payment"
+
+# ── Select TRX Terminal payment method ────────────────────────────────────
+- tapOn: "TRX Terminal"
+- assertVisible: "TRX Terminal Payment"
+
+# ── Wait for terminal auto-connect (scan can take 10-30s) ────────────────
+- waitForAnimationToEnd:
+    timeout: 35000
+
+# ── Verify terminal connected ─────────────────────────────────────────────
+- assertVisible: "Connected"
+
+# ── Verify amount breakdown is shown ─────────────────────────────────────
+- assertVisible: "Subtotal"
+- assertVisible: "Tax"
+- assertVisible: "Total"
+
+# ── Tap Charge button ─────────────────────────────────────────────────────
+- tapOn:
+    text: "Charge"
+    enabled: true
+
+# ── Verify processing modal appears ──────────────────────────────────────
+- assertVisible: "Processing"
+
+# NOTE: Actual card tap on terminal required here for full E2E
+# Test completes here for smoke validation — terminal flow continues on device

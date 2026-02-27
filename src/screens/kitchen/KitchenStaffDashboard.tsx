@@ -1,777 +1,577 @@
 /**
- * Kitchen Staff Dashboard - Order preparation tracking and kitchen operations according to wireframes
- * Features: Priority order management, station tracking, real-time updates, preparation timers
+ * Kitchen Staff Dashboard — connected to real SQLite order data
+ * Shows confirmed/preparing/ready orders with live elapsed timers and priority.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   FlatList,
   RefreshControl,
-  Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import {
-  AppleDashboardPanel,
-  AppleCard,
-  AppleButton,
-  AppleStatusPill,
-  AppleInteractive,
-  AppleProgressBar,
-} from '@/components/apple';
-import {
-  KITCHEN_STAFF_DASHBOARD_DATA,
-  KitchenOrder,
-  KitchenOrderItem,
-  KitchenStation,
-  getOrdersByStatus,
-  getOrdersByPriority,
-  getOverdueOrders,
-  getUrgentOrders,
-  getActiveStations,
-  sortOrdersByPriority,
-} from '@/data/dashboard/kitchenStaffDashboard';
+import { AppleCard, AppleProgressBar } from '@/components/apple';
+import { useUnifiedKitchen } from '@/context/unified-order/UnifiedOrderContext';
+import { UnifiedOrder, UnifiedOrderStatus } from '@/types/unified-order.types';
+import { formatCurrency } from '@/utils/currency';
 
-interface KitchenOrderCardProps {
-  order: KitchenOrder;
-  onUpdateStatus: (order: KitchenOrder, newStatus: string) => void;
-  onViewDetails: (order: KitchenOrder) => void;
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+const getMinutesElapsed = (iso: string): number => {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+};
+
+const mapKitchenStatus = (
+  status: UnifiedOrderStatus,
+): 'pending' | 'preparing' | 'ready' => {
+  if (status === 'preparing') return 'preparing';
+  if (status === 'ready') return 'ready';
+  return 'pending'; // confirmed
+};
+
+const derivePriority = (elapsed: number, estimated: number): 'urgent' | 'high' | 'normal' => {
+  if (elapsed > estimated * 1.2) return 'urgent';
+  if (elapsed > estimated * 0.7) return 'high';
+  return 'normal';
+};
+
+const estimatePrep = (order: UnifiedOrder): number =>
+  order.estimatedPrepTime ?? Math.max(10, order.items.length * 5);
+
+// ─── Order Card ─────────────────────────────────────────────────────────────
+
+interface OrderCardProps {
+  order: UnifiedOrder;
+  onUpdateStatus: (order: UnifiedOrder, next: UnifiedOrderStatus) => void;
 }
 
-const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, onUpdateStatus, onViewDetails }) => {
+const KitchenOrderCard: React.FC<OrderCardProps> = ({ order, onUpdateStatus }) => {
   const { theme } = useTheme();
 
-  const getPriorityColor = (priority: string) => {
-    return theme.colors.statusColors[priority as keyof typeof theme.colors.statusColors] || theme.colors.statusColors.normal;
-  };
+  const elapsed = getMinutesElapsed(order.createdAt);
+  const estimated = estimatePrep(order);
+  const kitchenStatus = mapKitchenStatus(order.status);
+  const priority = derivePriority(elapsed, estimated);
+  const isOverdue = elapsed > estimated * 1.2;
+  const progress = Math.min(elapsed / estimated, 1);
 
-  const getStatusColor = (status: string) => {
-    return theme.colors.statusColors[status as keyof typeof theme.colors.statusColors] || theme.colors.outline;
-  };
+  // Status banner colours
+  const statusConfig = {
+    pending: {
+      bg: '#3B82F6',
+      label: 'CONFIRMED',
+      next: 'preparing' as UnifiedOrderStatus,
+      nextLabel: 'Start Preparing',
+    },
+    preparing: {
+      bg: '#F59E0B',
+      label: 'PREPARING',
+      next: 'ready' as UnifiedOrderStatus,
+      nextLabel: 'Mark Ready',
+    },
+    ready: {
+      bg: '#10B981',
+      label: 'READY',
+      next: 'served' as UnifiedOrderStatus,
+      nextLabel: 'Mark Served',
+    },
+  }[kitchenStatus];
 
-  const getTimeColor = (timeElapsed: number, estimatedTime: number) => {
-    const ratio = timeElapsed / estimatedTime;
-    if (ratio > 1.2) return theme.colors.statusColors.poor; // Overdue
-    if (ratio > 0.8) return theme.colors.statusColors.average; // Nearly due
-    return theme.colors.statusColors.excellent; // On time
-  };
+  // Priority badge colour
+  const priorityColor = {
+    urgent: theme.colors.error,
+    high: '#F59E0B',
+    normal: theme.colors.onSurfaceVariant,
+  }[priority];
+
+  // Progress bar colour
+  const progressColor: 'success' | 'warning' | 'error' =
+    isOverdue ? 'error' : progress > 0.7 ? 'warning' : 'success';
 
   const styles = {
     card: {
       marginBottom: 12,
-      borderLeftWidth: 6,
-      borderLeftColor: getPriorityColor(order.priority),
+      padding: 0,
+      overflow: 'hidden' as const,
+      borderRadius: theme.borderRadius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
     },
-    header: {
+    banner: {
+      backgroundColor: statusConfig.bg,
       flexDirection: 'row' as const,
       justifyContent: 'space-between' as const,
       alignItems: 'center' as const,
-      marginBottom: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
     },
-    orderInfo: {
-      flex: 1,
+    bannerLeft: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 6,
+    },
+    bannerStatus: {
+      fontSize: 11,
+      fontWeight: '700' as const,
+      color: '#FFFFFF',
+      letterSpacing: 0.5,
+    },
+    bannerTime: {
+      fontSize: 11,
+      color: 'rgba(255,255,255,0.85)',
+      fontWeight: '500' as const,
+    },
+    body: {
+      padding: 12,
+    },
+    topRow: {
+      flexDirection: 'row' as const,
+      justifyContent: 'space-between' as const,
+      alignItems: 'flex-start' as const,
+      marginBottom: 8,
     },
     orderNumber: {
       fontSize: 16,
       fontWeight: '700' as const,
       color: theme.colors.onSurface,
     },
-    customerInfo: {
-      fontSize: 14,
+    meta: {
+      fontSize: 13,
       color: theme.colors.onSurfaceVariant,
       marginTop: 2,
     },
-    statusBadge: {
-      marginLeft: 8,
+    priorityBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: theme.borderRadius.sm,
+      backgroundColor: `${priorityColor}20`,
     },
-    timeContainer: {
+    priorityText: {
+      fontSize: 11,
+      fontWeight: '700' as const,
+      color: priorityColor,
+    },
+    timerRow: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
       gap: 8,
-      marginBottom: 12,
+      marginBottom: 8,
     },
-    timeText: {
+    timerText: {
       fontSize: 12,
       fontWeight: '600' as const,
+      color: isOverdue ? theme.colors.error : theme.colors.onSurfaceVariant,
+      minWidth: 60,
     },
-    itemsContainer: {
-      marginBottom: 12,
+    divider: {
+      height: 1,
+      backgroundColor: theme.colors.outline,
+      marginVertical: 8,
+      opacity: 0.5,
+    },
+    itemsSection: {
+      gap: 4,
+      marginBottom: 10,
     },
     itemRow: {
       flexDirection: 'row' as const,
-      justifyContent: 'space-between' as const,
       alignItems: 'center' as const,
-      paddingVertical: 4,
+      gap: 6,
+      paddingVertical: 3,
       paddingHorizontal: 8,
       backgroundColor: theme.colors.surfaceVariant,
       borderRadius: theme.borderRadius.sm,
-      marginBottom: 4,
     },
     itemName: {
-      fontSize: 14,
-      fontWeight: '500' as const,
-      color: theme.colors.onSurface,
       flex: 1,
+      fontSize: 13,
+      color: theme.colors.onSurface,
+      fontWeight: '500' as const,
     },
-    itemQuantity: {
+    itemQty: {
       fontSize: 12,
       color: theme.colors.onSurfaceVariant,
-      marginRight: 8,
-    },
-    specialInstructions: {
-      fontSize: 12,
-      fontStyle: 'italic' as const,
-      color: theme.colors.primary,
-      marginTop: 2,
-    },
-    allergenTag: {
-      backgroundColor: theme.colors.statusColors.error,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: theme.borderRadius.sm,
-      marginLeft: 4,
-    },
-    allergenText: {
-      fontSize: 10,
-      color: theme.colors.onError,
       fontWeight: '600' as const,
     },
-    actionsContainer: {
+    itemNote: {
+      fontSize: 11,
+      color: theme.colors.primary,
+      fontStyle: 'italic' as const,
+      marginTop: 1,
+    },
+    specialNote: {
+      flexDirection: 'row' as const,
+      alignItems: 'flex-start' as const,
+      gap: 4,
+      marginBottom: 10,
+    },
+    specialNoteText: {
+      flex: 1,
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+      fontStyle: 'italic' as const,
+    },
+    actionsRow: {
       flexDirection: 'row' as const,
       gap: 8,
     },
-    overdueIndicator: {
-      backgroundColor: theme.colors.statusColors.error,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: theme.borderRadius.sm,
-      alignSelf: 'flex-start' as const,
-      marginBottom: 8,
+    actionBtn: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: theme.borderRadius.md,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
     },
-    overdueText: {
-      fontSize: 12,
-      color: theme.colors.onError,
-      fontWeight: '600' as const,
+    actionBtnText: {
+      fontSize: 13,
+      fontWeight: '700' as const,
     },
   };
 
-  const timeElapsedColor = getTimeColor(order.timeElapsed, order.estimatedTime);
-
   return (
     <AppleCard layer="surface" size="large" style={styles.card}>
-      {order.isOverdue && (
-        <View style={styles.overdueIndicator}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <MaterialIcons name="warning" size={16} color={theme.colors.statusColors.error} />
-            <Text style={styles.overdueText}>OVERDUE</Text>
+      {/* Status Banner */}
+      <View style={styles.banner}>
+        <View style={styles.bannerLeft}>
+          {isOverdue && (
+            <MaterialIcons name="warning" size={14} color="#FFFFFF" />
+          )}
+          <Text style={styles.bannerStatus}>
+            {isOverdue ? 'OVERDUE • ' : ''}{statusConfig.label}
+          </Text>
+        </View>
+        <Text style={styles.bannerTime}>{elapsed}m ago</Text>
+      </View>
+
+      <View style={styles.body}>
+        {/* Order info + priority */}
+        <View style={styles.topRow}>
+          <View>
+            <Text style={styles.orderNumber}>{order.orderNumber}</Text>
+            <Text style={styles.meta}>
+              {order.tableName ? `${order.tableName} • ` : ''}
+              {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+            </Text>
           </View>
-        </View>
-      )}
-
-      <View style={styles.header}>
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderNumber}>{order.orderNumber}</Text>
-          <Text style={styles.customerInfo}>
-            {order.tableNumber ? `${order.tableNumber} • ` : ''}
-            {order.customerName} • {order.orderType.replace('-', ' ').toUpperCase()}
-          </Text>
-        </View>
-        <AppleStatusPill
-          status={order.status === 'ready' ? 'success' : order.status === 'preparing' ? 'warning' : 'error'}
-          text={order.status.toUpperCase()}
-          size="small"
-          style={styles.statusBadge}
-        />
-      </View>
-
-      <View style={styles.timeContainer}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <MaterialIcons name="access-time" size={16} color={timeElapsedColor} />
-          <Text style={[styles.timeText, { color: timeElapsedColor }]}>
-            {order.timeElapsed}m / {order.estimatedTime}m
-          </Text>
-        </View>
-        <AppleProgressBar
-          progress={Math.min(order.timeElapsed / order.estimatedTime, 1)}
-          color={timeElapsedColor === theme.colors.statusColors.excellent ? 'success' :
-                 timeElapsedColor === theme.colors.statusColors.average ? 'warning' : 'error'}
-          size="small"
-          style={{ flex: 1 }}
-        />
-      </View>
-
-      <View style={styles.itemsContainer}>
-        {order.items.map((item) => (
-          <View key={item.id} style={styles.itemRow}>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                {item.allergens && item.allergens.length > 0 && (
-                  <View style={styles.allergenTag}>
-                    <Text style={styles.allergenText}>ALLERGY</Text>
-                  </View>
-                )}
-              </View>
-              {/* Display modifiers if present */}
-              {item.modifiers && item.modifiers.length > 0 && (
-                <Text style={[styles.specialInstructions, { color: theme.colors.primary, fontStyle: 'normal' }]}>
-                  + {item.modifiers.flatMap(m => m.options).join(', ')}
-                </Text>
-              )}
-              {item.specialInstructions && (
-                <Text style={styles.specialInstructions}>Note: {item.specialInstructions}</Text>
-              )}
+          {priority !== 'normal' && (
+            <View style={styles.priorityBadge}>
+              <Text style={styles.priorityText}>{priority.toUpperCase()}</Text>
             </View>
-            <Text style={styles.itemQuantity}>x{item.quantity}</Text>
-            <AppleStatusPill
-              status={item.status === 'ready' ? 'success' : item.status === 'preparing' ? 'warning' : 'neutral'}
-              text={item.status}
-              size="small"
-            />
-          </View>
-        ))}
-      </View>
-
-      {order.specialNotes && (
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginBottom: 12 }}>
-          <MaterialIcons name="note" size={16} color={theme.colors.onSurfaceVariant} />
-          <Text style={[styles.specialInstructions, { flex: 1 }]}>
-            Special Notes: {order.specialNotes}
-          </Text>
+          )}
         </View>
-      )}
 
-      <View style={styles.actionsContainer}>
-        <AppleButton
-          title="View Details"
-          variant="ghost"
-          size="small"
-          onPress={() => onViewDetails(order)}
-        />
-        {order.status === 'pending' && (
-          <AppleButton
-            title="Start Preparing"
-            variant="primary"
-            size="small"
-            onPress={() => onUpdateStatus(order, 'preparing')}
+        {/* Time progress */}
+        <View style={styles.timerRow}>
+          <MaterialIcons
+            name="access-time"
+            size={16}
+            color={isOverdue ? theme.colors.error : theme.colors.onSurfaceVariant}
           />
-        )}
-        {order.status === 'preparing' && (
-          <AppleButton
-            title="Mark Ready"
-            variant="secondary"
+          <Text style={styles.timerText}>{elapsed}m / {estimated}m</Text>
+          <AppleProgressBar
+            progress={progress}
+            color={progressColor}
             size="small"
-            onPress={() => onUpdateStatus(order, 'ready')}
+            style={{ flex: 1 }}
           />
-        )}
-        {order.status === 'ready' && (
-          <AppleButton
-            title="Mark Served"
-            variant="success"
-            size="small"
-            onPress={() => onUpdateStatus(order, 'served')}
-          />
-        )}
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* Items */}
+        <View style={styles.itemsSection}>
+          {order.items.map((item) => (
+            <View key={item.id}>
+              <View style={styles.itemRow}>
+                <MaterialIcons
+                  name="restaurant-menu"
+                  size={14}
+                  color={theme.colors.onSurfaceVariant}
+                />
+                <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={styles.itemQty}>×{item.quantity}</Text>
+              </View>
+              {item.specialInstructions ? (
+                <Text style={styles.itemNote}>  Note: {item.specialInstructions}</Text>
+              ) : null}
+            </View>
+          ))}
+        </View>
+
+        {/* Special instructions */}
+        {order.specialInstructions ? (
+          <View style={styles.specialNote}>
+            <MaterialIcons name="note" size={14} color={theme.colors.onSurfaceVariant} />
+            <Text style={styles.specialNoteText}>{order.specialInstructions}</Text>
+          </View>
+        ) : null}
+
+        {/* Action button */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: statusConfig.bg }]}
+            onPress={() => onUpdateStatus(order, statusConfig.next)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.actionBtnText, { color: '#FFFFFF' }]}>
+              {statusConfig.nextLabel}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </AppleCard>
   );
 };
 
-interface KitchenStationCardProps {
-  station: KitchenStation;
-  onViewOrders: (station: KitchenStation) => void;
+// ─── Stat Card ───────────────────────────────────────────────────────────────
+
+interface StatCardProps {
+  icon: keyof typeof MaterialIcons.glyphMap;
+  iconColor: string;
+  value: string;
+  label: string;
 }
 
-const KitchenStationCard: React.FC<KitchenStationCardProps> = ({ station, onViewOrders }) => {
+const StatCard: React.FC<StatCardProps> = ({ icon, iconColor, value, label }) => {
   const { theme } = useTheme();
-
-  const getStatusColor = (status: string) => {
-    return theme.colors.statusColors[status as keyof typeof theme.colors.statusColors] || theme.colors.outline;
-  };
-
-  const styles = {
-    card: {
-      marginRight: 12,
-      width: 200,
-    },
-    header: {
-      flexDirection: 'row' as const,
-      justifyContent: 'space-between' as const,
-      alignItems: 'center' as const,
-      marginBottom: 8,
-    },
-    stationName: {
-      fontSize: 16,
-      fontWeight: '600' as const,
-      color: theme.colors.onSurface,
-    },
-    chefName: {
-      fontSize: 14,
-      color: theme.colors.onSurfaceVariant,
-      marginBottom: 8,
-    },
-    ordersCount: {
-      fontSize: 14,
-      fontWeight: '500' as const,
-      color: theme.colors.onSurface,
-      marginBottom: 8,
-    },
-    specialtyContainer: {
-      flexDirection: 'row' as const,
-      flexWrap: 'wrap' as const,
-      gap: 4,
-      marginBottom: 12,
-    },
-    specialtyTag: {
-      backgroundColor: theme.colors.primary,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: theme.borderRadius.sm,
-    },
-    specialtyText: {
-      fontSize: 10,
-      color: theme.colors.onPrimary,
-      fontWeight: '500' as const,
-    },
-    efficiencyContainer: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'space-between' as const,
-      marginBottom: 12,
-    },
-    efficiencyText: {
-      fontSize: 12,
-      color: theme.colors.onSurfaceVariant,
-    },
-    efficiencyValue: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      color: station.efficiency >= 90 ? theme.colors.statusColors.excellent :
-             station.efficiency >= 75 ? theme.colors.statusColors.average :
-             theme.colors.statusColors.poor,
-    },
-  };
-
   return (
-    <AppleInteractive onPress={() => onViewOrders(station)} feedbackType="scale">
-      <AppleCard layer="surfaceVariant" size="large" style={styles.card}>
-        <View style={styles.header}>
-          <Text style={styles.stationName}>{station.name}</Text>
-          <AppleStatusPill
-            status={station.status === 'active' ? 'success' : station.status === 'busy' ? 'info' : 'neutral'}
-            text={station.status.toUpperCase()}
-            size="small"
-          />
-        </View>
-
-        <Text style={styles.chefName}>Chef: {station.chef}</Text>
-
-        <Text style={styles.ordersCount}>
-          {station.currentOrders.length} active orders
-        </Text>
-
-        <View style={styles.specialtyContainer}>
-          {station.specialty.map((item, index) => (
-            <View key={index} style={styles.specialtyTag}>
-              <Text style={styles.specialtyText}>{item}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.efficiencyContainer}>
-          <Text style={styles.efficiencyText}>Efficiency:</Text>
-          <Text style={styles.efficiencyValue}>{station.efficiency}%</Text>
-        </View>
-
-        <AppleProgressBar
-          progress={station.efficiency / 100}
-          color={station.efficiency >= 90 ? 'success' : station.efficiency >= 75 ? 'warning' : 'error'}
-          size="small"
-        />
-      </AppleCard>
-    </AppleInteractive>
+    <View style={{
+      flex: 1,
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: theme.borderRadius.md,
+      padding: 12,
+      alignItems: 'center',
+    }}>
+      <View style={{
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: `${iconColor}20`,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 6,
+      }}>
+        <MaterialIcons name={icon} size={20} color={iconColor} />
+      </View>
+      <Text style={{
+        fontSize: 22,
+        fontWeight: '700',
+        color: theme.colors.onSurface,
+        marginBottom: 2,
+      }}>{value}</Text>
+      <Text style={{
+        fontSize: 11,
+        color: theme.colors.onSurfaceVariant,
+        textAlign: 'center',
+      }}>{label}</Text>
+    </View>
   );
 };
 
+// ─── Main Dashboard ──────────────────────────────────────────────────────────
+
+type StatusFilter = 'all' | 'pending' | 'preparing' | 'ready';
+
 const KitchenStaffDashboard: React.FC = () => {
   const { theme, isDark } = useTheme();
-  const [data, setData] = useState(KITCHEN_STAFF_DASHBOARD_DATA);
-  const [selectedPriority, setSelectedPriority] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('active');
+  const { orders, updateOrderStatus, refreshOrders, isLoading } = useUnifiedKitchen();
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Auto-refresh timer
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setData(prev => ({
-        ...prev,
-        orders: prev.orders.map(order => ({
-          ...order,
-          timeElapsed: order.timeElapsed + 1,
-          isOverdue: (order.timeElapsed + 1) > (order.estimatedTime * 1.2),
-        })),
-        lastUpdated: new Date().toISOString(),
-      }));
-    }, 60000); // Update every minute
+  // Compute stats from real data
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-    return () => clearInterval(interval);
-  }, []);
+    const active = orders.filter(o => o.status === 'preparing').length;
+    const pending = orders.filter(o => o.status === 'confirmed').length;
+    const ready = orders.filter(o => o.status === 'ready').length;
 
-  // Filter orders
-  const filteredOrders = React.useMemo(() => {
-    let orders = data.orders;
+    const overdue = orders.filter(o => {
+      const elapsed = getMinutesElapsed(o.createdAt);
+      const estimated = estimatePrep(o);
+      return elapsed > estimated * 1.2;
+    }).length;
 
-    if (selectedStatus !== 'all') {
-      if (selectedStatus === 'active') {
-        orders = orders.filter(order => ['pending', 'preparing'].includes(order.status));
-      } else {
-        orders = orders.filter(order => order.status === selectedStatus);
-      }
-    }
+    // Average time for all kitchen orders (as elapsed so far)
+    const avgTime = orders.length > 0
+      ? Math.round(orders.reduce((sum, o) => sum + getMinutesElapsed(o.createdAt), 0) / orders.length)
+      : 0;
 
-    if (selectedPriority !== 'all') {
-      orders = orders.filter(order => order.priority === selectedPriority);
-    }
+    return { active, pending, ready, overdue, avgTime };
+  }, [orders]);
 
-    return sortOrdersByPriority(orders);
-  }, [data.orders, selectedStatus, selectedPriority]);
+  // Filtered + sorted orders
+  const filteredOrders = useMemo(() => {
+    let result = orders.filter(o => {
+      if (statusFilter === 'all') return true;
+      return mapKitchenStatus(o.status) === statusFilter;
+    });
 
-  // Handle refresh
-  const handleRefresh = () => {
+    // Sort: overdue first, then by elapsed time descending
+    return result.sort((a, b) => {
+      const aElapsed = getMinutesElapsed(a.createdAt);
+      const bElapsed = getMinutesElapsed(b.createdAt);
+      const aEst = estimatePrep(a);
+      const bEst = estimatePrep(b);
+      const aOverdue = aElapsed > aEst * 1.2;
+      const bOverdue = bElapsed > bEst * 1.2;
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      return bElapsed - aElapsed;
+    });
+  }, [orders, statusFilter]);
+
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setData({ ...KITCHEN_STAFF_DASHBOARD_DATA, lastUpdated: new Date().toISOString() });
-      setRefreshing(false);
-    }, 1000);
-  };
+    await refreshOrders();
+    setRefreshing(false);
+  }, [refreshOrders]);
 
-  // Handle order status update
-  const handleOrderStatusUpdate = (order: KitchenOrder, newStatus: string) => {
-    Alert.alert('Update Order Status', `Change order ${order.orderNumber} to ${newStatus}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Update', onPress: () => {
-        const updatedOrders = data.orders.map(o =>
-          o.id === order.id ? { ...o, status: newStatus as any } : o
-        );
-        setData({ ...data, orders: updatedOrders });
-      }}
-    ]);
-  };
-
-  // Handle view order details
-  const handleViewOrderDetails = (order: KitchenOrder) => {
-    Alert.alert(
-      `Order ${order.orderNumber}`,
-      `Customer: ${order.customerName}\n` +
-      `${order.tableNumber ? `Table: ${order.tableNumber}\n` : ''}` +
-      `Items: ${order.items.length}\n` +
-      `Time Elapsed: ${order.timeElapsed}/${order.estimatedTime} minutes\n` +
-      `Status: ${order.status}\n` +
-      `Priority: ${order.priority}` +
-      (order.specialNotes ? `\n\nNotes: ${order.specialNotes}` : '')
-    );
-  };
-
-  // Handle view station orders
-  const handleViewStationOrders = (station: KitchenStation) => {
-    const stationOrders = data.orders.filter(order => station.currentOrders.includes(order.id));
-    Alert.alert(
-      `${station.name}`,
-      `Chef: ${station.chef}\n` +
-      `Status: ${station.status}\n` +
-      `Efficiency: ${station.efficiency}%\n` +
-      `Active Orders: ${stationOrders.length}\n\n` +
-      `Orders:\n${stationOrders.map(o => `• ${o.orderNumber} (${o.customerName})`).join('\n')}`
-    );
-  };
-
-  const styles = {
-    container: {
-      flex: 1,
-      backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+  const handleUpdateStatus = useCallback(
+    (order: UnifiedOrder, next: UnifiedOrderStatus) => {
+      updateOrderStatus(order.id, next);
     },
-    statsContainer: {
-      flexDirection: 'row' as const,
-      gap: 12,
-      marginBottom: 16,
-    },
-    statCard: {
-      flex: 1,
-      alignItems: 'center' as const,
-    },
-    statValue: {
-      fontSize: 20,
-      fontWeight: '700' as const,
-      color: theme.colors.primary,
-    },
-    statLabel: {
-      fontSize: 12,
-      color: theme.colors.onSurfaceVariant,
-      textAlign: 'center' as const,
-      marginTop: 4,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: '600' as const,
-      color: theme.colors.onSurface,
-      marginBottom: 12,
-    },
-    filtersContainer: {
-      flexDirection: 'row' as const,
-      gap: 8,
-      marginBottom: 16,
-    },
-    urgentAlert: {
-      backgroundColor: theme.colors.statusColors.urgent,
-      padding: 12,
-      borderRadius: theme.borderRadius.md,
-      marginBottom: 16,
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      gap: 8,
-    },
-    urgentText: {
-      color: theme.colors.onError,
-      fontWeight: '600' as const,
-      flex: 1,
-    },
-  };
-
-  // Filter options
-  const statusFilters = [
-    { key: 'active', label: 'Active', count: data.orders.filter(o => ['pending', 'preparing'].includes(o.status)).length },
-    { key: 'pending', label: 'Pending', count: data.orders.filter(o => o.status === 'pending').length },
-    { key: 'preparing', label: 'Preparing', count: data.orders.filter(o => o.status === 'preparing').length },
-    { key: 'ready', label: 'Ready', count: data.orders.filter(o => o.status === 'ready').length },
-  ];
-
-  const priorityFilters = [
-    { key: 'all', label: 'All Priority', count: data.orders.length },
-    { key: 'urgent', label: 'Urgent', count: data.orders.filter(o => o.priority === 'urgent').length },
-    { key: 'high', label: 'High', count: data.orders.filter(o => o.priority === 'high').length },
-    { key: 'normal', label: 'Normal', count: data.orders.filter(o => o.priority === 'normal').length },
-  ];
-
-  // Get urgent orders
-  const urgentOrders = getUrgentOrders();
-  const overdueOrders = getOverdueOrders();
-
-  // Header actions
-  const headerActions = (
-    <View style={{ flexDirection: 'row', gap: 12 }}>
-      <AppleStatusPill
-        status={overdueOrders.length > 0 ? 'error' : 'success'}
-        text={`${data.stats.activeOrders} Active`}
-        size="small"
-      />
-      <AppleButton
-        title="Refresh"
-        variant="secondary"
-        size="medium"
-        onPress={handleRefresh}
-      />
-    </View>
+    [updateOrderStatus],
   );
 
-  // Render header components for FlatList
-  const renderHeaderComponents = () => (
+  const filterOptions: { key: StatusFilter; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: orders.length },
+    { key: 'pending', label: 'Confirmed', count: orders.filter(o => o.status === 'confirmed').length },
+    { key: 'preparing', label: 'Preparing', count: orders.filter(o => o.status === 'preparing').length },
+    { key: 'ready', label: 'Ready', count: orders.filter(o => o.status === 'ready').length },
+  ];
+
+  const renderHeader = () => (
     <View style={{ padding: 16 }}>
-      {/* Header Title */}
-      <View style={{ marginBottom: 24 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{
-              fontSize: 28,
-              fontWeight: '700',
-              color: theme.colors.onSurface,
-              marginBottom: 4,
-            }}>
-              Kitchen Dashboard
-            </Text>
-            <Text style={{
-              fontSize: 14,
-              color: theme.colors.onSurfaceVariant,
-            }}>
-              {`${data.stats.activeOrders} Active Orders • ${data.stats.averageTime}m Avg Time • ${data.stats.efficiency}% Efficiency`}
-            </Text>
-          </View>
-          {headerActions}
+      {/* Title */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+        <View>
+          <Text style={{ fontSize: 26, fontWeight: '700', color: theme.colors.onSurface }}>
+            Kitchen Dashboard
+          </Text>
+          <Text style={{ fontSize: 13, color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+            {orders.length} active kitchen orders
+          </Text>
         </View>
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: theme.colors.primaryContainer,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            borderRadius: theme.borderRadius.md,
+          }}
+          onPress={handleRefresh}
+          disabled={isLoading || refreshing}
+        >
+          <MaterialIcons name="refresh" size={18} color={theme.colors.onPrimaryContainer} />
+          <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.onPrimaryContainer }}>
+            Refresh
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Urgent Alert */}
-      {(urgentOrders.length > 0 || overdueOrders.length > 0) && (
-        <View style={[styles.urgentAlert, { marginBottom: 16 }]}>
-          <Text style={styles.urgentText}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <MaterialIcons name="warning" size={16} color={theme.colors.statusColors.urgent} />
-              <Text>{urgentOrders.length} urgent orders • {overdueOrders.length} overdue orders</Text>
-            </View>
+      {/* Overdue alert */}
+      {stats.overdue > 0 && (
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          backgroundColor: `${theme.colors.error}18`,
+          borderWidth: 1,
+          borderColor: `${theme.colors.error}40`,
+          borderRadius: theme.borderRadius.md,
+          padding: 12,
+          marginBottom: 16,
+        }}>
+          <MaterialIcons name="warning" size={20} color={theme.colors.error} />
+          <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: theme.colors.error }}>
+            {stats.overdue} order{stats.overdue !== 1 ? 's' : ''} overdue — needs immediate attention
           </Text>
-          <AppleButton
-            title="View"
-            variant="ghost"
-            size="small"
-            onPress={() => setSelectedPriority('urgent')}
-          />
         </View>
       )}
 
-      {/* Kitchen Stats */}
-      <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <MaterialIcons name="analytics" size={20} color={theme.colors.primary} />
-          <Text style={styles.sectionTitle}>Kitchen Performance</Text>
-        </View>
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{data.stats.activeOrders}</Text>
-            <Text style={styles.statLabel}>Active Orders</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{data.stats.completedToday}</Text>
-            <Text style={styles.statLabel}>Completed Today</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{data.stats.averageTime}m</Text>
-            <Text style={styles.statLabel}>Avg Prep Time</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{data.stats.efficiency}%</Text>
-            <Text style={styles.statLabel}>Efficiency</Text>
-          </View>
-        </View>
-      </AppleCard>
+      {/* Stats row */}
+      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+        <StatCard icon="pending-actions" iconColor="#3B82F6" value={String(stats.pending)} label="Confirmed" />
+        <StatCard icon="local-fire-department" iconColor="#F59E0B" value={String(stats.active)} label="Preparing" />
+        <StatCard icon="check-circle" iconColor="#10B981" value={String(stats.ready)} label="Ready" />
+        <StatCard icon="schedule" iconColor={theme.colors.onSurfaceVariant} value={`${stats.avgTime}m`} label="Avg Wait" />
+      </View>
 
-      {/* Kitchen Stations */}
-      <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <MaterialIcons name="restaurant" size={20} color={theme.colors.primary} />
-          <Text style={styles.sectionTitle}>Kitchen Stations</Text>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={{ flexDirection: 'row', paddingVertical: 8 }}>
-            {data.stations.map((station) => (
-              <KitchenStationCard
-                key={station.id}
-                station={station}
-                onViewOrders={handleViewStationOrders}
-              />
-            ))}
-          </View>
-        </ScrollView>
-      </AppleCard>
+      {/* Status filter chips */}
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+        {filterOptions.map(opt => {
+          const isActive = statusFilter === opt.key;
+          return (
+            <TouchableOpacity
+              key={opt.key}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+                borderRadius: theme.borderRadius.full ?? 20,
+                backgroundColor: isActive ? theme.colors.primary : theme.colors.surfaceVariant,
+                borderWidth: 1,
+                borderColor: isActive ? theme.colors.primary : theme.colors.outline,
+              }}
+              onPress={() => setStatusFilter(opt.key)}
+              activeOpacity={0.7}
+            >
+              <Text style={{
+                fontSize: 13,
+                fontWeight: '600',
+                color: isActive ? theme.colors.onPrimary : theme.colors.onSurface,
+              }}>{opt.label}</Text>
+              <View style={{
+                backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : theme.colors.outline,
+                borderRadius: 10,
+                minWidth: 20,
+                paddingHorizontal: 5,
+                paddingVertical: 1,
+                alignItems: 'center',
+              }}>
+                <Text style={{
+                  fontSize: 11,
+                  fontWeight: '700',
+                  color: isActive ? '#FFFFFF' : theme.colors.onSurfaceVariant,
+                }}>{opt.count}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
-      {/* Filters */}
-      <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <MaterialIcons name="filter-list" size={20} color={theme.colors.primary} />
-          <Text style={styles.sectionTitle}>Filter Orders</Text>
-        </View>
-
-        <Text style={[styles.sectionTitle, { fontSize: 14, marginBottom: 8 }]}>Status</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.filtersContainer}>
-            {statusFilters.map((filter) => (
-              <AppleInteractive
-                key={filter.key}
-                onPress={() => setSelectedStatus(filter.key)}
-                feedbackType="scale"
-              >
-                <AppleCard
-                  layer={selectedStatus === filter.key ? "primary" : "surfaceVariant"}
-                  size="small"
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <Text style={{
-                    fontSize: 14,
-                    fontWeight: '500',
-                    color: selectedStatus === filter.key ? theme.colors.onPrimary : theme.colors.onSurface,
-                  }}>
-                    {filter.label}
-                  </Text>
-                  <AppleStatusPill
-                    status="neutral"
-                    text={filter.count.toString()}
-                    size="small"
-                  />
-                </AppleCard>
-              </AppleInteractive>
-            ))}
-          </View>
-        </ScrollView>
-
-        <Text style={[styles.sectionTitle, { fontSize: 14, marginTop: 12, marginBottom: 8 }]}>Priority</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.filtersContainer}>
-            {priorityFilters.map((filter) => (
-              <AppleInteractive
-                key={filter.key}
-                onPress={() => setSelectedPriority(filter.key)}
-                feedbackType="scale"
-              >
-                <AppleCard
-                  layer={selectedPriority === filter.key ? "primary" : "surfaceVariant"}
-                  size="small"
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <Text style={{
-                    fontSize: 14,
-                    fontWeight: '500',
-                    color: selectedPriority === filter.key ? theme.colors.onPrimary : theme.colors.onSurface,
-                  }}>
-                    {filter.label}
-                  </Text>
-                  <AppleStatusPill
-                    status="neutral"
-                    text={filter.count.toString()}
-                    size="small"
-                  />
-                </AppleCard>
-              </AppleInteractive>
-            ))}
-          </View>
-        </ScrollView>
-      </AppleCard>
-
-      {/* Orders List Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, paddingHorizontal: 16 }}>
-        <MaterialIcons name="assignment" size={20} color={theme.colors.primary} />
-        <Text style={styles.sectionTitle}>Kitchen Orders ({filteredOrders.length})</Text>
+      {/* List label */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <MaterialIcons name="assignment" size={18} color={theme.colors.primary} />
+        <Text style={{ fontSize: 15, fontWeight: '600', color: theme.colors.onSurface }}>
+          Kitchen Orders ({filteredOrders.length})
+        </Text>
       </View>
     </View>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={{ flex: 1, backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background }}>
       <FlatList
         data={filteredOrders}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
-            <KitchenOrderCard
-              order={item}
-              onUpdateStatus={handleOrderStatusUpdate}
-              onViewDetails={handleViewOrderDetails}
-            />
+          <View style={{ paddingHorizontal: 16, paddingBottom: 4 }}>
+            <KitchenOrderCard order={item} onUpdateStatus={handleUpdateStatus} />
           </View>
         )}
-        ListHeaderComponent={renderHeaderComponents}
+        ListHeaderComponent={renderHeader}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -781,16 +581,26 @@ const KitchenStaffDashboard: React.FC = () => {
             tintColor={theme.colors.primary}
           />
         }
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
         ListEmptyComponent={
           <View style={{ paddingHorizontal: 16 }}>
-            <AppleCard layer="surfaceVariant" size="large" style={{ alignItems: 'center', padding: 32 }}>
-              <MaterialIcons name="restaurant" size={48} color={theme.colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
+            <View style={{
+              alignItems: 'center',
+              padding: 40,
+              backgroundColor: theme.colors.surfaceVariant,
+              borderRadius: theme.borderRadius.lg,
+            }}>
+              <MaterialIcons
+                name="restaurant"
+                size={52}
+                color={theme.colors.onSurfaceVariant}
+                style={{ marginBottom: 16 }}
+              />
               <Text style={{
                 fontSize: 18,
-                fontWeight: '600',
+                fontWeight: '700',
                 color: theme.colors.onSurface,
-                marginBottom: 8,
+                marginBottom: 6,
               }}>
                 No Orders to Prepare
               </Text>
@@ -799,9 +609,11 @@ const KitchenStaffDashboard: React.FC = () => {
                 color: theme.colors.onSurfaceVariant,
                 textAlign: 'center',
               }}>
-                All orders are up to date! Great work!
+                {statusFilter === 'all'
+                  ? 'All orders are up to date!'
+                  : `No ${statusFilter} orders right now.`}
               </Text>
-            </AppleCard>
+            </View>
           </View>
         }
       />

@@ -3,7 +3,7 @@
  * Features: Order status filtering, real-time order grid, analytics, search & filter
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   TextInput,
   RefreshControl,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -22,178 +23,219 @@ import {
   AppleStatusPill,
   AppleInteractive,
 } from '@/components/apple';
-import {
-  ORDERS_DASHBOARD_DATA,
-  DashboardOrder,
-  OrderAnalytics,
-  getOrdersByStatus,
-  getOrdersByType,
-  getUrgentOrders,
-} from '@/data/dashboard/ordersDashboard';
+import { DashboardOrder, OrderAnalytics } from '@/data/dashboard/ordersDashboard';
+import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
+import { UnifiedOrder } from '@/types/unified-order.types';
 
 interface OrderCardProps {
   order: DashboardOrder;
   onPress: (order: DashboardOrder) => void;
-  onUpdateStatus: (order: DashboardOrder) => void;
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, onPress, onUpdateStatus }) => {
-  const { theme } = useTheme();
+const OrderCard: React.FC<OrderCardProps> = ({ order, onPress }) => {
+  const { theme, isDark } = useTheme();
 
-  const getStatusColor = (status: string) => {
-    return theme.colors.statusColors[status as keyof typeof theme.colors.statusColors] || theme.colors.outline;
+  const statusColors = (() => {
+    const sc = theme.colors.status;
+    if (!sc) return { bg: theme.colors.surfaceLight, text: theme.colors.onSurface, border: theme.colors.outline };
+    const key = order.status as keyof typeof sc;
+    return sc[key] || sc.pending;
+  })();
+
+  const getElapsedTime = () => {
+    const mins = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    return `${Math.floor(mins / 60)}h ago`;
   };
 
-  const getUrgencyIcon = (urgency: string) => {
-    const iconName = theme.colors.statusIcons[urgency as keyof typeof theme.colors.statusIcons];
-    if (!iconName) return null;
-
-    const iconColor = urgency === 'urgent' ? theme.colors.statusColors.urgent :
-                     urgency === 'priority' ? theme.colors.statusColors.high :
-                     theme.colors.onSurfaceVariant;
-
-    return <MaterialIcons name={iconName as any} size={16} color={iconColor} />;
-  };
-
-  const styles = {
-    card: {
-      marginBottom: 12,
-      borderLeftWidth: 4,
-      borderLeftColor: getStatusColor(order.status),
-    },
-    header: {
-      flexDirection: 'row' as const,
-      justifyContent: 'space-between' as const,
-      alignItems: 'center' as const,
-      marginBottom: 8,
-    },
-    orderNumber: {
-      fontSize: 16,
-      fontWeight: '600' as const,
-      color: theme.colors.onSurface,
-    },
-    urgencyBadge: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      gap: 4,
-    },
-    content: {
-      marginBottom: 12,
-    },
-    customerInfo: {
-      flexDirection: 'row' as const,
-      justifyContent: 'space-between' as const,
-      marginBottom: 8,
-    },
-    customerName: {
-      fontSize: 14,
-      fontWeight: '500' as const,
-      color: theme.colors.onSurface,
-    },
-    tableNumber: {
-      fontSize: 14,
-      color: theme.colors.onSurfaceVariant,
-    },
-    itemsText: {
-      fontSize: 12,
-      color: theme.colors.onSurfaceVariant,
-      marginBottom: 4,
-    },
-    footer: {
-      flexDirection: 'row' as const,
-      justifyContent: 'space-between' as const,
-      alignItems: 'center' as const,
-    },
-    amount: {
-      fontSize: 16,
-      fontWeight: '600' as const,
-      color: theme.colors.primary,
-    },
-    time: {
-      fontSize: 12,
-      color: theme.colors.onSurfaceVariant,
-    },
-    actions: {
-      flexDirection: 'row' as const,
-      gap: 8,
-      marginTop: 12,
-    },
-  };
+  const statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
 
   return (
-    <AppleInteractive onPress={() => onPress(order)} feedbackType="scale">
-      <AppleCard layer="surface" size="large" style={styles.card}>
-        <View style={styles.header}>
-          <Text style={styles.orderNumber}>{order.orderNumber}</Text>
-          <View style={styles.urgencyBadge}>
-            {getUrgencyIcon(order.urgencyLevel)}
-            <AppleStatusPill
-              status={order.status === 'ready' ? 'success' : order.status === 'preparing' ? 'warning' : 'error'}
-              text={order.status.toUpperCase()}
-              size="small"
-            />
-          </View>
-        </View>
+    <TouchableOpacity
+      style={{
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.borderRadius.lg,
+        marginVertical: theme.spacing.xs,
+        borderWidth: 2,
+        borderColor: statusColors.border,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.3 : 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+      }}
+      onPress={() => onPress(order)}
+      activeOpacity={0.8}
+    >
+      {/* Status Banner */}
+      <View style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: theme.spacing.sm,
+        paddingVertical: theme.spacing.xs,
+        backgroundColor: statusColors.bg,
+      }}>
+        <Text style={{ fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: statusColors.text }}>
+          {statusLabel}
+        </Text>
+        <Text style={{ fontSize: 11, fontWeight: '600', color: statusColors.text }}>
+          {getElapsedTime()}
+        </Text>
+      </View>
 
-        <View style={styles.content}>
-          <View style={styles.customerInfo}>
-            <Text style={styles.customerName}>{order.customer.name}</Text>
-            <Text style={styles.tableNumber}>
-              {order.tableNumber || `${order.orderType.toUpperCase()}`}
-            </Text>
-          </View>
-
-          <Text style={styles.itemsText}>
-            {order.items.length} items: {order.items.map(item => item.name).join(', ')}
+      <View style={{ padding: theme.spacing.md }}>
+        {/* Header Row: order number + table */}
+        <View style={{ marginBottom: theme.spacing.sm }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: theme.colors.onSurface, marginBottom: 2 }}>
+            {order.orderNumber}
           </Text>
-
-          {order.notes && (
-            <Text style={[styles.itemsText, { fontStyle: 'italic' }]}>
-              Note: {order.notes}
+          {order.tableNumber && (
+            <Text style={{ fontSize: 13, fontWeight: '500', color: theme.colors.onSurfaceVariant }}>
+              {order.tableNumber}
             </Text>
           )}
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.amount}>${order.totalAmount.toFixed(2)}</Text>
-          <View>
-            <Text style={styles.time}>
-              {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {/* Details Row: item count + time on left, total on right */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.sm }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <MaterialIcons name="restaurant-menu" size={14} color={theme.colors.onSurfaceVariant} />
+            <Text style={{ fontSize: 13, color: theme.colors.onSurfaceVariant, marginLeft: 4, marginRight: 12 }}>
+              {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
             </Text>
-            <Text style={styles.time}>Server: {order.serverName}</Text>
+            <MaterialIcons name="schedule" size={14} color={theme.colors.onSurfaceVariant} />
+            <Text style={{ fontSize: 13, color: theme.colors.onSurfaceVariant, marginLeft: 4 }}>
+              {getElapsedTime()}
+            </Text>
           </View>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: theme.colors.primary }}>
+            ${order.totalAmount.toFixed(2)}
+          </Text>
         </View>
 
-        <View style={styles.actions}>
-          <AppleButton
-            title="View Details"
-            variant="secondary"
-            size="small"
+        {/* Notes */}
+        {order.notes && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            paddingTop: theme.spacing.sm,
+            marginBottom: theme.spacing.sm,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.outline,
+          }}>
+            <MaterialIcons name="note" size={14} color={theme.colors.onSurfaceVariant} />
+            <Text style={{ fontSize: 13, flex: 1, fontStyle: 'italic', color: theme.colors.onSurfaceVariant, marginLeft: 4 }} numberOfLines={2}>
+              {order.notes}
+            </Text>
+          </View>
+        )}
+
+        {/* View Details Button */}
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingTop: theme.spacing.sm, borderTopWidth: 1, borderTopColor: theme.colors.outline }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: theme.spacing.md,
+              paddingVertical: theme.spacing.sm,
+              borderRadius: theme.borderRadius.md,
+              backgroundColor: theme.colors.primaryContainer,
+            }}
             onPress={() => onPress(order)}
-          />
-          <AppleButton
-            title="Update Status"
-            variant="primary"
-            size="small"
-            onPress={() => onUpdateStatus(order)}
-          />
+          >
+            <MaterialIcons name="visibility" size={16} color={theme.colors.onPrimaryContainer} />
+            <Text style={{ fontSize: 13, fontWeight: '600', marginLeft: 4, color: theme.colors.onPrimaryContainer }}>
+              View Details
+            </Text>
+          </TouchableOpacity>
         </View>
-      </AppleCard>
-    </AppleInteractive>
+      </View>
+    </TouchableOpacity>
   );
+};
+
+// Map UnifiedOrder status to DashboardOrder status
+const mapStatus = (status: UnifiedOrder['status']): DashboardOrder['status'] => {
+  const map: Record<string, DashboardOrder['status']> = {
+    draft: 'pending',
+    confirmed: 'pending',
+    preparing: 'preparing',
+    ready: 'ready',
+    served: 'served',
+    paid: 'paid',
+    cancelled: 'cancelled',
+  };
+  return map[status] ?? 'pending';
 };
 
 const OrdersDashboard: React.FC = () => {
   const { theme, isDark } = useTheme();
-  const [data, setData] = useState(ORDERS_DASHBOARD_DATA);
+  const { orders: rawOrders, refreshOrders } = useUnifiedOrder();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
+  // Map UnifiedOrder[] to DashboardOrder[] for display
+  const mappedOrders: DashboardOrder[] = useMemo(() => {
+    return rawOrders.map(o => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      status: mapStatus(o.status),
+      orderType: 'dine-in' as const,
+      tableNumber: o.tableName || o.tableId,
+      customer: {
+        id: o.customerId ?? o.createdBy,
+        name: o.createdByName || 'Staff',
+      },
+      items: o.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.quantity > 0 ? item.itemTotal / item.quantity : item.itemTotal,
+        specialInstructions: item.specialInstructions,
+      })),
+      totalAmount: o.totalAmount,
+      createdAt: o.createdAt,
+      updatedAt: o.updatedAt,
+      estimatedTime: o.estimatedPrepTime,
+      urgencyLevel: 'normal' as const,
+      serverName: o.createdByName,
+      notes: o.specialInstructions,
+    }));
+  }, [rawOrders]);
+
+  // Compute analytics from real data
+  const analytics: OrderAnalytics = useMemo(() => {
+    const total = rawOrders.length;
+    const revenue = rawOrders
+      .filter(o => o.paymentStatus === 'paid')
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+    const avgOrder = total > 0 ? rawOrders.reduce((sum, o) => sum + o.totalAmount, 0) / total : 0;
+    const completed = rawOrders.filter(o => o.status === 'paid' || o.status === 'served').length;
+    return {
+      totalOrders: total,
+      totalRevenue: revenue,
+      avgOrderValue: avgOrder,
+      completionRate: total > 0 ? (completed / total) * 100 : 0,
+      ordersByType: { dineIn: total, takeaway: 0, delivery: 0 },
+      ordersByStatus: {
+        pending: rawOrders.filter(o => o.status === 'draft' || o.status === 'confirmed').length,
+        preparing: rawOrders.filter(o => o.status === 'preparing').length,
+        ready: rawOrders.filter(o => o.status === 'ready').length,
+        served: rawOrders.filter(o => o.status === 'served').length,
+        paid: rawOrders.filter(o => o.status === 'paid').length,
+        cancelled: rawOrders.filter(o => o.status === 'cancelled').length,
+      },
+    };
+  }, [rawOrders]);
+
   // Filter orders based on selected criteria
   const filteredOrders = useMemo(() => {
-    let filtered = data.orders;
+    let filtered = mappedOrders;
 
     // Filter by status
     if (selectedStatus !== 'all') {
@@ -217,39 +259,18 @@ const OrdersDashboard: React.FC = () => {
     }
 
     return filtered;
-  }, [data.orders, selectedStatus, selectedType, searchQuery]);
+  }, [mappedOrders, selectedStatus, selectedType, searchQuery]);
 
-  // Handle refresh
-  const handleRefresh = () => {
+  // Handle refresh — reload from SQLite
+  const handleRefresh = async () => {
     setRefreshing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setData({ ...ORDERS_DASHBOARD_DATA, lastUpdated: new Date().toISOString() });
-      setRefreshing(false);
-    }, 1000);
+    await refreshOrders();
+    setRefreshing(false);
   };
 
   // Handle order press
   const handleOrderPress = (order: DashboardOrder) => {
-    Alert.alert('Order Details', `Order ${order.orderNumber}\nCustomer: ${order.customer.name}\nTotal: $${order.totalAmount.toFixed(2)}`);
-  };
-
-  // Handle status update
-  const handleStatusUpdate = (order: DashboardOrder) => {
-    const statusOptions = ['pending', 'preparing', 'ready', 'served'];
-    const currentIndex = statusOptions.indexOf(order.status);
-    const nextStatus = statusOptions[currentIndex + 1] || order.status;
-
-    Alert.alert('Update Status', `Change order ${order.orderNumber} to ${nextStatus}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Update', onPress: () => {
-        // Update order status in data
-        const updatedOrders = data.orders.map(o =>
-          o.id === order.id ? { ...o, status: nextStatus as any } : o
-        );
-        setData({ ...data, orders: updatedOrders });
-      }}
-    ]);
+    Alert.alert('Order Details', `Order ${order.orderNumber}\nTotal: $${order.totalAmount.toFixed(2)}`);
   };
 
   const styles = {
@@ -323,19 +344,20 @@ const OrdersDashboard: React.FC = () => {
 
   // Status filter options
   const statusFilters = [
-    { key: 'all', label: 'All Orders', count: data.orders.length },
-    { key: 'pending', label: 'Pending', count: data.analytics.ordersByStatus.pending },
-    { key: 'preparing', label: 'Preparing', count: data.analytics.ordersByStatus.preparing },
-    { key: 'ready', label: 'Ready', count: data.analytics.ordersByStatus.ready },
-    { key: 'served', label: 'Served', count: data.analytics.ordersByStatus.served },
+    { key: 'all', label: 'All Orders', count: mappedOrders.length },
+    { key: 'pending', label: 'Pending', count: analytics.ordersByStatus.pending },
+    { key: 'preparing', label: 'Preparing', count: analytics.ordersByStatus.preparing },
+    { key: 'ready', label: 'Ready', count: analytics.ordersByStatus.ready },
+    { key: 'served', label: 'Served', count: analytics.ordersByStatus.served },
+    { key: 'paid', label: 'Paid', count: analytics.ordersByStatus.paid },
   ];
 
-  // Type filter options
+  // Type filter options (all dine-in for now — no order type tracking in unified orders)
   const typeFilters = [
-    { key: 'all', label: 'All Types', count: data.orders.length },
-    { key: 'dine-in', label: 'Dine-in', count: data.analytics.ordersByType.dineIn },
-    { key: 'takeaway', label: 'Takeaway', count: data.analytics.ordersByType.takeaway },
-    { key: 'delivery', label: 'Delivery', count: data.analytics.ordersByType.delivery },
+    { key: 'all', label: 'All Types', count: mappedOrders.length },
+    { key: 'dine-in', label: 'Dine-in', count: analytics.ordersByType.dineIn },
+    { key: 'takeaway', label: 'Takeaway', count: analytics.ordersByType.takeaway },
+    { key: 'delivery', label: 'Delivery', count: analytics.ordersByType.delivery },
   ];
 
   // Header actions
@@ -360,7 +382,7 @@ const OrdersDashboard: React.FC = () => {
     <View style={styles.container}>
       <AppleDashboardPanel
         title="Orders Dashboard"
-        subtitle={`Total Orders: ${data.analytics.totalOrders} • Revenue: $${data.analytics.totalRevenue.toFixed(2)}`}
+        subtitle={`Total Orders: ${analytics.totalOrders} • Revenue: $${analytics.totalRevenue.toFixed(2)}`}
         headerActions={headerActions}
         refreshControl={
           <RefreshControl
@@ -380,22 +402,22 @@ const OrdersDashboard: React.FC = () => {
           <View style={styles.analyticsContainer}>
             <View style={styles.analyticsCard}>
               <MaterialIcons name="receipt" size={24} color={theme.colors.primary} style={{ marginBottom: 8 }} />
-              <Text style={styles.analyticsValue}>{data.analytics.totalOrders}</Text>
+              <Text style={styles.analyticsValue}>{analytics.totalOrders}</Text>
               <Text style={styles.analyticsLabel}>Total Orders</Text>
             </View>
             <View style={styles.analyticsCard}>
               <MaterialIcons name="attach-money" size={24} color={theme.colors.success} style={{ marginBottom: 8 }} />
-              <Text style={styles.analyticsValue}>${data.analytics.totalRevenue.toFixed(0)}</Text>
+              <Text style={styles.analyticsValue}>${analytics.totalRevenue.toFixed(0)}</Text>
               <Text style={styles.analyticsLabel}>Revenue</Text>
             </View>
             <View style={styles.analyticsCard}>
               <MaterialIcons name="trending-up" size={24} color={theme.colors.info} style={{ marginBottom: 8 }} />
-              <Text style={styles.analyticsValue}>${data.analytics.avgOrderValue.toFixed(0)}</Text>
+              <Text style={styles.analyticsValue}>${analytics.avgOrderValue.toFixed(0)}</Text>
               <Text style={styles.analyticsLabel}>Avg Order</Text>
             </View>
             <View style={styles.analyticsCard}>
               <MaterialIcons name="check-circle" size={24} color={theme.colors.warning} style={{ marginBottom: 8 }} />
-              <Text style={styles.analyticsValue}>{data.analytics.completionRate.toFixed(1)}%</Text>
+              <Text style={styles.analyticsValue}>{analytics.completionRate.toFixed(1)}%</Text>
               <Text style={styles.analyticsLabel}>Completion</Text>
             </View>
           </View>
@@ -512,7 +534,6 @@ const OrdersDashboard: React.FC = () => {
               <OrderCard
                 order={item}
                 onPress={handleOrderPress}
-                onUpdateStatus={handleStatusUpdate}
               />
             )}
             scrollEnabled={false}

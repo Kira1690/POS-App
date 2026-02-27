@@ -1,4 +1,6 @@
 import React from 'react';
+import { Buffer } from 'buffer';
+global.Buffer = Buffer;
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';

@@ -312,6 +312,7 @@ export type SettingsCategory =
   | 'user_management'
   | 'device_hardware'
   | 'payment_config'
+  | 'trx_payment'
   | 'table_management'
   | 'menu_management'
   | 'integrations'

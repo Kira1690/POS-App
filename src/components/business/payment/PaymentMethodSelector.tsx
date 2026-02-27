@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { useVP3350Device } from '@/context/payment';
-import { ProfessionalPaymentMethod, VP3350DeviceStatus } from '@/types/payment.types';
+import { ProfessionalPaymentMethod } from '@/types/payment.types';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 import { formatCurrency } from '@/utils/currency';
@@ -41,7 +40,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   total,
 }) => {
   const { theme } = useTheme();
-  const { vp3350Status } = useVP3350Device();
 
   // Define payment method options
   const paymentMethods: PaymentMethodOption[] = [
@@ -68,14 +66,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       icon: 'call-split',
       color: theme.colors.tertiary,
       enabled: true,
-    },
-    {
-      method: ProfessionalPaymentMethod.VP3350,
-      title: 'VP3350 Device',
-      subtitle: vp3350Status === VP3350DeviceStatus.CONNECTED ? 'Device Ready' : 'Device Not Connected',
-      icon: 'nfc',
-      color: vp3350Status === VP3350DeviceStatus.CONNECTED ? '#4CAF50' : theme.colors.outline,
-      enabled: vp3350Status === VP3350DeviceStatus.CONNECTED,
     },
   ];
 
@@ -172,15 +162,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             Select your preferred payment method
           </Text>
         </View>
-        
-        {vp3350Status !== VP3350DeviceStatus.CONNECTED && (
-          <View style={styles.descriptionRow}>
-            <MaterialIcons name="bluetooth-disabled" size={16} color={theme.colors.error} />
-            <Text style={[styles.descriptionText, { color: theme.colors.error }]}>
-              VP3350 device not connected. Use Settings to connect device.
-            </Text>
-          </View>
-        )}
         
         <View style={styles.descriptionRow}>
           <MaterialIcons name="security" size={16} color={theme.colors.primary} />

@@ -10,9 +10,9 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
-  RefreshControl
+  RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -26,8 +26,6 @@ import { useKitchenTickets } from '@/context/kitchen/EnhancedKitchenContext';
 import { UNIFIED_ORDER_STATUS_LABELS } from '@/types/unified-order.types';
 import { SimpleLineChart } from './components/SimpleLineChart';
 
-const { width: screenWidth } = Dimensions.get('window');
-const isTablet = screenWidth >= 768;
 
 const formatCurrency = (amount: number) =>
   `$${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
@@ -48,9 +46,11 @@ const ManagerDashboard: React.FC = () => {
   const navigation = useNavigation();
   const { state: authState } = useAuth();
   const { theme } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const isTablet = screenWidth >= 768;
 
   const [refreshing, setRefreshing] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(isTablet);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
 
   // Real data hooks
   const { orders, activeOrders, refreshOrders, isLoading } = useUnifiedOrder();
@@ -128,6 +128,9 @@ const ManagerDashboard: React.FC = () => {
     { label: 'Reports', icon: 'analytics' },
   ];
 
+  const SIDEBAR_EXPANDED = 250;
+  const SIDEBAR_COLLAPSED = 64;
+
   const quickActions = useMemo(() => [
     { label: 'New Order', icon: 'add-circle', color: theme.colors.primary },
     { label: 'View Tables', icon: 'table-restaurant', color: theme.colors.success },
@@ -170,36 +173,69 @@ const ManagerDashboard: React.FC = () => {
     </View>
   );
 
-  const renderSidebar = () => (
-    <View style={[styles.sidebar, { backgroundColor: theme.colors.surface }]}>
-      {navigationItems.map((item, index) => (
+  const renderSidebar = () => {
+    const collapsed = !sidebarVisible;
+    return (
+      <View style={[
+        styles.sidebar,
+        {
+          backgroundColor: theme.colors.surface,
+          width: collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED,
+          borderRightColor: theme.colors.outline,
+        }
+      ]}>
+        {/* Toggle button */}
         <TouchableOpacity
-          key={index}
+          onPress={toggleSidebar}
           style={[
-            styles.navItem,
-            item.active && { backgroundColor: theme.colors.primary },
-            { borderColor: theme.colors.outline }
+            styles.sidebarToggle,
+            collapsed && styles.sidebarToggleCollapsed,
+            { borderBottomColor: theme.colors.outline }
           ]}
         >
           <MaterialIcons
-            name={item.icon as keyof typeof MaterialIcons.glyphMap}
-            size={20}
-            color={item.active ? theme.colors.onPrimary : theme.colors.onSurface}
+            name={collapsed ? 'chevron-right' : 'chevron-left'}
+            size={22}
+            color={theme.colors.onSurfaceVariant}
           />
-          <Text style={[
-            styles.navText,
-            { color: item.active ? theme.colors.onPrimary : theme.colors.onSurface }
-          ]}>
-            {item.label}
-          </Text>
+          {!collapsed && (
+            <Text style={[styles.sidebarToggleText, { color: theme.colors.onSurfaceVariant }]}>
+              Collapse
+            </Text>
+          )}
         </TouchableOpacity>
-      ))}
-    </View>
-  );
+
+        {navigationItems.map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.navItem,
+              item.active && { backgroundColor: theme.colors.primary },
+              collapsed && styles.navItemCollapsed,
+            ]}
+          >
+            <MaterialIcons
+              name={item.icon as keyof typeof MaterialIcons.glyphMap}
+              size={22}
+              color={item.active ? theme.colors.onPrimary : theme.colors.onSurface}
+            />
+            {!collapsed && (
+              <Text style={[
+                styles.navText,
+                { color: item.active ? theme.colors.onPrimary : theme.colors.onSurface }
+              ]}>
+                {item.label}
+              </Text>
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
 
   const renderStatsCards = () => (
-    <View style={styles.statsRow}>
-      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.statsRow, { flexDirection: isTablet ? 'row' : 'column' }]}>
+      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
         <View style={styles.statsHeader}>
           <MaterialIcons name="attach-money" size={24} color={theme.colors.success} />
           <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
@@ -211,7 +247,7 @@ const ManagerDashboard: React.FC = () => {
         </Text>
       </View>
 
-      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
         <View style={styles.statsHeader}>
           <MaterialIcons name="receipt-long" size={24} color={theme.colors.tertiary} />
           <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
@@ -226,7 +262,7 @@ const ManagerDashboard: React.FC = () => {
         </Text>
       </View>
 
-      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
         <View style={styles.statsHeader}>
           <MaterialIcons name="table-restaurant" size={24} color={theme.colors.warning} />
           <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
@@ -241,7 +277,7 @@ const ManagerDashboard: React.FC = () => {
         </Text>
       </View>
 
-      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
         <View style={styles.statsHeader}>
           <MaterialIcons name="group" size={24} color={theme.colors.tertiary} />
           <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
@@ -266,8 +302,8 @@ const ManagerDashboard: React.FC = () => {
     >
       {renderStatsCards()}
 
-      <View style={styles.middleRow}>
-        <View style={[styles.chartContainer, { backgroundColor: 'transparent' }]}>
+      <View style={[styles.middleRow, { flexDirection: isTablet ? 'row' : 'column' }]}>
+        <View style={[styles.chartContainer, { backgroundColor: 'transparent', flex: isTablet ? 2 : undefined }]}>
           <SimpleLineChart
             data={salesChartData}
             title="Sales Trend (Last 7 Days)"
@@ -276,7 +312,7 @@ const ManagerDashboard: React.FC = () => {
           />
         </View>
 
-        <View style={[styles.ordersContainer, { backgroundColor: theme.colors.surface }]}>
+        <View style={[styles.ordersContainer, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
           <View style={styles.ordersHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
               Recent Orders
@@ -362,18 +398,9 @@ const ManagerDashboard: React.FC = () => {
       {renderHeader()}
 
       <View style={styles.body}>
-        {(sidebarVisible || isTablet) && renderSidebar()}
+        {renderSidebar()}
         {renderContent()}
       </View>
-
-      {!isTablet && (
-        <TouchableOpacity
-          style={[styles.menuToggle, { backgroundColor: theme.colors.primary }]}
-          onPress={toggleSidebar}
-        >
-          <MaterialIcons name="menu" size={24} color={theme.colors.onPrimary} />
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
@@ -440,18 +467,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   sidebar: {
-    width: 250,
-    padding: spacing.md,
+    paddingTop: spacing.sm,
     borderRightWidth: 1,
+    overflow: 'hidden',
+  },
+  sidebarToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 1,
+    gap: spacing.xs,
+  },
+  sidebarToggleCollapsed: {
+    justifyContent: 'center',
+  },
+  sidebarToggleText: {
+    ...typography.bodySmall,
+    fontWeight: '500',
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    marginHorizontal: spacing.sm,
+    marginBottom: spacing.xs,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: 'transparent',
+  },
+  navItemCollapsed: {
+    justifyContent: 'center',
+    paddingHorizontal: 0,
+    marginHorizontal: spacing.xs,
   },
   navText: {
     ...typography.bodyMedium,
@@ -463,16 +512,14 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   statsRow: {
-    flexDirection: isTablet ? 'row' : 'column',
-    gap: spacing.lg,
+    gap: spacing.md,
     marginBottom: spacing.xl,
   },
   statsCard: {
-    flex: isTablet ? 1 : undefined,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    minHeight: 150,
+    minHeight: 120,
   },
   statsHeader: {
     flexDirection: 'row',
@@ -493,19 +540,16 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
   },
   middleRow: {
-    flexDirection: isTablet ? 'row' : 'column',
     gap: spacing.lg,
     marginBottom: spacing.xl,
   },
   chartContainer: {
-    flex: isTablet ? 2 : 1,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     minHeight: 350,
   },
   ordersContainer: {
-    flex: isTablet ? 1 : undefined,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
@@ -597,28 +641,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    minWidth: isTablet ? 140 : 120,
+    minWidth: 120,
     minHeight: 50,
   },
   actionText: {
     ...typography.bodyMedium,
     fontWeight: '600',
     marginLeft: spacing.xs,
-  },
-  menuToggle: {
-    position: 'absolute',
-    bottom: spacing.xl,
-    right: spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
   },
 });
 

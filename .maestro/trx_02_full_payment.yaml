@@ -1,0 +1,134 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "TRX-02: Full TRX Payment (user taps card on terminal)"
+tags:
+  - trx
+  - payment
+  - full-flow
+---
+# ════════════════════════════════════════════════════════════════
+# FULL TRX PAYMENT TEST
+# Terminal: 192.168.1.12:1180
+# User taps card when "Processing" screen appears
+# ════════════════════════════════════════════════════════════════
+
+# ── Launch (session should persist from trx_01) ───────────────────────────
+- launchApp
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000
+- takeScreenshot: "trx02_01_dashboard"
+
+# ── Go to Order Management ─────────────────────────────────────────────────
+- tapOn: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+- takeScreenshot: "trx02_02_orders"
+
+# ── Use first order in list ────────────────────────────────────────────────
+- tapOn:
+    index: 0
+    text: ".*Table.*|.*Takeaway.*|.*Order.*"
+- extendedWaitUntil:
+    visible: "Order Details"
+    timeout: 10000
+- takeScreenshot: "trx02_03_order_details"
+
+# ── Advance order to SERVED (skip steps already done) ────────────────────
+- tapOn:
+    text: "Confirm Order"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Start Preparing"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Mark Ready"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Mark Served"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "trx02_04_order_served"
+
+# ── Tap Process Payment ────────────────────────────────────────────────────
+- tapOn:
+    text: "Process Payment"
+- extendedWaitUntil:
+    visible: "Payment"
+    timeout: 10000
+- takeScreenshot: "trx02_05_payment_screen"
+
+# ── Select TRX Terminal payment method ────────────────────────────────────
+- tapOn:
+    text: "TRX Terminal"
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 10000
+- takeScreenshot: "trx02_06_trx_modal_open"
+
+# ── Wait for terminal scan & connection (up to 40s) ───────────────────────
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 40000
+- takeScreenshot: "trx02_07_terminal_connected"
+- assertVisible: "Connected"
+
+# ── Verify amount breakdown ────────────────────────────────────────────────
+- assertVisible: "Subtotal"
+- assertVisible: "Tax"
+- assertVisible: "Total"
+- takeScreenshot: "trx02_08_amount_displayed"
+
+# ── Select a tip (18%) ─────────────────────────────────────────────────────
+- tapOn:
+    text: "18%"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "trx02_09_tip_selected"
+
+# ── Tap Charge ────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Charge"
+- extendedWaitUntil:
+    visible: "Processing"
+    timeout: 10000
+- takeScreenshot: "trx02_10_processing"
+
+# ════════════════════════════════════════════════════════════════
+# ⏳ TAP CARD ON TRX TERMINAL NOW
+#    Terminal: 192.168.1.12 (physical device)
+#    Waiting up to 5 minutes for card tap + approval
+# ════════════════════════════════════════════════════════════════
+- extendedWaitUntil:
+    visible: "Approved"
+    timeout: 300000
+
+# ── Capture approval ──────────────────────────────────────────────────────
+- takeScreenshot: "trx02_11_approved"
+- assertVisible: "Approved"
+
+# ── Dismiss and complete ──────────────────────────────────────────────────
+- tapOn:
+    text: "Done"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "trx02_12_payment_complete"
+
+# ── Verify order marked paid ──────────────────────────────────────────────
+- tapOn:
+    text: "Back to Orders"
+    optional: true
+- tapOn:
+    text: "Done"
+    optional: true
+- tapOn:
+    text: "Back"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "trx02_13_final_state"

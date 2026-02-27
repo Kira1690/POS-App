@@ -4,10 +4,10 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { AppleSidebar, AppleSidebarItem } from '@/components/apple/layouts/AppleSidebar';
+import { AppleSidebarCollapsible, AppleSidebarItem } from '@/components/apple/layouts/AppleSidebarCollapsible';
 
 // Import the new dashboard screens
 import OrdersDashboard from '@/screens/orders/OrdersDashboard';
@@ -101,48 +101,19 @@ const DashboardWithSidebar: React.FC = () => {
       flexDirection: 'row' as const,
       backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
     },
-    sidebar: {
-      width: 280,
-      backgroundColor: isDark ? theme.colors.layer1 : theme.colors.surface,
-      borderRightWidth: 1,
-      borderRightColor: theme.colors.outline,
-    },
     content: {
       flex: 1,
-    },
-    sidebarHeader: {
-      padding: 20,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outline,
-    },
-    sidebarTitle: {
-      fontSize: 18,
-      fontWeight: '600' as const,
-      color: theme.colors.onSurface,
-    },
-    sidebarSubtitle: {
-      fontSize: 14,
-      color: theme.colors.onSurfaceVariant,
-      marginTop: 4,
     },
   };
 
   return (
     <View style={styles.container}>
-      {/* Sidebar */}
-      <View style={styles.sidebar}>
-        <View style={styles.sidebarHeader}>
-          <Text style={styles.sidebarTitle}>🍽️ POS Dashboard</Text>
-          <Text style={styles.sidebarSubtitle}>The Food Corner</Text>
-        </View>
-        <AppleSidebar
-          items={sidebarItems}
-          variant="navigation"
-          title="Navigation"
-          width={280}
-          style={{ flex: 1, marginTop: 16 }}
-        />
-      </View>
+      {/* Collapsible Sidebar — manages its own width via animation */}
+      <AppleSidebarCollapsible
+        items={sidebarItems}
+        title="POS Dashboard"
+        defaultCollapsed={false}
+      />
 
       {/* Content Area */}
       <View style={styles.content}>
