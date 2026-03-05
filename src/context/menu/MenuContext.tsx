@@ -371,7 +371,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       if (useLocalStorage) {
         await menuStorageService.initialize(restaurantId); // ensure DB ready first
         const storedData = await menuStorageService.getMenuData(restaurantId);
-        if (storedData && (storedData.categories.length > 0 || storedData.menuItems.length > 0)) {
+        if (storedData && storedData.categories.length > 0 && storedData.menuItems.length > 0) {
           // Convert stored items to base menu items
           const menuItems: MenuItem[] = storedData.menuItems.map((item) => ({
             id: item.id,
@@ -485,8 +485,38 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
         }
       }
 
-      // No storage data — start with empty state (UI shows "No menu items found")
-      dispatch({ type: 'SET_LOADING', payload: false });
+      // No storage data — re-initialize which triggers mock data seeding
+      console.log('[MenuContext] No stored menu data — re-initializing to trigger seed');
+      await menuStorageService.initialize(restaurantId);
+      const seededData = await menuStorageService.getMenuData(restaurantId);
+      if (seededData && seededData.menuItems.length > 0) {
+        const menuItems: MenuItem[] = seededData.menuItems.map((item) => ({
+          id: item.id, restaurant_id: item.restaurant_id, category_id: item.category_id,
+          name: item.name, description: item.description, price: item.price,
+          image_url: item.image_url, is_available: item.is_available,
+          preparation_time_minutes: item.preparation_time_minutes,
+          dietary_info: item.dietary_info, ingredients: item.ingredients,
+          created_at: item.created_at, updated_at: item.updated_at,
+        }));
+        const categories: MenuCategory[] = seededData.categories.map((c) => ({
+          id: c.id, restaurant_id: c.restaurant_id, name: c.name,
+          description: c.description, sort_order: c.sort_order,
+          is_active: c.is_active, created_at: c.created_at, updated_at: c.updated_at,
+        }));
+        dispatch({ type: 'SET_MENU_DATA', payload: { menuItems, categories } });
+        dispatch({
+          type: 'SET_EXTENDED_DATA',
+          payload: {
+            categoriesWithStats: seededData.categories,
+            menuItemsExtended: seededData.menuItems,
+            modifierGroups: seededData.modifierGroups,
+            combos: seededData.combos,
+          },
+        });
+        console.log(`[MenuContext] Seeded ${categories.length} categories, ${menuItems.length} items`);
+      } else {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
       emitEvent('MENU_REFRESHED', {});
     } catch (error) {
       if (__DEV__) {
