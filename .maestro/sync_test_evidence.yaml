@@ -1,0 +1,98 @@
+appId: host.exp.exponent
+name: "Sync Evidence Test — Mobile creates order → Backend syncs → Web verifies"
+---
+
+# App is already running and logged in as testadmin@foodcorner.com
+# Currently on Order Management screen
+
+# --- TC-01: MENU SYNC EVIDENCE ---
+# Navigate to Dashboard first to trigger sync
+- tapOn:
+    text: "Dashboard"
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc01_mobile_dashboard
+
+# Go to Settings to see synced menu
+- tapOn:
+    text: "Settings"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc01_mobile_settings
+
+# --- TC-04: TABLE STATUS EVIDENCE ---
+# Go back to Order Management
+- tapOn:
+    text: "Order Management"
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc04_mobile_order_mgmt_before
+
+# --- TC-02: ORDER PUSH SYNC EVIDENCE ---
+# Create a new order
+- tapOn:
+    text: "+ New Order"
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc02_mobile_new_order_screen
+
+# Select a table if prompted
+- optional:
+    - tapOn:
+        text: ".*T1.*"
+    - waitForAnimationToEnd
+
+- optional:
+    - tapOn:
+        text: ".*Table 1.*|.*T-1.*"
+    - waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc02_mobile_table_select
+
+# Add a menu item - tap the first item visible
+- tapOn:
+    index: 0
+    text: ".*"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc02_mobile_item_added
+
+# Submit / place order
+- optional:
+    - tapOn:
+        text: ".*Place Order.*|.*Confirm.*|.*Submit.*|.*Send to Kitchen.*"
+    - waitForAnimationToEnd
+    - waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc02_mobile_order_placed
+
+# Wait for SyncEngine push (10s interval + buffer)
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc02_mobile_after_sync_wait
+
+# Go back to Order Management to see the order
+- tapOn:
+    text: "Order Management"
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: /home/kira/Documents/Github/POS/prep/screenshots/mobile/tc02_mobile_orders_list

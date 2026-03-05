@@ -9,6 +9,7 @@ import { IAuthService, IAuthContext, UpdateProfileRequest } from '@/interfaces';
 import { User, UserRole, Restaurant, LoginRequest } from '@/types';
 import { showToast } from '@/utils/toast';
 import { authStorageService } from '@/services/storage';
+import { apiClient } from '@/services/api/apiClient';
 import AuthContext from './AuthContext';
 import { authReducer, initialAuthState } from './AuthReducer';
 import { createAuthActions } from './AuthActions';
@@ -54,6 +55,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
 
         if (session) {
           console.log('[Auth Init] Restoring session for user:', session.user?.email);
+
+          // Bridge tokens to apiClient (both defaults header AND TokenManager/SecureStore)
+          if (session.accessToken) {
+            const expiresAt = session.expiresAt
+              ? Math.floor(new Date(session.expiresAt).getTime() / 1000)
+              : Math.floor(Date.now() / 1000) + 900;
+            await apiClient.setAuthTokens(
+              session.accessToken,
+              session.refreshToken || '',
+              expiresAt
+            );
+          }
+
           dispatch({
             type: 'AUTH_INITIALIZE_SUCCESS',
             payload: {

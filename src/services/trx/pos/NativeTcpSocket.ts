@@ -1,7 +1,14 @@
 // Production-ready native TCP socket implementation
+//
+// CRITICAL: Do NOT add TurboModuleRegistry.get('TcpSockets') or NativeModules.TcpSockets checks.
+// The patched react-native-tcp-socket uses lazy getters that bypass standard module registration.
+// Those checks ALWAYS return null with New Architecture + lazy getter patch = permanent false negative.
+// This was the root cause of 6 consecutive "connection failed" bugs.
+//
+// Expo Go detection is handled in TcpSocketWrapper.ts (not here).
+// This file matches the working reference: Food-MobileApp-Frontend/paymentprocessor/services/pos/NativeTcpSocket.ts
 
 import TcpSocket from 'react-native-tcp-socket';
-import { NativeModules, TurboModuleRegistry } from 'react-native';
 import { LoggerFactory } from '../logging/LoggingService';
 
 export interface SocketOptions {
@@ -45,32 +52,18 @@ class NativeTcpSocket {
         throw new Error('react-native-tcp-socket module not available');
       }
 
-      // Verify the underlying native module is truly registered.
-      // In Expo Go the JS package loads fine but TcpSockets is never registered,
-      // so getTcpSockets() returns null and any call crashes at runtime.
-      const viaInterop = TurboModuleRegistry.get && TurboModuleRegistry.get('TcpSockets');
-      const viaLegacy = NativeModules.TcpSockets;
-      const nativeModule = viaInterop || viaLegacy;
-
-      if (!nativeModule) {
-        throw new Error(
-          'TcpSockets native module not registered — ' +
-          'TCP requires a custom dev build, not Expo Go. ' +
-          'Run: eas build --profile development --platform android'
-        );
-      }
-
+      // Trust TcpSocket directly — no registry verification.
+      // The patched module resolves native bindings lazily at actual use time.
       this.tcpSocket = TcpSocket as unknown as TcpSocketLib;
       this.isInitialized = true;
 
       this.logger.info(
-        `Native TCP socket module loaded: turbo=${!!viaInterop} legacy=${!!viaLegacy}`,
+        'Native TCP socket module loaded successfully',
         'initializeNativeModule'
       );
     } catch (error) {
-      this.logger.error(
+      this.logger.warn(
         'Failed to load react-native-tcp-socket module',
-        error instanceof Error ? error : new Error(String(error)),
         'initializeNativeModule'
       );
       this.tcpSocket = null;
@@ -152,7 +145,7 @@ class NativeTcpSocket {
   }
 }
 
-// Export singleton instance
+// Export singleton instance — NO global pattern, matches reference implementation
 export const nativeTcpSocket = new NativeTcpSocket();
 
 // Legacy compatibility exports

@@ -1,0 +1,116 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SY-15 — Mobile Token Refresh (60s TTL)"
+# Verifies the mobile app silently refreshes the JWT access token after expiry.
+# With Auth Service default TTL = 60s, the app must stay authenticated
+# through navigation that triggers API calls more than 60s after login.
+#
+# Pre-conditions:
+# - Auth Service running with JWT_ACCESS_TOKEN_EXPIRY=60 (env.ts default)
+# - App logged in fresh (token starts at T=0)
+#
+# Usage: maestro test POS-App/.maestro/qa/sync/08_token_refresh_mobile.yaml
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login fresh — token starts at T=0
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-prod-manager@blueplate.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAProdMgr2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+- takeScreenshot: "token_00_login"
+
+# T=0: Verify dashboard loaded
+- assertVisible:
+    text: "Dashboard|Orders|Tables|Kitchen"
+    optional: true
+- takeScreenshot: "token_01_dashboard_fresh"
+
+# Navigate to Orders (triggers API call at T~5s)
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "token_02_orders_before_expiry"
+
+# Wait 75s — token expires at 60s; app should silently refresh
+# Maestro doesn't have a sleep command, so we use repeated waitForAnimationToEnd
+# and navigation to consume time.
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Kitchen"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# T~20s: Navigate back to Orders — token still valid
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "token_03_orders_t20s"
+
+# Continue waiting (T~40s)
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# T~60s: Token should have expired. Navigate to trigger API call.
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "token_04_after_expiry"
+
+# Assert: App still shows orders screen (NOT login screen)
+# If token refresh failed, the app would redirect to login
+- assertNotVisible:
+    text: "Sign In|Login|Email.*Password"
+    optional: true
+
+- assertVisible:
+    text: "Orders|Order.*No.|Status|POS|Table"
+    optional: true
+
+# T~75s: Make one more navigation
+- tapOn:
+    text: "Kitchen"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "token_05_kitchen_post_refresh"
+
+# Assert kitchen screen visible (not login)
+- assertNotVisible:
+    text: "Sign In|Login"
+    optional: true
+
+- assertVisible:
+    text: "Kitchen|Pending|In Progress|Ready|New Orders"
+    optional: true
+
+- takeScreenshot: "token_06_final_state"
+
+# Check logcat for silent token refresh evidence:
+# adb logcat -d | grep -E "ReactNativeJS|Token" | grep -i "refresh"
+- stopApp

@@ -7,7 +7,6 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Dimensions,
   ViewStyle,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +14,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '@/navigation/types';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { spacing, borderRadius } from '../../design-system/theme/spacing';
 import { typography } from '../../design-system/theme/typography';
 
@@ -33,9 +33,7 @@ interface WelcomeScreenProps {
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = () => {
   const { theme, isDark } = useTheme();
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-  const isTablet = screenWidth >= 768;
-  const isLandscape = screenWidth > screenHeight;
+  const { isLargeTablet, isLandscape, isPhone } = useResponsive();
 
   // Handle navigation to different auth flows
   const handleStaffLogin = () => {
@@ -70,7 +68,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = () => {
   // Get content container styles
   const getContentStyles = () => ({
     flex: 1,
-    padding: isTablet ? spacing['2xl'] : spacing.lg,
+    padding: isLargeTablet ? spacing['2xl'] : spacing.lg,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   });
@@ -83,8 +81,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = () => {
 
   // Get logo styles
   const getLogoStyles = () => ({
-    width: isTablet ? 120 : 80,
-    height: isTablet ? 120 : 80,
+    width: isLargeTablet ? 120 : 80,
+    height: isLargeTablet ? 120 : 80,
     marginBottom: spacing.lg,
     borderRadius: borderRadius.card,
   });
@@ -103,13 +101,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = () => {
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center' as const,
     marginBottom: spacing['2xl'],
-    maxWidth: isTablet ? 600 : 300,
+    maxWidth: isLargeTablet ? 600 : 300,
   });
 
   // Get buttons container styles
   const getButtonsContainerStyles = (): ViewStyle => ({
     width: '100%',
-    maxWidth: isTablet ? 500 : 350,
+    maxWidth: isLargeTablet ? 500 : 350,
   });
 
   // Get footer container styles
@@ -164,7 +162,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = () => {
             >
               <MaterialIcons
                 name="restaurant"
-                size={isTablet ? 48 : 32}
+                size={isLargeTablet ? 48 : 32}
                 color={theme.colors.onPrimary}
               />
             </View>
@@ -181,34 +179,36 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = () => {
           {/* APPLE MAIN ACTION BUTTONS CARD */}
           <AppleCard
             layer="surface"
-            size={isTablet ? 'large' : 'medium'}
+            size={isLargeTablet ? 'large' : 'medium'}
             shadow={true}
-            style={{ width: '100%', maxWidth: isTablet ? 500 : 350 }}
+            style={{ width: '100%', maxWidth: isLargeTablet ? 500 : 350 }}
           >
             <View style={getButtonsContainerStyles()}>
               {/* APPLE STAFF LOGIN BUTTON */}
               <AppleButton
                 title="👥 Continue as Staff Member"
                 variant="primary"
-                size={isTablet ? 'large' : 'medium'}
+                size={isLargeTablet ? 'large' : 'medium'}
                 onPress={handleStaffLogin}
                 fullWidth={true}
+                testID="btn-welcome-staff-login"
               />
 
               {/* APPLE MANAGER LOGIN BUTTON */}
               <AppleButton
                 title="🛡️ Manager Login"
                 variant="secondary"
-                size={isTablet ? 'large' : 'medium'}
+                size={isLargeTablet ? 'large' : 'medium'}
                 onPress={handleManagerLogin}
                 fullWidth={true}
+                testID="btn-welcome-manager-login"
               />
 
               {/* APPLE DEVICE SETUP BUTTON */}
               <AppleButton
                 title="⚙️ Setup New Device"
                 variant="ghost"
-                size={isTablet ? 'medium' : 'small'}
+                size={isLargeTablet ? 'medium' : 'small'}
                 onPress={handleDeviceSetup}
                 fullWidth={true}
               />

@@ -57,9 +57,9 @@ export const cardDimensions = {
 export const gridConfig = {
   // Menu grid columns based on available width
   menuGrid: {
-    mobile: 2,           // 2 columns on mobile
+    mobile: 2,           // 2 columns on mobile + small tablet
     tablet: 3,           // 3 columns on tablet
-    largeTablet: 4,      // 4 columns on large tablet/desktop
+    largeTablet: 3,      // 3 columns max — 4 is too cramped
   },
 
   // Table grid columns

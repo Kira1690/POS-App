@@ -1,0 +1,144 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Helper: Ensure on Order Management (Dev Build)"
+---
+
+# Opens the dev build app and navigates to Order Management.
+# Uses launchApp (not openLink) — dev build connects to Metro directly.
+# Handles all leftover modal states from previous interrupted tests.
+
+- launchApp
+- waitForAnimationToEnd
+
+# Dismiss any full-screen LogBox (dev warnings)
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss "Open debugger to view warnings" dev banner (covers tab bar in dev build).
+# This native-level banner is NOT in Maestro's accessibility tree so we cannot check
+# visibility — instead always tap the ✕ position (96%, 96%). Safe: if no banner,
+# the tap lands on an empty area above the tab bar (no side-effect).
+- tapOn:
+    point: "96%, 96%"
+- waitForAnimationToEnd
+
+# Login if on welcome / auth screen
+- tapOn:
+    id: "btn-welcome-manager-login"
+    optional: true
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        id: "email-input"
+    commands:
+      - tapOn:
+          id: "email-input"
+      - eraseText: 60
+      - inputText: "testadmin@foodcorner.com"
+      - hideKeyboard
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "password-input"
+      - eraseText: 30
+      - inputText: "TestAdmin123!"
+      - hideKeyboard
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "btn-manager-sign-in"
+      - extendedWaitUntil:
+          visible:
+            id: "tab-nav-orders"
+          timeout: 15000
+
+# Dismiss "Existing Order Found" alert
+- runFlow:
+    when:
+      visible:
+        text: "GO BACK"
+    commands:
+      - tapOn:
+          text: "GO BACK"
+      - waitForAnimationToEnd
+
+# Dismiss TableSelectionModal
+- runFlow:
+    when:
+      visible:
+        id: "btn-table-modal-close"
+    commands:
+      - tapOn:
+          id: "btn-table-modal-close"
+      - waitForAnimationToEnd
+
+# Dismiss TRXPaymentModal
+- runFlow:
+    when:
+      visible:
+        id: "btn-trx-close"
+    commands:
+      - tapOn:
+          id: "btn-trx-close"
+      - waitForAnimationToEnd
+
+# Dismiss SplitPaymentModal
+- runFlow:
+    when:
+      visible:
+        id: "btn-split-close"
+    commands:
+      - tapOn:
+          id: "btn-split-close"
+      - waitForAnimationToEnd
+
+# Dismiss CashPaymentModal
+- runFlow:
+    when:
+      visible:
+        id: "btn-cash-cancel"
+    commands:
+      - tapOn:
+          id: "btn-cash-cancel"
+      - waitForAnimationToEnd
+
+# Dismiss PaymentProcessingScreen
+- runFlow:
+    when:
+      visible:
+        id: "btn-cancel-payment"
+    commands:
+      - tapOn:
+          id: "btn-cancel-payment"
+      - waitForAnimationToEnd
+
+# Dismiss PaymentConfirmationScreen
+- runFlow:
+    when:
+      visible:
+        id: "btn-continue"
+    commands:
+      - tapOn:
+          id: "btn-continue"
+      - waitForAnimationToEnd
+
+# Navigate to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+# Reset filters
+- tapOn:
+    id: "tab-status-all"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-all"
+    optional: true
+- waitForAnimationToEnd

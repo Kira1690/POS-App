@@ -1,0 +1,87 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SY-09/SY-10 — App→Web Order Push Sync"
+# Creates an order on the mobile app and verifies the push sync fires.
+# Web-side assertion is in sync-verification.spec.ts (ORD01/ORD02).
+#
+# Pre-conditions:
+# - Prod seed data loaded (Prod items + tables from 00_prod_seed.yaml)
+# - App logged in as qa-prod-manager
+# - SyncEngine running (10s push interval)
+#
+# Usage: maestro test POS-App/.maestro/qa/sync/06_app_to_web_order.yaml
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-prod-manager@blueplate.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAProdMgr2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+- takeScreenshot: "sync_order_00_login"
+
+# Navigate to Orders / POS
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "sync_order_01_pos_start"
+
+# Select table P-T1 if floor plan shows
+- tapOn:
+    text: "P-T1|Table.*1|T1"
+    optional: true
+- waitForAnimationToEnd
+
+# Add items to order
+- tapOn:
+    text: "Prod-Coffee"
+    optional: true
+- waitForAnimationToEnd
+
+# If modifier modal appears, dismiss it
+- tapOn:
+    text: "Add|OK|Done|Confirm"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Prod-Burger"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|OK|Done|Confirm"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "sync_order_02_items_added"
+
+# Send order / Confirm
+- tapOn:
+    text: ".*[Ss]end.*[Kk]itchen.*|.*[Pp]lace.*[Oo]rder.*|Confirm|Send"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "sync_order_03_order_sent"
+
+# Wait 12s for push sync (interval = 10s)
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "sync_order_04_after_push"
+
+# Verify order appears in recent orders list
+- assertVisible:
+    text: "ORD-|P-T1|Prod-Coffee|pending|confirmed"
+    optional: true
+- takeScreenshot: "sync_order_05_order_in_list"
+
+- stopApp

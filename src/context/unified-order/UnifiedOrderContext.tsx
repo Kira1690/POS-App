@@ -45,6 +45,8 @@ import { KitchenStation, getStationForCategory } from '@/types/order-extended.ty
 import { Table } from '@/types/table.types';
 import { MenuItemExtended, AllergenType, DietaryTag } from '@/types/menu-management-extended.types';
 import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
+import { syncQueueService } from '@/services/storage';
+import { activityLogService } from '@/services/storage/ActivityLogService';
 import { orderEventEmitter, OrderEventType, OrderEventData } from '@/services/events/OrderEventEmitter';
 
 // Re-export the SINGLE event emitter for use by other modules
@@ -97,6 +99,13 @@ export interface UnifiedOrderContextValue {
   getOrderById: (orderId: string) => UnifiedOrder | undefined;
   getActiveOrderForTable: (tableId: string) => UnifiedOrder | undefined;
   cancelOrder: (orderId: string, reason: string) => Promise<void>;
+  mergeOrders: (targetOrderId: string, sourceOrderId: string) => Promise<void>;
+
+  // Bill-level operations
+  applyOrderDiscount: (orderId: string, type: 'percentage' | 'fixed', value: number) => Promise<void>;
+  applyItemDiscount: (orderId: string, itemId: string, type: 'percentage' | 'fixed', value: number) => Promise<void>;
+  transferItems: (sourceOrderId: string, targetOrderId: string, itemIds: string[]) => Promise<void>;
+  addItemsToOrder: (orderId: string, cartItems: UnifiedOrderItem[]) => Promise<void>;
 
   // Filters
   setSearchQuery: (query: string) => void;
@@ -116,6 +125,7 @@ export interface UnifiedOrderContextValue {
   cart: UnifiedOrderItem[];
   cartTotal: number;
   cartItemCount: number;
+  cartOrderNumber: string | null;
   selectedTable: Table | null;
   orders: UnifiedOrder[];
   activeOrders: UnifiedOrder[];
@@ -188,53 +198,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       dispatch({ type: 'RESET_STATE' });
     });
 
-    // Subscribe to ORDER_STATUS_CHANGED events from Kitchen
-    // Kitchen is the ONLY source of status updates (except payment)
-    const unsubscribeStatusChanged = orderEventEmitter.subscribe(
-      'ORDER_STATUS_CHANGED',
-      (orderId: string, data: { status?: string }) => {
-        if (__DEV__) {
-          console.log('[UnifiedOrderContext] Received ORDER_STATUS_CHANGED:', orderId, data);
-        }
-
-        // Map kitchen status to unified order status
-        const statusMapping: Record<string, UnifiedOrderStatus> = {
-          pending: 'confirmed',
-          preparing: 'preparing',
-          ready: 'ready',
-          completed: 'served', // Kitchen 'completed' maps to unified 'served'
-          served: 'served',
-          cancelled: 'cancelled',
-          paid: 'paid',
-        };
-
-        const status = data.status;
-        if (status && statusMapping[status]) {
-          const unifiedStatus = statusMapping[status];
-
-          // Update context state
-          dispatch({
-            type: 'UPDATE_ORDER_STATUS',
-            payload: { orderId, status: unifiedStatus },
-          });
-
-          // Update unified storage
-          unifiedOrderStorageService.updateOrder(orderId, {
-            status: unifiedStatus,
-            updatedAt: new Date().toISOString(),
-            ...(unifiedStatus === 'preparing' && { preparingAt: new Date().toISOString() }),
-            ...(unifiedStatus === 'ready' && { readyAt: new Date().toISOString() }),
-            ...(unifiedStatus === 'served' && { servedAt: new Date().toISOString() }),
-          }).catch((err) => {
-            console.error('[UnifiedOrderContext] Failed to sync status to unified storage:', err);
-          });
-        }
-      }
-    );
-
     return () => {
       unsubscribeReset();
-      unsubscribeStatusChanged();
     };
   }, []);
 
@@ -253,10 +218,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         quantity
       );
 
-      const kitchenStation = getStationForCategory(
-        menuItem.category_id,
-        menuItem.category_id
-      );
+      const kitchenStation = menuItem.kitchen_station
+        ?? getStationForCategory(menuItem.category_id, menuItem.category_id);
 
       const allergens = (menuItem.allergens || []) as AllergenType[];
       const dietaryTags = (menuItem.dietary_tags || []) as DietaryTag[];
@@ -310,6 +273,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
   // ============== TABLE SELECTION ==============
 
   const setSelectedTable = useCallback((table: Table | null) => {
+    // SET_SELECTED_TABLE atomically sets both selectedTable and cartOrderNumber in the reducer
     dispatch({ type: 'SET_SELECTED_TABLE', payload: table });
   }, []);
 
@@ -351,7 +315,9 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     try {
       const now = new Date().toISOString();
       const orderId = generateUnifiedOrderId();
-      const orderNumber = generateUnifiedOrderNumber();
+      // Use the pre-assigned order number (generated when table was selected),
+      // falling back to a new one if somehow not set
+      const orderNumber = currentState.cartOrderNumber ?? generateUnifiedOrderNumber();
 
       // Create the order with items
       const items = currentState.cart.map((item) => ({
@@ -387,10 +353,63 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       // Save to storage
       await unifiedOrderStorageService.saveOrder(order);
 
+      // Enqueue for background sync push to server (transform to snake_case server format)
+      syncQueueService.enqueue(
+        'order',
+        orderId,
+        'create',
+        {
+          order_number: order.orderNumber,
+          table_id: order.tableId,
+          status: order.status,
+          subtotal: order.subtotal,
+          tax_amount: order.taxAmount,
+          discount_amount: order.discountAmount,
+          total_amount: order.totalAmount,
+          guest_count: order.guestCount,
+          special_instructions: order.specialInstructions,
+          submitted_at: order.submittedAt,
+          order_items: order.items.map((i) => ({
+            menu_item_id: i.menuItemId,
+            name: i.name,
+            quantity: i.quantity,
+            base_price: i.basePrice,
+            item_total: i.itemTotal,
+            item_status: i.itemStatus,
+            kitchen_station: i.kitchenStation,
+            special_instructions: i.specialInstructions,
+          })),
+        }
+      ).then(() => {
+        if (__DEV__) console.log('[UnifiedOrder] Order enqueued for sync:', orderId);
+      }).catch((err) => {
+        if (__DEV__) console.error('[UnifiedOrder] Sync enqueue failed:', err);
+      });
+
+      // Log activity
+      activityLogService.logEvent({
+        timestamp: now,
+        eventType: 'order_created',
+        orderId,
+        orderNumber,
+        tableName: order.tableName,
+        description: `Order created for ${order.tableName}`,
+      }).catch(() => { /* silent */ });
+
       // Update state
       dispatch({ type: 'ADD_ORDER', payload: order });
       dispatch({ type: 'CLEAR_CURRENT_ORDER' });
       dispatch({ type: 'SET_SUBMITTING', payload: false });
+
+      // Log sent_to_kitchen
+      activityLogService.logEvent({
+        timestamp: now,
+        eventType: 'sent_to_kitchen',
+        orderId,
+        orderNumber,
+        tableName: order.tableName,
+        description: `Order ${orderNumber} sent to kitchen`,
+      }).catch(() => { /* silent */ });
 
       // Emit ORDER_CREATED event - this triggers:
       // 1. TableProvider: Mark table as OCCUPIED
@@ -449,9 +468,6 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           ...(status === 'ready' && { readyAt: new Date().toISOString() }),
           ...(status === 'served' && { servedAt: new Date().toISOString() }),
         });
-
-        // Emit event
-        orderEventEmitter.emit('ORDER_STATUS_CHANGED', orderId, { status });
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: String(error) });
       }
@@ -462,15 +478,12 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
   const updateItemStatus = useCallback(
     async (orderId: string, itemId: string, status: UnifiedItemStatus) => {
       try {
-        dispatch({
-          type: 'UPDATE_ITEM_STATUS',
-          payload: { orderId, itemId, status },
-        });
-
-        // Get updated order from state
-        const order = stateRef.current.orders.find((o) => o.id === orderId);
-        if (order) {
-          await unifiedOrderStorageService.saveOrder(order);
+        // Update item status in storage + auto-recalculate order status
+        const updatedOrder = await unifiedOrderStorageService.updateItemStatus(
+          orderId, itemId, status
+        );
+        if (updatedOrder) {
+          dispatch({ type: 'UPDATE_ORDER', payload: updatedOrder });
         }
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: String(error) });
@@ -518,6 +531,17 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           paidAt: now,
           updatedAt: now,
         });
+
+        // Log payment
+        activityLogService.logEvent({
+          timestamp: new Date().toISOString(),
+          eventType: 'paid',
+          orderId,
+          orderNumber: order.orderNumber,
+          tableName: order.tableName,
+          description: `Order ${order.orderNumber} paid via ${method} ($${order.totalAmount.toFixed(2)})`,
+          metadata: { method, amount: order.totalAmount },
+        }).catch(() => { /* silent */ });
 
         // Emit ORDER_PAID event - this triggers:
         // 1. TableProvider: Mark table as AVAILABLE
@@ -571,11 +595,40 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           cancelledAt: new Date().toISOString(),
         });
 
+        // Log cancellation
+        activityLogService.logEvent({
+          timestamp: new Date().toISOString(),
+          eventType: 'cancelled',
+          orderId,
+          orderNumber: order.orderNumber,
+          tableName: order.tableName,
+          description: `Order ${order.orderNumber} cancelled: ${reason}`,
+          metadata: { reason },
+        }).catch(() => { /* silent */ });
+
         // Emit ORDER_CANCELLED event - this triggers:
         // 1. TableProvider: Mark table as AVAILABLE
         orderEventEmitter.emit('ORDER_CANCELLED', orderId, { reason, tableId: order.tableId });
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: String(error) });
+      }
+    },
+    []
+  );
+
+  const mergeOrders = useCallback(
+    async (targetOrderId: string, sourceOrderId: string) => {
+      try {
+        const merged = await unifiedOrderStorageService.mergeOrders(targetOrderId, sourceOrderId);
+        dispatch({ type: 'UPDATE_ORDER', payload: merged });
+        dispatch({
+          type: 'UPDATE_ORDER_STATUS',
+          payload: { orderId: sourceOrderId, status: 'cancelled' },
+        });
+        orderEventEmitter.emit('ORDER_CANCELLED', sourceOrderId, { reason: 'merged', tableId: '' });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+        throw error;
       }
     },
     []
@@ -692,6 +745,101 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     state.dateFilter,
   ]);
 
+  // ============== BILL-LEVEL OPERATIONS ==============
+
+  const applyOrderDiscount = useCallback(
+    async (orderId: string, type: 'percentage' | 'fixed', value: number) => {
+      try {
+        const updated = await unifiedOrderStorageService.applyOrderDiscount(orderId, type, value);
+        dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        activityLogService.logEvent({
+          timestamp: new Date().toISOString(),
+          eventType: 'discount_applied',
+          orderId,
+          orderNumber: updated.orderNumber,
+          tableName: updated.tableName,
+          description: `Discount applied: ${type === 'percentage' ? `${value}%` : `$${value}`}`,
+          metadata: { type, value, discountAmount: updated.discountAmount },
+        }).catch(() => { /* silent */ });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+        throw error;
+      }
+    },
+    []
+  );
+
+  const applyItemDiscount = useCallback(
+    async (orderId: string, itemId: string, type: 'percentage' | 'fixed', value: number) => {
+      try {
+        const updated = await unifiedOrderStorageService.applyItemDiscount(orderId, itemId, type, value);
+        dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        const item = updated.items.find(i => i.id === itemId);
+        activityLogService.logEvent({
+          timestamp: new Date().toISOString(),
+          eventType: 'discount_applied',
+          orderId,
+          orderNumber: updated.orderNumber,
+          tableName: updated.tableName,
+          description: `Item discount applied to ${item?.name || 'item'}: ${type === 'percentage' ? `${value}%` : `$${value}`}`,
+          metadata: { type, value, itemId },
+        }).catch(() => { /* silent */ });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+        throw error;
+      }
+    },
+    []
+  );
+
+  const transferItems = useCallback(
+    async (sourceOrderId: string, targetOrderId: string, itemIds: string[]) => {
+      try {
+        const { source, target } = await unifiedOrderStorageService.transferItems(
+          sourceOrderId, targetOrderId, itemIds
+        );
+        dispatch({ type: 'UPDATE_ORDER', payload: source });
+        dispatch({ type: 'UPDATE_ORDER', payload: target });
+        activityLogService.logEvent({
+          timestamp: new Date().toISOString(),
+          eventType: 'items_transferred',
+          orderId: sourceOrderId,
+          orderNumber: source.orderNumber,
+          tableName: source.tableName,
+          description: `${itemIds.length} item(s) transferred to ${target.tableName}`,
+          metadata: { itemIds, targetOrderId },
+        }).catch(() => { /* silent */ });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+        throw error;
+      }
+    },
+    []
+  );
+
+  const addItemsToOrder = useCallback(
+    async (orderId: string, cartItems: UnifiedOrderItem[]) => {
+      try {
+        const updated = await unifiedOrderStorageService.addItemsToOrder(orderId, cartItems);
+        dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        dispatch({ type: 'CLEAR_CART' });
+        activityLogService.logEvent({
+          timestamp: new Date().toISOString(),
+          eventType: 'sent_to_kitchen',
+          orderId,
+          orderNumber: updated.orderNumber,
+          tableName: updated.tableName,
+          description: `${cartItems.length} new item(s) added to order ${updated.orderNumber}`,
+          metadata: { itemCount: cartItems.length },
+        }).catch(() => { /* silent */ });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+        throw error;
+      }
+    },
+    []
+  );
+
   // ============== UTILITY ==============
 
   const canProcessPaymentFn = useCallback((order: UnifiedOrder): boolean => {
@@ -730,6 +878,13 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     getOrderById,
     getActiveOrderForTable,
     cancelOrder,
+    mergeOrders,
+
+    // Bill-level operations
+    applyOrderDiscount,
+    applyItemDiscount,
+    transferItems,
+    addItemsToOrder,
 
     // Filters
     setSearchQuery,
@@ -749,6 +904,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     cart: state.cart,
     cartTotal: state.cartTotal,
     cartItemCount: state.cartItemCount,
+    cartOrderNumber: state.cartOrderNumber,
     selectedTable: state.selectedTable,
     orders: state.orders,
     activeOrders: state.activeOrders,
@@ -790,6 +946,7 @@ export const useUnifiedCart = () => {
   return {
     items: context.cart,
     itemCount: context.cartItemCount,
+    orderNumber: context.cartOrderNumber,
     subtotal: context.state.cartSubtotal,
     taxAmount: context.state.cartTaxAmount,
     discountAmount: context.state.cartDiscountAmount,
@@ -857,6 +1014,127 @@ export const useUnifiedOrderManagement = () => {
     setSelectedOrderId: context.setSelectedOrderId,
     selectedOrderId: context.state.selectedOrderId,
   };
+};
+
+// ============== KITCHEN STATION VIEW TYPE ==============
+
+export interface KitchenStationView {
+  order: UnifiedOrder;
+  station: string;
+  items: UnifiedOrderItem[];
+  stationStatus: 'pending' | 'preparing' | 'ready' | 'served';
+  elapsedMinutes: number;
+  isOverdue: boolean;
+}
+
+export interface KitchenStats {
+  pendingCount: number;
+  preparingCount: number;
+  readyCount: number;
+  overdueCount: number;
+  avgPrepTime: number;
+}
+
+/**
+ * Computes kitchen station view from item statuses
+ */
+function computeStationStatus(
+  items: UnifiedOrderItem[]
+): KitchenStationView['stationStatus'] {
+  if (items.every((i) => i.itemStatus === 'served')) return 'served';
+  if (items.every((i) => i.itemStatus === 'ready' || i.itemStatus === 'served')) return 'ready';
+  if (items.some((i) => i.itemStatus === 'preparing')) return 'preparing';
+  return 'pending';
+}
+
+/**
+ * Hook that derives per-station kitchen cards from unified order state.
+ * Replaces EnhancedKitchenContext ticket-based display.
+ */
+export const useKitchenStationViews = (): KitchenStationView[] => {
+  const context = useUnifiedOrder();
+
+  return useMemo(() => {
+    const kitchenOrders = context.orders.filter((o) =>
+      ['confirmed', 'preparing', 'ready'].includes(o.status)
+    );
+
+    const views: KitchenStationView[] = [];
+    const now = Date.now();
+
+    for (const order of kitchenOrders) {
+      // Group items by station
+      const byStation = new Map<string, UnifiedOrderItem[]>();
+      for (const item of order.items) {
+        if (item.itemStatus === 'cancelled') continue;
+        const station = item.kitchenStation || 'hot_kitchen';
+        if (!byStation.has(station)) byStation.set(station, []);
+        byStation.get(station)!.push(item);
+      }
+
+      const elapsedMinutes = Math.floor(
+        (now - new Date(order.createdAt).getTime()) / 60000
+      );
+      const threshold = (order.estimatedPrepTime || 20) * 1.2;
+
+      for (const [station, items] of byStation.entries()) {
+        const stationStatus = computeStationStatus(items);
+        if (stationStatus === 'served') continue; // Skip fully served stations
+        views.push({
+          order,
+          station,
+          items,
+          stationStatus,
+          elapsedMinutes,
+          isOverdue: elapsedMinutes > threshold,
+        });
+      }
+    }
+
+    // Sort: overdue first, then by oldest
+    return views.sort((a, b) => {
+      if (a.isOverdue && !b.isOverdue) return -1;
+      if (!a.isOverdue && b.isOverdue) return 1;
+      return new Date(a.order.createdAt).getTime() - new Date(b.order.createdAt).getTime();
+    });
+  }, [context.orders]);
+};
+
+/**
+ * Hook that derives kitchen stats from unified order state.
+ * Replaces useKitchenTickets() stats for dashboard consumption.
+ */
+export const useKitchenStats = (): KitchenStats => {
+  const context = useUnifiedOrder();
+
+  return useMemo((): KitchenStats => {
+    const now = Date.now();
+    let overdueCount = 0;
+
+    const pendingCount = context.orders.filter((o) => o.status === 'confirmed').length;
+    const preparingCount = context.orders.filter((o) => o.status === 'preparing').length;
+    const readyCount = context.orders.filter((o) => o.status === 'ready').length;
+
+    for (const o of context.orders) {
+      if (!['confirmed', 'preparing', 'ready'].includes(o.status)) continue;
+      const elapsed = (now - new Date(o.createdAt).getTime()) / 60000;
+      const threshold = (o.estimatedPrepTime || 20) * 1.2;
+      if (elapsed > threshold) overdueCount++;
+    }
+
+    const servedWithPrepTime = context.orders.filter(
+      (o) => o.status === 'paid' && o.actualPrepTime && o.actualPrepTime > 0
+    );
+    const avgPrepTime =
+      servedWithPrepTime.length > 0
+        ? Math.round(
+            servedWithPrepTime.reduce((sum, o) => sum + (o.actualPrepTime || 0), 0) /
+              servedWithPrepTime.length
+          )
+        : 0;
+
+    return { pendingCount, preparingCount, readyCount, overdueCount, avgPrepTime };
+  }, [context.orders]);
 };
 
 /**

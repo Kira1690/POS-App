@@ -1,0 +1,274 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 23: Combine Bills — Merge T-1 into B-1 Bill"
+tags:
+  - qa
+  - billing
+  - combine
+  - feature
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 23 — Combine Bills (Feature 5)
+#  Uses ONLY testIDs and text — no coordinate taps.
+#
+#  What is tested:
+#    ✓ BillScreen shows "Split / Combine Bill" header (renamed)
+#    ✓ 4th option "Combine Bills" button is visible (btn-combine-bills)
+#    ✓ Tapping it opens CombineBillsModal
+#    ✓ Modal lists other active orders (T-1 in this test)
+#    ✓ Tapping an order shows confirmation Alert
+#    ✓ Confirming merges the orders (success toast)
+#    ✓ Source order (T-1) shows as CANCELLED in Order Management
+#
+#  Setup:
+#    - Create T-1 order (CONFIRMED) — needed as the "source" to merge from
+#    - Create B-1 order and advance to SERVED — needed for BillScreen access
+#
+#  Flow:
+#    Cleanup → Create T-1 CONFIRMED order
+#    → Create B-1 SERVED order
+#    → B-1 OrderDetails → Process Payment → BillScreen
+#    → Assert "Split / Combine Bill" header + "Combine Bills" button
+#    → Tap "Combine Bills" → CombineBillsModal opens
+#    → Assert T-1 order visible in modal list
+#    → Tap T-1 → Alert → tap "Combine"
+#    → Assert success / modal closes
+#    → Order Management → T-1 shows CANCELLED
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Cancel any lingering B-1 and T-1 active orders ─────────────────────
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+- runFlow: helpers/cancel_t1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# ── STEP 1: Create B-1 order and advance to SERVED ────────────────────────────
+# IMPORTANT: B-1 must be created BEFORE T-1 so that the helper's "cancel active order"
+# step does not accidentally cancel T-1 (helper just cancels first visible active order).
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_23_step1_b1_served"
+
+# ── STEP 2: Create T-1 order (CONFIRMED) — will be merged into B-1 ────────────
+# T-1 is created AFTER B-1 is already SERVED so no helper will cancel it.
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-modal-close"
+    timeout: 10000
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-T-1"
+    timeout: 8000
+
+- tapOn:
+    id: "btn-table-select-T-1"
+- waitForAnimationToEnd
+
+# Handle "Existing Order Found" if it appears
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# POS screen for T-1 — add Spring Rolls (no modifier)
+- extendedWaitUntil:
+    visible:
+      id: "tab-category-chip-all"
+    timeout: 12000
+
+- tapOn:
+    id: "tab-category-chip-all"
+    optional: true
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Spring Rolls"
+    timeout: 8000
+
+- tapOn:
+    text: "Spring Rolls"
+- waitForAnimationToEnd
+
+# Send to kitchen — T-1 becomes CONFIRMED
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_23_step2_t1_confirmed"
+
+# ── STEP 3: Find B-1 (SERVED) → Open OrderDetails → BillScreen ───────────────
+# B-1 has testID "order-card-b-1" on its card root (OrderListItem per-table testID).
+# Tap it directly — no need to scroll the status tab bar to find the off-screen Served tab.
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# Ensure All filter is active so B-1 (SERVED) is visible in the list
+- tapOn:
+    id: "tab-status-all"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap B-1's card via its per-table testID — opens B-1 OrderDetails directly
+- extendedWaitUntil:
+    visible:
+      id: "order-card-b-1"
+    timeout: 10000
+- tapOn:
+    id: "order-card-b-1"
+- waitForAnimationToEnd
+
+# Wait for OrderDetails → tap Process Payment
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+# BillScreen should be visible
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 10000
+
+- takeScreenshot: "qa_23_step3_bill_screen"
+
+# ── STEP 4: Verify "Split / Combine Bill" section ─────────────────────────────
+# The split section is below the fold — scroll to reveal it
+- scroll
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Split / Combine Bill"
+
+- assertVisible:
+    id: "btn-split-equally"
+- assertVisible:
+    id: "btn-split-by-items"
+- assertVisible:
+    id: "btn-split-by-payment"
+- assertVisible:
+    id: "btn-combine-bills"
+
+- takeScreenshot: "qa_23_step4_split_combine_section"
+
+# ── STEP 5: Open CombineBillsModal ────────────────────────────────────────────
+- tapOn:
+    id: "btn-combine-bills"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-combine-close"
+    timeout: 8000
+
+- assertVisible:
+    id: "btn-combine-close"
+
+- takeScreenshot: "qa_23_step5_combine_modal_open"
+
+# QA: T-1 order card is listed in the modal (testID: combine-card-t-1)
+- extendedWaitUntil:
+    visible:
+      id: "combine-card-t-1"
+    timeout: 20000
+
+- takeScreenshot: "qa_23_step6_t1_order_visible_in_modal"
+
+# ── STEP 6: Tap T-1 order → confirm merge ─────────────────────────────────────
+- tapOn:
+    id: "combine-card-t-1"
+- waitForAnimationToEnd
+
+# Confirmation Alert should appear
+- extendedWaitUntil:
+    visible:
+      text: "Combine"
+    timeout: 6000
+
+- takeScreenshot: "qa_23_step7_confirm_alert"
+
+- tapOn:
+    text: "Combine"
+- waitForAnimationToEnd
+
+# Modal should close after successful merge
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 10000
+
+- takeScreenshot: "qa_23_step8_after_merge"
+
+# ── STEP 7: Verify T-1 order is now CANCELLED ─────────────────────────────────
+- tapOn:
+    id: "btn-bill-back"
+- waitForAnimationToEnd
+
+# Navigate back to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+# Show all orders. tab-status-cancelled is the 9th tab and off-screen on 360dp display.
+# Instead: verify T-1's card status banner reads "Cancelled" via tab-status-all.
+- tapOn:
+    id: "tab-status-all"
+    optional: true
+- waitForAnimationToEnd
+
+# T-1 card status banner should now read "Cancelled" (OrderListItem status label)
+- extendedWaitUntil:
+    visible:
+      text: "Cancelled"
+    timeout: 8000
+
+- assertVisible:
+    text: "Cancelled"
+
+- takeScreenshot: "qa_23_PASS_combine_bills_complete"

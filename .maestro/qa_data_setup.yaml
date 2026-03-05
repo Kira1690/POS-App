@@ -1,0 +1,19 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Data Setup (01-09) — Menu + Orders + Kitchen + Payments"
+tags:
+  - qa
+  - data-setup
+---
+
+# Runs QA 01-09 to populate the app with test data.
+# Prerequisites: App cleared, Metro running, emulator at 360x800 portrait.
+
+- runFlow: qa_01_setup_categories.yaml
+- runFlow: qa_02_add_items.yaml
+- runFlow: qa_03_add_modifiers.yaml
+- runFlow: qa_04_assign_modifiers.yaml
+- runFlow: qa_05_pos_portrait.yaml
+- runFlow: qa_06_pos_landscape.yaml
+- runFlow: qa_07_kitchen_ops.yaml
+- runFlow: qa_08_cash_payment.yaml
+- runFlow: qa_09_split_equal.yaml

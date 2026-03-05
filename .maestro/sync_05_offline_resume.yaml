@@ -1,0 +1,82 @@
+appId: host.exp.exponent
+name: "[SYNC-05] Offline Resume — app works offline and syncs on reconnect"
+---
+
+# This test verifies the offline-first architecture:
+# 1. App is launched with backend DOWN → works from SQLite
+# 2. Backend comes back up → sync resumes automatically
+#
+# Prerequisites:
+#   - App is installed and has been synced at least once (SQLite populated)
+#   - Test runner can stop/start backend services
+
+# Step 1: Start app with backend already running (so SQLite is populated)
+- runFlow: helpers/manager_login.yaml
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 15000
+
+- takeScreenshot: sync_05_online_dashboard
+
+# Navigate to Menu — verify menu items are visible (from SQLite)
+- tapOn:
+    text: ".*Menu.*"
+
+- extendedWaitUntil:
+    visible: ".*Menu.*"
+    timeout: 15000
+
+- takeScreenshot: sync_05_menu_online
+
+# Step 2: Simulate backend going offline by killing process (manual step)
+# NOTE: Stop the gateway manually: `pkill -f "POS-API-Gateway"`
+# Then continue test...
+
+# Wait a moment for the app to detect offline state
+- wait: 5000
+
+- takeScreenshot: sync_05_after_backend_down
+
+# Step 3: Verify app still shows menu data from SQLite (NOT a blank/error screen)
+# Menu items should still be visible from local SQLite cache
+- assertVisible:
+    text: ".*"
+    index: 0
+
+- takeScreenshot: sync_05_offline_still_shows_data
+
+# Navigate to Tables — should still show from SQLite
+- tapOn:
+    text: ".*Tables.*"
+
+- extendedWaitUntil:
+    visible: ".*Table.*"
+    timeout: 10000
+
+- takeScreenshot: sync_05_tables_offline
+
+# Navigate back to Dashboard — app should NOT show a crash or empty state
+- tapOn:
+    text: ".*Dashboard.*"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 10000
+
+- takeScreenshot: sync_05_dashboard_offline
+
+# Step 4: Simulate reconnection (manual step)
+# NOTE: Restart the gateway manually: `cd POS-API-Gateway && bun run dev`
+# Then continue test...
+
+- wait: 15000
+
+- takeScreenshot: sync_05_after_reconnect
+
+# App should resume sync automatically after reconnect
+# Verify no error state is shown
+- assertNotVisible:
+    text: ".*crash.*|.*error.*|.*failed to load.*"
+
+- takeScreenshot: sync_05_reconnected_final

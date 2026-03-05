@@ -1,0 +1,232 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 09: Split Equally — 2 Guests, Both Cash"
+tags:
+  - qa
+  - payment
+  - split
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 9 — Split Equally (2 guests, both pay cash)
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Flow:
+#    Create B-1 order → Kitchen (CONFIRMED → SERVED)
+#    → Order Management → SERVED filter → View order
+#    → OrderDetails → Process Payment → BillScreen
+#    → Split Equally → BillSplitScreen (Equal tab)
+#    → Guest 1: Pay Now → Cash → quick amount → Confirm
+#    → Back to BillSplit → Guest 1 shows Paid
+#    → Guest 2: Pay Now → Cash → quick amount → Confirm
+#    → All paid → Order Management → PAID
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: create B-1 order and advance to SERVED ────────────────────────────
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_09_step1_b1_served"
+
+# ── Filter to SERVED, open order details ──────────────────────────────────────
+- tapOn:
+    id: "tab-payment-pending"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 10000
+
+- takeScreenshot: "qa_09_step2_served_order"
+
+# Tap "View" to go to OrderDetails (not Pay — need BillScreen via Process Payment)
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+
+# Wait for OrderDetails with Process Payment button
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+
+- takeScreenshot: "qa_09_step3_order_details"
+
+# Navigate to BillScreen
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-split-equally"
+    timeout: 10000
+
+- takeScreenshot: "qa_09_step4_bill_screen"
+
+# ── Split Equally ─────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-split-equally"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "tab-split-equal"
+    timeout: 10000
+
+- takeScreenshot: "qa_09_step5_split_screen"
+
+# QA: BillSplitScreen Equal tab active, 2 guest cards visible
+- assertVisible:
+    id: "tab-split-equal"
+
+- takeScreenshot: "qa_09_step6_guests_visible"
+
+# ── Guest 1 Payment ───────────────────────────────────────────────────────────
+# Guest IDs are dynamic UUIDs — use the first btn-guest-pay-* visible
+- extendedWaitUntil:
+    visible:
+      text: "Pay Now"
+    timeout: 8000
+
+# Tap the first "Pay Now" (Guest 1) by text since IDs are dynamic UUIDs
+- tapOn:
+    text: "Pay Now"
+- waitForAnimationToEnd
+
+# PaymentProcessingScreen shown — select Cash
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 10000
+
+- takeScreenshot: "qa_09_step7_guest1_payment_screen"
+
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-confirm"
+    timeout: 8000
+
+- takeScreenshot: "qa_09_step7b_guest1_cash_modal"
+
+# Select quick cash amount (~$10.45 each (tax-included split) → $15 covers it)
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-15"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-15"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+
+- takeScreenshot: "qa_09_step8_guest1_paid"
+
+# Back to BillSplitScreen
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "tab-split-equal"
+    timeout: 8000
+
+- takeScreenshot: "qa_09_step9_back_split_guest1_done"
+
+# ── Guest 2 Payment ───────────────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      text: "Pay Now"
+    timeout: 8000
+
+- tapOn:
+    text: "Pay Now"
+- waitForAnimationToEnd
+
+# PaymentProcessingScreen — select Cash
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 10000
+
+- takeScreenshot: "qa_09_step10_guest2_payment"
+
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-confirm"
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-15"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-15"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+
+- takeScreenshot: "qa_09_step11_guest2_paid"
+
+# All guests paid — Continue to Order Management
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_09_step12_order_management"
+
+# QA: Order is PAID — clear status filter first, then filter to paid
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-paid"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 8000
+
+- takeScreenshot: "qa_09_PASS_split_equal_complete"

@@ -18,9 +18,24 @@ import {
 import { Table } from '@/types/table.types';
 import { TableStatus } from '@/types/common.types';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { Icon } from '@/components/common';
 import { tableStorageService, StoredArea } from '@/services/storage';
+import { MOCK_AREAS } from '@/data/tables/mockAreas';
 import { showToast } from '@/utils/toast';
+
+// Map common server section names to MOCK_AREAS IDs
+const SECTION_ALIASES: Record<string, string> = {
+  'main floor': 'area-1',
+  'main dining': 'area-1',
+  'vip lounge': 'area-2',
+  'vip': 'area-2',
+  'patio': 'area-3',
+  'outdoor patio': 'area-3',
+  'bar': 'area-4',
+  'bar seating': 'area-4',
+  'bar area': 'area-4',
+};
 
 // Helper to check if status matches (handles both string and enum)
 const isStatusMatch = (status: TableStatus | string, target: TableStatus | string): boolean => {
@@ -35,6 +50,8 @@ interface TableSelectionModalProps {
   isLoading?: boolean;
   title?: string;
   subtitle?: string;
+  /** Allow selecting occupied tables (caller handles existing-order logic) */
+  allowOccupied?: boolean;
 }
 
 interface AreaWithTables {
@@ -51,31 +68,61 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
   isLoading = false,
   title = 'Select Table',
   subtitle = 'Choose a table to start a new order',
+  allowOccupied = false,
 }) => {
   const { theme } = useTheme();
+  const { isPhone, isSmallTablet, tableGridColumns, captionSize } = useResponsive();
   const [selectedAreaId, setSelectedAreaId] = useState<string>('all');
   const [areas, setAreas] = useState<StoredArea[]>([]);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  // Load areas from storage
+  // Responsive table card sizing — fill available width instead of fixed 100px
+  const useCompactLayout = isPhone || isSmallTablet;
+  const gridPadding = useCompactLayout ? 12 : 16;
+  const gridGap = useCompactLayout ? 6 : 8;
+  const numCols = useCompactLayout ? 3 : tableGridColumns;
+  // Use measured container width for accurate card sizing; fall back to 100px
+  const cardSize = containerWidth > 0
+    ? Math.floor((containerWidth - gridGap * (numCols - 1)) / numCols)
+    : 100;
+
+  // Use MOCK_AREAS as canonical area list (deduplicated, correct names)
   useEffect(() => {
-    const loadAreas = async () => {
-      const storedAreas = await tableStorageService.getAreas();
-      setAreas(storedAreas);
-      if (__DEV__) {
-        console.log(`[TableSelectionModal] Loaded ${storedAreas.length} areas, received ${tables.length} tables as prop`);
-      }
-    };
     if (visible) {
-      loadAreas();
+      const canonicalAreas: StoredArea[] = MOCK_AREAS.map(a => ({
+        id: String(a.id),
+        name: a.name,
+        icon: a.icon,
+        description: a.description,
+        isActive: a.isActive,
+      }));
+      setAreas(canonicalAreas);
+      if (__DEV__) {
+        console.log(`[TableSelectionModal] Using ${canonicalAreas.length} canonical areas, received ${tables.length} tables`);
+      }
     }
   }, [visible, tables.length]);
+
+  // Match table section to area by ID, name, or alias (API returns names, SQLite stores IDs)
+  const tableMatchesArea = useCallback((table: Table, area: StoredArea): boolean => {
+    const section = table.section;
+    if (!section || typeof section !== 'string') return false;
+    // Direct ID match (e.g., "area-1" === "area-1")
+    if (section === area.id) return true;
+    // Direct name match (e.g., "Main Dining" === "Main Dining")
+    if (section === area.name) return true;
+    // Alias match (e.g., "Main Floor" → "area-1" === area.id)
+    const aliasedId = SECTION_ALIASES[section.toLowerCase()];
+    if (aliasedId && aliasedId === area.id) return true;
+    return false;
+  }, []);
 
   // Group tables by area
   const areasWithTables = useMemo((): AreaWithTables[] => {
     const grouped: AreaWithTables[] = [];
 
     for (const area of areas) {
-      const areaTables = tables.filter(t => t.section === area.id);
+      const areaTables = tables.filter(t => tableMatchesArea(t, area));
       const availableCount = areaTables.filter(
         t => isStatusMatch(t.status, TableStatus.AVAILABLE)
       ).length;
@@ -91,7 +138,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
 
     // Add tables without area assignment
     const unassignedTables = tables.filter(
-      t => !t.section || !areas.find(a => a.id === t.section)
+      t => !t.section || !areas.find(a => tableMatchesArea(t, a))
     );
     if (unassignedTables.length > 0) {
       grouped.push({
@@ -117,11 +164,17 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
     if (selectedAreaId === 'all') {
       return tables;
     }
-    return tables.filter(t => t.section === selectedAreaId || (selectedAreaId === 'other' && !t.section));
-  }, [tables, selectedAreaId]);
+    if (selectedAreaId === 'other') {
+      return tables.filter(t => !t.section || !areas.find(a => tableMatchesArea(t, a)));
+    }
+    const selectedArea = areas.find(a => a.id === selectedAreaId);
+    if (!selectedArea) return tables;
+    return tables.filter(t => tableMatchesArea(t, selectedArea));
+  }, [tables, selectedAreaId, areas, tableMatchesArea]);
 
   const handleTableSelect = useCallback((table: Table) => {
-    if (!isStatusMatch(table.status, TableStatus.AVAILABLE)) {
+    const isOccupied = isStatusMatch(table.status, TableStatus.OCCUPIED);
+    if (!isStatusMatch(table.status, TableStatus.AVAILABLE) && !(allowOccupied && isOccupied)) {
       // Show feedback for why table can't be selected
       const statusMessages: Record<string, string> = {
         [TableStatus.OCCUPIED]: 'This table has an active order. Please select a different table.',
@@ -139,7 +192,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
     }
     onTableSelect(table);
     onClose();
-  }, [onTableSelect, onClose]);
+  }, [onTableSelect, onClose, allowOccupied]);
 
   // Get status color
   const getStatusColor = (status: string) => {
@@ -172,36 +225,60 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
   // Render table card
   const renderTableCard = ({ item: table }: { item: Table }) => {
     const isAvailable = isStatusMatch(table.status, TableStatus.AVAILABLE);
+    const isOccupied = isStatusMatch(table.status, TableStatus.OCCUPIED);
+    const isReserved = isStatusMatch(table.status, TableStatus.RESERVED);
     const statusColor = getStatusColor(String(table.status));
+
+    // Background tint makes status immediately obvious regardless of allowOccupied
+    const bgColor = isAvailable
+      ? theme.colors.success + '12'
+      : isOccupied
+        ? theme.colors.error + '18'
+        : isReserved
+          ? (theme.colors.warning ?? '#FF9800') + '18'
+          : theme.colors.surface;
+
+    const borderColor = isAvailable
+      ? theme.colors.success
+      : isOccupied
+        ? theme.colors.error
+        : isReserved
+          ? (theme.colors.warning ?? '#FF9800')
+          : theme.colors.outline;
+
+    // Non-selectable states (e.g. cleaning) get reduced opacity
+    const opacity = isAvailable || isOccupied || isReserved ? 1 : 0.45;
 
     return (
       <TouchableOpacity
         style={[
           styles.tableCard,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: isAvailable ? theme.colors.success : theme.colors.outline,
-            opacity: isAvailable ? 1 : 0.6,
-          },
+          { backgroundColor: bgColor, borderColor, opacity },
         ]}
         onPress={() => handleTableSelect(table)}
-        activeOpacity={isAvailable ? 0.7 : 0.6}
+        activeOpacity={0.75}
+        testID={`btn-table-select-${table.table_number}`}
       >
         <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
         <Text style={[styles.tableNumber, { color: theme.colors.onSurface }]}>
           {table.table_number}
         </Text>
+        {isOccupied && (
+          <Text style={[styles.locationText, { color: theme.colors.error, fontWeight: '600' }]}>
+            Occupied
+          </Text>
+        )}
+        {isReserved && (
+          <Text style={[styles.locationText, { color: theme.colors.warning ?? '#FF9800', fontWeight: '600' }]}>
+            Reserved
+          </Text>
+        )}
         <View style={styles.tableInfo}>
           <Icon name="account-multiple" size={14} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.capacityText, { color: theme.colors.onSurfaceVariant }]}>
             {table.capacity}
           </Text>
         </View>
-        {table.location && (
-          <Text style={[styles.locationText, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
-            {table.location}
-          </Text>
-        )}
       </TouchableOpacity>
     );
   };
@@ -214,17 +291,17 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
     modalContent: {
       flex: 1,
       backgroundColor: theme.colors.background,
-      marginTop: 60,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
+      marginTop: useCompactLayout ? 0 : 60,
+      borderTopLeftRadius: useCompactLayout ? 0 : 20,
+      borderTopRightRadius: useCompactLayout ? 0 : 20,
       overflow: 'hidden',
     },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingHorizontal: useCompactLayout ? 12 : 20,
+      paddingVertical: useCompactLayout ? 10 : 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
@@ -233,12 +310,12 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
       flex: 1,
     },
     title: {
-      fontSize: 20,
+      fontSize: useCompactLayout ? 16 : 20,
       fontWeight: 'bold',
       color: theme.colors.onSurface,
     },
     subtitle: {
-      fontSize: 14,
+      fontSize: captionSize,
       color: theme.colors.onSurfaceVariant,
       marginTop: 2,
     },
@@ -256,20 +333,20 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
       borderBottomColor: theme.colors.border,
     },
     areaTabsContent: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      gap: 8,
+      paddingHorizontal: useCompactLayout ? 8 : 12,
+      paddingVertical: useCompactLayout ? 6 : 8,
+      gap: useCompactLayout ? 6 : 8,
     },
     areaTab: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      paddingHorizontal: useCompactLayout ? 10 : 16,
+      paddingVertical: useCompactLayout ? 7 : 10,
       borderRadius: 20,
-      gap: 8,
+      gap: useCompactLayout ? 5 : 8,
     },
     areaTabText: {
-      fontSize: 14,
+      fontSize: useCompactLayout ? 12 : 14,
       fontWeight: '500',
     },
     areaTabBadge: {
@@ -285,15 +362,14 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
     },
     tablesContainer: {
       flex: 1,
-      padding: 16,
+      padding: gridPadding,
     },
     tableCard: {
-      width: 100,
-      height: 100,
-      margin: 6,
+      width: cardSize,
+      height: Math.min(cardSize, useCompactLayout ? 120 : 160),
       borderRadius: 12,
       borderWidth: 2,
-      padding: 10,
+      padding: useCompactLayout ? 8 : 10,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -324,23 +400,24 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
     },
     statsContainer: {
       flexDirection: 'row',
-      justifyContent: 'space-around',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
+      justifyContent: 'space-evenly',
+      paddingVertical: useCompactLayout ? 8 : 12,
+      paddingHorizontal: useCompactLayout ? 8 : 16,
       backgroundColor: theme.colors.surface,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
     },
     statItem: {
       alignItems: 'center',
+      flex: 1,
     },
     statValue: {
-      fontSize: 18,
+      fontSize: useCompactLayout ? 15 : 18,
       fontWeight: 'bold',
       color: theme.colors.onSurface,
     },
     statLabel: {
-      fontSize: 11,
+      fontSize: useCompactLayout ? 10 : 11,
       color: theme.colors.onSurfaceVariant,
       marginTop: 2,
     },
@@ -383,6 +460,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Close modal"
+              testID="btn-table-modal-close"
             >
               <Icon name="close" size={24} color={theme.colors.onSurface} />
             </TouchableOpacity>
@@ -407,6 +485,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
                   },
                 ]}
                 onPress={() => setSelectedAreaId('all')}
+                testID="btn-area-tab-all"
               >
                 <Icon
                   name="view-grid"
@@ -447,6 +526,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
               {areasWithTables.map(({ area, availableCount }) => (
                 <TouchableOpacity
                   key={area.id}
+                  testID={`btn-area-tab-${area.id}`}
                   style={[
                     styles.areaTab,
                     {
@@ -501,7 +581,13 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
           </View>
 
           {/* Tables Grid */}
-          <View style={styles.tablesContainer}>
+          <View
+            style={styles.tablesContainer}
+            onLayout={(e) => {
+              const inner = e.nativeEvent.layout.width - gridPadding * 2;
+              if (Math.abs(inner - containerWidth) > 2) setContainerWidth(inner);
+            }}
+          >
             {isLoading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -519,9 +605,10 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
                 data={filteredTables}
                 renderItem={renderTableCard}
                 keyExtractor={item => item.id}
-                numColumns={3}
-                contentContainerStyle={{ paddingBottom: 16, alignItems: 'center' }}
-                columnWrapperStyle={{ justifyContent: 'flex-start', gap: 8 }}
+                numColumns={numCols}
+                key={`grid-${numCols}`}
+                contentContainerStyle={{ paddingBottom: 16, gap: gridGap }}
+                columnWrapperStyle={{ justifyContent: 'flex-start', gap: gridGap }}
                 showsVerticalScrollIndicator={false}
               />
             )}

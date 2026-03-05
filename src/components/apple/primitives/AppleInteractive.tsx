@@ -37,6 +37,7 @@ interface AppleInteractiveProps {
   accessibilityState?: Record<string, boolean | string>;
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  testID?: string;
 }
 
 // UNIVERSAL APPLE INTERACTIVE COMPONENT (Single Responsibility)
@@ -53,6 +54,7 @@ export const AppleInteractive: React.FC<AppleInteractiveProps> = ({
   touchTarget = 'auto',
   style,
   pressedStyle,
+  testID,
 }) => {
   const { theme } = useTheme();
 
@@ -116,6 +118,7 @@ export const AppleInteractive: React.FC<AppleInteractiveProps> = ({
       onPressIn={disabled ? undefined : onPressIn}
       onPressOut={disabled ? undefined : onPressOut}
       disabled={disabled}
+      testID={testID}
       style={({ pressed }) => [
         ...baseStyle,
         getFeedbackStyle(pressed),

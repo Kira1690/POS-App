@@ -1,0 +1,74 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Permissions 05 — Store Admin Full Access"
+# Verifies: store_admin has access to all Settings panels including all 10 setting sections
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Login as store admin
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-admin@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAAdmin2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+- takeScreenshot: "admin_01_login"
+
+# Navigate to Settings
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+- takeScreenshot: "admin_02_settings_main"
+
+# Verify Restaurant Profile accessible
+- tapOn:
+    text: "Restaurant Profile"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "admin_03_restaurant_profile"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# Verify Table Management accessible
+- tapOn:
+    text: "Table Management"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "admin_04_table_management"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# Verify Menu Management accessible
+- tapOn:
+    text: "Menu"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "admin_05_menu_management"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# Verify User Management accessible
+- tapOn:
+    text: "User Management"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "admin_06_user_management"
+- pressKey: "Back"
+
+- stopApp

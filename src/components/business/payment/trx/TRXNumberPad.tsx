@@ -1,9 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-
-const { width } = Dimensions.get('window');
 
 interface TRXNumberPadProps {
   onNumberPress: (number: string) => void;
@@ -18,6 +16,7 @@ export const TRXNumberPad: React.FC<TRXNumberPadProps> = ({
   onDelete,
 }) => {
   const { theme } = useTheme();
+  const { width } = useWindowDimensions();
 
   const styles = StyleSheet.create({
     dialerContainer: {

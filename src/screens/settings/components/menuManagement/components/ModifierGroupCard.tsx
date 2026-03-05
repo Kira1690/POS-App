@@ -321,7 +321,7 @@ export const ModifierGroupCard: React.FC<ModifierGroupCardProps> = ({
           <TouchableOpacity
             style={styles.actionButton}
             onPress={handleAddOption}
-            accessibilityLabel="Add option"
+            accessibilityLabel="Add modifier option"
             testID="btn-add-option"
           >
             <MaterialCommunityIcons name="plus" size={18} color={theme.colors.primary} />

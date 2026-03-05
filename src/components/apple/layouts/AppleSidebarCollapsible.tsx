@@ -45,6 +45,8 @@ interface AppleSidebarCollapsibleProps {
   defaultCollapsed?: boolean;
   onCollapseChange?: (isCollapsed: boolean) => void;
   showTooltips?: boolean;
+  /** On phones the sidebar is replaced by a chip row — render nothing */
+  phoneMode?: boolean;
 }
 
 export const AppleSidebarCollapsible: React.FC<AppleSidebarCollapsibleProps> = ({
@@ -56,6 +58,7 @@ export const AppleSidebarCollapsible: React.FC<AppleSidebarCollapsibleProps> = (
   defaultCollapsed = false,
   onCollapseChange,
   showTooltips = true,
+  phoneMode = false,
 }) => {
   const { theme, isDark } = useTheme();
 
@@ -269,6 +272,7 @@ export const AppleSidebarCollapsible: React.FC<AppleSidebarCollapsibleProps> = (
           ]}
           accessibilityLabel={item.label}
           accessibilityRole="button"
+          testID={`settings-nav-${item.id}`}
         >
           {/* Icon Container - ALWAYS 40x40, NEVER changes */}
           {item.icon && (
@@ -327,6 +331,10 @@ export const AppleSidebarCollapsible: React.FC<AppleSidebarCollapsibleProps> = (
       </View>
     );
   };
+
+  if (phoneMode) {
+    return null;
+  }
 
   return (
     <Animated.View style={[styles.container, { width: sidebarWidth }]}>

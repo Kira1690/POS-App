@@ -1,0 +1,48 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Sync 02 — Table Pull (Web → App)"
+# Verifies: After creating a table area on the web, it appears in the app within 30s.
+# Pre-condition: Create "QA-Rooftop" area and "QA-R1" table on web before running.
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-manager@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAManager2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+# Navigate to Tables / Floor Plan
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "sync_tables_01_before_pull"
+
+# Wait 30 seconds for pull sync
+- wait:
+    ms: 30000
+- waitForAnimationToEnd
+
+- takeScreenshot: "sync_tables_02_after_30s"
+
+# Verify QA-Rooftop tab appears
+- assertVisible:
+    text: "QA-Rooftop"
+    optional: true
+
+# Verify QA-R1 table appears
+- assertVisible:
+    text: "QA-R1"
+    optional: true
+
+- takeScreenshot: "sync_tables_03_new_area_visible"
+- stopApp

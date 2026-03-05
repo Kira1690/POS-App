@@ -4,6 +4,7 @@
  */
 
 import { MenuCategory, MenuItem } from './menu.types';
+import { KitchenStation } from './order-extended.types';
 
 export interface CategoryStats {
   itemCount: number;
@@ -82,6 +83,8 @@ export interface UpdateMenuItemRequest {
   category_id?: string;
   /** IDs of modifier groups to assign to this item */
   modifier_group_ids?: string[];
+  /** Override which kitchen station prepares this item. undefined = auto-derive from category */
+  kitchen_station?: KitchenStation;
 }
 
 export interface BulkMenuOperation {

@@ -14,7 +14,7 @@ import {
   ScrollView,
   Switch,
   KeyboardAvoidingView,
-  Platform,
+  
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -425,7 +425,7 @@ export const AddModifierOptionModal: React.FC<AddModifierOptionModalProps> = ({
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         style={styles.overlay}
       >
         <View style={styles.container}>

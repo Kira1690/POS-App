@@ -142,6 +142,7 @@ export const SplitByGuests: React.FC<SplitByGuestsProps> = memo(
               onPress={handleDecrease}
               disabled={guestCount <= minGuests}
               activeOpacity={0.7}
+              testID="btn-guest-count-decrease"
             >
               <MaterialCommunityIcons
                 name="minus"
@@ -162,6 +163,7 @@ export const SplitByGuests: React.FC<SplitByGuestsProps> = memo(
               onPress={handleIncrease}
               disabled={guestCount >= maxGuests}
               activeOpacity={0.7}
+              testID="btn-guest-count-increase"
             >
               <MaterialCommunityIcons
                 name="plus"

@@ -1,0 +1,152 @@
+appId: host.exp.exponent
+name: "QA 10: Split Payment Modal — Cash + Cash (Multiple Methods)"
+tags:
+  - qa
+  - payment
+  - split
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 10 — SplitPaymentModal (multiple methods)
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Flow:
+#    Create B-1 order → Kitchen → SERVED
+#    → Order Management → SERVED → Pay (direct)
+#    → PaymentProcessingScreen → Split Payment option
+#    → SplitPaymentModal opens
+#    → Select Cash → enter $10 → Enter key → row added
+#    → Select Cash → enter remaining → Enter → row added
+#    → Remaining = $0.00 (Balanced) → Process Payments
+#    → PaymentConfirmation → Continue → Order PAID
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP ─────────────────────────────────────────────────────────────────────
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_10_step1_b1_served"
+
+# ── Filter to SERVED, tap Pay directly ────────────────────────────────────────
+- tapOn:
+    id: "tab-payment-pending"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-pay"
+    timeout: 10000
+
+- takeScreenshot: "qa_10_step2_served_order"
+
+- tapOn:
+    id: "btn-order-pay"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+
+- takeScreenshot: "qa_10_step3_payment_screen"
+
+# ── Select Split Payment ──────────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-split"
+    timeout: 8000
+- tapOn:
+    id: "btn-pay-method-split"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-split-close"
+    timeout: 8000
+
+- takeScreenshot: "qa_10_step4_split_modal_opened"
+
+# QA: SplitPaymentModal open
+- assertVisible:
+    id: "btn-split-process"
+
+# ── Entry 1: Cash $10 ─────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-split-method-cash"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-split-amount"
+- eraseText: 10
+- inputText: "10"
+- pressKey: Enter
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_10_step5_first_entry"
+
+# ── Entry 2: Cash — remaining ($10.89 to reach $20.89 total) ──────────────────
+- tapOn:
+    id: "btn-split-method-cash"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-split-amount"
+- eraseText: 10
+- inputText: "10.89"
+- pressKey: Enter
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_10_step6_second_entry"
+
+# QA: Process Payments button should be enabled when balanced
+- assertVisible:
+    id: "btn-split-process"
+
+# ── Process Payments ──────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-split-process"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+
+- takeScreenshot: "qa_10_step7_payment_successful"
+
+# ── Complete ──────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+# btn-continue navigates to Dashboard — tap Orders tab to get to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+# QA: Order is PAID — clear status filter first
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-paid"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 8000
+
+- takeScreenshot: "qa_10_PASS_split_payment_complete"

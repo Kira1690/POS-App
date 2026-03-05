@@ -11,11 +11,12 @@ import {
   FlatList,
   TextInput,
   RefreshControl,
-  Alert,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   AppleDashboardPanel,
   AppleCard,
@@ -60,7 +61,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onPress }) => {
         borderWidth: 2,
         borderColor: statusColors.border,
         overflow: 'hidden',
-        shadowColor: '#000',
+        shadowColor: theme.colors.shadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: isDark ? 0.3 : 0.1,
         shadowRadius: 8,
@@ -173,6 +174,8 @@ const mapStatus = (status: UnifiedOrder['status']): DashboardOrder['status'] => 
 
 const OrdersDashboard: React.FC = () => {
   const { theme, isDark } = useTheme();
+  const { isPhone, sectionGap, captionSize, statValueSize, headingSize } = useResponsive();
+  const navigation = useNavigation<any>();
   const { orders: rawOrders, refreshOrders } = useUnifiedOrder();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -268,9 +271,12 @@ const OrdersDashboard: React.FC = () => {
     setRefreshing(false);
   };
 
-  // Handle order press
+  // Handle order press — navigate to Orders tab → OrderDetails
   const handleOrderPress = (order: DashboardOrder) => {
-    Alert.alert('Order Details', `Order ${order.orderNumber}\nTotal: $${order.totalAmount.toFixed(2)}`);
+    navigation.navigate('Orders', {
+      screen: 'OrderDetails',
+      params: { orderId: order.id },
+    });
   };
 
   const styles = {
@@ -280,15 +286,16 @@ const OrdersDashboard: React.FC = () => {
     },
     analyticsContainer: {
       flexDirection: 'row' as const,
-      gap: 16,
-      marginBottom: 16,
+      flexWrap: 'wrap' as const,
+      gap: isPhone ? theme.spacing.sm : theme.spacing.lg,
+      marginBottom: sectionGap,
     },
     analyticsCard: {
-      flex: 1,
+      ...(isPhone ? { width: '48%' as const } : { flex: 1 }),
       alignItems: 'center' as const,
       backgroundColor: theme.colors.surfaceVariant,
-      paddingVertical: 20,
-      paddingHorizontal: 16,
+      paddingVertical: theme.spacing.xl,
+      paddingHorizontal: theme.spacing.lg,
       borderRadius: theme.borderRadius.lg,
       borderWidth: 1,
       borderColor: theme.colors.outline,
@@ -296,31 +303,31 @@ const OrdersDashboard: React.FC = () => {
       elevation: 2,
     },
     analyticsValue: {
-      fontSize: 28,
+      fontSize: statValueSize,
       fontWeight: '800' as const,
       color: theme.colors.onSurface,
-      marginBottom: 4,
+      marginBottom: theme.spacing.xs,
     },
     analyticsLabel: {
-      fontSize: 13,
+      fontSize: captionSize,
       color: theme.colors.onSurfaceVariant,
       textAlign: 'center' as const,
       fontWeight: '600' as const,
       letterSpacing: 0.5,
     },
     filtersContainer: {
-      marginBottom: 16,
+      marginBottom: sectionGap,
     },
     filterRow: {
       flexDirection: 'row' as const,
-      gap: 8,
-      marginBottom: 8,
+      gap: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
     },
     searchBar: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
       backgroundColor: theme.colors.surfaceVariant,
       borderRadius: theme.borderRadius.xl,
       borderWidth: 1,
@@ -330,15 +337,15 @@ const OrdersDashboard: React.FC = () => {
     },
     searchInput: {
       flex: 1,
-      marginLeft: 8,
-      fontSize: 16,
+      marginLeft: theme.spacing.sm,
+      fontSize: headingSize,
       color: theme.colors.onSurface,
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: headingSize,
       fontWeight: '600' as const,
       color: theme.colors.onSurface,
-      marginBottom: 12,
+      marginBottom: theme.spacing.md,
     },
   };
 
@@ -394,7 +401,7 @@ const OrdersDashboard: React.FC = () => {
         }
       >
         {/* Analytics Summary */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <AppleCard layer="surface" size="large" style={{ marginBottom: sectionGap }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <MaterialIcons name="analytics" size={20} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>Order Analytics</Text>

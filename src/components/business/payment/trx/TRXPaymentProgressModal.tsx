@@ -3,6 +3,7 @@ import {
   Modal,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
   Animated,
   Easing,
@@ -22,6 +23,7 @@ interface TRXPaymentProgressModalProps {
   lastFour?: string;
   errorMessage?: string;
   onDismiss?: () => void;
+  onCancel?: () => void;
 }
 
 interface StateConfig {
@@ -92,6 +94,7 @@ export const TRXPaymentProgressModal: React.FC<TRXPaymentProgressModalProps> = (
   lastFour,
   errorMessage,
   onDismiss,
+  onCancel,
 }) => {
   const { theme } = useTheme();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -236,6 +239,15 @@ export const TRXPaymentProgressModal: React.FC<TRXPaymentProgressModalProps> = (
     }
   };
 
+  // Always allow back/cancel escape — hardware back or Cancel button during processing
+  const handleCancel = () => {
+    if (canDismiss) {
+      handleDismiss();
+    } else if (onCancel) {
+      onCancel();
+    }
+  };
+
   const { width } = Dimensions.get('window');
 
   const styles = StyleSheet.create({
@@ -298,6 +310,17 @@ export const TRXPaymentProgressModal: React.FC<TRXPaymentProgressModalProps> = (
       textAlign: 'center',
       marginTop: theme.spacing.xs,
     },
+    cancelButton: {
+      marginTop: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.xl,
+      borderRadius: theme.borderRadius.md,
+      borderWidth: 1,
+    },
+    cancelButtonText: {
+      ...theme.typography.subhead,
+      fontWeight: '600',
+    },
   });
 
   if (!visible) return null;
@@ -308,7 +331,7 @@ export const TRXPaymentProgressModal: React.FC<TRXPaymentProgressModalProps> = (
       transparent
       animationType="fade"
       statusBarTranslucent
-      onRequestClose={handleDismiss}
+      onRequestClose={handleCancel}
     >
       <View style={styles.blurContainer}>
         <View style={styles.modalContainer}>
@@ -353,6 +376,19 @@ export const TRXPaymentProgressModal: React.FC<TRXPaymentProgressModalProps> = (
               [PaymentState.BUILDING_MESSAGE, PaymentState.CONNECTING, PaymentState.SENDING, PaymentState.PROCESSING].includes(currentState) && (
                 <Text style={styles.timerText}>{elapsedSeconds}s</Text>
               )}
+
+            {/* Cancel escape — always available during processing states */}
+            {!canDismiss && onCancel && (
+              <TouchableOpacity
+                style={[styles.cancelButton, { borderColor: theme.colors.outline }]}
+                onPress={handleCancel}
+                testID="btn-trx-progress-cancel"
+              >
+                <Text style={[styles.cancelButtonText, { color: theme.colors.onSurfaceVariant }]}>
+                  Cancel Payment
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>

@@ -1,0 +1,47 @@
+appId: com.ajinkya123.POSReactNativeApp
+---
+# Helper: Cancel any active order for Table B-1.
+# Uses per-table testID "order-card-b-1" — ONLY targets B-1, never another table.
+# Assumes: currently on Order Management screen.
+
+# Reset to All orders so B-1 card is visible regardless of current filter
+- tapOn:
+    id: "tab-payment-all"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-status-all"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap B-1's card specifically (Maestro auto-scrolls to find it; skipped if absent)
+- tapOn:
+    id: "order-card-b-1"
+    optional: true
+- waitForAnimationToEnd
+
+# If we navigated to OrderDetails for an active B-1, cancel it
+- runFlow:
+    when:
+      visible:
+        id: "btn-cancel-order"
+    commands:
+      - tapOn:
+          id: "btn-cancel-order"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "input-cancel-reason"
+      - inputText: "QA test cleanup"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "btn-confirm-cancel-order"
+      - waitForAnimationToEnd
+
+# Return to Order Management (handles both: stayed on list OR navigated to OrderDetails)
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000

@@ -19,12 +19,20 @@ export class TableApiClient extends SimpleApiClient {
     const response = await this.get<Table[]>('/api/tables', {
       params: { restaurant_id: restaurantId }
     });
-    
+
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || 'Failed to get tables');
     }
-    
-    return response.data.data;
+
+    // Normalize: server returns section as a joined object {id, name, ...}
+    // but the Table type expects section as a string name
+    const raw = response.data.data as unknown as Array<Record<string, unknown>>;
+    return raw.map(t => ({
+      ...t,
+      section: typeof t.section === 'object' && t.section !== null
+        ? (t.section as Record<string, unknown>).name as string | undefined
+        : t.section as string | undefined,
+    })) as Table[];
   }
 
   async getTable(tableId: string): Promise<Table> {

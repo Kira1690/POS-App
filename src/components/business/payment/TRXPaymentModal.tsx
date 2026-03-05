@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useTRXTerminalConnection } from '@/hooks/trx/useTRXTerminalConnection';
 import { useTRXPaymentProcessor } from '@/hooks/trx/useTRXPaymentProcessor';
 import { useTRXSettings } from '@/hooks/trx/useTRXSettings';
@@ -40,6 +41,7 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
   onCancel,
 }) => {
   const { theme } = useTheme();
+  const { isPhone, modalMaxWidth } = useResponsive();
   const { settings } = useTRXSettings();
   const [tipAmount, setTipAmount] = useState(0);
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -132,17 +134,11 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
   const showProgressModal = transactionStatus !== PaymentState.IDLE;
   const showReconnecting = isReconnecting || isConnecting || isScanning;
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onCancel}
-    >
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+  const innerContent = (
+    <>
         {/* Header */}
         <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
-          <TouchableOpacity style={styles.closeButton} onPress={onCancel} disabled={isProcessing}>
+          <TouchableOpacity style={styles.closeButton} onPress={onCancel} testID="btn-trx-close">
             <MaterialIcons name="close" size={24} color={theme.colors.onSurface} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>
@@ -168,6 +164,7 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
             <TouchableOpacity
               style={[styles.reconnectButton, { backgroundColor: theme.colors.primaryContainer }]}
               onPress={handleReconnect}
+              testID="btn-trx-reconnect"
             >
               <MaterialIcons name="refresh" size={20} color={theme.colors.onPrimaryContainer} />
               <Text style={[styles.reconnectText, { color: theme.colors.onPrimaryContainer }]}>
@@ -214,6 +211,7 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
                       isActive && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
                     ]}
                     onPress={() => setTipAmount(isActive ? 0 : amt)}
+                    testID={`btn-tip-${pct}`}
                   >
                     <Text style={[
                       styles.tipChipText,
@@ -232,6 +230,7 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
                   tipAmount === 0 && { backgroundColor: theme.colors.surfaceVariant },
                 ]}
                 onPress={() => setTipAmount(0)}
+                testID="btn-tip-0"
               >
                 <Text style={[styles.tipChipText, { color: theme.colors.onSurface }]}>No Tip</Text>
               </TouchableOpacity>
@@ -244,7 +243,7 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
           <TouchableOpacity
             style={[styles.cancelButton, { borderColor: theme.colors.outline }]}
             onPress={onCancel}
-            disabled={isProcessing}
+            testID="btn-trx-cancel"
           >
             <Text style={[styles.cancelButtonText, { color: theme.colors.onSurfaceVariant }]}>
               Cancel
@@ -261,6 +260,7 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
             ]}
             onPress={handleCharge}
             disabled={!isConnected || isProcessing}
+            testID="btn-trx-charge"
           >
             <MaterialIcons
               name="payment"
@@ -287,8 +287,30 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
           lastFour={lastFour || undefined}
           errorMessage={errorMessage || undefined}
           onDismiss={handleModalDismiss}
+          onCancel={onCancel}
         />
-      </SafeAreaView>
+    </>
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={!isPhone}
+      presentationStyle={isPhone ? 'pageSheet' : 'overFullScreen'}
+      onRequestClose={onCancel}
+    >
+      {isPhone ? (
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          {innerContent}
+        </SafeAreaView>
+      ) : (
+        <View style={styles.overlay}>
+          <View style={[styles.dialogCard, { maxWidth: modalMaxWidth, backgroundColor: theme.colors.background }]}>
+            {innerContent}
+          </View>
+        </View>
+      )}
     </Modal>
   );
 };
@@ -296,6 +318,18 @@ export const TRXPaymentModal: React.FC<TRXPaymentModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialogCard: {
+    width: '90%',
+    height: '90%',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',

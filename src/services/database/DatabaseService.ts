@@ -8,7 +8,7 @@
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 
 const DB_NAME = 'pos_app.db';
-const CURRENT_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 6;
 
 class DatabaseService {
   private db: SQLiteDatabase | null = null;
@@ -17,9 +17,24 @@ class DatabaseService {
   /**
    * Initialize the database - opens/creates DB and runs schema setup.
    * Safe to call multiple times; only initializes once.
+   * Validates connection is alive (handles Fast Refresh stale native handles).
    */
   async initialize(): Promise<SQLiteDatabase> {
-    if (this.db) return this.db;
+    // If we have an existing handle, verify it's still valid
+    // After Fast Refresh, the native SQLite handle can become stale
+    // (NativeDatabase.prepareAsync throws NullPointerException)
+    if (this.db) {
+      try {
+        await this.db.getFirstAsync('SELECT 1');
+        return this.db;
+      } catch {
+        if (__DEV__) {
+          console.log('[DatabaseService] Stale DB handle detected (Fast Refresh?) — re-opening');
+        }
+        this.db = null;
+        this.initPromise = null;
+      }
+    }
 
     if (!this.initPromise) {
       this.initPromise = this.doInitialize();
@@ -85,8 +100,42 @@ class DatabaseService {
 
     const currentVersion = versionRow ? parseInt(versionRow.value, 10) : 0;
 
+    if (currentVersion < 1) {
+      // v1: initial schema created by createSchema() above
+      if (__DEV__) console.log('[DatabaseService] Running v0 → v1 migration (schema creation)');
+    }
+
+    if (currentVersion < 2) {
+      // v2: add kitchen timing columns to orders + station config columns
+      await this.runV2Migration();
+      if (__DEV__) console.log('[DatabaseService] Running v1 → v2 migration');
+    }
+
+    if (currentVersion < 3) {
+      // v3: add terminal_settings table for SQLite-based terminal persistence
+      await this.runV3Migration();
+      if (__DEV__) console.log('[DatabaseService] Running v2 → v3 migration');
+    }
+
+    if (currentVersion < 4) {
+      // v4: add kitchen_station column to menu_items for per-item station override
+      await this.runV4Migration();
+      if (__DEV__) console.log('[DatabaseService] Running v3 → v4 migration');
+    }
+
+    if (currentVersion < 5) {
+      // v5: fix tables.section — was seeded with area name strings, must be area IDs
+      await this.runV5Migration();
+      if (__DEV__) console.log('[DatabaseService] Running v4 → v5 migration (fix table section IDs)');
+    }
+
+    if (currentVersion < 6) {
+      // v6: add activity_logs + printer_settings tables
+      await this.runV6Migration();
+      if (__DEV__) console.log('[DatabaseService] Running v5 → v6 migration (activity_logs + printer_settings)');
+    }
+
     if (currentVersion < CURRENT_SCHEMA_VERSION) {
-      // For v1, schema is already created above - just set the version
       await this.db.runAsync(
         `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('schema_version', ?, ?)`,
         String(CURRENT_SCHEMA_VERSION),
@@ -97,6 +146,134 @@ class DatabaseService {
         console.log(`[DatabaseService] Schema version set to ${CURRENT_SCHEMA_VERSION}`);
       }
     }
+  }
+
+  private async runV2Migration(): Promise<void> {
+    if (!this.db) return;
+
+    // Add kitchen timing columns to orders (safe: IF NOT EXISTS equivalent via PRAGMA check)
+    const orderColumns = await this.db.getAllAsync<{ name: string }>(
+      'PRAGMA table_info(orders)'
+    );
+    const orderColNames = new Set(orderColumns.map((c) => c.name));
+
+    if (!orderColNames.has('preparing_at')) {
+      await this.db.execAsync('ALTER TABLE orders ADD COLUMN preparing_at TEXT');
+    }
+    if (!orderColNames.has('ready_at')) {
+      await this.db.execAsync('ALTER TABLE orders ADD COLUMN ready_at TEXT');
+    }
+    if (!orderColNames.has('served_at')) {
+      await this.db.execAsync('ALTER TABLE orders ADD COLUMN served_at TEXT');
+    }
+    if (!orderColNames.has('estimated_prep_time')) {
+      await this.db.execAsync('ALTER TABLE orders ADD COLUMN estimated_prep_time INTEGER DEFAULT 15');
+    }
+    if (!orderColNames.has('actual_prep_time')) {
+      await this.db.execAsync('ALTER TABLE orders ADD COLUMN actual_prep_time INTEGER');
+    }
+
+    // Add config columns to station_configs
+    const stationColumns = await this.db.getAllAsync<{ name: string }>(
+      'PRAGMA table_info(station_configs)'
+    );
+    const stationColNames = new Set(stationColumns.map((c) => c.name));
+
+    if (!stationColNames.has('alert_threshold')) {
+      await this.db.execAsync('ALTER TABLE station_configs ADD COLUMN alert_threshold INTEGER DEFAULT 20');
+    }
+    if (!stationColNames.has('display_order')) {
+      await this.db.execAsync('ALTER TABLE station_configs ADD COLUMN display_order INTEGER DEFAULT 0');
+    }
+    if (!stationColNames.has('max_concurrent')) {
+      await this.db.execAsync('ALTER TABLE station_configs ADD COLUMN max_concurrent INTEGER DEFAULT 10');
+    }
+  }
+
+  private async runV3Migration(): Promise<void> {
+    if (!this.db) return;
+
+    await this.db.execAsync(`
+      CREATE TABLE IF NOT EXISTS terminal_settings (
+        id INTEGER PRIMARY KEY,
+        ip TEXT NOT NULL,
+        port INTEGER NOT NULL DEFAULT 1180,
+        name TEXT,
+        is_selected INTEGER NOT NULL DEFAULT 1,
+        connected_at TEXT,
+        last_ping_success TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      );
+    `);
+  }
+
+  private async runV4Migration(): Promise<void> {
+    if (!this.db) return;
+
+    const menuItemColumns = await this.db.getAllAsync<{ name: string }>(
+      'PRAGMA table_info(menu_items)'
+    );
+    const colNames = new Set(menuItemColumns.map((c) => c.name));
+
+    if (!colNames.has('kitchen_station')) {
+      await this.db.execAsync('ALTER TABLE menu_items ADD COLUMN kitchen_station TEXT;');
+    }
+  }
+
+  private async runV6Migration(): Promise<void> {
+    if (!this.db) return;
+
+    await this.db.execAsync(`
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id TEXT PRIMARY KEY,
+        timestamp TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        order_id TEXT NOT NULL,
+        order_number TEXT,
+        table_name TEXT,
+        description TEXT,
+        metadata TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+    `);
+
+    await this.db.execAsync(`
+      CREATE TABLE IF NOT EXISTS printer_settings (
+        id TEXT PRIMARY KEY DEFAULT 'default',
+        receipt_enabled INTEGER DEFAULT 0,
+        receipt_ip TEXT,
+        receipt_port INTEGER DEFAULT 9100,
+        receipt_paper_size TEXT DEFAULT '80mm',
+        kitchen_enabled INTEGER DEFAULT 0,
+        kitchen_ip TEXT,
+        kitchen_port INTEGER DEFAULT 9100,
+        updated_at TEXT NOT NULL
+      );
+    `);
+
+    // Index for fast time-range queries on activity_logs
+    await this.db.execAsync(
+      `CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON activity_logs(timestamp);`
+    );
+  }
+
+  private async runV5Migration(): Promise<void> {
+    if (!this.db) return;
+
+    // Fix tables whose section was stored as the area NAME instead of area ID.
+    // Only updates rows where section doesn't already match an area ID in table_areas,
+    // but does match an area name — resolves it to the correct ID via a subquery.
+    await this.db.execAsync(`
+      UPDATE tables
+      SET section = (
+        SELECT id FROM table_areas WHERE name = tables.section LIMIT 1
+      ),
+      updated_at = datetime('now')
+      WHERE section IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM table_areas WHERE id = tables.section)
+        AND EXISTS (SELECT 1 FROM table_areas WHERE name = tables.section)
+    `);
   }
 
   /**
@@ -159,6 +336,7 @@ CREATE TABLE IF NOT EXISTS menu_items (
   is_available INTEGER DEFAULT 1, preparation_time_minutes INTEGER,
   sort_order INTEGER DEFAULT 0, cost_price REAL, tax_rate REAL,
   calories INTEGER, sku TEXT, dietary_tags TEXT, allergens TEXT,
+  kitchen_station TEXT,
   created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
 
@@ -214,6 +392,8 @@ CREATE TABLE IF NOT EXISTS orders (
   status TEXT NOT NULL DEFAULT 'draft', payment_status TEXT NOT NULL DEFAULT 'pending',
   special_instructions TEXT, cancellation_reason TEXT,
   submitted_at TEXT, paid_at TEXT, cancelled_at TEXT,
+  preparing_at TEXT, ready_at TEXT, served_at TEXT,
+  estimated_prep_time INTEGER DEFAULT 15, actual_prep_time INTEGER,
   pending_sync INTEGER DEFAULT 1, synced_at TEXT,
   created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
@@ -306,6 +486,8 @@ CREATE TABLE IF NOT EXISTS carts (
 CREATE TABLE IF NOT EXISTS station_configs (
   station TEXT PRIMARY KEY, name TEXT NOT NULL, is_active INTEGER DEFAULT 1,
   color TEXT, icon TEXT, default_prep_time INTEGER DEFAULT 15,
+  alert_threshold INTEGER DEFAULT 20, display_order INTEGER DEFAULT 0,
+  max_concurrent INTEGER DEFAULT 10,
   updated_at TEXT NOT NULL
 );
 
@@ -357,6 +539,18 @@ CREATE TABLE IF NOT EXISTS payment_config (
   receipt_settings TEXT,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS terminal_settings (
+  id INTEGER PRIMARY KEY,
+  ip TEXT NOT NULL,
+  port INTEGER NOT NULL DEFAULT 1180,
+  name TEXT,
+  is_selected INTEGER NOT NULL DEFAULT 1,
+  connected_at TEXT,
+  last_ping_success TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
 `;
 
 const INDEX_SQL = `
@@ -388,5 +582,12 @@ CREATE INDEX IF NOT EXISTS idx_bill_splits_order ON bill_splits(order_id);
 CREATE INDEX IF NOT EXISTS idx_receipts_order ON receipts(order_id);
 `;
 
-// Export singleton instance
-export const databaseService = new DatabaseService();
+// Export singleton instance — uses global to survive Fast Refresh.
+// After Fast Refresh, modules re-evaluate creating a new DatabaseService
+// with db=null, losing the valid native SQLite handle. By storing the
+// instance on global, we reuse the same object (and its DB handle) across
+// hot reloads. The initialize() method still validates the handle is alive.
+const GLOBAL_KEY = '__databaseServiceInstance';
+export const databaseService: DatabaseService =
+  (global as Record<string, unknown>)[GLOBAL_KEY] as DatabaseService ??
+  ((global as Record<string, unknown>)[GLOBAL_KEY] = new DatabaseService());

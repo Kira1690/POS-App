@@ -182,11 +182,19 @@ export const TableProvider: React.FC<TableProviderProps> = ({
       });
     });
 
+    // TABLE_SYNC_COMPLETE: Refresh tables when sync pulls new data from server
+    const unsubscribeTableSync = orderEventEmitter.subscribe('TABLE_SYNC_COMPLETE', () => {
+      refreshTables().catch(() => {
+        // Non-blocking — silently ignore errors
+      });
+    });
+
     return () => {
       unsubscribeCreated();
       unsubscribePaid();
       unsubscribeCancelled();
       unsubscribeReset();
+      unsubscribeTableSync();
     };
   }, [updateTableStatus, refreshTables]);
 

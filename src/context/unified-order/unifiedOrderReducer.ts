@@ -21,6 +21,7 @@ import {
   isActiveOrder,
   calculateUnifiedItemTotal,
   calculateUnifiedOrderTotals,
+  generateUnifiedOrderNumber,
 } from '@/types/unified-order.types';
 import { Table } from '@/types/table.types';
 
@@ -33,6 +34,7 @@ export interface UnifiedOrderState {
 
   // Cart
   cart: UnifiedOrderItem[];
+  cartOrderNumber: string | null;
   cartSubtotal: number;
   cartTaxRate: number;
   cartTaxAmount: number;
@@ -74,6 +76,7 @@ export const initialUnifiedOrderState: UnifiedOrderState = {
 
   // Cart
   cart: [],
+  cartOrderNumber: null,
   cartSubtotal: 0,
   cartTaxRate: 0.1, // 10% default tax rate
   cartTaxAmount: 0,
@@ -122,6 +125,7 @@ export type UnifiedOrderAction =
   | { type: 'UPDATE_CART_ITEM_QUANTITY'; payload: { itemId: string; quantity: number } }
   | { type: 'REMOVE_FROM_CART'; payload: string }
   | { type: 'CLEAR_CART' }
+  | { type: 'SET_CART_ORDER_NUMBER'; payload: string | null }
   | { type: 'SET_CART_TAX_RATE'; payload: number }
   | { type: 'SET_CART_DISCOUNT'; payload: { type: 'percentage' | 'fixed'; value: number } }
 
@@ -280,6 +284,9 @@ export function unifiedOrderReducer(
       return {
         ...state,
         selectedTable: action.payload,
+        // Generate order number atomically when table is selected; clear when deselected.
+        // This guarantees cartOrderNumber is always ready by the time the BillPanel renders.
+        cartOrderNumber: action.payload ? generateUnifiedOrderNumber() : null,
       };
 
     // ============== CART OPERATIONS ==============
@@ -356,10 +363,17 @@ export function unifiedOrderReducer(
       };
     }
 
+    case 'SET_CART_ORDER_NUMBER':
+      return {
+        ...state,
+        cartOrderNumber: action.payload,
+      };
+
     case 'CLEAR_CART':
       return {
         ...state,
         cart: [],
+        cartOrderNumber: null,
         cartSubtotal: 0,
         cartTaxAmount: 0,
         cartTotal: 0,
@@ -666,6 +680,7 @@ export function unifiedOrderReducer(
         currentOrder: null,
         selectedTable: null,
         cart: [],
+        cartOrderNumber: null,
         cartSubtotal: 0,
         cartTaxAmount: 0,
         cartTotal: 0,

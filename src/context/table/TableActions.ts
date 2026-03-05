@@ -8,6 +8,37 @@ import { Table, CreateTableRequest, UpdateTableStatusRequest } from '@/types/tab
 import { MenuItem } from '@/types/menu.types';
 import { showToast } from '@/utils/toast';
 import { TableAction } from './TableReducer';
+import { tableStorageService } from '@/services/storage';
+import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
+import { TableStatus } from '@/types/common.types';
+
+// Reconcile table statuses against actual active orders.
+// Resets OCCUPIED tables to AVAILABLE if they have no active order in storage.
+// Silently returns the original list on any error.
+const reconcileTableStatuses = async (tables: Table[]): Promise<Table[]> => {
+  try {
+    const activeOrders = await unifiedOrderStorageService.getActiveOrders();
+    const activeTableIds = new Set(activeOrders.map((o) => o.tableId).filter(Boolean));
+
+    const corrected: string[] = [];
+    const result = tables.map((table) => {
+      if (table.status === TableStatus.OCCUPIED && !activeTableIds.has(table.id)) {
+        // Stale OCCUPIED — reset both in-memory and SQLite
+        tableStorageService.updateTableStatus(table.id, TableStatus.AVAILABLE).catch(() => {});
+        corrected.push(table.table_number);
+        return { ...table, status: TableStatus.AVAILABLE };
+      }
+      return table;
+    });
+
+    if (__DEV__ && corrected.length > 0) {
+      console.log('[TableActions] Reconciled stale OCCUPIED tables to AVAILABLE:', corrected);
+    }
+    return result;
+  } catch {
+    return tables;
+  }
+};
 
 // Simple Order interface for table context (UI-only)
 interface SimpleOrder {
@@ -34,21 +65,48 @@ export const createTableActions = (
   
   const loadTables = async (restaurantId: string): Promise<void> => {
     dispatch({ type: 'TABLE_LOAD_START' });
-    
+
     try {
-      const tables = await tableService.getTables(restaurantId);
-      dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: tables });
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to load tables';
-      dispatch({ type: 'TABLE_LOAD_FAILURE', payload: errorMessage });
-      
-      showToast({
-        type: 'error',
-        title: 'Load Failed',
-        message: errorMessage,
-      });
-      
-      throw error;
+      const apiTables = await tableService.getTables(restaurantId);
+
+      // Merge with locally-created tables not yet synced to server.
+      // Only include user-created tables (timestamp-based IDs), not seeded mock data.
+      let merged = apiTables;
+      try {
+        const localTables = await tableStorageService.getTables();
+        const apiIds = new Set(apiTables.map(t => t.id));
+        const apiNumbers = new Set(apiTables.map(t => t.table_number));
+        const localOnly = localTables.filter(t => {
+          if (apiIds.has(t.id) || apiNumbers.has(t.table_number)) return false;
+          // Skip seeded mock tables (IDs: t-001 to t-030). Only include user-created
+          // tables which have timestamp-based IDs like t-1741305834.
+          const numPart = parseInt(t.id.replace('t-', ''), 10);
+          return !isNaN(numPart) && numPart > 1000;
+        });
+        if (localOnly.length > 0) {
+          merged = [...apiTables, ...localOnly];
+        }
+      } catch {
+        // SQLite read failed — use API data only
+      }
+
+      const reconciled = await reconcileTableStatuses(merged);
+      dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: reconciled });
+    } catch {
+      // API unavailable — fall back to SQLite (seeds mock data if empty)
+      try {
+        const data = await tableStorageService.initialize(restaurantId);
+        const reconciled = await reconcileTableStatuses(data.tables);
+        dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: reconciled });
+      } catch (storageError: any) {
+        const errorMessage = storageError.message || 'Failed to load tables';
+        dispatch({ type: 'TABLE_LOAD_FAILURE', payload: errorMessage });
+        showToast({
+          type: 'error',
+          title: 'Load Failed',
+          message: errorMessage,
+        });
+      }
     }
   };
 

@@ -16,16 +16,16 @@
 
 import React, { memo, useEffect } from 'react';
 import { AuthProvider } from '@/context/auth/AuthProvider';
+import { SyncProvider } from '@/context/sync/SyncProvider';
 import { TableProvider } from '@/context/table/TableProvider';
 import { UnifiedOrderProvider } from '@/context/unified-order';
 import { BillSplitProvider } from '@/context/billing/BillSplitContext';
 import { PaymentProvider } from '@/context/payment/PaymentProvider';
-import { EnhancedKitchenProvider } from '@/context/kitchen';
+import { KitchenConfigProvider } from '@/context/kitchen';
 import {
   tableStorageService,
   kitchenStorageService,
   authStorageService,
-  menuStorageService,
 } from '@/services/storage';
 
 interface AppProvidersProps {
@@ -41,15 +41,17 @@ interface AppProvidersProps {
 export const OptimizedAppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <AuthProvider>
-      <BusinessStateProviders>
-        {children}
-      </BusinessStateProviders>
+      <SyncProvider>
+        <BusinessStateProviders>
+          {children}
+        </BusinessStateProviders>
+      </SyncProvider>
     </AuthProvider>
   );
 };
 
 /**
- * Business State Providers - Memoized to prevent auth changes from 
+ * Business State Providers - Memoized to prevent auth changes from
  * causing unnecessary re-creation of business context providers
  */
 const BusinessStateProviders = memo<{ children: React.ReactNode }>(({ children }) => {
@@ -84,7 +86,8 @@ const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children
           tableStorageService.initialize(restaurantId),
           kitchenStorageService.initialize(),
           authStorageService.seedDummyUsers(),
-          menuStorageService.initialize(restaurantId),
+          // menuStorageService.initialize() is called by MenuContext.refreshMenu()
+          // — removed here to eliminate double-initialization race condition
         ]);
 
         if (__DEV__) {
@@ -112,15 +115,15 @@ const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children
 OrderManagementProviders.displayName = 'OrderManagementProviders';
 
 /**
- * Transaction Providers - Payment and kitchen operations
+ * Transaction Providers - Payment and kitchen config
  * Final level of provider memoization
  */
 const TransactionProviders = memo<{ children: React.ReactNode }>(({ children }) => {
   return (
     <PaymentProvider>
-      <EnhancedKitchenProvider>
+      <KitchenConfigProvider>
         {children}
-      </EnhancedKitchenProvider>
+      </KitchenConfigProvider>
     </PaymentProvider>
   );
 });
@@ -131,12 +134,12 @@ TransactionProviders.displayName = 'TransactionProviders';
  * Context Performance Monitor - Development helper
  * Logs provider re-renders to help identify performance issues
  */
-export const ContextPerformanceMonitor: React.FC<{ children: React.ReactNode }> = 
+export const ContextPerformanceMonitor: React.FC<{ children: React.ReactNode }> =
   memo(({ children }) => {
     if (__DEV__) {
       console.log('[Context Performance] Provider tree rendered at:', new Date().toISOString());
     }
-    
+
     return <>{children}</>;
   });
 
@@ -155,7 +158,7 @@ export const DevOptimizedAppProviders: React.FC<AppProvidersProps> = ({ children
       </ContextPerformanceMonitor>
     );
   }
-  
+
   return (
     <OptimizedAppProviders>
       {children}
@@ -171,10 +174,10 @@ export const analyzeProviderPerformance = () => {
   if (__DEV__) {
     console.group('Provider Tree Analysis');
     console.log('✅ AuthProvider: Top-level, changes rarely');
+    console.log('✅ SyncProvider: Starts/stops SyncEngine on auth change');
     console.log('✅ BusinessStateProviders: Memoized, isolated from auth changes');
     console.log('✅ OrderManagementProviders: Memoized, isolated from table changes');
     console.log('   └─ UnifiedOrderProvider: NEW single source of truth for orders');
-    console.log('   └─ EnhancedOrderProvider: Legacy (backwards compatibility)');
     console.log('✅ TransactionProviders: Memoized, isolated from order changes');
     console.log('');
     console.log('UNIFIED ORDER SYSTEM:');
@@ -193,5 +196,5 @@ export const analyzeProviderPerformance = () => {
 
 // Export for development debugging
 if (__DEV__) {
-  (window as any).analyzeProviderPerformance = analyzeProviderPerformance;
+  (window as unknown as Record<string, unknown>).analyzeProviderPerformance = analyzeProviderPerformance;
 }

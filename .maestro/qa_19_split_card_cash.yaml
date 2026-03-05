@@ -1,0 +1,216 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 19: Split Payment — Card + Cash (TRX terminal required)"
+tags:
+  - qa
+  - payment
+  - split
+  - card
+  - trx
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 19 — Split Payment: Card + Cash
+#  ⚠️  Requires custom dev build (not Expo Go) + TRX
+#      terminal connected at 192.168.1.12:1180
+#
+#  Tests the bug fix: card entries in SplitPaymentModal
+#  must open TRXPaymentModal instead of confirming instantly.
+#
+#  Flow:
+#    Create B-1 order → SERVED
+#    → Order Management → SERVED → Pay (direct)
+#    → PaymentProcessingScreen → "Split Payment"
+#    → SplitPaymentModal opens
+#    → Add Card $10.00   → btn-split-add
+#    → Add Cash $10.89   → btn-split-add
+#    → Remaining = $0.00 → btn-split-process
+#    ── BUG: used to skip TRX and go straight to Confirmation ──
+#    ── FIX: TRXPaymentModal opens for the card $10.00 portion ──
+#    → TRXPaymentModal visible (btn-trx-charge or btn-trx-reconnect)
+#    → If connected: btn-trx-charge → TRX payment succeeds
+#    → TRX modal closes → CashPaymentModal opens for $10.89
+#    → Cash: quick amount → btn-cash-confirm
+#    → PaymentConfirmation → Continue → Order PAID
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard_dev.yaml
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_19_step1_b1_served"
+
+# ── Find B-1 (SERVED) and navigate to payment ─────────────────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+- tapOn:
+    id: "tab-status-all"
+    optional: true
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "order-card-b-1"
+    timeout: 10000
+- tapOn:
+    id: "order-card-b-1"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_19_step2_order_details"
+
+# OrderDetails → Process Payment → BillScreen
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+# BillScreen → Pay Full Bill → PaymentProcessingScreen
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 10000
+- tapOn:
+    id: "btn-pay-full"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_19_step3_payment_screen"
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+
+# ── Open Split Payment modal ───────────────────────────────────────────────────
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-split"
+    timeout: 8000
+- tapOn:
+    id: "btn-pay-method-split"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-split-close"
+    timeout: 8000
+
+- takeScreenshot: "qa_19_step4_split_modal_opened"
+
+# QA: SplitPaymentModal is open
+- assertVisible:
+    id: "btn-split-process"
+
+# ── Entry 1: Card $10.00 ──────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-split-method-card"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-split-amount"
+- eraseText: 10
+- inputText: "10"
+- pressKey: Enter
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_19_step5_card_entry_added"
+
+# ── Entry 2: Cash $10.89 (total $20.89 - card $10.00) ────────────────────────
+- tapOn:
+    id: "btn-split-method-cash"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-split-amount"
+- eraseText: 10
+- inputText: "10.89"
+- pressKey: Enter
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_19_step6_both_entries_added"
+
+# QA: Remaining should be $0.00 — Process button enabled
+- assertVisible:
+    id: "btn-split-process"
+
+# ── Process Payments ──────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-split-process"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_19_step7_after_process"
+
+# ── BUG CHECK: TRXPaymentModal must open for the card portion ─────────────────
+# The fix routes card splits through TRX before finalising.
+# If btn-trx-charge OR btn-trx-reconnect is visible, the TRX modal is open = PASS.
+# If we land directly on btn-continue (PaymentConfirmation), the bug is still present = FAIL.
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-close"
+    timeout: 10000
+
+- takeScreenshot: "qa_19_step8_trx_modal_opened"
+
+# QA: TRX modal is open — NOT PaymentConfirmation
+- assertVisible:
+    id: "btn-trx-close"
+
+# ── Charge Card $10.00 via TRX terminal ──────────────────────────────────────
+# Dev build + live terminal: btn-trx-charge is enabled when terminal connected.
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 20000
+
+- takeScreenshot: "qa_19_step8b_trx_ready"
+
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+
+# After TRX charges the card portion ($10.00), executeFullSplitPayment() runs
+# for ALL entries — the cash portion is included in the single processSplitPayment
+# call (no separate CashPaymentModal). Goes straight to PaymentConfirmation.
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 90000
+
+- takeScreenshot: "qa_19_step9_payment_confirmed"
+
+# ── Complete ──────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+# QA: Order is PAID
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-paid"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 8000
+
+- takeScreenshot: "qa_19_PASS_card_cash_split_complete"

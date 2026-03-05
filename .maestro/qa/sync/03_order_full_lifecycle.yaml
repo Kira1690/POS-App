@@ -1,0 +1,113 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
+# Verifies: Complete order lifecycle from mobile creation to web visibility.
+# Checks: order created → kitchen → paid, each step visible on web within 10s push interval.
+# Pre-condition: QA-T1 table and QA-Item-01/02 must exist in app.
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login as manager
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-manager@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAManager2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+- takeScreenshot: "order_lifecycle_01_login"
+
+# Navigate to POS / Orders
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+
+# Select QA-T1 table
+- tapOn:
+    text: "QA-T1"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_lifecycle_02_table_selected"
+
+# Add QA-Item-01
+- tapOn:
+    text: "QA-Item-01"
+    optional: true
+- waitForAnimationToEnd
+
+# Add QA-Item-02
+- tapOn:
+    text: "QA-Item-02"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "order_lifecycle_03_items_added"
+
+# Send to Kitchen / Confirm order
+- tapOn:
+    text: "Send to Kitchen|Confirm|Place Order"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "order_lifecycle_04_order_confirmed"
+
+# Wait 10s for push sync
+- wait:
+    ms: 12000
+
+# At this point, verify on web that order appears (manual check or use sync-verification.spec.ts)
+- takeScreenshot: "order_lifecycle_05_after_push_wait"
+
+# Update status to Preparing (if available in UI)
+- tapOn:
+    text: "Preparing|Mark Preparing"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_lifecycle_06_preparing"
+
+# Update status to Ready
+- tapOn:
+    text: "Ready|Mark Ready"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_lifecycle_07_ready"
+
+# Update status to Served
+- tapOn:
+    text: "Served|Mark Served|Complete"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_lifecycle_08_served"
+
+# Process payment (Cash)
+- tapOn:
+    text: "Payment|Pay|Checkout"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_lifecycle_09_payment_screen"
+
+- tapOn:
+    text: "Cash"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Process|Confirm Payment|Complete"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "order_lifecycle_10_payment_complete"
+
+# Wait for billing sync
+- wait:
+    ms: 12000
+
+- takeScreenshot: "order_lifecycle_11_after_billing_push"
+- stopApp

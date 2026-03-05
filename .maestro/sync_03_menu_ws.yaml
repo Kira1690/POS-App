@@ -1,0 +1,39 @@
+appId: host.exp.exponent
+name: "[SYNC-03] Menu WebSocket — new item from dashboard appears in app"
+---
+
+# Prerequisites:
+#   - Backend running with WebSocket enabled (Core Service WS at port 5005)
+#   - App connected and SyncProvider started (ws://10.0.2.2:5005)
+#   - New menu item "WS Test Item" must be created via web dashboard BEFORE running this test
+#   - WS message should trigger menu pull within 30s (pull interval)
+
+- runFlow: helpers/manager_login.yaml
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 15000
+
+- takeScreenshot: sync_03_dashboard
+
+# Navigate to Menu
+- tapOn:
+    text: ".*Menu.*"
+
+- extendedWaitUntil:
+    visible: ".*Menu.*"
+    timeout: 15000
+
+- takeScreenshot: sync_03_menu_before
+
+# Wait for WS-triggered pull (up to 35s — pull interval is 30s)
+- wait: 35000
+
+- takeScreenshot: sync_03_menu_after_ws
+
+# Verify the new item "WS Test Item" appears
+# (This item must have been created via the web dashboard BEFORE starting this test)
+- assertVisible:
+    text: "WS Test Item"
+
+- takeScreenshot: sync_03_item_visible

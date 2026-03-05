@@ -1,0 +1,232 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 30: Update Existing Order — Add More Items"
+tags:
+  - qa
+  - orders
+  - edit
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 30 — Update Existing Order (Add More Items)
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Prerequisites:
+#    Active (non-paid) B-1 order in CONFIRMED/PREPARING/
+#    READY state. create_b1_served_order creates SERVED —
+#    we stop after Kitchen: READY step here (before SERVED).
+#
+#  Flow:
+#    1. Cancel any active B-1 orders
+#    2. Create new B-1 order → send to kitchen → leave at CONFIRMED
+#    3. Orders tab → find B-1 order → OrderDetails
+#    4. Tap "Add More Items" (btn-add-items-to-order)
+#    5. POSOrderScreen opens in edit mode
+#    6. Assert section-already-ordered visible
+#    7. Add "Latte" to cart
+#    8. Tap "Add to Order" (btn-add-to-order)
+#    9. Assert success toast "Order Updated"
+#   10. Back on OrderDetails — Latte appears in item list
+#   11. Navigate to Kitchen → assert new ticket for Latte
+#
+#  testIDs:
+#    btn-add-items-to-order   — "Add More Items" on OrderDetails
+#    section-already-ordered  — read-only existing items header
+#    btn-add-to-order         — "Add to Order" in edit mode BillPanel
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Clear + create B-1 CONFIRMED order ─────────────────────────────────
+# Cancel existing B-1 orders (run twice to clear any stale state)
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# Create new B-1 order with 1 item (Beef Burger)
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle existing order alert if present
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Add Beef Burger
+- extendedWaitUntil:
+    visible:
+      text: "Beef Burger"
+    timeout: 8000
+- tapOn:
+    text: "Beef Burger"
+- waitForAnimationToEnd
+
+# Handle modifier modal if shown
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Extra"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send to kitchen (CONFIRMED state)
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Wait for Order Management
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_30_step1_b1_confirmed"
+
+# ── STEP 1: Find and open B-1 OrderDetails ────────────────────────────────────
+# Show confirmed orders
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 10000
+
+- takeScreenshot: "qa_30_step2_order_details"
+
+# ── STEP 2: Tap "Add More Items" ──────────────────────────────────────────────
+- tapOn:
+    id: "btn-add-items-to-order"
+- waitForAnimationToEnd
+
+# POSOrderScreen should open in edit mode
+- extendedWaitUntil:
+    visible:
+      id: "section-already-ordered"
+    timeout: 10000
+
+- takeScreenshot: "qa_30_step3_edit_mode_open"
+
+# ── STEP 3: Add "Latte" from menu ─────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      text: "Latte"
+    timeout: 8000
+- tapOn:
+    text: "Latte"
+- waitForAnimationToEnd
+
+# Handle modifier modal if shown
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Verify "Add to Order" button visible (edit mode)
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-to-order"
+    timeout: 8000
+
+- takeScreenshot: "qa_30_step4_latte_in_cart"
+
+# ── STEP 4: Submit "Add to Order" ─────────────────────────────────────────────
+- tapOn:
+    id: "btn-add-to-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_30_step5_order_updated"
+
+# Wait for navigation back to OrderDetailsScreen (confirms addItemsToOrder + goBack completed)
+# btn-add-items-to-order is visible on OrderDetailsScreen for CONFIRMED orders
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 15000
+
+# ── STEP 5: Verify order — navigate to Order Management and reopen B-1 ────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+# Show confirmed orders and view the B-1 order
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+
+# Assert Latte now appears in the updated order items list
+- extendedWaitUntil:
+    visible:
+      text: "Latte"
+    timeout: 8000
+
+- takeScreenshot: "qa_30_step6_latte_in_order"
+
+# ── STEP 6: Verify kitchen ticket contains Latte ──────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Latte"
+    timeout: 10000
+
+- takeScreenshot: "qa_30_PASS_latte_in_kitchen"

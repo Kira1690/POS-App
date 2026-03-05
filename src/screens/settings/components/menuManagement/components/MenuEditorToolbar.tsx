@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { Icon } from '@/components/common';
 import { MenuViewMode, MenuSortField, SortOrder } from '@/types/menu-management-settings.types';
 
@@ -51,6 +52,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
   selectedCount,
 }) => {
   const { theme } = useTheme();
+  const { isPhone } = useResponsive();
 
   const sortOptions: { field: MenuSortField; label: string }[] = [
     { field: 'name', label: 'Name' },
@@ -66,6 +68,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'row',
+      flexWrap: isPhone ? 'wrap' : 'nowrap',
       alignItems: 'center',
       backgroundColor: theme.colors.surface,
       paddingHorizontal: theme.spacing.md,
@@ -208,9 +211,10 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
           value={searchQuery}
           onChangeText={onSearchChange}
           accessibilityLabel="Search menu items"
+          testID="input-search-items"
         />
         {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => onSearchChange('')}>
+          <TouchableOpacity onPress={() => onSearchChange('')} testID="btn-clear-search">
             <Icon
               name="close-circle"
               size={16}
@@ -228,6 +232,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
           onPress={onFilterPress}
           accessibilityLabel="Filter items"
           accessibilityRole="button"
+          testID="btn-filter-items"
         >
           <Icon
             name="filter-variant"
@@ -240,7 +245,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
       </View>
 
       {/* Sort Button */}
-      <TouchableOpacity style={styles.sortButton} onPress={handleSortToggle}>
+      <TouchableOpacity style={styles.sortButton} onPress={handleSortToggle} testID="btn-sort-toggle">
         <Icon
           name={sortOrder === 'asc' ? 'sort-ascending' : 'sort-descending'}
           size={18}
@@ -262,6 +267,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
           accessibilityLabel="Grid view"
           accessibilityRole="button"
           accessibilityState={{ selected: viewMode === 'grid' }}
+          testID="btn-view-grid"
         >
           <Icon
             name="view-grid"
@@ -276,6 +282,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
           accessibilityLabel="List view"
           accessibilityRole="button"
           accessibilityState={{ selected: viewMode === 'list' }}
+          testID="btn-view-list"
         >
           <Icon
             name="view-list"
@@ -296,6 +303,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
           disabled={!canUndo}
           accessibilityLabel="Undo"
           accessibilityRole="button"
+          testID="btn-undo"
         >
           <Icon
             name="undo"
@@ -310,6 +318,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
           disabled={!canRedo}
           accessibilityLabel="Redo"
           accessibilityRole="button"
+          testID="btn-redo"
         >
           <Icon
             name="redo"
@@ -329,6 +338,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
           onPress={onAddItem}
           accessibilityLabel="Add menu item"
           accessibilityRole="button"
+          testID="btn-add-item"
         >
           <Icon
             name="plus"
@@ -341,7 +351,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
       )}
 
       {/* Import/Export */}
-      <TouchableOpacity style={styles.actionButton} onPress={onImportPress}>
+      <TouchableOpacity style={styles.actionButton} onPress={onImportPress} testID="btn-import-items">
         <Icon
           name="import"
           size={18}
@@ -351,7 +361,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
         <Text style={styles.actionButtonText}>Import</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.actionButton} onPress={onExportPress}>
+      <TouchableOpacity style={styles.actionButton} onPress={onExportPress} testID="btn-export-items">
         <Icon
           name="export"
           size={18}

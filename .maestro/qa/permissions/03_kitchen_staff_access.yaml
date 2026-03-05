@@ -1,0 +1,37 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Permissions 03 — Kitchen Staff Access"
+# Verifies: kitchen_staff has Kitchen tab access only
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Login as kitchen staff
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-kitchen@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAKitchen2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+- takeScreenshot: "kitchen_01_login"
+
+# Verify Kitchen tab is accessible
+- tapOn:
+    text: "Kitchen"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "kitchen_02_kitchen_tab"
+
+# Verify Orders tab is not the primary screen (kitchen staff shouldn't manage orders directly)
+- takeScreenshot: "kitchen_03_nav_state"
+
+- stopApp

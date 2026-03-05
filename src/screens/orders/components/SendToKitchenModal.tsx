@@ -289,6 +289,7 @@ export const SendToKitchenModal: React.FC<SendToKitchenModalProps> = ({
               style={styles.closeButton}
               onPress={onClose}
               disabled={isSubmitting}
+              testID="btn-kitchen-modal-close"
             >
               <MaterialCommunityIcons
                 name="close"
@@ -373,6 +374,7 @@ export const SendToKitchenModal: React.FC<SendToKitchenModalProps> = ({
                 style={styles.cancelButton}
                 onPress={onClose}
                 disabled={isSubmitting}
+                testID="btn-kitchen-modal-cancel"
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -381,6 +383,7 @@ export const SendToKitchenModal: React.FC<SendToKitchenModalProps> = ({
                 style={styles.confirmButton}
                 onPress={onConfirm}
                 disabled={isSubmitting}
+                testID="btn-kitchen-modal-confirm"
               >
                 {isSubmitting ? (
                   <ActivityIndicator color={theme.colors.onPrimary} />

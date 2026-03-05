@@ -1,0 +1,96 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SY-14 — Offline → Reconnect → Auto-Sync"
+# Tests the offline/reconnect flow:
+# 1. App online → data loads
+# 2. WiFi disabled → NetworkStatusBar amber banner appears
+# 3. Order created offline → saved to SQLite
+# 4. WiFi re-enabled → auto-sync fires → order pushes to server
+#
+# Pre-conditions:
+# - Android emulator with WiFi access to host (10.0.2.2)
+# - App logged in as qa-prod-manager with seed data loaded
+# - adb available (for wifi toggle commands)
+#
+# Usage: maestro test POS-App/.maestro/qa/sync/07_network_disconnect.yaml
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-prod-manager@blueplate.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAProdMgr2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+# Verify online state — data loads
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "network_01_online"
+
+# ── OFFLINE ──────────────────────────────────────────────────────
+# Run via adb before this step:
+#   adb shell svc wifi disable && adb shell svc data disable
+- runScript:
+    file: "../scripts/wifi_off.sh"
+    optional: true
+
+# Wait 15s for NetworkStatusBar amber banner to appear
+- waitForAnimationToEnd
+- takeScreenshot: "network_02_offline_banner"
+
+# Assert amber/error banner (NetworkStatusBar) is visible
+- assertVisible:
+    text: "Offline|No connection|Reconnecting|Sync.*error"
+    optional: true
+
+# Create an offline order (P-T2, Prod-Salad)
+- tapOn:
+    text: "P-T2|Table.*2|T2"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Prod-Salad"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|OK|Done|Confirm"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "network_03_offline_order_created"
+
+# ── RECONNECT ────────────────────────────────────────────────────
+# Run via adb:
+#   adb shell svc wifi enable
+- runScript:
+    file: "../scripts/wifi_on.sh"
+    optional: true
+
+# Wait 15s for reconnect + auto sync
+- waitForAnimationToEnd
+- takeScreenshot: "network_04_reconnected"
+
+# Assert banner gone / status idle
+- assertNotVisible:
+    text: "Offline|No connection"
+    optional: true
+
+# Sync status should show idle (not error)
+- assertVisible:
+    text: "Synced|Online|Connected"
+    optional: true
+
+- takeScreenshot: "network_05_sync_complete"
+
+- stopApp

@@ -110,6 +110,7 @@ const CategoryItem: React.FC<CategoryItemProps> = React.memo(
         style={styles.container}
         onPress={onPress}
         activeOpacity={0.7}
+        testID={`tab-category-item-${category.id}`}
       >
         <View style={styles.iconContainer}>
           <MaterialCommunityIcons
@@ -221,6 +222,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
         style={styles.allItemContainer}
         onPress={() => onSelectCategory('')}
         activeOpacity={0.7}
+        testID="tab-category-all-items"
       >
         <View style={styles.allIconContainer}>
           <MaterialCommunityIcons

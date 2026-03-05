@@ -1,0 +1,59 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Explore Settings Icons"
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Login
+- tapOn:
+    text: ".*Manager Login.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "email-input"
+- inputText: "admin@blueplatebistro.io"
+- hideKeyboard
+- tapOn:
+    id: "password-input"
+- inputText: "BluePlate2026!"
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "settings_00_after_login"
+
+# Navigate to Dashboard > Settings
+- tapOn:
+    text: "Dashboard"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "settings_01_main"
+
+# Try expanding sidebar with chevron ">" button
+- tapOn:
+    text: ">"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "settings_02_expanded"
+
+# After expansion, try Menu option
+- tapOn:
+    text: "Menu|Menu Management"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "settings_03_menu"
+
+# Try Table Management
+- tapOn:
+    text: "Table Management|Tables"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "settings_04_tables"

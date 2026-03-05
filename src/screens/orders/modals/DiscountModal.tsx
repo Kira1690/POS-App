@@ -358,7 +358,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
         <SafeAreaView style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.closeButton} onPress={onCancel}>
+            <TouchableOpacity style={styles.closeButton} onPress={onCancel} testID="btn-discount-modal-close">
               <MaterialCommunityIcons name="close" size={24} color={theme.colors.onSurface} />
             </TouchableOpacity>
             <View>
@@ -377,6 +377,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
                 <TouchableOpacity
                   style={[styles.typeButton, discountType === 'percentage' && styles.typeButtonActive]}
                   onPress={() => setDiscountType('percentage')}
+                  testID="btn-discount-type-percentage"
                 >
                   <MaterialCommunityIcons
                     name="percent"
@@ -390,6 +391,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
                 <TouchableOpacity
                   style={[styles.typeButton, discountType === 'fixed' && styles.typeButtonActive]}
                   onPress={() => setDiscountType('fixed')}
+                  testID="btn-discount-type-fixed"
                 >
                   <MaterialCommunityIcons
                     name="currency-usd"
@@ -417,6 +419,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
                         key={pct}
                         style={[styles.presetButton, percentageValue === pct.toString() && styles.presetButtonActive]}
                         onPress={() => setPercentageValue(pct.toString())}
+                        testID={`btn-preset-${pct}`}
                       >
                         <Text style={[styles.presetText, percentageValue === pct.toString() && styles.presetTextActive]}>
                           {pct}%
@@ -433,6 +436,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
                       placeholderTextColor={theme.colors.onSurfaceVariant}
                       keyboardType="decimal-pad"
                       maxLength={5}
+                      testID="input-discount-percentage"
                     />
                     <Text style={styles.inputSuffix}>%</Text>
                   </View>
@@ -448,6 +452,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
                     placeholderTextColor={theme.colors.onSurfaceVariant}
                     keyboardType="decimal-pad"
                     maxLength={8}
+                    testID="input-discount-fixed"
                   />
                 </View>
               )}
@@ -462,6 +467,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
                     key={r}
                     style={[styles.reasonChip, reason === r && styles.reasonChipActive]}
                     onPress={() => setReason(r)}
+                    testID={`btn-reason-${r.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     <Text style={[styles.reasonText, reason === r && styles.reasonTextActive]}>
                       {r}
@@ -476,6 +482,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
                   onChangeText={setCustomReason}
                   placeholder="Enter reason..."
                   placeholderTextColor={theme.colors.onSurfaceVariant}
+                  testID="input-custom-reason"
                 />
               )}
             </View>
@@ -515,17 +522,18 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
           {/* Footer */}
           <View style={styles.footer}>
             {currentDiscount && (
-              <TouchableOpacity style={styles.removeButton} onPress={onRemove}>
+              <TouchableOpacity style={styles.removeButton} onPress={onRemove} testID="btn-remove-discount">
                 <MaterialCommunityIcons name="delete" size={20} color={theme.colors.error} />
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onCancel} testID="btn-cancel-discount">
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.applyButton, !isValid && styles.applyButtonDisabled]}
               onPress={handleApply}
               disabled={!isValid}
+              testID="btn-apply-discount"
             >
               <MaterialCommunityIcons name="check" size={20} color={theme.colors.onPrimary} />
               <Text style={styles.applyButtonText}>Apply Discount</Text>

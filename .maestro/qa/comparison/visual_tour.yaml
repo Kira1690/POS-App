@@ -1,0 +1,187 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Visual Tour — Mobile Screenshots for Page Comparison"
+# Takes screenshots of all key screens for side-by-side comparison with web dashboard.
+# Screenshots correspond to pages P01-P17 in prep/testing/04_page_comparison.md.
+# Run after web screenshots from page-comparison-screenshots.spec.ts.
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login as store admin for full access
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-admin@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAAdmin2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+# P01 — Dashboard Overview
+- takeScreenshot: "p01_mobile_dashboard"
+
+# P08 — Tables Floor Plan (Dashboard > Tables tab)
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p08_mobile_tables_floor"
+
+# P10 — Kitchen Screen
+- tapOn:
+    text: "Kitchen"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p10_mobile_kitchen"
+
+# P06 — Orders / POS Screen
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p06_mobile_orders"
+
+# P03 — POS Item Grid (Menu Items)
+- takeScreenshot: "p03_mobile_pos_grid"
+
+# P04 — Modifier Modal (tap an item to open)
+- tapOn:
+    text: "QA-Item-01|Add"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p04_mobile_modifiers"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# Navigate to Settings for remaining screenshots
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+
+# P16 — Account / User Info
+- takeScreenshot: "p16_mobile_account"
+
+# P15 — Restaurant Profile
+- tapOn:
+    text: "Restaurant Profile"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p15_mobile_restaurant_profile"
+- pressKey: "Back"
+
+# P09 / P14 — Table Management (Settings)
+- tapOn:
+    text: "Table Management"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p09_mobile_table_settings"
+- pressKey: "Back"
+
+# P02 — Menu Categories (Settings > Menu)
+- tapOn:
+    text: "Menu"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p02_mobile_menu_categories"
+- pressKey: "Back"
+
+# P14 — User Management (Settings > Users/Staff)
+- tapOn:
+    text: "User Management|Staff"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p14_mobile_staff"
+- pressKey: "Back"
+
+# P13 — Reports (if accessible from settings or dashboard)
+- tapOn:
+    text: "Reports"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p13_mobile_reports"
+- pressKey: "Back"
+
+# P12 — Customer Search (open POS > start order > customer search)
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Customer|Add Customer"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p12_mobile_customer_search"
+
+# P07 — Order Detail (tap an active order row)
+- pressKey: "Back"
+- waitForAnimationToEnd
+- tapOn:
+    text: "ORD-|Active|open"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p07_mobile_order_detail"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# P05 — Combos list
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Menu"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Combos|Combo"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p05_mobile_combos"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# Kitchen Settings
+- tapOn:
+    text: "Kitchen Settings|Kitchen.*Config"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p_mobile_kitchen_settings"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# Payment / Checkout screen (navigate to POS, create order, go to pay)
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "P-T1|Table.*1|T1|QA-T1"
+    optional: true
+- waitForAnimationToEnd
+# Tap any available item
+- tapOn:
+    text: "Prod-Coffee|QA-Item|Coffee"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|OK|Done|Confirm"
+    optional: true
+- waitForAnimationToEnd
+# Navigate to payment
+- tapOn:
+    text: "Pay|Checkout|Process.*Payment|Total"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "p_mobile_payment_screen"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# NetworkStatusBar — offline banner (disable wifi first)
+# Note: run `adb shell svc wifi disable` before this capture
+# then `adb shell svc wifi enable` after
+- takeScreenshot: "p_mobile_network_status_note"
+
+- stopApp

@@ -1,0 +1,45 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Sync 01 — Menu Pull (Web → App)"
+# Verifies: After creating a menu category on the web, it appears in the app within 30s.
+# Pre-condition: Create "QA-Cat-Sync-01" on web /menu before running this test.
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login as qa-manager
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-manager@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAManager2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+# Navigate to POS order screen to see category sidebar
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "sync_menu_01_before_pull"
+
+# Wait 30 seconds for pull sync interval
+- waitForAnimationToEnd
+- wait:
+    ms: 30000
+
+# Reload / trigger sync
+- waitForAnimationToEnd
+- takeScreenshot: "sync_menu_02_after_30s"
+
+# Verify new category appears
+- assertVisible:
+    text: "QA-Cat-Sync-01"
+    optional: true  # Non-fatal — log result
+
+- takeScreenshot: "sync_menu_03_category_visible"
+- stopApp

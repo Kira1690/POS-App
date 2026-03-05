@@ -1,6 +1,6 @@
 --- a/src/Globals.js	2026-02-26 20:53:18.130932064 +0530
-+++ b/src/Globals.js	2026-02-27 14:39:43.654197937 +0530
-@@ -1,5 +1,10 @@
++++ b/src/Globals.js	2026-02-28 00:00:00.000000000 +0530
+@@ -1,14 +1,35 @@
 -import { NativeEventEmitter, NativeModules } from 'react-native';
 -const Sockets = NativeModules.TcpSockets;
 +import { NativeEventEmitter, NativeModules, TurboModuleRegistry } from 'react-native';
@@ -10,18 +10,38 @@
 +export const getTcpSockets = () =>
 +  (TurboModuleRegistry.get && TurboModuleRegistry.get('TcpSockets')) ||
 +  NativeModules.TcpSockets;
- 
- let instanceNumber = 0;
- 
-@@ -7,6 +12,8 @@
-     return instanceNumber++;
+
+-let instanceNumber = 0;
++// Use global counter so IDs never repeat after hot reload.
++// Native socket module is NOT reset on hot reload — reusing IDs causes conflicts.
++if (!global.__tcpSocketInstanceNumber) {
++  global.__tcpSocketInstanceNumber = 0;
++}
+
+ function getNextId() {
+-    return instanceNumber++;
++    return global.__tcpSocketInstanceNumber++;
  }
- 
+
 -const nativeEventEmitter = new NativeEventEmitter(Sockets);
-+// Pass null so NativeEventEmitter uses the global DeviceEventEmitter.
-+// Safe because TcpSocketModule emits via RCTDeviceEventEmitter (global channel).
-+const nativeEventEmitter = new NativeEventEmitter(null);
- 
++// Lazily create NativeEventEmitter with actual TcpSockets module.
++// Cannot create at parse-time (module is null in New Architecture).
++// Recreated fresh on each hot reload so subscriptions are clean.
++let _eventEmitter = null;
++const nativeEventEmitter = {
++  addListener(eventType, listener, context) {
++    if (!_eventEmitter) {
++      _eventEmitter = new NativeEventEmitter(getTcpSockets());
++    }
++    return _eventEmitter.addListener(eventType, listener, context);
++  },
++  removeAllListeners(eventType) {
++    if (_eventEmitter) {
++      _eventEmitter.removeAllListeners(eventType);
++    }
++  },
++};
+
  export { nativeEventEmitter, getNextId };
 --- a/src/Socket.js	2026-02-26 20:53:18.130932064 +0530
 +++ b/src/Socket.js	2026-02-27 14:39:54.372920979 +0530

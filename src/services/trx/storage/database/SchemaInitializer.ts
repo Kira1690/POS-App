@@ -39,6 +39,7 @@ export class SchemaInitializer {
         await this.createInitialSchema(db);
       } else {
         this.logger.info(`Schema version ${currentVersion} already applied`, 'SchemaInitializer.initializeSchema');
+        await this.runMigrations(db, currentVersion);
       }
 
       this.logger.info('Schema initialization complete', 'SchemaInitializer.initializeSchema');
@@ -49,6 +50,38 @@ export class SchemaInitializer {
         'SchemaInitializer.initializeSchema'
       );
       throw error;
+    }
+  }
+
+  private async runMigrations(db: SQLiteDatabase, currentVersion: number): Promise<void> {
+    if (currentVersion < 2) {
+      // v2: add terminal_settings table for SQLite-based selected terminal storage
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS terminal_settings (
+            id INTEGER PRIMARY KEY,
+            ip TEXT NOT NULL,
+            port INTEGER NOT NULL DEFAULT 1180,
+            name TEXT,
+            is_selected INTEGER NOT NULL DEFAULT 1,
+            connected_at TEXT,
+            last_ping_success TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now'))
+          );
+        `);
+        await db.runAsync(
+          'INSERT INTO schema_version (version, applied_at, description) VALUES (?, ?, ?)',
+          [2, new Date().toISOString(), 'Add terminal_settings table']
+        );
+        this.logger.info('Applied TRX schema v2 migration', 'SchemaInitializer.runMigrations');
+      } catch (error) {
+        this.logger.error(
+          'Failed to apply v2 migration',
+          error instanceof Error ? error : new Error(String(error)),
+          'SchemaInitializer.runMigrations'
+        );
+      }
     }
   }
 

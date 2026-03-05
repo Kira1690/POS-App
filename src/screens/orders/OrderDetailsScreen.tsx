@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useCallback, useMemo } from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView, Text } from 'react-native';
+import { View, StyleSheet, SafeAreaView, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useUnifiedOrderManagement } from '@/context/unified-order';
 import { useTheme } from '@/hooks/useTheme';
@@ -18,6 +18,7 @@ import {
   OrderActionPanel
 } from '@/components/business/order';
 import { spacing } from '@/design-system/theme/spacing';
+import { borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 
 interface OrderDetailsScreenProps {
@@ -110,6 +111,19 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
           onStatusUpdate={(orderId, newStatus) => updateOrderStatus(orderId, newStatus as any)}
           loading={isLoadingDetails}
         />
+        {/* Add More Items — visible for active (non-paid, non-cancelled) orders */}
+        {(order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready') && (
+          <TouchableOpacity
+            style={[styles.addItemsButton, { backgroundColor: theme.colors.primaryContainer }]}
+            onPress={() => navigation?.navigate('POSOrder', { editOrderId: order.id })}
+            testID="btn-add-items-to-order"
+          >
+            <MaterialIcons name="add-shopping-cart" size={20} color={theme.colors.primary} />
+            <Text style={[styles.addItemsText, { color: theme.colors.primary }]}>
+              Add More Items
+            </Text>
+          </TouchableOpacity>
+        )}
         <OrderActionPanel
           order={order as any}
           onPrint={handlePrint}
@@ -153,6 +167,20 @@ const styles = StyleSheet.create({
     ...typography.headlineSmall,
     fontWeight: '600',
     marginTop: spacing.md,
+  },
+  addItemsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    minHeight: 48,
+  },
+  addItemsText: {
+    ...typography.labelLarge,
+    fontWeight: '600',
   },
 });
 

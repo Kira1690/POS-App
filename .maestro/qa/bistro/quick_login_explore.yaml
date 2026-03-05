@@ -1,0 +1,57 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Quick Login & Explore Dashboard"
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Step 1: Tap "Manager Login" on welcome screen
+- tapOn:
+    text: ".*Manager Login.*"
+- waitForAnimationToEnd
+- takeScreenshot: "explore_01_manager_login_form"
+
+# Step 2: Fill email field by id
+- tapOn:
+    id: "email-input"
+- inputText: "admin@blueplatebistro.io"
+
+# Step 3: Fill password field by id
+- tapOn:
+    id: "password-input"
+- inputText: "BluePlate2026!"
+
+# Step 4: Hide keyboard and tap Sign In
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "explore_02_after_login"
+
+# Step 5: Explore what we see
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "explore_03_dashboard_loaded"
+
+# Step 6: Try tapping Order Management tab
+- tapOn:
+    text: ".*Order Management.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "explore_04_order_mgmt_tab"
+
+# Step 7: Try Dashboard tab sidebar items
+- tapOn:
+    text: ".*Tables.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "explore_05_tables"
+
+# Step 8: Try Kitchen Operations
+- tapOn:
+    text: ".*Kitchen.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "explore_06_kitchen"

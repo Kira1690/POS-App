@@ -3,7 +3,7 @@
  * Modal for editing an existing menu item with tabbed navigation
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,13 +13,15 @@ import {
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
+  
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Icon, ImagePicker } from '@/components/common';
 import { CategoryWithStats } from '@/types/menu-management.types';
-import { MenuItemExtended, DietaryTag, AllergenType, DIETARY_TAGS_CONFIG, ALLERGEN_LABELS, ModifierGroup, ModifierGroupWithStats } from '@/types/menu-management-extended.types';
+import { MenuItemExtended, DietaryTag, AllergenType, DIETARY_TAGS_CONFIG, ALLERGEN_LABELS, ModifierGroup, ModifierGroupWithStats, KitchenStation } from '@/types/menu-management-extended.types';
 import { ModifierSelectionList } from '../components/ModifierSelectionList';
+import { useKitchenConfig } from '@/context/kitchen';
+import { getStationForCategory } from '@/types/order-extended.types';
 
 interface EditMenuItemModalProps {
   visible: boolean;
@@ -44,6 +46,7 @@ export interface MenuItemUpdateData {
   calories?: number;
   image_url?: string;
   modifier_group_ids?: string[];
+  kitchen_station?: KitchenStation;
 }
 
 type EditTab = 'basic' | 'pricing' | 'modifiers' | 'nutritional';
@@ -64,9 +67,16 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
   onSave,
 }) => {
   const { theme } = useTheme();
+  const { stations } = useKitchenConfig();
+
+  const activeStations = useMemo(
+    () => stations.filter((s) => s.isActive).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
+    [stations]
+  );
 
   const [activeTab, setActiveTab] = useState<EditTab>('basic');
   const [formData, setFormData] = useState<MenuItemUpdateData>({});
+  const [kitchenStation, setKitchenStation] = useState<KitchenStation | undefined>(undefined);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -100,6 +110,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       setPriceText(item.price > 0 ? item.price.toString() : '');
       setCostPriceText(item.cost_price && item.cost_price > 0 ? item.cost_price.toString() : '');
       setTaxRateText(item.tax_rate && item.tax_rate > 0 ? item.tax_rate.toString() : '');
+      setKitchenStation(item.kitchen_station);
       setActiveTab('basic');
       setErrors({});
     }
@@ -127,7 +138,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onSave(item.id, formData);
+      await onSave(item.id, { ...formData, kitchen_station: kitchenStation });
       onClose();
     } catch (error) {
       setErrors({ name: 'Failed to update item. Please try again.' });
@@ -375,6 +386,34 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       fontSize: 12,
       color: theme.colors.onSurface,
     },
+    stationScrollRow: {
+      flexDirection: 'row',
+    },
+    stationChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      backgroundColor: theme.colors.surfaceLight,
+      borderRadius: theme.borderRadius.full,
+      borderWidth: 2,
+      borderColor: theme.colors.outline,
+      marginRight: theme.spacing.sm,
+      gap: theme.spacing.xs,
+    },
+    stationChipSelected: {
+      borderColor: theme.colors.tertiary,
+    },
+    stationChipText: {
+      fontSize: 13,
+      color: theme.colors.onSurface,
+      fontWeight: '500',
+    },
+    stationSubtitle: {
+      fontSize: 11,
+      color: theme.colors.onSurfaceSecondary,
+      marginTop: 2,
+    },
     modifiersContainer: {
       flex: 1,
       minHeight: 200,
@@ -451,6 +490,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
           onChangeText={(text) => updateFormData({ name: text })}
           maxLength={100}
           accessibilityLabel="Item name"
+          testID="input-edit-item-name"
         />
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
       </View>
@@ -509,6 +549,69 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
           keyboardType="numeric"
           accessibilityLabel="Preparation time"
         />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Kitchen Station</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stationScrollRow}>
+          {/* Auto chip */}
+          {(() => {
+            const autoStation = activeStations.find(
+              (s) => s.station === getStationForCategory(formData.category_id || '', formData.category_id || '')
+            );
+            const isAutoSelected = kitchenStation === undefined;
+            return (
+              <TouchableOpacity
+                style={[styles.stationChip, isAutoSelected && styles.stationChipSelected]}
+                onPress={() => setKitchenStation(undefined)}
+                accessibilityLabel="Auto station"
+                testID="btn-station-auto"
+              >
+                <Icon
+                  name="auto-fix"
+                  size={16}
+                  color={isAutoSelected ? theme.colors.tertiary : theme.colors.onSurfaceSecondary}
+                  accessibilityLabel=""
+                />
+                <View>
+                  <Text style={[styles.stationChipText, { color: isAutoSelected ? theme.colors.tertiary : theme.colors.onSurface }]}>
+                    Auto
+                  </Text>
+                  <Text style={styles.stationSubtitle}>{autoStation?.name ?? 'Hot Kitchen'}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })()}
+          {/* Active station chips */}
+          {activeStations.map((s) => {
+            const isSelected = kitchenStation === s.station;
+            return (
+              <TouchableOpacity
+                key={s.station}
+                style={[
+                  styles.stationChip,
+                  isSelected && { borderColor: s.color },
+                ]}
+                onPress={() => setKitchenStation(s.station)}
+                accessibilityLabel={`Select ${s.name}`}
+                testID={`btn-station-${s.station}`}
+              >
+                <Icon
+                  name={s.icon}
+                  size={16}
+                  color={isSelected ? s.color : theme.colors.onSurfaceSecondary}
+                  accessibilityLabel=""
+                />
+                <Text style={[styles.stationChipText, { color: isSelected ? s.color : theme.colors.onSurface }]}>
+                  {s.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+        <Text style={styles.helperText}>
+          Override which kitchen station prepares this item. "Auto" derives from category.
+        </Text>
       </View>
     </>
   );
@@ -699,7 +802,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         style={styles.overlay}
       >
         <View style={styles.container}>
@@ -726,6 +829,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
                 onPress={() => setActiveTab(tab.id)}
                 accessibilityLabel={`${tab.label} tab`}
                 accessibilityState={{ selected: activeTab === tab.id }}
+                testID={`tab-edit-item-${tab.id}`}
               >
                 <Icon
                   name={tab.icon}
@@ -754,6 +858,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
               style={[styles.button, styles.cancelButton]}
               onPress={onClose}
               accessibilityLabel="Cancel"
+              testID="btn-cancel-edit-item"
             >
               <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
             </TouchableOpacity>
@@ -762,6 +867,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
               onPress={handleSave}
               disabled={isSubmitting}
               accessibilityLabel="Save changes"
+              testID="btn-save-item-changes"
             >
               {isSubmitting ? (
                 <Icon name="loading" size={18} color={theme.colors.white} accessibilityLabel="" />

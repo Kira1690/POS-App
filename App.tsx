@@ -1,12 +1,17 @@
 import React, { useEffect } from 'react';
 import { Buffer } from 'buffer';
 global.Buffer = Buffer;
+import { LogBox } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import * as ScreenOrientation from 'expo-screen-orientation';
+
+// Suppress all dev warnings in dev build to prevent the native
+// "Open debugger to view warnings" banner from blocking the tab bar during Maestro testing.
+LogBox.ignoreAllLogs();
 
 import { RootNavigator } from '@/navigation';
 import { ThemeProvider } from '@/providers/ThemeProvider';

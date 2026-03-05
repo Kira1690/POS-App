@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import * as Network from 'expo-network';
 import { TerminalDiscoveryService, DiscoveredTerminal } from '@/services/trx/pos/TerminalDiscoveryService';
+import { TerminalStorageService } from '@/services/trx/storage/TerminalStorageService';
 import { TerminalStorage } from '@/services/trx/pos/TerminalStorage';
 import { LoggerFactory } from '@/services/trx/logging/LoggingService';
 
@@ -40,7 +41,8 @@ export const useTRXTerminalConnection = (): UseTRXTerminalConnectionReturn => {
 
   // Initialize singleton services
   const terminalService = TerminalDiscoveryService.getInstance();
-  const terminalStorage = TerminalStorage.getInstance();
+  const terminalStorageSQLite = TerminalStorageService.getInstance(); // SQLite — selected terminal
+  const terminalStorage = TerminalStorage.getInstance(); // AsyncStorage — discovered cache + network info
   const logger = LoggerFactory.createLogger('TerminalConnection');
 
   // Check if terminal is connected — uses service's persistent state
@@ -202,21 +204,21 @@ export const useTRXTerminalConnection = (): UseTRXTerminalConnectionReturn => {
   }, [isConnected, terminalService, logger]);
 
   /**
-   * Reconnect to the current terminal or attempt restore from storage
+   * Reconnect to the current terminal or attempt restore from SQLite storage
    */
   const reconnectTerminal = useCallback(async () => {
     if (currentTerminal) {
       await connectToTerminal(currentTerminal.ip, currentTerminal.port);
     } else {
-      // Try restore from storage first
-      const stored = await terminalStorage.getSelectedTerminal();
+      // Try restore from SQLite first
+      const stored = await terminalStorageSQLite.getSelectedTerminal();
       if (stored) {
         await connectToTerminal(stored.ip, stored.port);
       } else {
         await scanForTerminals();
       }
     }
-  }, [currentTerminal, connectToTerminal, scanForTerminals, terminalStorage]);
+  }, [currentTerminal, connectToTerminal, scanForTerminals, terminalStorageSQLite]);
 
   // Restore from storage on mount instead of auto-scanning
   useEffect(() => {
@@ -224,12 +226,15 @@ export const useTRXTerminalConnection = (): UseTRXTerminalConnectionReturn => {
     restoredRef.current = true;
 
     const restoreTerminal = async () => {
-      logger.info('Restoring terminal from storage', 'useEffect:restore');
+      logger.info('Restoring terminal from SQLite storage', 'useEffect:restore');
 
-      // Restore selected terminal
-      const stored = await terminalStorage.getSelectedTerminal();
+      // Wait for TerminalDiscoveryService singleton to finish its own restore
+      await terminalService.ensureRestored();
+
+      // Use SQLite as source of truth for selected terminal
+      const stored = await terminalStorageSQLite.getSelectedTerminal();
       if (stored) {
-        logger.info('Found stored terminal', 'useEffect:restore', { ip: stored.ip, port: stored.port });
+        logger.info('Found stored terminal in SQLite', 'useEffect:restore', { ip: stored.ip, port: stored.port });
         setCurrentTerminal({ ip: stored.ip, port: stored.port, isOnline: true, lastChecked: new Date() });
 
         // Verify connection in background (don't block UI)
@@ -238,7 +243,7 @@ export const useTRXTerminalConnection = (): UseTRXTerminalConnectionReturn => {
         });
       }
 
-      // Load cached discovered terminals
+      // Load cached discovered terminals from AsyncStorage (UI cache only, not critical)
       const cached = await terminalStorage.getDiscoveredTerminals();
       if (cached.length > 0) {
         setDiscoveredTerminals(

@@ -39,13 +39,8 @@ class ApiClient {
           config.headers.Authorization = `Bearer ${token}`;
         }
         
-        // Add request logging in development
-        if (__DEV__) {
-          console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
-            data: config.data,
-            params: config.params,
-          });
-        }
+        // Minimal request logging — only errors are logged (see response interceptor)
+
         
         return config;
       },
@@ -59,20 +54,16 @@ class ApiClient {
 
     // Response interceptor to handle errors and token refresh
     this.instance.interceptors.response.use(
-      (response) => {
-        if (__DEV__) {
-          console.log(`[API] Response ${response.status}:`, response.data);
-        }
-        return response;
-      },
+      (response) => response,
       async (error: AxiosError) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+        const isSilent = (error.config as any)?.silent === true;
 
-        if (__DEV__) {
-          console.error('[API] Response error:', error.response?.status, error.message);
+        if (__DEV__ && error.response?.status !== 401) {
+          console.warn(`[API] ${error.config?.method?.toUpperCase()} ${error.config?.url} → ${error.response?.status || 'NETWORK'}`);
         }
 
-        // Handle 401 Unauthorized - attempt token refresh
+        // Handle 401 Unauthorized - attempt token refresh BEFORE showing any toast
         if (error.response?.status === HTTP_STATUS.UNAUTHORIZED && !originalRequest._retry) {
           originalRequest._retry = true;
 
@@ -84,15 +75,15 @@ class ApiClient {
               return this.instance(originalRequest);
             }
           } catch (refreshError) {
-            // Refresh failed, redirect to login
+            // Refresh failed — only show auth error toast for user-initiated (non-silent) requests
             await this.tokenManager.clearTokens();
-            this.handleAuthError();
+            if (!isSilent) this.handleAuthError();
             return Promise.reject(refreshError);
           }
         }
 
-        // Handle other errors
-        this.handleApiError(error);
+        // Handle other errors — skip toasts for background sync requests
+        if (!isSilent) this.handleApiError(error);
         return Promise.reject(error);
       }
     );
@@ -223,8 +214,18 @@ class ApiClient {
     this.instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
+  /**
+   * Set full auth tokens on both the axios defaults AND the TokenManager.
+   * This ensures the request interceptor and token refresh both work correctly.
+   */
+  async setAuthTokens(accessToken: string, refreshToken: string, expiresAt: number): Promise<void> {
+    this.instance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    await this.tokenManager.setTokens({ accessToken, refreshToken, expiresAt });
+  }
+
   clearAuthToken(): void {
     delete this.instance.defaults.headers.common['Authorization'];
+    this.tokenManager.clearTokens();
   }
 
   getBaseURL(): string {

@@ -1,0 +1,61 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Explore T1 occupied popup"
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Login
+- tapOn:
+    text: ".*Manager Login.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "email-input"
+- inputText: "admin@blueplatebistro.io"
+- hideKeyboard
+- tapOn:
+    id: "password-input"
+- inputText: "BluePlate2026!"
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Open new order → Select Table → tap T1 to see the popup
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "popup_01_select_table"
+
+# Tap T1 (likely occupied)
+- tapOn:
+    text: "T1"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "popup_02_t1_tapped"
+
+# Wait and screenshot any popup
+- waitForAnimationToEnd
+- takeScreenshot: "popup_03_after_t1"
+
+# Try T2
+- pressKey: "Back"
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "T2"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "popup_04_t2_selected"

@@ -1,0 +1,60 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Permissions 01 — Manager Access"
+# Verifies: manager role has access to Orders, Tables, Kitchen, Settings (management level)
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Login as manager
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-manager@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAManager2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+# Assert dashboard loaded
+- assertVisible:
+    text: ".*Dashboard|.*Overview|.*Orders"
+- takeScreenshot: "manager_01_dashboard"
+
+# Verify Orders tab accessible
+- tapOn:
+    text: "Orders"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized|403"
+- takeScreenshot: "manager_02_orders"
+
+# Verify Tables tab accessible
+- tapOn:
+    text: "Tables"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "manager_03_tables"
+
+# Verify Kitchen tab accessible
+- tapOn:
+    text: "Kitchen"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "manager_04_kitchen"
+
+# Verify Settings accessible
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "manager_05_settings"
+
+- stopApp

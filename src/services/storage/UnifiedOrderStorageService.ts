@@ -9,6 +9,7 @@
 
 import {
   UnifiedOrder,
+  UnifiedOrderItem,
   UnifiedOrderFilters,
   UnifiedCartState,
   isActiveOrder,
@@ -16,6 +17,7 @@ import {
 } from '@/types/unified-order.types';
 import { databaseService } from '@/services/database/DatabaseService';
 import { parseJsonColumn, now } from '@/services/database/helpers';
+import type { SQLiteDatabase } from 'expo-sqlite';
 
 // ============== ROW TYPES ==============
 
@@ -30,6 +32,8 @@ interface OrderRow {
   status: string; payment_status: string;
   special_instructions: string | null; cancellation_reason: string | null;
   submitted_at: string | null; paid_at: string | null; cancelled_at: string | null;
+  preparing_at: string | null; ready_at: string | null; served_at: string | null;
+  estimated_prep_time: number | null; actual_prep_time: number | null;
   pending_sync: number; synced_at: string | null;
   created_at: string; updated_at: string;
 }
@@ -58,9 +62,17 @@ interface CartRow {
 
 class UnifiedOrderStorageService {
   private initialized = false;
+  private _db: SQLiteDatabase | null = null;
 
-  private get db() {
-    return databaseService.getDatabase();
+  /**
+   * Async DB getter — waits for DatabaseService to finish initialization.
+   * Eliminates the race condition where getDatabase() throws before DB is ready.
+   */
+  private async ensureDb(): Promise<SQLiteDatabase> {
+    if (!this._db) {
+      this._db = await databaseService.initialize();
+    }
+    return this._db;
   }
 
   // ============== CONVERTERS ==============
@@ -121,6 +133,11 @@ class UnifiedOrderStorageService {
       submittedAt: row.submitted_at || undefined,
       paidAt: row.paid_at || undefined,
       cancelledAt: row.cancelled_at || undefined,
+      preparingAt: row.preparing_at || undefined,
+      readyAt: row.ready_at || undefined,
+      servedAt: row.served_at || undefined,
+      estimatedPrepTime: row.estimated_prep_time || undefined,
+      actualPrepTime: row.actual_prep_time || undefined,
       pendingSync: row.pending_sync === 1,
       syncedAt: row.synced_at || undefined,
       createdAt: row.created_at,
@@ -136,10 +153,10 @@ class UnifiedOrderStorageService {
     this.initialized = true;
 
     if (__DEV__) {
-      const activeRow = await this.db.getFirstAsync<{ cnt: number }>(
+      const activeRow = await (await this.ensureDb()).getFirstAsync<{ cnt: number }>(
         `SELECT COUNT(*) as cnt FROM orders WHERE status NOT IN ('paid', 'cancelled')`
       );
-      const historyRow = await this.db.getFirstAsync<{ cnt: number }>(
+      const historyRow = await (await this.ensureDb()).getFirstAsync<{ cnt: number }>(
         `SELECT COUNT(*) as cnt FROM orders WHERE status IN ('paid', 'cancelled')`
       );
       console.log('[UnifiedOrderStorage] Initialized successfully');
@@ -153,14 +170,15 @@ class UnifiedOrderStorageService {
   async saveOrder(order: UnifiedOrder): Promise<void> {
     const ts = now();
 
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       `INSERT OR REPLACE INTO orders (id, order_number, restaurant_id, table_id, table_name,
         guest_count, customer_id, created_by, created_by_name, served_by, served_by_name,
         subtotal, tax_rate, tax_amount, discount_type, discount_value, discount_amount,
         tip_amount, total_amount, status, payment_status,
         special_instructions, cancellation_reason, submitted_at, paid_at, cancelled_at,
+        preparing_at, ready_at, served_at, estimated_prep_time, actual_prep_time,
         pending_sync, synced_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       order.id, order.orderNumber, order.restaurantId || 'rest_001',
       order.tableId, order.tableName, order.guestCount || 1,
       order.customerId || null, order.createdBy, order.createdByName,
@@ -171,6 +189,8 @@ class UnifiedOrderStorageService {
       order.status, order.paymentStatus || 'pending',
       order.specialInstructions || null, order.cancellationReason || null,
       order.submittedAt || null, order.paidAt || null, order.cancelledAt || null,
+      order.preparingAt || null, order.readyAt || null, order.servedAt || null,
+      order.estimatedPrepTime || null, order.actualPrepTime || null,
       order.pendingSync !== false ? 1 : 0, order.syncedAt || null,
       order.createdAt || ts, order.updatedAt || ts
     );
@@ -178,10 +198,10 @@ class UnifiedOrderStorageService {
     // Save order items
     if (order.items) {
       // Remove existing items for this order then re-insert
-      await this.db.runAsync('DELETE FROM order_items WHERE order_id = ?', order.id);
+      await (await this.ensureDb()).runAsync('DELETE FROM order_items WHERE order_id = ?', order.id);
 
       for (const item of order.items) {
-        await this.db.runAsync(
+        await (await this.ensureDb()).runAsync(
           `INSERT INTO order_items (id, order_id, menu_item_id, name, category, category_id,
             base_price, quantity, modifier_total, item_total, selected_modifiers,
             dietary_tags, allergens, has_allergen_warning, kitchen_station, item_status,
@@ -206,12 +226,12 @@ class UnifiedOrderStorageService {
   }
 
   async getOrder(orderId: string): Promise<UnifiedOrder | null> {
-    const row = await this.db.getFirstAsync<OrderRow>(
+    const row = await (await this.ensureDb()).getFirstAsync<OrderRow>(
       'SELECT * FROM orders WHERE id = ?', orderId
     );
     if (!row) return null;
 
-    const items = await this.db.getAllAsync<OrderItemRow>(
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>(
       'SELECT * FROM order_items WHERE order_id = ?', orderId
     );
     return this.orderFromRow(row, items);
@@ -224,12 +244,12 @@ class UnifiedOrderStorageService {
   }
 
   async getAllOrders(): Promise<UnifiedOrder[]> {
-    const rows = await this.db.getAllAsync<OrderRow>(
+    const rows = await (await this.ensureDb()).getAllAsync<OrderRow>(
       'SELECT * FROM orders ORDER BY created_at DESC'
     );
     if (rows.length === 0) return [];
 
-    const items = await this.db.getAllAsync<OrderItemRow>(
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>(
       'SELECT * FROM order_items'
     );
     return rows.map((r) => this.orderFromRow(r, items));
@@ -239,7 +259,7 @@ class UnifiedOrderStorageService {
     const activeStatuses = getActiveStatuses();
     const placeholders = activeStatuses.map(() => '?').join(', ');
 
-    const rows = await this.db.getAllAsync<OrderRow>(
+    const rows = await (await this.ensureDb()).getAllAsync<OrderRow>(
       `SELECT * FROM orders WHERE status IN (${placeholders}) ORDER BY created_at DESC`,
       ...activeStatuses
     );
@@ -247,7 +267,7 @@ class UnifiedOrderStorageService {
 
     const orderIds = rows.map((r) => r.id);
     const idPlaceholders = orderIds.map(() => '?').join(', ');
-    const items = await this.db.getAllAsync<OrderItemRow>(
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>(
       `SELECT * FROM order_items WHERE order_id IN (${idPlaceholders})`,
       ...orderIds
     );
@@ -307,10 +327,10 @@ class UnifiedOrderStorageService {
     }
     sql += ' ORDER BY created_at DESC';
 
-    const rows = await this.db.getAllAsync<OrderRow>(sql, ...params);
+    const rows = await (await this.ensureDb()).getAllAsync<OrderRow>(sql, ...params);
     if (rows.length === 0) return [];
 
-    const items = await this.db.getAllAsync<OrderItemRow>('SELECT * FROM order_items');
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>('SELECT * FROM order_items');
     let orders = rows.map((r) => this.orderFromRow(r, items));
 
     // Handle search query in JS (needs item name matching)
@@ -342,12 +362,83 @@ class UnifiedOrderStorageService {
   }
 
   async deleteOrder(orderId: string): Promise<void> {
-    await this.db.runAsync('DELETE FROM order_items WHERE order_id = ?', orderId);
-    await this.db.runAsync('DELETE FROM orders WHERE id = ?', orderId);
+    await (await this.ensureDb()).runAsync('DELETE FROM order_items WHERE order_id = ?', orderId);
+    await (await this.ensureDb()).runAsync('DELETE FROM orders WHERE id = ?', orderId);
+  }
+
+  /**
+   * Update a single item's status, then recalculate and persist the order status.
+   * Returns the updated full order.
+   */
+  async updateItemStatus(
+    orderId: string,
+    itemId: string,
+    status: string
+  ): Promise<UnifiedOrder | null> {
+    const ts = now();
+
+    // 1. Update the item status
+    await (await this.ensureDb()).runAsync(
+      'UPDATE order_items SET item_status = ?, modified_at = ? WHERE id = ? AND order_id = ?',
+      status, ts, itemId, orderId
+    );
+
+    // 2. Load all items to recalculate order status
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>(
+      'SELECT * FROM order_items WHERE order_id = ?', orderId
+    );
+
+    // 3. Recalculate order status
+    const allServed = items.every((i) => i.item_status === 'served');
+    const allReadyOrServed = items.every(
+      (i) => i.item_status === 'ready' || i.item_status === 'served'
+    );
+    const anyPreparing = items.some((i) => i.item_status === 'preparing');
+
+    let newOrderStatus: string;
+    if (allServed) {
+      newOrderStatus = 'served';
+    } else if (allReadyOrServed) {
+      newOrderStatus = 'ready';
+    } else if (anyPreparing) {
+      newOrderStatus = 'preparing';
+    } else {
+      newOrderStatus = 'confirmed';
+    }
+
+    // 4. Update order status + timing
+    const preparingAt = newOrderStatus === 'preparing' ? ts : null;
+    const readyAt = newOrderStatus === 'ready' ? ts : null;
+    const servedAt = newOrderStatus === 'served' ? ts : null;
+
+    // Only set timing if transitioning TO that status (don't overwrite existing)
+    const existingOrder = await (await this.ensureDb()).getFirstAsync<OrderRow>(
+      'SELECT * FROM orders WHERE id = ?', orderId
+    );
+    if (!existingOrder) return null;
+
+    await (await this.ensureDb()).runAsync(
+      `UPDATE orders SET
+        status = ?,
+        preparing_at = COALESCE(preparing_at, ?),
+        ready_at = COALESCE(ready_at, ?),
+        served_at = COALESCE(served_at, ?),
+        updated_at = ?
+       WHERE id = ?`,
+      newOrderStatus,
+      newOrderStatus === 'preparing' ? ts : null,
+      newOrderStatus === 'ready' ? ts : null,
+      newOrderStatus === 'served' ? ts : null,
+      ts,
+      orderId
+    );
+
+    // 5. Return full updated order
+    return this.getOrder(orderId);
   }
 
   async getOrdersByTable(tableId: string): Promise<UnifiedOrder[]> {
-    const rows = await this.db.getAllAsync<OrderRow>(
+    const rows = await (await this.ensureDb()).getAllAsync<OrderRow>(
       'SELECT * FROM orders WHERE table_id = ? ORDER BY created_at DESC',
       tableId
     );
@@ -355,7 +446,7 @@ class UnifiedOrderStorageService {
 
     const orderIds = rows.map((r) => r.id);
     const placeholders = orderIds.map(() => '?').join(', ');
-    const items = await this.db.getAllAsync<OrderItemRow>(
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>(
       `SELECT * FROM order_items WHERE order_id IN (${placeholders})`,
       ...orderIds
     );
@@ -366,13 +457,13 @@ class UnifiedOrderStorageService {
     const activeStatuses = getActiveStatuses();
     const placeholders = activeStatuses.map(() => '?').join(', ');
 
-    const row = await this.db.getFirstAsync<OrderRow>(
+    const row = await (await this.ensureDb()).getFirstAsync<OrderRow>(
       `SELECT * FROM orders WHERE table_id = ? AND status IN (${placeholders}) ORDER BY created_at DESC LIMIT 1`,
       tableId, ...activeStatuses
     );
     if (!row) return null;
 
-    const items = await this.db.getAllAsync<OrderItemRow>(
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>(
       'SELECT * FROM order_items WHERE order_id = ?', row.id
     );
     return this.orderFromRow(row, items);
@@ -385,7 +476,7 @@ class UnifiedOrderStorageService {
   // ============== CART OPERATIONS ==============
 
   async saveCart(tableId: string, cart: UnifiedCartState): Promise<void> {
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       `INSERT OR REPLACE INTO carts (id, table_id, table_name, guest_count, items, subtotal, total_amount, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       `cart_${tableId}`, tableId, cart.tableName || '',
@@ -395,7 +486,7 @@ class UnifiedOrderStorageService {
   }
 
   async getCart(tableId: string): Promise<UnifiedCartState | null> {
-    const row = await this.db.getFirstAsync<CartRow>(
+    const row = await (await this.ensureDb()).getFirstAsync<CartRow>(
       'SELECT * FROM carts WHERE table_id = ?', tableId
     );
     if (!row) return null;
@@ -414,11 +505,11 @@ class UnifiedOrderStorageService {
   }
 
   async deleteCart(tableId: string): Promise<void> {
-    await this.db.runAsync('DELETE FROM carts WHERE table_id = ?', tableId);
+    await (await this.ensureDb()).runAsync('DELETE FROM carts WHERE table_id = ?', tableId);
   }
 
   async getAllCarts(): Promise<Record<string, UnifiedCartState>> {
-    const rows = await this.db.getAllAsync<CartRow>('SELECT * FROM carts');
+    const rows = await (await this.ensureDb()).getAllAsync<CartRow>('SELECT * FROM carts');
     const carts: Record<string, UnifiedCartState> = {};
 
     for (const row of rows) {
@@ -438,6 +529,52 @@ class UnifiedOrderStorageService {
     return carts;
   }
 
+  // ============== MERGE ==============
+
+  /**
+   * Merge source order's items into target order, then cancel source.
+   * Returns the updated target order with merged items.
+   */
+  async mergeOrders(targetOrderId: string, sourceOrderId: string): Promise<UnifiedOrder> {
+    const target = await this.getOrder(targetOrderId);
+    const source = await this.getOrder(sourceOrderId);
+    if (!target) throw new Error(`Target order not found: ${targetOrderId}`);
+    if (!source) throw new Error(`Source order not found: ${sourceOrderId}`);
+
+    const ts = now();
+    const mergedItems = [
+      ...target.items,
+      ...source.items.map(item => ({
+        ...item,
+        id: `${item.id}_m${Date.now()}`,
+        orderId: targetOrderId,
+        addedAt: ts,
+      })),
+    ];
+
+    const subtotal = mergedItems.reduce((sum, i) => sum + i.basePrice * i.quantity + i.modifierTotal, 0);
+    const taxAmount = parseFloat((subtotal * (target.taxRate || 0.1)).toFixed(2));
+    const totalAmount = parseFloat((subtotal + taxAmount).toFixed(2));
+
+    const updatedTarget: UnifiedOrder = {
+      ...target,
+      items: mergedItems,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      updatedAt: ts,
+    };
+
+    await this.saveOrder(updatedTarget);
+    await this.updateOrder(sourceOrderId, {
+      status: 'cancelled',
+      cancellationReason: `Merged into order ${target.orderNumber}`,
+      cancelledAt: ts,
+    });
+
+    return updatedTarget;
+  }
+
   // ============== BULK OPERATIONS ==============
 
   async saveOrders(orders: UnifiedOrder[]): Promise<void> {
@@ -450,13 +587,13 @@ class UnifiedOrderStorageService {
     const cutoff = beforeDate.toISOString();
 
     // Only clear completed/cancelled orders
-    const result = await this.db.runAsync(
+    const result = await (await this.ensureDb()).runAsync(
       `DELETE FROM orders WHERE status IN ('paid', 'cancelled') AND created_at < ?`,
       cutoff
     );
 
     // Also clean up orphaned order_items
-    await this.db.execAsync(
+    await (await this.ensureDb()).execAsync(
       `DELETE FROM order_items WHERE order_id NOT IN (SELECT id FROM orders)`
     );
 
@@ -466,12 +603,12 @@ class UnifiedOrderStorageService {
   // ============== SYNC OPERATIONS ==============
 
   async getUnsyncedOrders(): Promise<UnifiedOrder[]> {
-    const rows = await this.db.getAllAsync<OrderRow>(
+    const rows = await (await this.ensureDb()).getAllAsync<OrderRow>(
       'SELECT * FROM orders WHERE pending_sync = 1'
     );
     if (rows.length === 0) return [];
 
-    const items = await this.db.getAllAsync<OrderItemRow>('SELECT * FROM order_items');
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>('SELECT * FROM order_items');
     return rows.map((r) => this.orderFromRow(r, items));
   }
 
@@ -480,7 +617,7 @@ class UnifiedOrderStorageService {
 
     const ts = now();
     const placeholders = orderIds.map(() => '?').join(', ');
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       `UPDATE orders SET pending_sync = 0, synced_at = ? WHERE id IN (${placeholders})`,
       ts, ...orderIds
     );
@@ -489,9 +626,9 @@ class UnifiedOrderStorageService {
   // ============== CLEAR AND RESET OPERATIONS ==============
 
   async clearAll(): Promise<void> {
-    await this.db.execAsync('DELETE FROM order_items');
-    await this.db.execAsync('DELETE FROM orders');
-    await this.db.execAsync('DELETE FROM carts');
+    await (await this.ensureDb()).execAsync('DELETE FROM order_items');
+    await (await this.ensureDb()).execAsync('DELETE FROM orders');
+    await (await this.ensureDb()).execAsync('DELETE FROM carts');
 
     if (__DEV__) {
       console.log('[UnifiedOrderStorage] All data cleared');
@@ -528,16 +665,17 @@ class UnifiedOrderStorageService {
     carts: number;
     unsyncedOrders: number;
   }> {
+    const db = await this.ensureDb();
     const [total, active, history, carts, unsynced] = await Promise.all([
-      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM orders'),
-      this.db.getFirstAsync<{ cnt: number }>(
+      db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM orders'),
+      db.getFirstAsync<{ cnt: number }>(
         `SELECT COUNT(*) as cnt FROM orders WHERE status NOT IN ('paid', 'cancelled')`
       ),
-      this.db.getFirstAsync<{ cnt: number }>(
+      db.getFirstAsync<{ cnt: number }>(
         `SELECT COUNT(*) as cnt FROM orders WHERE status IN ('paid', 'cancelled')`
       ),
-      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM carts'),
-      this.db.getFirstAsync<{ cnt: number }>(
+      db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM carts'),
+      db.getFirstAsync<{ cnt: number }>(
         'SELECT COUNT(*) as cnt FROM orders WHERE pending_sync = 1'
       ),
     ]);
@@ -553,6 +691,168 @@ class UnifiedOrderStorageService {
 
   isInitialized(): boolean {
     return this.initialized;
+  }
+
+  // ============== BILL-LEVEL DISCOUNT ==============
+
+  async applyOrderDiscount(
+    orderId: string,
+    type: 'percentage' | 'fixed',
+    value: number
+  ): Promise<UnifiedOrder> {
+    const order = await this.getOrder(orderId);
+    if (!order) throw new Error('Order not found');
+
+    const discountAmount =
+      type === 'percentage'
+        ? parseFloat((order.subtotal * (value / 100)).toFixed(2))
+        : parseFloat(Math.min(value, order.subtotal).toFixed(2));
+
+    const totalAmount = parseFloat(
+      (order.subtotal - discountAmount + (order.taxAmount ?? 0)).toFixed(2)
+    );
+
+    const updated = await this.updateOrder(orderId, {
+      discountType: type,
+      discountValue: value,
+      discountAmount,
+      totalAmount,
+    });
+    if (!updated) throw new Error('Failed to update order with discount');
+    return updated;
+  }
+
+  // ============== ITEM-LEVEL DISCOUNT ==============
+
+  async applyItemDiscount(
+    orderId: string,
+    itemId: string,
+    type: 'percentage' | 'fixed',
+    value: number
+  ): Promise<UnifiedOrder> {
+    const order = await this.getOrder(orderId);
+    if (!order) throw new Error('Order not found');
+
+    const itemIndex = order.items.findIndex(i => i.id === itemId);
+    if (itemIndex === -1) throw new Error('Item not found in order');
+
+    const item = order.items[itemIndex];
+    const itemSubtotal = item.basePrice * item.quantity + item.modifierTotal;
+    const discountAmount =
+      type === 'percentage'
+        ? parseFloat((itemSubtotal * (value / 100)).toFixed(2))
+        : parseFloat(Math.min(value, itemSubtotal).toFixed(2));
+
+    const updatedItems = [...order.items];
+    updatedItems[itemIndex] = {
+      ...item,
+      discountType: value > 0 ? type : undefined,
+      discountValue: value > 0 ? value : undefined,
+      discountAmount: value > 0 ? discountAmount : undefined,
+      itemTotal: itemSubtotal - discountAmount,
+    };
+
+    // Recalculate order totals
+    const subtotal = updatedItems.reduce((sum, i) => sum + i.itemTotal, 0);
+    let orderDiscountAmount = 0;
+    if (order.discountType && order.discountValue) {
+      orderDiscountAmount = order.discountType === 'percentage'
+        ? parseFloat((subtotal * (order.discountValue / 100)).toFixed(2))
+        : parseFloat(Math.min(order.discountValue, subtotal).toFixed(2));
+    }
+    const taxableAmount = subtotal - orderDiscountAmount;
+    const taxAmount = parseFloat((taxableAmount * (order.taxRate || 0.1)).toFixed(2));
+    const totalAmount = parseFloat((taxableAmount + taxAmount).toFixed(2));
+
+    const updated = await this.updateOrder(orderId, {
+      items: updatedItems,
+      subtotal,
+      discountAmount: orderDiscountAmount,
+      taxAmount,
+      totalAmount,
+    });
+    if (!updated) throw new Error('Failed to update order with item discount');
+    return updated;
+  }
+
+  // ============== ITEM TRANSFER ==============
+
+  async transferItems(
+    sourceOrderId: string,
+    targetOrderId: string,
+    itemIds: string[]
+  ): Promise<{ source: UnifiedOrder; target: UnifiedOrder }> {
+    const source = await this.getOrder(sourceOrderId);
+    const target = await this.getOrder(targetOrderId);
+    if (!source) throw new Error(`Source order not found: ${sourceOrderId}`);
+    if (!target) throw new Error(`Target order not found: ${targetOrderId}`);
+
+    const toMove = source.items.filter(i => itemIds.includes(i.id));
+    const remaining = source.items.filter(i => !itemIds.includes(i.id));
+
+    // Recalculate source totals
+    const srcSubtotal = remaining.reduce((s, i) => s + i.basePrice * i.quantity + i.modifierTotal, 0);
+    const srcTax = parseFloat((srcSubtotal * (source.taxRate || 0.1)).toFixed(2));
+    const updatedSourcePartial = await this.updateOrder(sourceOrderId, {
+      items: remaining,
+      subtotal: srcSubtotal,
+      taxAmount: srcTax,
+      totalAmount: parseFloat((srcSubtotal + srcTax).toFixed(2)),
+    });
+
+    // Merge items into target with fresh IDs
+    const ts = now();
+    const newItems = toMove.map(i => ({
+      ...i,
+      id: `${i.id}_t${Date.now()}`,
+      orderId: targetOrderId,
+      addedAt: ts,
+    }));
+    const tgtItems = [...target.items, ...newItems];
+    const tgtSubtotal = tgtItems.reduce((s, i) => s + i.basePrice * i.quantity + i.modifierTotal, 0);
+    const tgtTax = parseFloat((tgtSubtotal * (target.taxRate || 0.1)).toFixed(2));
+    const updatedTarget = await this.updateOrder(targetOrderId, {
+      items: tgtItems,
+      subtotal: tgtSubtotal,
+      taxAmount: tgtTax,
+      totalAmount: parseFloat((tgtSubtotal + tgtTax).toFixed(2)),
+    });
+
+    if (!updatedSourcePartial || !updatedTarget) throw new Error('Transfer update failed');
+    return { source: updatedSourcePartial, target: updatedTarget };
+  }
+
+  // ============== ADD ITEMS TO EXISTING ORDER ==============
+
+  async addItemsToOrder(
+    orderId: string,
+    newItems: UnifiedOrderItem[]
+  ): Promise<UnifiedOrder> {
+    const order = await this.getOrder(orderId);
+    if (!order) throw new Error('Order not found');
+
+    const ts = now();
+    const itemsToAdd = newItems.map(item => ({
+      ...item,
+      id: `${item.menuItemId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      orderId,
+      itemStatus: 'pending' as const,
+      addedAt: ts,
+    }));
+
+    const allItems = [...order.items, ...itemsToAdd];
+    const subtotal = allItems.reduce((s, i) => s + i.basePrice * i.quantity + i.modifierTotal, 0);
+    const taxAmount = parseFloat((subtotal * (order.taxRate || 0.1)).toFixed(2));
+    const totalAmount = parseFloat((subtotal + taxAmount).toFixed(2));
+
+    const updated = await this.updateOrder(orderId, {
+      items: allItems,
+      subtotal,
+      taxAmount,
+      totalAmount,
+    });
+    if (!updated) throw new Error('Failed to add items to order');
+    return updated;
   }
 }
 

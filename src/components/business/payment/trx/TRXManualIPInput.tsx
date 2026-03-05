@@ -74,11 +74,11 @@ export const TRXManualIPInput: React.FC<TRXManualIPInputProps> = ({
   };
 
   const commonIPs = [
+    '10.0.2.2',
     '192.168.1.12',
     '192.168.1.100',
     '192.168.1.101',
     '10.236.1.128',
-    '10.0.0.100',
   ];
 
   const styles = StyleSheet.create({
@@ -200,7 +200,7 @@ export const TRXManualIPInput: React.FC<TRXManualIPInputProps> = ({
   if (!showInput) {
     return (
       <View style={styles.container}>
-        <TouchableOpacity style={styles.showInputButton} onPress={() => setShowInput(true)}>
+        <TouchableOpacity style={styles.showInputButton} onPress={() => setShowInput(true)} testID="btn-trx-add-manual">
           <Text style={styles.showInputText}>Add Terminal Manually</Text>
         </TouchableOpacity>
       </View>
@@ -225,6 +225,7 @@ export const TRXManualIPInput: React.FC<TRXManualIPInputProps> = ({
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isAdding}
+              testID="input-trx-ip"
             />
           </View>
 
@@ -252,6 +253,7 @@ export const TRXManualIPInput: React.FC<TRXManualIPInputProps> = ({
                 key={index}
                 style={styles.commonIPButton}
                 onPress={() => setIPAddress(ip)}
+                testID={`btn-trx-quick-ip-${index}`}
               >
                 <Text style={styles.commonIPText}>{ip}</Text>
               </TouchableOpacity>
@@ -272,6 +274,7 @@ export const TRXManualIPInput: React.FC<TRXManualIPInputProps> = ({
             style={[styles.button, styles.addButton]}
             onPress={handleAddTerminal}
             disabled={isAdding || !ipAddress.trim()}
+            testID="btn-trx-connect"
           >
             <View style={styles.addButtonInner}>
               {isAdding ? (

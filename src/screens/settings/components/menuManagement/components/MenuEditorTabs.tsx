@@ -109,6 +109,7 @@ export const MenuEditorTabs: React.FC<MenuEditorTabsProps> = ({
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={`${tab.label} tab, ${tab.count} items`}
+            testID={`tab-menu-${tab.id}`}
           >
             <Icon
               name={tab.icon}

@@ -17,11 +17,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { OrdersStackParamList } from '@/navigation/types';
 import { useBillSplit } from '@/context/billing';
 import { useUnifiedOrder, useUnifiedBilling } from '@/context/unified-order';
 import { UnifiedOrder, UnifiedOrderItem, canAcceptPayment } from '@/types/unified-order.types';
 import { ExtendedOrder, ExtendedOrderItem } from '@/types/order-extended.types';
+import CombineBillsModal from './components/CombineBillsModal';
+import BillTransferModal from './components/BillTransferModal';
+import { DiscountModal, DiscountData } from '@/screens/orders/modals/DiscountModal';
 
 // Adapter to convert UnifiedOrder to ExtendedOrder for BillSplitContext compatibility
 const toExtendedOrder = (order: UnifiedOrder): ExtendedOrder => {
@@ -113,16 +117,20 @@ BillItemRow.displayName = 'BillItemRow';
 
 export const BillScreen: React.FC = () => {
   const { theme } = useTheme();
+  const { isPhone } = useResponsive();
   const navigation = useNavigation<BillScreenNavigationProp>();
   const route = useRoute<BillScreenRouteProp>();
   const { orderId } = route.params;
 
   // Use unified order context
-  const { orders, getOrderById, processPayment, canProcessPayment } = useUnifiedOrder();
+  const { orders, getOrderById, processPayment, canProcessPayment, applyOrderDiscount } = useUnifiedOrder();
   const { setOrder, setSplitType, setGuestCount, state: billState } = useBillSplit();
 
   const [tipPercentage, setTipPercentage] = useState(0);
   const [isPaymentBlocked, setIsPaymentBlocked] = useState(false);
+  const [showCombineModal, setShowCombineModal] = useState(false);
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Find the order using unified context
   const order = useMemo(
@@ -236,11 +244,13 @@ export const BillScreen: React.FC = () => {
     },
     tipButtons: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: theme.spacing.sm,
       marginTop: theme.spacing.sm,
     },
     tipButton: {
       flex: 1,
+      minWidth: isPhone ? '28%' : undefined,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.borderRadius.sm,
       borderWidth: 1,
@@ -274,6 +284,8 @@ export const BillScreen: React.FC = () => {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.surfaceLight,
+      paddingVertical: isPhone ? theme.spacing.sm : undefined,
+      paddingHorizontal: isPhone ? theme.spacing.md : undefined,
       padding: theme.spacing.md,
       borderRadius: theme.borderRadius.md,
       borderWidth: 1,
@@ -324,6 +336,35 @@ export const BillScreen: React.FC = () => {
       ...theme.typography.body1,
       color: theme.colors.onSurfaceVariant,
       textAlign: 'center',
+    },
+    discountRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: theme.spacing.xs,
+    },
+    discountLabel: {
+      ...theme.typography.body1,
+      color: theme.colors.success,
+    },
+    discountValue: {
+      ...theme.typography.body1,
+      color: theme.colors.success,
+      fontWeight: '600',
+    },
+    discountButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderRadius: theme.borderRadius.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+      gap: theme.spacing.xs,
+      marginBottom: theme.spacing.sm,
+    },
+    discountButtonText: {
+      ...theme.typography.body2,
+      color: theme.colors.primary,
     },
   });
 
@@ -380,11 +421,21 @@ export const BillScreen: React.FC = () => {
     navigation.goBack();
   }, [navigation]);
 
+  const handleDiscountApply = useCallback(async (discount: DiscountData) => {
+    if (!order) return;
+    try {
+      await applyOrderDiscount(order.id, discount.type, discount.value);
+      setShowDiscountModal(false);
+    } catch {
+      // error shown via toast in context
+    }
+  }, [order, applyOrderDiscount]);
+
   if (!order) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack} testID="btn-bill-back">
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
@@ -413,7 +464,7 @@ export const BillScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack} testID="btn-bill-back">
           <MaterialCommunityIcons
             name="arrow-left"
             size={24}
@@ -464,6 +515,13 @@ export const BillScreen: React.FC = () => {
             <Text style={styles.summaryValue}>{formatPrice(taxAmount)}</Text>
           </View>
 
+          {(order.discountAmount ?? 0) > 0 && (
+            <View style={styles.discountRow}>
+              <Text style={styles.discountLabel}>Discount</Text>
+              <Text style={styles.discountValue}>-{formatPrice(order.discountAmount ?? 0)}</Text>
+            </View>
+          )}
+
           {tipAmount > 0 && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tip ({tipPercentage}%)</Text>
@@ -475,6 +533,20 @@ export const BillScreen: React.FC = () => {
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>{formatPrice(total)}</Text>
           </View>
+
+          {/* Discount button */}
+          <TouchableOpacity
+            style={styles.discountButton}
+            onPress={() => setShowDiscountModal(true)}
+            testID="btn-bill-discount"
+          >
+            <MaterialCommunityIcons name="tag-outline" size={20} color={theme.colors.primary} />
+            <Text style={styles.discountButtonText}>
+              {(order.discountAmount ?? 0) > 0
+                ? `Discount Applied: -${formatPrice(order.discountAmount ?? 0)}`
+                : 'Apply Discount'}
+            </Text>
+          </TouchableOpacity>
 
           {/* Tip Section */}
           <View style={styles.tipSection}>
@@ -488,6 +560,7 @@ export const BillScreen: React.FC = () => {
                     tipPercentage === option.percentage && styles.tipButtonActive,
                   ]}
                   onPress={() => handleTipSelect(option.percentage)}
+                  testID={`btn-tip-${option.percentage}`}
                 >
                   <Text
                     style={[
@@ -503,13 +576,14 @@ export const BillScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Split Options */}
+        {/* Split / Combine Options */}
         <View style={styles.section}>
-          <Text style={styles.splitTitle}>Split Bill</Text>
+          <Text style={styles.splitTitle}>Split / Combine Bill</Text>
           <View style={styles.splitOptions}>
             <TouchableOpacity
               style={styles.splitOption}
               onPress={() => handleSplitOption('equal')}
+              testID="btn-split-equally"
             >
               <MaterialCommunityIcons
                 name="account-group"
@@ -533,6 +607,7 @@ export const BillScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.splitOption}
               onPress={() => handleSplitOption('by_items')}
+              testID="btn-split-by-items"
             >
               <MaterialCommunityIcons
                 name="format-list-checks"
@@ -556,6 +631,7 @@ export const BillScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.splitOption}
               onPress={() => handleSplitOption('by_payment_method')}
+              testID="btn-split-by-payment"
             >
               <MaterialCommunityIcons
                 name="credit-card-multiple"
@@ -575,9 +651,84 @@ export const BillScreen: React.FC = () => {
                 color={theme.colors.onSurfaceVariant}
               />
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.splitOption}
+              onPress={() => setShowCombineModal(true)}
+              testID="btn-combine-bills"
+            >
+              <MaterialCommunityIcons
+                name="call-merge"
+                size={32}
+                color={theme.colors.primary}
+                style={styles.splitOptionIcon}
+              />
+              <View style={styles.splitOptionContent}>
+                <Text style={styles.splitOptionTitle}>Combine Bills</Text>
+                <Text style={styles.splitOptionDescription}>
+                  Merge another table's order into this bill
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={theme.colors.onSurfaceVariant}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.splitOption}
+              onPress={() => setShowTransferModal(true)}
+              testID="btn-bill-transfer"
+            >
+              <MaterialCommunityIcons
+                name="transfer"
+                size={32}
+                color={theme.colors.primary}
+                style={styles.splitOptionIcon}
+              />
+              <View style={styles.splitOptionContent}>
+                <Text style={styles.splitOptionTitle}>Transfer Items</Text>
+                <Text style={styles.splitOptionDescription}>
+                  Move items to another table's bill
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={theme.colors.onSurfaceVariant}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
+
+      <CombineBillsModal
+        visible={showCombineModal}
+        currentOrderId={orderId}
+        onClose={() => setShowCombineModal(false)}
+        onCombined={() => setShowCombineModal(false)}
+      />
+
+      <BillTransferModal
+        visible={showTransferModal}
+        currentOrderId={orderId}
+        onClose={() => setShowTransferModal(false)}
+        onTransferred={() => setShowTransferModal(false)}
+      />
+
+      <DiscountModal
+        visible={showDiscountModal}
+        currentAmount={order.subtotal}
+        currentDiscount={
+          order.discountType && order.discountValue
+            ? { type: order.discountType as 'percentage' | 'fixed', value: order.discountValue, reason: '', requiresApproval: false }
+            : undefined
+        }
+        onApply={handleDiscountApply}
+        onRemove={() => setShowDiscountModal(false)}
+        onCancel={() => setShowDiscountModal(false)}
+      />
 
       <View style={styles.footer}>
         {/* Payment Status Indicator */}
@@ -613,6 +764,7 @@ export const BillScreen: React.FC = () => {
           ]}
           onPress={handlePayFull}
           disabled={!canPay}
+          testID="btn-pay-full"
         >
           <MaterialCommunityIcons
             name={canPay ? "cash" : "lock"}

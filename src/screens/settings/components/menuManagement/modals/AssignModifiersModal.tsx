@@ -259,6 +259,7 @@ export const AssignModifiersModal: React.FC<AssignModifiersModalProps> = ({
     modalContainer: {
       width: '90%',
       maxWidth: 600,
+      height: '75%',
       maxHeight: '85%',
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.xl,

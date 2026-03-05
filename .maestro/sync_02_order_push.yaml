@@ -1,0 +1,80 @@
+appId: host.exp.exponent
+name: "[SYNC-02] Order Push — order created locally is pushed to backend"
+---
+
+# Prerequisites:
+#   - Backend services running
+#   - At least one table (T1) and menu item exist in SQLite
+#   - App connected to backend
+
+- runFlow: helpers/manager_login.yaml
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 15000
+
+- takeScreenshot: sync_02_dashboard
+
+# Navigate to Tables
+- tapOn:
+    text: ".*Tables.*"
+
+- extendedWaitUntil:
+    visible: ".*Table.*"
+    timeout: 15000
+
+- takeScreenshot: sync_02_tables_screen
+
+# Select first available table
+- tapOn:
+    text: ".*T1.*"
+
+- extendedWaitUntil:
+    visible: ".*New Order.*|.*Start Order.*|.*View.*"
+    timeout: 10000
+
+- takeScreenshot: sync_02_table_selected
+
+# Start a new order
+- tapOn:
+    text: ".*New Order.*|.*Start Order.*"
+
+- extendedWaitUntil:
+    visible: ".*Menu.*|.*Add Items.*|.*Order.*"
+    timeout: 10000
+
+- takeScreenshot: sync_02_new_order
+
+# Add first available menu item
+- tapOn:
+    index: 0
+    text: ".*"
+
+- wait: 1000
+
+- takeScreenshot: sync_02_item_added
+
+# Confirm / place order
+- optional:
+    - tapOn:
+        text: ".*Place Order.*|.*Confirm.*|.*Submit.*"
+    - extendedWaitUntil:
+        visible: ".*Order.*|.*Success.*|.*Placed.*"
+        timeout: 10000
+
+- takeScreenshot: sync_02_order_placed
+
+# Wait for push interval (SyncEngine pushes every 10s)
+- wait: 12000
+
+- takeScreenshot: sync_02_after_push_interval
+
+# Navigate back to orders to confirm sync happened
+- tapOn:
+    text: ".*Orders.*"
+
+- extendedWaitUntil:
+    visible: ".*Order.*"
+    timeout: 10000
+
+- takeScreenshot: sync_02_orders_synced

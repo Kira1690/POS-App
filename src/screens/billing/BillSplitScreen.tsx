@@ -21,6 +21,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { OrdersStackParamList } from '@/navigation/types';
 import { useUnifiedOrder } from '@/context/unified-order';
 import { useBillSplit } from '@/context/billing';
@@ -38,6 +39,7 @@ type BillSplitRouteProp = RouteProp<OrdersStackParamList, 'BillSplit'>;
 
 export const BillSplitScreen: React.FC = () => {
   const { theme } = useTheme();
+  const { isPhone } = useResponsive();
   const navigation = useNavigation<BillSplitNavigationProp>();
   const route = useRoute<BillSplitRouteProp>();
   const { orderId, splitType: initialSplitType, guestCount: initialGuestCount } = route.params;
@@ -197,6 +199,7 @@ export const BillSplitScreen: React.FC = () => {
     },
     tabs: {
       flexDirection: 'row',
+      flexWrap: isPhone ? 'wrap' : 'nowrap',
       backgroundColor: theme.colors.surface,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
@@ -502,7 +505,7 @@ export const BillSplitScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack} testID="btn-billsplit-back">
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
@@ -562,7 +565,7 @@ export const BillSplitScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack} testID="btn-billsplit-back">
           <MaterialCommunityIcons
             name="arrow-left"
             size={24}
@@ -583,6 +586,7 @@ export const BillSplitScreen: React.FC = () => {
             key={tab.type}
             style={[styles.tab, activeTab === tab.type && styles.tabActive]}
             onPress={() => setActiveTab(tab.type)}
+            testID={`tab-split-${tab.type}`}
           >
             <MaterialCommunityIcons
               name={tab.icon as any}
@@ -622,7 +626,7 @@ export const BillSplitScreen: React.FC = () => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.payAllButton} onPress={handlePayAll}>
+        <TouchableOpacity style={styles.payAllButton} onPress={handlePayAll} testID="btn-pay-all">
           <MaterialCommunityIcons
             name="cash-multiple"
             size={24}

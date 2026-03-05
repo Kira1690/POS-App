@@ -1,0 +1,60 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Test: Real API Login with testadmin"
+---
+
+# Fresh login test — verify real backend auth works
+- launchApp
+- waitForAnimationToEnd
+
+# Wait for welcome screen (long timeout — app may need to reload from Metro)
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 60000
+
+- takeScreenshot: "test_login_01_welcome"
+
+# Tap Manager Login
+- tapOn:
+    id: "btn-welcome-manager-login"
+- waitForAnimationToEnd
+
+# Wait for login form
+- extendedWaitUntil:
+    visible:
+      id: "email-input"
+    timeout: 15000
+
+- takeScreenshot: "test_login_02_login_form"
+
+# Enter real store admin credentials
+- tapOn:
+    id: "email-input"
+- inputText: "testadmin@foodcorner.com"
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "password-input"
+- inputText: "TestAdmin123!"
+- hideKeyboard
+- waitForAnimationToEnd
+
+- takeScreenshot: "test_login_03_credentials_entered"
+
+# Tap Sign In
+- tapOn:
+    id: "btn-manager-sign-in"
+
+# Wait for dashboard — 30s timeout for real API call
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 30000
+
+- takeScreenshot: "test_login_04_dashboard_loaded"
+
+# Verify we're on dashboard
+- assertVisible:
+    id: "tab-nav-orders"
+
+- takeScreenshot: "test_login_PASS"

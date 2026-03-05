@@ -74,6 +74,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
         <TouchableOpacity
           style={[styles.actionButton, styles.secondaryButton, { borderColor: theme.colors.outline }]}
           onPress={() => onPrint('Receipt')}
+          testID="btn-print-receipt"
         >
           <MaterialIcons name="print" size={20} color={theme.colors.onSurface} />
           <Text style={[styles.actionButtonText, { color: theme.colors.onSurface }]}>
@@ -90,6 +91,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
         <TouchableOpacity
           style={[styles.actionButton, styles.secondaryButton, { borderColor: theme.colors.outline }]}
           onPress={() => onPrint('KOT')}
+          testID="btn-print-kot"
         >
           <MaterialIcons name="print" size={20} color={theme.colors.onSurface} />
           <Text style={[styles.actionButtonText, { color: theme.colors.onSurface }]}>
@@ -102,6 +104,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
           <TouchableOpacity
             style={[styles.actionButton, styles.paymentButton, { backgroundColor: theme.colors.secondary }]}
             onPress={onPayment}
+            testID="btn-process-payment"
           >
             <MaterialIcons name="payment" size={20} color={theme.colors.onSecondary} />
             <Text style={[styles.actionButtonText, { color: theme.colors.onSecondary }]}>
@@ -113,6 +116,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
         <TouchableOpacity
           style={[styles.actionButton, styles.errorButton, { borderColor: theme.colors.error }]}
           onPress={() => setShowCancelModal(true)}
+          testID="btn-cancel-order"
         >
           <MaterialIcons name="cancel" size={20} color={theme.colors.error} />
           <Text style={[styles.actionButtonText, { color: theme.colors.error }]}>
@@ -139,7 +143,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
             </Text>
             
             <TextInput
-              style={[styles.reasonInput, { 
+              style={[styles.reasonInput, {
                 backgroundColor: theme.colors.surfaceVariant,
                 color: theme.colors.onSurface,
               }]}
@@ -149,6 +153,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
               onChangeText={setCancelReason}
               multiline
               numberOfLines={3}
+              testID="input-cancel-reason"
             />
             
             <View style={styles.modalActions}>
@@ -158,6 +163,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
                   setShowCancelModal(false);
                   setCancelReason('');
                 }}
+                testID="btn-cancel-modal-dismiss"
               >
                 <Text style={[styles.modalActionText, { color: theme.colors.onSurfaceVariant }]}>
                   Cancel
@@ -168,6 +174,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
                 style={[styles.modalActionButton, { backgroundColor: theme.colors.error }]}
                 onPress={handleCancelOrder}
                 disabled={loading || !cancelReason.trim()}
+                testID="btn-confirm-cancel-order"
               >
                 <Text style={[styles.modalActionText, { color: theme.colors.onError }]}>
                   Cancel Order

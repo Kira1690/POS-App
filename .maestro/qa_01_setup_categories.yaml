@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 name: "QA 01: Setup Categories (Drinks / Mains / Starters)"
 tags:
   - qa
@@ -8,15 +8,17 @@ tags:
 # ─────────────────────────────────────────────────────
 #  QA Phase 1 — Add 3 categories
 #  Test Data: Drinks, Mains, Starters
-#  Prerequisites: App cleared, Expo server running
+#  Prerequisites: App cleared, dev build running
 #
 #  Notes:
 #    - Uses testID="btn-add-category" — same ID in both collapsed
 #      and expanded sidebar modes (no need to expand first).
 #    - Uses testID="input-category-name" for the name TextInput.
 #    - Uses testID="btn-save-category" for the Save button.
-#    - waitForAnimationToEnd after hideKeyboard lets KeyboardAvoidingView
-#      settle before tapping Save (prevents missed tap on Android).
+#    - Triple waitForAnimationToEnd after each save: keyboard dismiss
+#      + KeyboardAvoidingView reflow + sidebar layout settle.
+#      Without this the sidebar flickers and btn-add-category is
+#      temporarily unavailable, causing only 2/3 categories.
 # ─────────────────────────────────────────────────────
 
 - runFlow: helpers/ensure_dashboard.yaml
@@ -25,16 +27,18 @@ tags:
 - waitForAnimationToEnd
 
 - tapOn:
-    text: "Settings"
+    id: "tab-nav-settings"
 
 - extendedWaitUntil:
-    visible: "Menu Management"
-    timeout: 15000
+    visible:
+      id: "settings-nav-restaurant_profile"
+    timeout: 10000
 
 - takeScreenshot: "qa_01_step0_settings_open"
 
+# tapOn auto-scrolls the sidebar to find the item
 - tapOn:
-    text: "Menu Management"
+    id: "settings-nav-menu_management"
 
 - extendedWaitUntil:
     visible: "Items"
@@ -70,6 +74,15 @@ tags:
 - waitForAnimationToEnd
 
 - extendedWaitUntil:
+    notVisible: "Save Category"
+    timeout: 8000
+
+# Triple wait: keyboard dismiss + KAV reflow + sidebar layout settle
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
     visible: "Drinks"
     timeout: 8000
 
@@ -102,6 +115,15 @@ tags:
 - waitForAnimationToEnd
 
 - extendedWaitUntil:
+    notVisible: "Save Category"
+    timeout: 8000
+
+# Triple wait: keyboard dismiss + KAV reflow + sidebar layout settle
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
     visible: "Mains"
     timeout: 8000
 
@@ -131,6 +153,15 @@ tags:
 - tapOn:
     id: "btn-save-category"
 
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    notVisible: "Save Category"
+    timeout: 8000
+
+# Triple wait: keyboard dismiss + KAV reflow + sidebar layout settle
+- waitForAnimationToEnd
+- waitForAnimationToEnd
 - waitForAnimationToEnd
 
 - extendedWaitUntil:

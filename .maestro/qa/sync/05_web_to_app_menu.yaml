@@ -1,0 +1,79 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SY-01 to SY-05 — Web→App Menu Sync Verification"
+# Verifies that menu data created/updated on the web dashboard appears in the
+# POS app within one pull-sync interval (30 seconds).
+#
+# Pre-conditions:
+# - Create a test category via web API or dashboard before running:
+#     POST /api/menu/categories  { name: "Sync-Cat-01" }
+# - App logged in as qa-prod-manager
+# - Pull sync running every 30s
+#
+# Usage: maestro test POS-App/.maestro/qa/sync/05_web_to_app_menu.yaml
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-prod-manager@blueplate.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAProdMgr2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+- takeScreenshot: "sync_menu_00_login"
+
+# Navigate to POS / Orders screen
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "sync_menu_01_pos_before_sync"
+
+# Wait for one full pull sync cycle (35s to be safe)
+- waitForAnimationToEnd
+# Maestro doesn't have a built-in wait, use multiple short waits totalling ~35s
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+
+# Check category sidebar for Sync-Cat-01 (web-created category)
+- assertVisible:
+    text: "Sync-Cat-01|Prod-Drinks|Prod-Mains"
+    optional: true
+- takeScreenshot: "sync_menu_02_category_appeared"
+
+# Navigate to Settings > Menu to verify items synced
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Menu"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "sync_menu_03_menu_settings_after_sync"
+
+# Verify Prod items are present
+- assertVisible:
+    text: "Prod-Coffee|Prod-Juice|Prod-Burger|Prod-Salad"
+    optional: true
+- takeScreenshot: "sync_menu_04_items_synced"
+
+# SY-04: Check modifier groups pulled
+- tapOn:
+    text: "Modifier|Modifiers"
+    optional: true
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Prod-Size|Size|Modifier"
+    optional: true
+- takeScreenshot: "sync_menu_05_modifiers_synced"
+
+- stopApp

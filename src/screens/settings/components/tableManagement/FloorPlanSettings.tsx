@@ -9,10 +9,11 @@ import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing } from '@/design-system/theme/spacing';
 import { MOCK_FLOORS, MOCK_TABLE_POSITIONS, MOCK_ZONES } from '@/data/tables/mockFloorPlans';
-import { FloorZone, ZoneType, TableShape } from '@/types/settings/table-management.types';
+import { FloorZone, ZoneType, TableShape, FloorPlanTablePosition } from '@/types/settings/table-management.types';
 import { useTable } from '@/context/table/TableContext';
 import { useAuth } from '@/context/auth/AuthContext';
 import { tableStorageService, StoredArea } from '@/services/storage/TableStorageService';
+import { tableApiClient } from '@/services/api/table';
 import { Table } from '@/types/table.types';
 import { TableStatus } from '@/types/common.types';
 import { MockTable } from '@/data/tables/mockTables';
@@ -53,15 +54,23 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   const [pendingTablePosition, setPendingTablePosition] = useState<{ x: number; y: number } | null>(null);
   const [pendingZonePosition, setPendingZonePosition] = useState<{ x: number; y: number } | null>(null);
 
-  // Load areas from storage
+  // Load areas from storage and refresh tables from API
   const [areas, setAreas] = useState<StoredArea[]>([]);
 
   useEffect(() => {
-    const loadAreas = async () => {
+    const init = async () => {
       const storedAreas = await tableStorageService.getAreas();
       setAreas(storedAreas);
+      // Refresh tables from API to pick up server-side changes (e.g. web-created tables)
+      try {
+        await refreshTables();
+      } catch {
+        // Offline or error — proceed with existing table state
+      }
     };
-    loadAreas();
+    init();
+  // refreshTables is stable (memoized useCallback)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Use tables from context (AsyncStorage)
@@ -129,11 +138,39 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     [state.zones, state.activeFloorId]
   );
 
+  // Derive table positions from allTables so they always appear regardless of
+  // FloorPlanProvider initialization timing. State positions (manually moved)
+  // take precedence over derived ones.
+  const derivedTablePositions = useMemo(() => {
+    return allTables.map((table, idx): FloorPlanTablePosition => {
+      const matchingFloor = state.floors.find(
+        f => f.id === table.section || f.name === table.section
+      );
+      const floorId = matchingFloor?.id ?? state.floors[0]?.id ?? 'floor-main';
+      const col = idx % 6;
+      const row = Math.floor(idx / 6);
+      return {
+        table_id: table.id,
+        floor_id: floorId,
+        x: (table.position_x ?? 0) > 0 ? table.position_x! : 100 + col * 150,
+        y: (table.position_y ?? 0) > 0 ? table.position_y! : 150 + row * 150,
+        rotation: 0,
+      };
+    });
+  }, [allTables, state.floors]);
+
+  // Merge: prefer manually-placed positions from state over derived ones
+  const mergedTablePositions = useMemo(() => {
+    const stateMap = new Map(state.tablePositions.map(tp => [tp.table_id, tp]));
+    return derivedTablePositions.map(dp => stateMap.get(dp.table_id) ?? dp);
+  }, [derivedTablePositions, state.tablePositions]);
+
   // Get table positions for current floor
   const currentTablePositions = useMemo(
-    () => state.tablePositions.filter(tp => tp.floor_id === state.activeFloorId),
-    [state.tablePositions, state.activeFloorId]
+    () => mergedTablePositions.filter(tp => tp.floor_id === state.activeFloorId),
+    [mergedTablePositions, state.activeFloorId]
   );
+
 
   // Get selected table data
   const selectedTablePosition = useMemo(
@@ -317,9 +354,10 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
     try {
       const restaurantId = authState.restaurant?.id || 'rest_001';
 
-      // Find area name for section (use first area or default)
-      const area = areas.find(a => a.id === state.activeFloorId);
-      const section = area?.name || 'Main Dining';
+      // Find area matching the current floor by name (floor IDs and area IDs differ)
+      const area = areas.find(a => a.name === currentFloor?.name) || areas[0];
+      const sectionId = area?.id || '';
+      const section = sectionId;
 
       // Map TableShape enum to shape type
       const shapeMap: Record<TableShape, 'square' | 'round' | 'rectangle'> = {
@@ -346,8 +384,34 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
         updated_at: new Date().toISOString(),
       };
 
-      // Save to AsyncStorage via service
+      // Save to local SQLite first (works offline)
       await tableStorageService.addTable(newTable);
+
+      // Push to server in background (non-blocking — fires and forgets)
+      // Resolve the server section_id: prefer numeric ID (from pull sync), else match by name
+      const activeSectionId = parseInt(state.activeFloorId, 10);
+      const serverSectionId = !isNaN(activeSectionId)
+        ? activeSectionId
+        : (() => {
+            // Try to find a server area (numeric ID) matching the floor name
+            const matchByName = areas.find(a => {
+              const numId = parseInt(String(a.id), 10);
+              return !isNaN(numId) && a.name === area?.name;
+            });
+            // Fallback: use first available server area
+            const fallback = areas.find(a => !isNaN(parseInt(String(a.id), 10)));
+            const found = matchByName ?? fallback;
+            return found ? parseInt(String(found.id), 10) : NaN;
+          })();
+      tableApiClient.createTable({
+        restaurant_id: restaurantId,
+        table_number: newTable.table_number,
+        capacity: newTable.capacity,
+        section: newTable.section,
+        section_id: isNaN(serverSectionId) ? undefined : serverSectionId,
+      }).catch(err => {
+        console.warn('[FloorPlanSettings] Server sync for new table failed (will retry on next sync):', err?.message);
+      });
 
       // Refresh context to reflect changes
       await refreshTables();
@@ -367,7 +431,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
       setActiveTool('select');
       onChangesDetected?.(true);
 
-      console.log('[FloorPlanSettings] Table created and saved to AsyncStorage:', newTable);
+      console.log('[FloorPlanSettings] Table created locally and sync triggered:', newTable.table_number);
     } catch (error) {
       console.error('[FloorPlanSettings] Failed to create table:', error);
       Alert.alert('Error', 'Failed to create table. Please try again.');

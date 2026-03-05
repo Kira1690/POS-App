@@ -1,0 +1,33 @@
+appId: host.exp.exponent
+name: "[SYNC-04] Table WebSocket — table status update from backend appears in app"
+---
+
+# Prerequisites:
+#   - Backend running with WebSocket enabled
+#   - App connected to WS
+#   - Another client (e.g. web dashboard or direct API call) changes a table status
+#   - The change should appear in app within pull interval (30s) or instantly via WS
+
+- runFlow: helpers/manager_login.yaml
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 15000
+
+- takeScreenshot: sync_04_dashboard
+
+# Navigate to Tables
+- tapOn:
+    text: ".*Tables.*"
+
+- extendedWaitUntil:
+    visible: ".*Table.*"
+    timeout: 15000
+
+- takeScreenshot: sync_04_tables_before
+
+# Wait for potential WS table update
+# A table status change sent from outside (via API or web dashboard) should appear here
+- wait: 35000
+
+- takeScreenshot: sync_04_tables_after_ws

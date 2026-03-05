@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Alert } from 'react-native';
+import { View, Alert, ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   RestaurantProfileSettings,
   UserManagementSettings,
@@ -11,9 +12,11 @@ import {
   SystemLogsSettings,
   HelpSupportSettings,
   TRXSettingsPanel,
+  PrinterSettingsPanel,
 } from './components';
 import TableManagementSettingsContainer from './components/tableManagement';
 import MenuManagementSettingsContainer from './components/menuManagement';
+import KitchenManagementScreen from './components/kitchenManagement/KitchenManagementScreen';
 import { SettingsCategory } from '@/types/settings.types';
 import { useTheme } from '@/hooks/useTheme';
 import {
@@ -25,14 +28,25 @@ import {
 } from '@/components/apple';
 import { Icon } from '@/components/common';
 
+// Grouped structure for phone master-detail list
+const SETTINGS_GROUPS = [
+  { label: 'GENERAL', ids: ['restaurant_profile', 'user_management', 'device_hardware'] },
+  { label: 'PAYMENTS', ids: ['payment_config', 'trx_payment'] },
+  { label: 'OPERATIONS', ids: ['table_management', 'menu_management', 'kitchen_management', 'printer_management'] },
+  { label: 'SYSTEM', ids: ['integrations', 'security_backup', 'system_logs', 'help_support'] },
+];
+
 export default function SettingsScreen() {
   // Theme hook FIRST (REQUIRED per CLAUDE.md)
   const { theme, isDark } = useTheme();
+  const { isPhone, isSmallTablet, isPortrait } = useResponsive();
+  // Small tablets use phone layout — sidebar takes too much space on 600-800dp screens
+  const usePhoneLayout = isPhone || isSmallTablet;
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>('restaurant_profile');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showDetail, setShowDetail] = useState(false); // phone only
 
   // APPLE SETTINGS CATEGORIES (transformed for AppleSidebar)
-  // Using Apple's reference image structure with colorful icon backgrounds
   const SETTINGS_CATEGORIES: AppleSidebarItem[] = [
     {
       id: 'restaurant_profile',
@@ -62,7 +76,7 @@ export default function SettingsScreen() {
       id: 'trx_payment',
       label: 'TRX Terminal',
       icon: <Icon name="lan-connect" size={20} color={theme.colors.white} accessibilityLabel="TRX terminal payment" />,
-      iconBackground: '#007AFF',
+      iconBackground: theme.colors.info,
     },
     {
       id: 'table_management',
@@ -75,6 +89,18 @@ export default function SettingsScreen() {
       label: 'Menu Management',
       icon: <Icon name="silverware-fork-knife" size={20} color={theme.colors.white} accessibilityLabel="Menu management" />,
       iconBackground: theme.colors.warning,
+    },
+    {
+      id: 'kitchen_management',
+      label: 'Kitchen Management',
+      icon: <Icon name="stove" size={20} color={theme.colors.white} accessibilityLabel="Kitchen management" />,
+      iconBackground: theme.colors.error,
+    },
+    {
+      id: 'printer_management',
+      label: 'Printer Management',
+      icon: <Icon name="printer" size={20} color={theme.colors.white} accessibilityLabel="Printer management" />,
+      iconBackground: '#8E44AD',
     },
     {
       id: 'integrations',
@@ -102,7 +128,7 @@ export default function SettingsScreen() {
     },
   ];
 
-  // APPLE-STYLE INTERACTION HANDLERS (unchanged logic, cleaner implementation)
+  // INTERACTION HANDLERS
   const handleCategoryChange = (category: SettingsCategory) => {
     if (hasUnsavedChanges) {
       Alert.alert(
@@ -116,12 +142,36 @@ export default function SettingsScreen() {
             onPress: () => {
               setHasUnsavedChanges(false);
               setActiveCategory(category);
+              if (usePhoneLayout) setShowDetail(true);
             }
           },
         ]
       );
     } else {
       setActiveCategory(category);
+      if (usePhoneLayout) setShowDetail(true);
+    }
+  };
+
+  const handleBackToList = () => {
+    if (hasUnsavedChanges) {
+      Alert.alert(
+        'Unsaved Changes',
+        'You have unsaved changes. Do you want to discard them?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => {
+              setHasUnsavedChanges(false);
+              setShowDetail(false);
+            }
+          },
+        ]
+      );
+    } else {
+      setShowDetail(false);
     }
   };
 
@@ -143,11 +193,10 @@ export default function SettingsScreen() {
   };
 
   const handleBackToDashboard = () => {
-    // Navigate back to dashboard
     console.log('Navigate back to dashboard');
   };
 
-  // APPLE SETTINGS CONTENT RENDERING (with Table Management)
+  // CONTENT RENDERING
   const renderCategoryContent = () => {
     switch (activeCategory) {
       case 'restaurant_profile':
@@ -164,6 +213,10 @@ export default function SettingsScreen() {
         return <TableManagementSettingsContainer onChangesDetected={setHasUnsavedChanges} />;
       case 'menu_management':
         return <MenuManagementSettingsContainer onChangesDetected={setHasUnsavedChanges} />;
+      case 'kitchen_management':
+        return <KitchenManagementScreen />;
+      case 'printer_management':
+        return <PrinterSettingsPanel onChangesDetected={setHasUnsavedChanges} />;
       case 'integrations':
         return <IntegrationsSettings onChangesDetected={setHasUnsavedChanges} />;
       case 'security_backup':
@@ -177,14 +230,12 @@ export default function SettingsScreen() {
     }
   };
 
-  // TRANSFORM CATEGORIES FOR APPLE SIDEBAR (adds selection state and handlers)
   const sidebarItems: AppleSidebarItem[] = SETTINGS_CATEGORIES.map(category => ({
     ...category,
     selected: activeCategory === category.id,
     onPress: () => handleCategoryChange(category.id as SettingsCategory),
   }));
 
-  // APPLE HEADER ACTIONS (using universal AppleButton components)
   const headerActions = (
     <View style={{ flexDirection: 'row', gap: 12 }}>
       <AppleButton
@@ -206,69 +257,240 @@ export default function SettingsScreen() {
     </View>
   );
 
-  // GET CURRENT CATEGORY LABEL (for breadcrumb)
   const currentCategoryLabel = SETTINGS_CATEGORIES.find(
     c => c.id === activeCategory
   )?.label || 'Settings';
 
+  const isFullScreenContent = activeCategory === 'table_management'
+    || activeCategory === 'menu_management'
+    || activeCategory === 'kitchen_management';
+
+  // CONTENT PANEL (used by both tablet and phone detail)
+  const renderContent = () => {
+    if (isFullScreenContent) {
+      return (
+        <View style={styles.contentArea}>
+          {renderCategoryContent()}
+        </View>
+      );
+    }
+    if (usePhoneLayout) {
+      // No panel title — back header already shows category label
+      return (
+        <AppleSettingsPanel scrollable={true}>
+          {renderCategoryContent()}
+        </AppleSettingsPanel>
+      );
+    }
+    return (
+      <AppleSettingsPanel
+        title="System Settings"
+        subtitle={currentCategoryLabel}
+        headerActions={headerActions}
+        scrollable={false}
+      >
+        {renderCategoryContent()}
+      </AppleSettingsPanel>
+    );
+  };
+
+  // PHONE: master list view
+  const renderPhoneList = () => (
+    <ScrollView
+      style={[styles.phoneLayout, { backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
+      {SETTINGS_GROUPS.map((group) => {
+        const phoneIds = group.ids.filter(id => id !== 'table_management');
+        if (phoneIds.length === 0) return null;
+        return (
+        <View key={group.label}>
+          <Text style={styles.groupHeader}>{group.label}</Text>
+          {phoneIds.map((id, idx) => {
+            const item = SETTINGS_CATEGORIES.find(c => c.id === id);
+            if (!item) return null;
+            const isLast = idx === phoneIds.length - 1;
+            return (
+              <View key={id}>
+                <TouchableOpacity
+                  style={[styles.listRow, { backgroundColor: isDark ? theme.colors.layer1 : theme.colors.surface }]}
+                  onPress={() => handleCategoryChange(id as SettingsCategory)}
+                  activeOpacity={0.7}
+                  accessibilityLabel={item.label}
+                >
+                  <View style={[styles.iconBg, { backgroundColor: item.iconBackground }]}>
+                    {item.icon}
+                  </View>
+                  <Text style={[styles.listRowLabel, { color: theme.colors.onSurface }]} numberOfLines={1}>
+                    {item.label}
+                  </Text>
+                  <Icon name="chevron-right" size={16} color={theme.colors.onSurfaceVariant} accessibilityLabel="" />
+                </TouchableOpacity>
+                {!isLast && (
+                  <View style={[styles.separator, { backgroundColor: theme.colors.outline }]} />
+                )}
+              </View>
+            );
+          })}
+        </View>
+        );
+      })}
+    </ScrollView>
+  );
+
+  // PHONE: detail view with back header
+  const renderPhoneDetail = () => (
+    <View style={[styles.phoneLayout, { backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background }]}>
+      <View style={[styles.phoneDetailHeader, {
+        backgroundColor: isDark ? theme.colors.layer1 : theme.colors.surface,
+        borderBottomColor: theme.colors.outline,
+      }]}>
+        <TouchableOpacity
+          style={styles.phoneBackBtn}
+          onPress={handleBackToList}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Back to settings list"
+        >
+          <Icon name="arrow-left" size={20} color={theme.colors.primary} accessibilityLabel="" />
+          <Text style={[styles.phoneBackText, { color: theme.colors.primary }]}>Settings</Text>
+        </TouchableOpacity>
+        <Text style={[styles.phoneDetailTitle, { color: theme.colors.onSurface }]} numberOfLines={1}>
+          {currentCategoryLabel}
+        </Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        {renderContent()}
+      </View>
+    </View>
+  );
+
+  const styles = StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+    },
+    safe: { flex: 1 },
+    breadcrumb: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+      borderBottomWidth: isDark ? 1 : 0,
+      borderBottomColor: isDark ? theme.colors.layer1 : 'transparent',
+    },
+    mainLayout: {
+      flex: 1,
+      flexDirection: 'row',
+      backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
+      paddingHorizontal: 6,
+      paddingTop: 4,
+      paddingBottom: 4,
+      gap: 8,
+    },
+    phoneLayout: {
+      flex: 1,
+    },
+    contentArea: {
+      flex: 1,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 12,
+      overflow: 'hidden',
+    },
+    // Phone list styles
+    groupHeader: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.colors.onSurfaceVariant,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      paddingHorizontal: 16,
+      paddingTop: 20,
+      paddingBottom: 6,
+    },
+    listRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      minHeight: 52,
+    },
+    iconBg: {
+      width: 36,
+      height: 36,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    listRowLabel: {
+      flex: 1,
+      fontSize: 16,
+    },
+    separator: {
+      height: StyleSheet.hairlineWidth,
+      marginLeft: 64,
+    },
+    // Phone detail styles
+    phoneDetailHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      minHeight: 52,
+      borderBottomWidth: 1,
+    },
+    phoneBackBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 10,
+      paddingRight: 8,
+      minWidth: 80,
+    },
+    phoneBackText: {
+      fontSize: 15,
+      fontWeight: '500',
+    },
+    phoneDetailTitle: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '600',
+      textAlign: 'center',
+      marginRight: 80,
+    },
+  });
+
   return (
-    <View style={{ flex: 1, backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background }}>
-      <SafeAreaView style={{ flex: 1 }}>
-        {/* APPLE BREADCRUMB (moved to top for better space utilization) */}
-        <View style={{
-          paddingHorizontal: 8,
-          paddingVertical: 4,
-          backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
-          borderBottomWidth: isDark ? 1 : 0,
-          borderBottomColor: isDark ? theme.colors.layer1 : 'transparent',
-        }}>
-          <ApplePill
-            text={`Dashboard › Settings › ${currentCategoryLabel}`}
-            variant="badge"
-            size="small"
-            color="neutral"
-          />
-        </View>
+    <View style={styles.root}>
+      <SafeAreaView style={styles.safe}>
+        {/* Breadcrumb — tablet only */}
+        {!usePhoneLayout && (
+          <View style={styles.breadcrumb}>
+            <ApplePill
+              text={`Dashboard › Settings › ${currentCategoryLabel}`}
+              variant="badge"
+              size="small"
+              color="neutral"
+            />
+          </View>
+        )}
 
-        {/* APPLE MAIN LAYOUT (two-panel with minimal spacing for better space utilization) */}
-        <View style={{
-          flex: 1,
-          flexDirection: 'row',
-          backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
-          paddingHorizontal: 6,
-          paddingTop: 4,
-          paddingBottom: 4,
-          gap: 8,
-        }}>
-
-          {/* APPLE COLLAPSIBLE SIDEBAR (Phase 1 implementation) */}
-          <AppleSidebarCollapsible
-            items={sidebarItems}
-            title="Settings Categories"
-            searchable={true}
-            searchPlaceholder="Search settings..."
-            defaultCollapsed={false}
-            showTooltips={true}
-          />
-
-          {/* CONTENT AREA - Table/Menu Management get full space, others use AppleSettingsPanel */}
-          {activeCategory === 'table_management' || activeCategory === 'menu_management' ? (
-            // Full-screen application-like interface (no header)
-            <View style={{ flex: 1, backgroundColor: theme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>
-              {renderCategoryContent()}
-            </View>
-          ) : (
-            // Other settings: Standard panel with header
-            <AppleSettingsPanel
-              title="System Settings"
-              subtitle={currentCategoryLabel}
-              headerActions={headerActions}
-              scrollable={false}
-            >
-              {renderCategoryContent()}
-            </AppleSettingsPanel>
-          )}
-        </View>
+        {usePhoneLayout ? (
+          /* PHONE / SMALL TABLET: master-detail list pattern */
+          showDetail ? renderPhoneDetail() : renderPhoneList()
+        ) : (
+          /* TABLET: sidebar + content panel */
+          <View style={styles.mainLayout}>
+            <AppleSidebarCollapsible
+              items={sidebarItems}
+              title="Settings Categories"
+              searchable={true}
+              searchPlaceholder="Search settings..."
+              defaultCollapsed={false}
+              showTooltips={true}
+            />
+            {renderContent()}
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );

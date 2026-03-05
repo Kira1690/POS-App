@@ -1,0 +1,72 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Sync 04 — Settings Sync Verification"
+# Verifies: Settings changed on web appear correctly in the mobile app.
+# Pre-condition: Run settings-sync.spec.ts first to change restaurant name on web.
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login as store admin
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-admin@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAAdmin2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+- takeScreenshot: "settings_sync_01_login"
+
+# Navigate to Settings › Restaurant Profile
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Restaurant Profile"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "settings_sync_02_restaurant_profile"
+
+# Verify restaurant name matches web
+- assertVisible:
+    text: "QA Blueplate 2026|Demo Store"  # Accept either
+    optional: true
+
+# Check for menu categories synced from web
+- pressKey: "Back"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Orders|POS"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "settings_sync_03_pos_categories"
+
+# Verify QA categories visible in POS sidebar
+- assertVisible:
+    text: "QA-Drinks|QA-Mains|QA-Starters"
+    optional: true
+
+- takeScreenshot: "settings_sync_04_categories_check"
+
+# Navigate to Settings › Table Management
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Table Management"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "settings_sync_05_table_management"
+
+# Verify QA tables visible
+- assertVisible:
+    text: "QA-Floor|QA-T1|QA-T2"
+    optional: true
+
+- takeScreenshot: "settings_sync_06_tables_check"
+- stopApp

@@ -9,10 +9,12 @@ import {
   MenuItemExtended,
   ModifierGroup,
   ComboDeal,
+  KitchenStation,
 } from '@/types/menu-management-extended.types';
 import { databaseService } from '@/services/database/DatabaseService';
 import { fromSqlBool, toSqlBool, parseJsonColumn, now } from '@/services/database/helpers';
 import { DEV_FLAGS } from '@/constants/config';
+import type { SQLiteDatabase } from 'expo-sqlite';
 
 // Menu data structure for storage
 export interface MenuStorageData {
@@ -39,6 +41,7 @@ interface MenuItemRow {
   sort_order: number; cost_price: number | null; tax_rate: number | null;
   calories: number | null; sku: string | null;
   dietary_tags: string | null; allergens: string | null;
+  kitchen_station: string | null;
   created_at: string; updated_at: string;
 }
 
@@ -63,8 +66,18 @@ interface AssignmentRow {
 }
 
 class MenuStorageService {
-  private get db() {
-    return databaseService.getDatabase();
+  private _db: SQLiteDatabase | null = null;
+  private initPromise: Promise<void> | null = null;
+
+  /**
+   * Async DB getter — waits for DatabaseService to finish initialization.
+   * Eliminates the race condition where getDatabase() throws before DB is ready.
+   */
+  private async ensureDb(): Promise<SQLiteDatabase> {
+    if (!this._db) {
+      this._db = await databaseService.initialize();
+    }
+    return this._db;
   }
 
   // ============== CONVERTERS ==============
@@ -119,6 +132,7 @@ class MenuStorageService {
       sku: row.sku || undefined,
       dietary_tags: parseJsonColumn(row.dietary_tags, []),
       allergens: parseJsonColumn(row.allergens, []),
+      kitchen_station: (row.kitchen_station as KitchenStation) || undefined,
       modifier_groups: itemModifierGroups,
       modifier_assignments: itemAssignments.map((a) => ({
         id: a.id,
@@ -185,10 +199,10 @@ class MenuStorageService {
     ]);
 
     // Get all items with modifier assemblies
-    const itemRows = await this.db.getAllAsync<MenuItemRow>(
+    const itemRows = await (await this.ensureDb()).getAllAsync<MenuItemRow>(
       'SELECT * FROM menu_items ORDER BY sort_order, name'
     );
-    const assignmentRows = await this.db.getAllAsync<AssignmentRow>(
+    const assignmentRows = await (await this.ensureDb()).getAllAsync<AssignmentRow>(
       'SELECT * FROM menu_item_modifier_assignments ORDER BY sort_order'
     );
 
@@ -207,14 +221,14 @@ class MenuStorageService {
   }
 
   async hasMenuData(): Promise<boolean> {
-    const row = await this.db.getFirstAsync<{ cnt: number }>(
+    const row = await (await this.ensureDb()).getFirstAsync<{ cnt: number }>(
       'SELECT COUNT(*) as cnt FROM menu_categories'
     );
     return (row?.cnt || 0) > 0;
   }
 
   async getLastSyncTime(): Promise<string | null> {
-    const row = await this.db.getFirstAsync<{ value: string }>(
+    const row = await (await this.ensureDb()).getFirstAsync<{ value: string }>(
       `SELECT value FROM sync_metadata WHERE key = 'menu_last_sync'`
     );
     return row?.value || null;
@@ -224,7 +238,7 @@ class MenuStorageService {
 
   async saveCategories(categories: CategoryWithStats[]): Promise<void> {
     for (const c of categories) {
-      await this.db.runAsync(
+      await (await this.ensureDb()).runAsync(
         `INSERT OR REPLACE INTO menu_categories (id, restaurant_id, name, description, sort_order, is_active, color, icon, item_count, available_count, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         c.id, c.restaurant_id || 'rest_001', c.name, c.description || null,
@@ -237,14 +251,14 @@ class MenuStorageService {
   }
 
   async getCategories(): Promise<CategoryWithStats[]> {
-    const rows = await this.db.getAllAsync<CategoryRow>(
+    const rows = await (await this.ensureDb()).getAllAsync<CategoryRow>(
       'SELECT * FROM menu_categories ORDER BY sort_order, name'
     );
     return rows.map((r) => this.categoryFromRow(r));
   }
 
   async addCategory(category: CategoryWithStats): Promise<void> {
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       `INSERT OR REPLACE INTO menu_categories (id, restaurant_id, name, description, sort_order, is_active, color, icon, item_count, available_count, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       category.id, category.restaurant_id || 'rest_001', category.name, category.description || null,
@@ -256,7 +270,7 @@ class MenuStorageService {
   }
 
   async updateCategory(id: string, data: Partial<CategoryWithStats>): Promise<void> {
-    const existing = await this.db.getFirstAsync<CategoryRow>(
+    const existing = await (await this.ensureDb()).getFirstAsync<CategoryRow>(
       'SELECT * FROM menu_categories WHERE id = ?', id
     );
     if (!existing) return;
@@ -267,7 +281,7 @@ class MenuStorageService {
   }
 
   async deleteCategory(id: string): Promise<void> {
-    await this.db.runAsync('DELETE FROM menu_categories WHERE id = ?', id);
+    await (await this.ensureDb()).runAsync('DELETE FROM menu_categories WHERE id = ?', id);
     await this.updateLastSync();
   }
 
@@ -275,9 +289,9 @@ class MenuStorageService {
 
   async saveMenuItems(items: MenuItemExtended[]): Promise<void> {
     for (const item of items) {
-      await this.db.runAsync(
-        `INSERT OR REPLACE INTO menu_items (id, restaurant_id, category_id, name, description, price, image_url, is_available, preparation_time_minutes, sort_order, cost_price, tax_rate, calories, sku, dietary_tags, allergens, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      await (await this.ensureDb()).runAsync(
+        `INSERT OR REPLACE INTO menu_items (id, restaurant_id, category_id, name, description, price, image_url, is_available, preparation_time_minutes, sort_order, cost_price, tax_rate, calories, sku, dietary_tags, allergens, kitchen_station, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         item.id, item.restaurant_id || 'rest_001', item.category_id,
         item.name, item.description || null, item.price, item.image_url || null,
         toSqlBool(item.is_available), item.preparation_time_minutes || null,
@@ -285,18 +299,19 @@ class MenuStorageService {
         item.calories || null, item.sku || null,
         item.dietary_tags ? JSON.stringify(item.dietary_tags) : null,
         item.allergens ? JSON.stringify(item.allergens) : null,
+        item.kitchen_station || null,
         item.created_at || now(), item.updated_at || now()
       );
 
       // Save modifier assignments
       if (item.modifier_assignments) {
         // Clear existing assignments for this item
-        await this.db.runAsync(
+        await (await this.ensureDb()).runAsync(
           'DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', item.id
         );
 
         for (const assignment of item.modifier_assignments) {
-          await this.db.runAsync(
+          await (await this.ensureDb()).runAsync(
             `INSERT OR REPLACE INTO menu_item_modifier_assignments (id, menu_item_id, modifier_group_id, sort_order, created_at)
              VALUES (?, ?, ?, ?, ?)`,
             assignment.id, assignment.menu_item_id || item.id,
@@ -310,9 +325,10 @@ class MenuStorageService {
   }
 
   async getMenuItems(): Promise<MenuItemExtended[]> {
+    const db = await this.ensureDb();
     const [itemRows, assignmentRows, modifierGroups] = await Promise.all([
-      this.db.getAllAsync<MenuItemRow>('SELECT * FROM menu_items ORDER BY sort_order, name'),
-      this.db.getAllAsync<AssignmentRow>('SELECT * FROM menu_item_modifier_assignments ORDER BY sort_order'),
+      db.getAllAsync<MenuItemRow>('SELECT * FROM menu_items ORDER BY sort_order, name'),
+      db.getAllAsync<AssignmentRow>('SELECT * FROM menu_item_modifier_assignments ORDER BY sort_order'),
       this.getModifierGroups(),
     ]);
     return itemRows.map((r) => this.menuItemFromRow(r, assignmentRows, modifierGroups));
@@ -323,13 +339,13 @@ class MenuStorageService {
   }
 
   async updateMenuItem(id: string, data: Partial<MenuItemExtended>): Promise<void> {
-    const existing = await this.db.getFirstAsync<MenuItemRow>(
+    const existing = await (await this.ensureDb()).getFirstAsync<MenuItemRow>(
       'SELECT * FROM menu_items WHERE id = ?', id
     );
     if (!existing) return;
 
     const modifierGroups = await this.getModifierGroups();
-    const assignments = await this.db.getAllAsync<AssignmentRow>(
+    const assignments = await (await this.ensureDb()).getAllAsync<AssignmentRow>(
       'SELECT * FROM menu_item_modifier_assignments WHERE menu_item_id = ?', id
     );
     const current = this.menuItemFromRow(existing, assignments, modifierGroups);
@@ -338,19 +354,20 @@ class MenuStorageService {
   }
 
   async deleteMenuItem(id: string): Promise<void> {
-    await this.db.runAsync('DELETE FROM menu_items WHERE id = ?', id);
-    await this.db.runAsync('DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', id);
+    await (await this.ensureDb()).runAsync('DELETE FROM menu_items WHERE id = ?', id);
+    await (await this.ensureDb()).runAsync('DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', id);
     await this.updateLastSync();
   }
 
   async getMenuItemById(id: string): Promise<MenuItemExtended | null> {
-    const row = await this.db.getFirstAsync<MenuItemRow>(
+    const db = await this.ensureDb();
+    const row = await db.getFirstAsync<MenuItemRow>(
       'SELECT * FROM menu_items WHERE id = ?', id
     );
     if (!row) return null;
 
     const [assignments, modifierGroups] = await Promise.all([
-      this.db.getAllAsync<AssignmentRow>(
+      db.getAllAsync<AssignmentRow>(
         'SELECT * FROM menu_item_modifier_assignments WHERE menu_item_id = ?', id
       ),
       this.getModifierGroups(),
@@ -373,7 +390,7 @@ class MenuStorageService {
 
   async saveModifierGroups(groups: ModifierGroup[]): Promise<void> {
     for (const g of groups) {
-      await this.db.runAsync(
+      await (await this.ensureDb()).runAsync(
         `INSERT OR REPLACE INTO modifier_groups (id, restaurant_id, name, selection_type, is_required, min_selections, max_selections, is_active, sort_order, options, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         g.id, g.restaurant_id || 'rest_001', g.name, g.selection_type || 'single',
@@ -387,7 +404,7 @@ class MenuStorageService {
   }
 
   async getModifierGroups(): Promise<ModifierGroup[]> {
-    const rows = await this.db.getAllAsync<ModifierGroupRow>(
+    const rows = await (await this.ensureDb()).getAllAsync<ModifierGroupRow>(
       'SELECT * FROM modifier_groups ORDER BY sort_order, name'
     );
     return rows.map((r) => this.modifierGroupFromRow(r));
@@ -398,7 +415,7 @@ class MenuStorageService {
   }
 
   async updateModifierGroup(id: string, data: Partial<ModifierGroup>): Promise<void> {
-    const existing = await this.db.getFirstAsync<ModifierGroupRow>(
+    const existing = await (await this.ensureDb()).getFirstAsync<ModifierGroupRow>(
       'SELECT * FROM modifier_groups WHERE id = ?', id
     );
     if (!existing) return;
@@ -409,8 +426,8 @@ class MenuStorageService {
   }
 
   async deleteModifierGroup(id: string): Promise<void> {
-    await this.db.runAsync('DELETE FROM modifier_groups WHERE id = ?', id);
-    await this.db.runAsync('DELETE FROM menu_item_modifier_assignments WHERE modifier_group_id = ?', id);
+    await (await this.ensureDb()).runAsync('DELETE FROM modifier_groups WHERE id = ?', id);
+    await (await this.ensureDb()).runAsync('DELETE FROM menu_item_modifier_assignments WHERE modifier_group_id = ?', id);
     await this.updateLastSync();
   }
 
@@ -418,7 +435,7 @@ class MenuStorageService {
 
   async saveCombos(combos: ComboDeal[]): Promise<void> {
     for (const combo of combos) {
-      await this.db.runAsync(
+      await (await this.ensureDb()).runAsync(
         `INSERT OR REPLACE INTO combo_deals (id, restaurant_id, name, description, image_url, regular_price, combo_price, savings_amount, savings_percentage, is_active, availability, items, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         combo.id, combo.restaurant_id || 'rest_001', combo.name, combo.description || null,
@@ -433,7 +450,7 @@ class MenuStorageService {
   }
 
   async getCombos(): Promise<ComboDeal[]> {
-    const rows = await this.db.getAllAsync<ComboRow>(
+    const rows = await (await this.ensureDb()).getAllAsync<ComboRow>(
       'SELECT * FROM combo_deals ORDER BY name'
     );
     return rows.map((r) => this.comboFromRow(r));
@@ -444,7 +461,7 @@ class MenuStorageService {
   }
 
   async updateCombo(id: string, data: Partial<ComboDeal>): Promise<void> {
-    const existing = await this.db.getFirstAsync<ComboRow>(
+    const existing = await (await this.ensureDb()).getFirstAsync<ComboRow>(
       'SELECT * FROM combo_deals WHERE id = ?', id
     );
     if (!existing) return;
@@ -455,14 +472,14 @@ class MenuStorageService {
   }
 
   async deleteCombo(id: string): Promise<void> {
-    await this.db.runAsync('DELETE FROM combo_deals WHERE id = ?', id);
+    await (await this.ensureDb()).runAsync('DELETE FROM combo_deals WHERE id = ?', id);
     await this.updateLastSync();
   }
 
   // ============== MODIFIER ASSIGNMENTS ==============
 
   async getModifierAssignments(menuItemId: string): Promise<AssignmentRow[]> {
-    return this.db.getAllAsync<AssignmentRow>(
+    return (await this.ensureDb()).getAllAsync<AssignmentRow>(
       'SELECT * FROM menu_item_modifier_assignments WHERE menu_item_id = ? ORDER BY sort_order',
       menuItemId
     );
@@ -480,14 +497,14 @@ class MenuStorageService {
 
   async assignModifiersToMenuItem(menuItemId: string, modifierGroupIds: string[]): Promise<void> {
     // Clear existing assignments
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       'DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', menuItemId
     );
 
     // Insert new assignments
     for (let i = 0; i < modifierGroupIds.length; i++) {
       const groupId = modifierGroupIds[i];
-      await this.db.runAsync(
+      await (await this.ensureDb()).runAsync(
         `INSERT INTO menu_item_modifier_assignments (id, menu_item_id, modifier_group_id, sort_order, created_at)
          VALUES (?, ?, ?, ?, ?)`,
         `assignment_${menuItemId}_${groupId}_${Date.now()}`,
@@ -498,18 +515,18 @@ class MenuStorageService {
   }
 
   async addModifierToMenuItem(menuItemId: string, modifierGroupId: string): Promise<void> {
-    const existing = await this.db.getFirstAsync<AssignmentRow>(
+    const existing = await (await this.ensureDb()).getFirstAsync<AssignmentRow>(
       'SELECT * FROM menu_item_modifier_assignments WHERE menu_item_id = ? AND modifier_group_id = ?',
       menuItemId, modifierGroupId
     );
     if (existing) return; // Already assigned
 
-    const countRow = await this.db.getFirstAsync<{ cnt: number }>(
+    const countRow = await (await this.ensureDb()).getFirstAsync<{ cnt: number }>(
       'SELECT COUNT(*) as cnt FROM menu_item_modifier_assignments WHERE menu_item_id = ?',
       menuItemId
     );
 
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       `INSERT INTO menu_item_modifier_assignments (id, menu_item_id, modifier_group_id, sort_order, created_at)
        VALUES (?, ?, ?, ?, ?)`,
       `assignment_${menuItemId}_${modifierGroupId}_${Date.now()}`,
@@ -519,7 +536,7 @@ class MenuStorageService {
   }
 
   async removeModifierFromMenuItem(menuItemId: string, modifierGroupId: string): Promise<void> {
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       'DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ? AND modifier_group_id = ?',
       menuItemId, modifierGroupId
     );
@@ -527,7 +544,7 @@ class MenuStorageService {
   }
 
   async clearModifierAssignments(menuItemId: string): Promise<void> {
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       'DELETE FROM menu_item_modifier_assignments WHERE menu_item_id = ?', menuItemId
     );
     await this.updateLastSync();
@@ -537,9 +554,20 @@ class MenuStorageService {
 
   /**
    * Initialize menu storage - seeds mock data on first launch.
-   * Pattern matches TableStorageService.initialize().
+   * Uses mutex to prevent concurrent initialization calls.
    */
   async initialize(restaurantId: string = 'rest_001'): Promise<void> {
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = this.doInitialize(restaurantId);
+    try {
+      await this.initPromise;
+    } finally {
+      this.initPromise = null;
+    }
+  }
+
+  private async doInitialize(restaurantId: string): Promise<void> {
     if (__DEV__) {
       console.log('[MenuStorageService] Initializing...');
     }
@@ -597,20 +625,20 @@ class MenuStorageService {
   // ============== UTILITIES ==============
 
   private async updateLastSync(): Promise<void> {
-    await this.db.runAsync(
+    await (await this.ensureDb()).runAsync(
       `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('menu_last_sync', ?, ?)`,
       now(), now()
     );
   }
 
   async clearMenuData(): Promise<void> {
-    await this.db.execAsync('DELETE FROM menu_categories');
-    await this.db.execAsync('DELETE FROM menu_items');
-    await this.db.execAsync('DELETE FROM modifier_groups');
-    await this.db.execAsync('DELETE FROM modifier_options');
-    await this.db.execAsync('DELETE FROM menu_item_modifier_assignments');
-    await this.db.execAsync('DELETE FROM combo_deals');
-    await this.db.runAsync(`DELETE FROM sync_metadata WHERE key = 'menu_last_sync'`);
+    await (await this.ensureDb()).execAsync('DELETE FROM menu_categories');
+    await (await this.ensureDb()).execAsync('DELETE FROM menu_items');
+    await (await this.ensureDb()).execAsync('DELETE FROM modifier_groups');
+    await (await this.ensureDb()).execAsync('DELETE FROM modifier_options');
+    await (await this.ensureDb()).execAsync('DELETE FROM menu_item_modifier_assignments');
+    await (await this.ensureDb()).execAsync('DELETE FROM combo_deals');
+    await (await this.ensureDb()).runAsync(`DELETE FROM sync_metadata WHERE key = 'menu_last_sync'`);
   }
 
   async getStorageInfo(): Promise<{
@@ -621,11 +649,12 @@ class MenuStorageService {
     modifiersCount: number;
     combosCount: number;
   }> {
+    const db = await this.ensureDb();
     const [cats, items, mods, combos, lastSync] = await Promise.all([
-      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM menu_categories'),
-      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM menu_items'),
-      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM modifier_groups'),
-      this.db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM combo_deals'),
+      db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM menu_categories'),
+      db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM menu_items'),
+      db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM modifier_groups'),
+      db.getFirstAsync<{ cnt: number }>('SELECT COUNT(*) as cnt FROM combo_deals'),
       this.getLastSyncTime(),
     ]);
 

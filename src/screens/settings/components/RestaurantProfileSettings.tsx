@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { RestaurantProfile } from '@/types/settings.types';
-import { MockSettingsService } from '@/services/settings/MockSettingsService';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/context/auth';
 import { Icon } from '@/components/common';
 
 interface RestaurantProfileSettingsProps {
@@ -32,48 +32,82 @@ const TIMEZONES = [
   { value: 'America/Los_Angeles', label: 'America/Los_Angeles' },
 ];
 
+const DEFAULT_HOURS = {
+  monday: { open: '08:00', close: '22:00', is_closed: false },
+  tuesday: { open: '08:00', close: '22:00', is_closed: false },
+  wednesday: { open: '08:00', close: '22:00', is_closed: false },
+  thursday: { open: '08:00', close: '22:00', is_closed: false },
+  friday: { open: '08:00', close: '22:00', is_closed: false },
+  saturday: { open: '09:00', close: '23:00', is_closed: false },
+  sunday: { open: '09:00', close: '23:00', is_closed: false },
+};
+
+/** Build a RestaurantProfile from auth context restaurant data */
+function buildProfileFromAuth(restaurant: { id: string; name: string; address?: string; phone?: string; timezone?: string }): RestaurantProfile {
+  return {
+    id: restaurant.id,
+    name: restaurant.name,
+    business_type: 'casual_dining',
+    cuisine_type: ['Multi-Cuisine'],
+    phone: restaurant.phone || '',
+    email: '',
+    timezone: restaurant.timezone || 'America/New_York',
+    street_address: restaurant.address || '',
+    city: '',
+    state: '',
+    zip_code: '',
+    country: 'US',
+    tax_id: '',
+    business_license: '',
+    sales_tax_rate: 8.25,
+    operating_hours: DEFAULT_HOURS,
+    currency: 'USD',
+    date_format: 'MM/DD/YYYY',
+    time_format: '12h',
+    language: 'en',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
 export default function RestaurantProfileSettings({ onChangesDetected }: RestaurantProfileSettingsProps) {
   // Theme hook FIRST (REQUIRED per CLAUDE.md)
   const { theme } = useTheme();
+  const { state: authState } = useAuth();
 
   const [profile, setProfile] = useState<RestaurantProfile | null>(null);
-  const [originalProfile, setOriginalProfile] = useState<RestaurantProfile | null>(null);
+  const [originalProfileJson, setOriginalProfileJson] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const settingsService = MockSettingsService.getInstance();
+  const userEdited = useRef(false);
 
   useEffect(() => {
-    loadProfile();
+    const restaurant = authState.restaurant;
+    if (restaurant) {
+      const profileData = buildProfileFromAuth(restaurant);
+      const json = JSON.stringify(profileData);
+      setProfile(profileData);
+      setOriginalProfileJson(json);
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    if (profile && originalProfile) {
-      const hasChanges = JSON.stringify(profile) !== JSON.stringify(originalProfile);
-      onChangesDetected(hasChanges);
-    }
-  }, [profile, originalProfile, onChangesDetected]);
-
-  const loadProfile = async () => {
-    try {
-      setLoading(true);
-      const profileData = await settingsService.getRestaurantProfile('rest_001');
-      setProfile(profileData);
-      setOriginalProfile(profileData);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load restaurant profile');
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Only check for changes after user has edited something
+    if (!userEdited.current || !profile) return;
+    const hasChanges = JSON.stringify(profile) !== originalProfileJson;
+    onChangesDetected(hasChanges);
+  }, [profile, originalProfileJson, onChangesDetected]);
 
   const handleUpdateProfile = async () => {
     if (!profile) return;
 
     try {
       setSaving(true);
-      await settingsService.updateRestaurantProfile('rest_001', profile);
-      setOriginalProfile(profile);
+      // TODO: Wire to real API when restaurant profile endpoint exists
+      setOriginalProfileJson(JSON.stringify(profile));
+      userEdited.current = false;
+      onChangesDetected(false);
       Alert.alert('Success', 'Restaurant profile updated successfully');
     } catch (error) {
       Alert.alert('Error', 'Failed to update restaurant profile');
@@ -83,29 +117,21 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
   };
 
   const handleResetChanges = () => {
-    if (originalProfile) {
-      setProfile(originalProfile);
+    if (originalProfileJson) {
+      setProfile(JSON.parse(originalProfileJson));
+      userEdited.current = false;
+      onChangesDetected(false);
     }
   };
 
   const handleUploadLogo = async () => {
-    try {
-      // Mock file upload
-      const mockFile = new File([''], 'logo.png', { type: 'image/png' });
-      const logoUrl = await settingsService.uploadLogo(mockFile);
-      
-      if (profile) {
-        setProfile({ ...profile, logo_url: logoUrl });
-      }
-      
-      Alert.alert('Success', 'Logo uploaded successfully');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to upload logo');
-    }
+    // TODO: Wire to real file upload API
+    Alert.alert('Info', 'Logo upload will be available when the backend endpoint is ready.');
   };
 
-  const updateProfile = (field: keyof RestaurantProfile, value: any) => {
+  const updateProfile = (field: keyof RestaurantProfile, value: unknown) => {
     if (profile) {
+      userEdited.current = true;
       setProfile({ ...profile, [field]: value });
     }
   };

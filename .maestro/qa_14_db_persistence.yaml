@@ -1,0 +1,170 @@
+appId: host.exp.exponent
+name: "QA 14: Database Persistence — Menu + Orders survive force-stop"
+tags:
+  - qa
+  - persistence
+  - database
+  - regression
+---
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  QA Phase 14 — SQLite Database Persistence (Regression Test)
+#
+#  REGRESSION: Previously all data (menu, orders) was lost after app restart.
+#  This test verifies SQLite data persists across force-stop + restart.
+#
+#  SCENARIO A — Menu data persists
+#    Open app → Settings → Menu Management → verify categories visible
+#    → force-stop → restart → verify same categories still visible
+#
+#  SCENARIO B — Active order persists
+#    Create a CONFIRMED B-1 order (not paid) → force-stop → restart
+#    → Order Management → order still shows as CONFIRMED (not gone)
+#
+#  SCENARIO C — PAID order stays PAID
+#    Verify a completed PAID order from qa_08 still shows as Paid
+#    after restart
+#
+#  QA Assertions:
+#    ✓ Menu categories (Mains, Drinks, Starters) visible after restart
+#    ✓ Menu items (Beef Burger, Latte, etc.) visible after restart
+#    ✓ Active CONFIRMED order still shows after restart (not lost)
+#    ✓ Order count/status unchanged after restart
+#    ✓ No data seeding on restart (SEED_DEMO_DATA = false)
+#
+#  Prerequisites: qa_01 (categories), qa_02 (items) must have run successfully
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── SETUP: ensure logged in ───────────────────────────────────────────────────
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SCENARIO A SETUP: verify menu data exists before restart ─────────────────
+- tapOn:
+    text: "Settings"
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 8000
+
+- tapOn:
+    text: "Menu Management"
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 10000
+
+# Assert all 3 categories visible
+- assertVisible: "Mains"
+- assertVisible: "Drinks"
+- assertVisible: "Starters"
+
+- takeScreenshot: "qa_14_step1_menu_before_restart"
+
+# ── SCENARIO B SETUP: create an active order that should survive restart ──────
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 8000
+
+# Pre-cancel any leftover B-1 order from a previous run
+- runFlow: helpers/cancel_b1_active_order.yaml
+
+# Create a fresh B-1 order and only go to CONFIRMED (don't serve/pay)
+- tapOn:
+    text: "+ New Order"
+- extendedWaitUntil:
+    visible: "Select Table"
+    timeout: 10000
+- tapOn:
+    text: "B-1"
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 10000
+
+# Add Garlic Bread (no modifier — simplest item)
+- tapOn:
+    text: "Garlic Bread"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 8000
+
+# Send to Kitchen — order becomes CONFIRMED
+- tapOn:
+    text: "Send to Kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "CONFIRMED"
+    timeout: 15000
+
+- takeScreenshot: "qa_14_step2_order_confirmed_before_restart"
+
+# Note the order exists in CONFIRMED state
+- assertVisible: "CONFIRMED"
+- assertVisible: "Table B-1"
+
+# ── FORCE-STOP (kills process, SQLite data survives) ─────────────────────────
+- stopApp
+
+- takeScreenshot: "qa_14_step3_app_stopped"
+
+- waitForAnimationToEnd
+
+# ── RESTART ──────────────────────────────────────────────────────────────────
+- launchApp
+- waitForAnimationToEnd
+
+# ensure_dashboard navigates through Expo Go home → POS bundle → login if needed → Dashboard
+- runFlow: helpers/ensure_dashboard.yaml
+
+- takeScreenshot: "qa_14_step4_app_restarted"
+
+# ── ASSERTION A: Menu categories survived restart ────────────────────────────
+- tapOn:
+    text: "Settings"
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 8000
+
+- tapOn:
+    text: "Menu Management"
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 10000
+
+- assertVisible: "Mains"
+- assertVisible: "Drinks"
+- assertVisible: "Starters"
+
+- takeScreenshot: "qa_14_PASS_A_menu_persisted"
+
+# ── ASSERTION B: Active B-1 order still CONFIRMED after restart ───────────────
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible: "CONFIRMED"
+    timeout: 10000
+
+- assertVisible: "CONFIRMED"
+- assertVisible: "Table B-1"
+
+- takeScreenshot: "qa_14_PASS_B_order_persisted"
+
+# ── CLEANUP: cancel the test order ───────────────────────────────────────────
+- runFlow: helpers/cancel_b1_active_order.yaml
+
+- takeScreenshot: "qa_14_step5_cleanup_done"
+
+# ── FINAL: verify app still healthy after all this ───────────────────────────
+- tapOn:
+    text: "Dashboard"
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 8000
+
+- assertVisible: "Dashboard"
+
+- takeScreenshot: "qa_14_PASS_db_persistence_complete"

@@ -26,12 +26,24 @@ export interface SocketOptions {
 
 const logger = LoggerFactory.createLogger('TcpSocketWrapper');
 
-// Check if we're in an environment that supports native modules
+// Check if we're in an environment that supports native modules.
+// Matches reference: Food-MobileApp-Frontend/paymentprocessor/services/pos/TcpSocketWrapper.ts
 function isDevelopmentEnvironment(): boolean {
-  // Skip Expo Go detection — rely on native module availability instead.
-  // The nativeTcpSocket.isAvailable() check in isTcpSocketAvailable()
-  // handles the case where the native module is not present.
-  return true;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Constants = require('expo-constants');
+    const isExpoGo = Constants.default?.appOwnership === 'expo';
+
+    if (isExpoGo) {
+      logger.warn('Expo Go detected - native TCP sockets not available', 'isDevelopmentEnvironment');
+      return false;
+    }
+
+    return true;
+  } catch {
+    // If expo-constants is not available, assume we're in a standard React Native environment
+    return true;
+  }
 }
 
 export const isTcpSocketAvailable = (): boolean => {

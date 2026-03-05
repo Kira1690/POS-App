@@ -1,10 +1,12 @@
 /**
  * KitchenDisplayScreen - Kitchen operations interface
- * Optimized display for kitchen staff with ticket queue and status management
- * Uses EnhancedKitchenContext with AsyncStorage-based ticket management
+ * Derived from UnifiedOrderContext — single source of truth.
+ * Station views come from order_items.kitchen_station + item_status.
+ * No kitchen_tickets table involved.
  */
 
 import React, { useCallback, useState, useMemo } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   StyleSheet,
@@ -13,16 +15,19 @@ import {
   Text,
   TouchableOpacity,
   RefreshControl,
-  Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useEnhancedKitchen, useKitchenTickets, useKitchenActions } from '@/context/kitchen';
+import {
+  useKitchenStationViews,
+  useKitchenStats,
+  KitchenStationView,
+} from '@/context/unified-order/UnifiedOrderContext';
+import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
+import { useKitchenConfig } from '@/context/kitchen/KitchenConfigContext';
 import { useTheme } from '@/hooks/useTheme';
-import { KitchenTicket, TicketStatus, KitchenStation } from '@/types/kitchen-ticket.types';
+import { useResponsive } from '@/hooks/useResponsive';
+import { UnifiedItemStatus } from '@/types/unified-order.types';
 import { showToast } from '@/utils/toast';
-
-const { width } = Dimensions.get('window');
-const isTablet = width >= 768;
 
 interface KitchenDisplayScreenProps {
   navigation?: any;
@@ -30,13 +35,14 @@ interface KitchenDisplayScreenProps {
 
 const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation }) => {
   const { theme, isDark } = useTheme();
-  const { state, refreshTickets, sortedTickets, filteredTickets } = useEnhancedKitchen();
-  const { stats, isLoading } = useKitchenTickets();
-  const { updateTicketStatus, bumpTicket } = useKitchenActions();
+  const { kitchenColumns, isPhone, isPortrait } = useResponsive();
+  const stationViews = useKitchenStationViews();
+  const kitchenStats = useKitchenStats();
+  const { updateItemStatus, refreshOrders, isLoading } = useUnifiedOrder();
+  const { stations } = useKitchenConfig();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showAllTickets, setShowAllTickets] = useState(false);
-  const [sortBy, setSortBy] = useState<'priority' | 'time'>('priority');
+  const [selectedStation, setSelectedStation] = useState<string>('all');
 
   const styles = StyleSheet.create({
     container: {
@@ -61,9 +67,6 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       fontWeight: '700',
       color: theme.colors.onSurface,
     },
-    headerActions: {
-      flexDirection: 'row',
-    },
     headerButton: {
       padding: theme.spacing.sm,
       borderRadius: theme.borderRadius.full,
@@ -71,15 +74,18 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
     },
     statsContainer: {
       flexDirection: 'row',
+      flexWrap: isPhone && isPortrait ? 'wrap' : 'nowrap',
       justifyContent: 'space-between',
       marginBottom: theme.spacing.md,
     },
     statItem: {
-      flex: 1,
+      flex: isPhone && isPortrait ? 0 : 1,
+      width: isPhone && isPortrait ? '48%' : undefined,
       alignItems: 'center',
       paddingVertical: theme.spacing.md,
       borderRadius: theme.borderRadius.lg,
       marginHorizontal: theme.spacing.xs / 2,
+      marginBottom: isPhone && isPortrait ? theme.spacing.xs : 0,
       borderWidth: 1,
       borderColor: theme.colors.outline,
     },
@@ -96,20 +102,18 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       textTransform: 'uppercase',
       letterSpacing: 0.5,
     },
-    filterContainer: {
+    stationTabsContainer: {
       flexDirection: 'row',
       backgroundColor: 'transparent',
-      borderRadius: theme.borderRadius.full,
-      padding: theme.spacing.xs / 2,
     },
-    filterButton: {
-      flex: 1,
+    stationTab: {
       paddingVertical: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
       borderRadius: theme.borderRadius.full,
+      marginRight: theme.spacing.xs,
       alignItems: 'center',
     },
-    filterButtonText: {
+    stationTabText: {
       ...theme.typography.body2,
       fontWeight: '600',
     },
@@ -120,7 +124,6 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
     ticketRow: {
       justifyContent: 'space-between',
       alignItems: 'stretch',
-      paddingHorizontal: 0,
     },
     ticketCard: {
       flex: 1,
@@ -131,7 +134,6 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       marginBottom: theme.spacing.sm,
       borderWidth: 1,
       borderColor: theme.colors.outline,
-      // Apple-style card shadow
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: isDark ? 0.2 : 0.08,
@@ -145,9 +147,7 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       alignItems: 'flex-start',
       marginBottom: theme.spacing.sm,
     },
-    ticketOrderInfo: {
-      flex: 1,
-    },
+    ticketOrderInfo: { flex: 1 },
     ticketOrderNumber: {
       ...theme.typography.body1,
       fontWeight: '700',
@@ -170,13 +170,17 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       color: theme.colors.primary,
       textTransform: 'uppercase',
     },
-    ticketItems: {
-      marginBottom: theme.spacing.sm,
-    },
+    ticketItems: { marginBottom: theme.spacing.sm },
     ticketItem: {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: theme.spacing.xs,
+    },
+    itemStatusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: theme.spacing.xs,
     },
     ticketItemQuantity: {
       ...theme.typography.body2,
@@ -192,7 +196,7 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
     ticketItemModifiers: {
       ...theme.typography.caption,
       color: theme.colors.onSurfaceVariant,
-      marginLeft: 24,
+      marginLeft: 32,
       fontStyle: 'italic',
     },
     ticketFooter: {
@@ -235,21 +239,6 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       fontWeight: '600',
       marginLeft: theme.spacing.xs,
     },
-    allergenBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.errorContainer,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: theme.spacing.xs / 2,
-      borderRadius: theme.borderRadius.sm,
-      marginTop: theme.spacing.xs,
-    },
-    allergenText: {
-      ...theme.typography.caption,
-      color: theme.colors.error,
-      fontWeight: '600',
-      marginLeft: theme.spacing.xs / 2,
-    },
     overdueBadge: {
       position: 'absolute',
       top: -4,
@@ -265,9 +254,7 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       fontWeight: '700',
       fontSize: 10,
     },
-    emptyListContainer: {
-      flex: 1,
-    },
+    emptyListContainer: { flex: 1 },
     emptyContainer: {
       flex: 1,
       justifyContent: 'center',
@@ -289,283 +276,207 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
     },
   });
 
-  // Handle pull-to-refresh
+  // Refresh orders whenever this screen gains focus (ensures DB state is current)
+  useFocusEffect(
+    useCallback(() => {
+      refreshOrders().catch(() => {/* ignore */});
+    }, [refreshOrders])
+  );
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refreshTickets();
-    } catch (error) {
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to refresh kitchen tickets',
-      });
+      await refreshOrders();
+    } catch {
+      showToast({ type: 'error', title: 'Error', message: 'Failed to refresh kitchen orders' });
     } finally {
       setRefreshing(false);
     }
-  }, [refreshTickets]);
+  }, [refreshOrders]);
 
-  // Handle ticket status update
-  const handleBumpTicket = useCallback(async (ticketId: string) => {
-    try {
-      // Get the ticket to determine current status
-      const ticket = sortedTickets.find(t => t.id === ticketId);
-      if (!ticket) return;
-
-      // Determine next status for toast message
-      const statusFlow: Record<TicketStatus, TicketStatus | null> = {
-        pending: 'preparing',
-        preparing: 'ready',
-        ready: 'served',
-        served: null,
-        cancelled: null,
-      };
-
-      const nextStatus = statusFlow[ticket.status];
-
-      await bumpTicket(ticketId);
-
-      // Show specific toast based on next status
-      if (nextStatus === 'served') {
-        showToast({
-          type: 'info',
-          title: 'Order Served',
-          message: 'Ticket marked as served. Payment can now be collected.',
-        });
-      } else if (nextStatus) {
-        showToast({
-          type: 'success',
-          title: 'Status Updated',
-          message: `Ticket moved to ${nextStatus.toUpperCase()}`,
-        });
+  // Advance all items in a station view to the next status
+  const handleStationAction = useCallback(
+    async (view: KitchenStationView, targetStatus: UnifiedItemStatus) => {
+      try {
+        for (const item of view.items) {
+          await updateItemStatus(view.order.id, item.id, targetStatus);
+        }
+        const statusLabels: Record<UnifiedItemStatus, string> = {
+          pending: 'Pending',
+          preparing: 'Preparing',
+          ready: 'Ready',
+          served: 'Served',
+          cancelled: 'Cancelled',
+        };
+        if (targetStatus === 'served') {
+          showToast({
+            type: 'info',
+            title: 'Order Served',
+            message: 'Items marked as served. Payment can now be collected.',
+          });
+        } else {
+          showToast({
+            type: 'success',
+            title: 'Status Updated',
+            message: `Items moved to ${statusLabels[targetStatus]}`,
+          });
+        }
+      } catch {
+        showToast({ type: 'error', title: 'Error', message: 'Failed to update item status' });
       }
-    } catch (error) {
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to update ticket status',
-      });
-    }
-  }, [bumpTicket, sortedTickets]);
+    },
+    [updateItemStatus]
+  );
 
-  // Get tickets to display
-  const ticketsToShow = useMemo(() => {
-    if (showAllTickets) {
-      return sortedTickets;
-    }
-    return sortedTickets.filter(
-      (t) => t.status !== 'served' && t.status !== 'cancelled'
-    );
-  }, [sortedTickets, showAllTickets]);
+  // Filtered views
+  const viewsToShow = useMemo(() => {
+    if (selectedStation === 'all') return stationViews;
+    return stationViews.filter((v) => v.station === selectedStation);
+  }, [stationViews, selectedStation]);
 
-  // Get active ticket count
-  const activeTicketCount = useMemo(() => {
-    return sortedTickets.filter(
-      (t) => t.status !== 'served' && t.status !== 'cancelled'
-    ).length;
-  }, [sortedTickets]);
+  // Active station slugs in current views
+  const activeStations = useMemo(() => {
+    const s = new Set(stationViews.map((v) => v.station));
+    return Array.from(s);
+  }, [stationViews]);
 
-  // Get status color using theme.colors.status for professional blue palette consistency
-  const getStatusColor = (status: TicketStatus) => {
-    const statusColors = theme.colors.status;
+  const getStatusColor = (status: KitchenStationView['stationStatus']) => {
+    const map = theme.colors.status;
     switch (status) {
-      case 'pending':
-        return { bg: statusColors.pending.bg, text: statusColors.pending.text };
-      case 'preparing':
-        return { bg: statusColors.preparing.bg, text: statusColors.preparing.text };
-      case 'ready':
-        return { bg: statusColors.ready.bg, text: statusColors.ready.text };
-      case 'served':
-        return { bg: statusColors.served.bg, text: statusColors.served.text };
-      case 'cancelled':
-        return { bg: statusColors.cancelled.bg, text: statusColors.cancelled.text };
-      default:
-        return { bg: theme.colors.surfaceLight, text: theme.colors.onSurfaceVariant };
+      case 'pending': return { bg: map.pending.bg, text: map.pending.text };
+      case 'preparing': return { bg: map.preparing.bg, text: map.preparing.text };
+      case 'ready': return { bg: map.ready.bg, text: map.ready.text };
+      case 'served': return { bg: map.served.bg, text: map.served.text };
+      default: return { bg: theme.colors.surfaceLight, text: theme.colors.onSurfaceVariant };
     }
   };
 
-  // Get card background and border color based on status using theme colors
-  const getCardStatusStyles = (status: TicketStatus) => {
-    const statusColors = theme.colors.status;
+  const getCardStatusStyles = (status: KitchenStationView['stationStatus']) => {
+    const map = theme.colors.status;
     switch (status) {
       case 'pending':
-        return {
-          backgroundColor: statusColors.pending.bg,
-          borderColor: statusColors.pending.border,
-          borderWidth: 2,
-        };
+        return { backgroundColor: map.pending.bg, borderColor: map.pending.border, borderWidth: 2 };
       case 'preparing':
-        return {
-          backgroundColor: statusColors.preparing.bg,
-          borderColor: statusColors.preparing.border,
-          borderWidth: 2,
-        };
+        return { backgroundColor: map.preparing.bg, borderColor: map.preparing.border, borderWidth: 2 };
       case 'ready':
-        return {
-          backgroundColor: statusColors.ready.bg,
-          borderColor: statusColors.ready.border,
-          borderWidth: 3,
-        };
-      case 'served':
-        return {
-          backgroundColor: statusColors.served.bg,
-          borderColor: statusColors.served.border,
-          borderWidth: 1,
-          opacity: 0.7,
-        };
-      case 'cancelled':
-        return {
-          backgroundColor: statusColors.cancelled.bg,
-          borderColor: statusColors.cancelled.border,
-          borderWidth: 2,
-          opacity: 0.6,
-        };
+        return { backgroundColor: map.ready.bg, borderColor: map.ready.border, borderWidth: 3 };
       default:
-        return {
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.outline,
-          borderWidth: 1,
-        };
+        return { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline, borderWidth: 1 };
     }
   };
 
-  // Get next action text
-  const getNextAction = (status: TicketStatus): { text: string; icon: string } | null => {
+  const getNextAction = (status: KitchenStationView['stationStatus']): {
+    text: string; icon: string; targetStatus: UnifiedItemStatus
+  } | null => {
     switch (status) {
-      case 'pending':
-        return { text: 'Start', icon: 'play' };
-      case 'preparing':
-        return { text: 'Ready', icon: 'check' };
-      case 'ready':
-        return { text: 'Served', icon: 'check-all' };
-      default:
-        return null;
+      case 'pending': return { text: 'Start', icon: 'play', targetStatus: 'preparing' };
+      case 'preparing': return { text: 'Ready', icon: 'check', targetStatus: 'ready' };
+      case 'ready': return { text: 'Served', icon: 'check-all', targetStatus: 'served' };
+      default: return null;
     }
   };
 
-  // Format elapsed time
+  const getItemStatusColor = (itemStatus: string): string => {
+    switch (itemStatus) {
+      case 'served': return theme.colors.success;
+      case 'ready': return theme.colors.status.ready.text;
+      case 'preparing': return theme.colors.warning;
+      default: return theme.colors.onSurfaceVariant;
+    }
+  };
+
   const formatElapsedTime = (createdAt: string): string => {
-    const elapsed = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60));
+    const elapsed = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
     if (elapsed < 1) return 'Just now';
     if (elapsed === 1) return '1 min';
     return `${elapsed} mins`;
   };
 
-  // Format station name
-  const formatStation = (station: KitchenStation): string => {
-    return station.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  };
+  const formatStation = (station: string): string =>
+    station.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-  // Render header with stats
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerTop}>
         <Text style={styles.headerTitle}>Kitchen Display</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: theme.colors.primaryContainer }]}
-            onPress={handleRefresh}
-          >
-            <MaterialCommunityIcons
-              name="refresh"
-              size={20}
-              color={theme.colors.onPrimaryContainer}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: theme.colors.secondaryContainer }]}
-            onPress={() => setSortBy(sortBy === 'priority' ? 'time' : 'priority')}
-          >
-            <MaterialCommunityIcons
-              name={sortBy === 'priority' ? 'sort-variant' : 'clock-outline'}
-              size={20}
-              color={theme.colors.onSecondaryContainer}
-            />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.headerButton, { backgroundColor: theme.colors.primaryContainer }]}
+          onPress={handleRefresh}
+        >
+          <MaterialCommunityIcons name="refresh" size={20} color={theme.colors.onPrimaryContainer} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.statsContainer}>
         <View style={[styles.statItem, { backgroundColor: theme.colors.status.pending.bg }]}>
           <Text style={[styles.statNumber, { color: theme.colors.status.pending.text }]}>
-            {stats?.pendingCount || 0}
+            {kitchenStats.pendingCount}
           </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.status.pending.text }]}>Pending</Text>
+          <Text style={[styles.statLabel, { color: theme.colors.status.pending.text }]}>
+            Pending
+          </Text>
         </View>
-
         <View style={[styles.statItem, { backgroundColor: theme.colors.status.preparing.bg }]}>
           <Text style={[styles.statNumber, { color: theme.colors.status.preparing.text }]}>
-            {stats?.preparingCount || 0}
+            {kitchenStats.preparingCount}
           </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.status.preparing.text }]}>Preparing</Text>
+          <Text style={[styles.statLabel, { color: theme.colors.status.preparing.text }]}>
+            Preparing
+          </Text>
         </View>
-
         <View style={[styles.statItem, { backgroundColor: theme.colors.status.ready.bg }]}>
           <Text style={[styles.statNumber, { color: theme.colors.status.ready.text }]}>
-            {stats?.readyCount || 0}
+            {kitchenStats.readyCount}
           </Text>
           <Text style={[styles.statLabel, { color: theme.colors.status.ready.text }]}>Ready</Text>
         </View>
-
-        <View style={[styles.statItem, { backgroundColor: theme.colors.status.served.bg }]}>
-          <Text style={[styles.statNumber, { color: theme.colors.status.served.text }]}>
-            {stats?.servedCount || 0}
+        <View style={[styles.statItem, { backgroundColor: theme.colors.errorContainer }]}>
+          <Text style={[styles.statNumber, { color: theme.colors.error }]}>
+            {kitchenStats.overdueCount}
           </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.status.served.text }]}>Served</Text>
+          <Text style={[styles.statLabel, { color: theme.colors.error }]}>Overdue</Text>
         </View>
       </View>
 
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            !showAllTickets && { backgroundColor: theme.colors.primary },
-          ]}
-          onPress={() => setShowAllTickets(false)}
-        >
-          <Text
-            style={[
-              styles.filterButtonText,
-              {
-                color: !showAllTickets ? theme.colors.onPrimary : theme.colors.onSurface,
-              },
-            ]}
-          >
-            Active ({activeTicketCount})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            showAllTickets && { backgroundColor: theme.colors.primary },
-          ]}
-          onPress={() => setShowAllTickets(true)}
-        >
-          <Text
-            style={[
-              styles.filterButtonText,
-              {
-                color: showAllTickets ? theme.colors.onPrimary : theme.colors.onSurface,
-              },
-            ]}
-          >
-            All ({sortedTickets.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Station filter tabs */}
+      <FlatList
+        horizontal
+        data={['all', ...activeStations]}
+        keyExtractor={(item) => item}
+        showsHorizontalScrollIndicator={false}
+        renderItem={({ item: stationKey }) => {
+          const isSelected = selectedStation === stationKey;
+          return (
+            <TouchableOpacity
+              style={[
+                styles.stationTab,
+                isSelected && { backgroundColor: theme.colors.primary },
+              ]}
+              onPress={() => setSelectedStation(stationKey)}
+            >
+              <Text
+                style={[
+                  styles.stationTabText,
+                  { color: isSelected ? theme.colors.onPrimary : theme.colors.onSurface },
+                ]}
+              >
+                {stationKey === 'all' ? `All (${stationViews.length})` : formatStation(stationKey)}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
+      />
     </View>
   );
 
-  // Render ticket card
-  const renderTicketCard = ({ item: ticket }: { item: KitchenTicket }) => {
-    const statusColor = getStatusColor(ticket.status);
-    const nextAction = getNextAction(ticket.status);
-    const cardStatusStyles = getCardStatusStyles(ticket.status);
+  const renderCard = ({ item: view }: { item: KitchenStationView }) => {
+    const statusColor = getStatusColor(view.stationStatus);
+    const cardStyles = getCardStatusStyles(view.stationStatus);
+    const nextAction = getNextAction(view.stationStatus);
 
     return (
-      <View style={[styles.ticketCard, cardStatusStyles]}>
-        {ticket.isOverdue && (
+      <View style={[styles.ticketCard, cardStyles]}>
+        {view.isOverdue && (
           <View style={styles.overdueBadge}>
             <Text style={styles.overdueText}>OVERDUE</Text>
           </View>
@@ -573,53 +484,46 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
 
         <View style={styles.ticketHeader}>
           <View style={styles.ticketOrderInfo}>
-            <Text style={styles.ticketOrderNumber}>#{ticket.orderNumber}</Text>
-            <Text style={styles.ticketTableName}>{ticket.tableName}</Text>
+            <Text style={styles.ticketOrderNumber}>#{view.order.orderNumber}</Text>
+            <Text style={styles.ticketTableName}>{view.order.tableName}</Text>
           </View>
           <View style={styles.ticketStation}>
-            <Text style={styles.ticketStationText}>{formatStation(ticket.station)}</Text>
+            <Text style={styles.ticketStationText}>{formatStation(view.station)}</Text>
           </View>
         </View>
 
         <View style={styles.ticketItems}>
-          {(ticket.items || []).slice(0, 5).map((item, index) => (
+          {view.items.slice(0, 5).map((item, index) => (
             <View key={item.id || index}>
               <View style={styles.ticketItem}>
+                <View
+                  style={[
+                    styles.itemStatusDot,
+                    { backgroundColor: getItemStatusColor(item.itemStatus) },
+                  ]}
+                />
                 <Text style={styles.ticketItemQuantity}>{item.quantity}x</Text>
                 <Text style={styles.ticketItemName} numberOfLines={1}>
                   {item.name}
                 </Text>
               </View>
-              {item.modifiers && item.modifiers.length > 0 && (
+              {item.selectedModifiers && item.selectedModifiers.length > 0 && (
                 <Text style={styles.ticketItemModifiers} numberOfLines={1}>
-                  {item.modifiers.join(', ')}
+                  {item.selectedModifiers.map((m) => m.optionName).join(', ')}
                 </Text>
               )}
             </View>
           ))}
-          {(ticket.items || []).length > 5 && (
-            <Text style={styles.ticketItemModifiers}>
-              +{(ticket.items || []).length - 5} more items
-            </Text>
+          {view.items.length > 5 && (
+            <Text style={styles.ticketItemModifiers}>+{view.items.length - 5} more items</Text>
           )}
         </View>
 
-        {ticket.hasAllergens && (
-          <View style={styles.allergenBadge}>
-            <MaterialCommunityIcons
-              name="alert-circle"
-              size={14}
-              color={theme.colors.error}
-            />
-            <Text style={styles.allergenText}>Contains Allergens</Text>
-          </View>
-        )}
-
         <View style={styles.ticketFooter}>
-          <Text style={styles.ticketTime}>{formatElapsedTime(ticket.createdAt)}</Text>
+          <Text style={styles.ticketTime}>{formatElapsedTime(view.order.createdAt)}</Text>
           <View style={[styles.ticketStatus, { backgroundColor: statusColor.bg }]}>
             <Text style={[styles.ticketStatusText, { color: statusColor.text }]}>
-              {ticket.status}
+              {view.stationStatus}
             </Text>
           </View>
         </View>
@@ -628,7 +532,9 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
           <View style={styles.ticketActions}>
             <TouchableOpacity
               style={[styles.ticketActionButton, { backgroundColor: theme.colors.primary }]}
-              onPress={() => handleBumpTicket(ticket.id)}
+              onPress={() => handleStationAction(view, nextAction.targetStatus)}
+              testID={`btn-kitchen-action-${nextAction.text.toLowerCase()}`}
+              accessibilityLabel={nextAction.text}
             >
               <MaterialCommunityIcons
                 name={nextAction.icon as any}
@@ -645,44 +551,28 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
     );
   };
 
-  // Render empty state
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <MaterialCommunityIcons
-        name="chef-hat"
-        size={64}
-        color={theme.colors.onSurfaceVariant}
-      />
-      <Text style={styles.emptyTitle}>
-        {showAllTickets ? 'No Tickets Available' : 'No Active Tickets'}
-      </Text>
+      <MaterialCommunityIcons name="chef-hat" size={64} color={theme.colors.onSurfaceVariant} />
+      <Text style={styles.emptyTitle}>No Active Orders</Text>
       <Text style={styles.emptyMessage}>
-        {showAllTickets
-          ? 'New tickets will appear here when orders are sent to the kitchen'
-          : 'All tickets are completed or there are no pending tickets'}
+        New orders will appear here when sent to the kitchen
       </Text>
     </View>
   );
 
-  // Get number of columns based on screen size
-  const getNumColumns = () => {
-    if (isTablet) {
-      return width > 1200 ? 3 : 2;
-    }
-    return width > 600 ? 2 : 1;
-  };
+  const numColumns = kitchenColumns;
 
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-
       <FlatList
-        data={ticketsToShow}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTicketCard}
-        numColumns={getNumColumns()}
-        key={`kitchen-grid-${getNumColumns()}`}
-        columnWrapperStyle={getNumColumns() > 1 ? styles.ticketRow : undefined}
+        data={viewsToShow}
+        keyExtractor={(item) => `${item.order.id}-${item.station}`}
+        renderItem={renderCard}
+        numColumns={numColumns}
+        key={`kitchen-grid-${numColumns}`}
+        columnWrapperStyle={numColumns > 1 ? styles.ticketRow : undefined}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -692,14 +582,15 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
         }
         ListEmptyComponent={renderEmptyState}
         contentContainerStyle={
-          ticketsToShow.length === 0 ? styles.emptyListContainer : styles.listContainer
+          viewsToShow.length === 0 ? styles.emptyListContainer : styles.listContainer
         }
         showsVerticalScrollIndicator={false}
+        extraData={stationViews}
         initialNumToRender={12}
         maxToRenderPerBatch={12}
         windowSize={8}
         removeClippedSubviews={true}
-        updateCellsBatchingPeriod={50}
+        updateCellsBatchingPeriod={0}
       />
     </SafeAreaView>
   );

@@ -48,3 +48,11 @@ android/app/build/
 *.aab
 
 screenshots/
+
+# QA/debug testing artifacts
+qa_*.png
+debug_*.png
+report.xml
+
+# Testing PNGs (root level)
+*.png

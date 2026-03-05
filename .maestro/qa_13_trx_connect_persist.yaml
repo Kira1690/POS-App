@@ -1,0 +1,186 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 13: TRX Terminal — Connect + App Restart Persist"
+tags:
+  - qa
+  - trx
+  - connection
+  - persistence
+---
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  QA Phase 13 — TRX Terminal Connection Reliability (Dev Build)
+#
+#  SCENARIO A — Fresh Connect
+#    Settings → TRX Terminal → Manual IP → 192.168.1.12 → Connect
+#    → Assert "Terminal 192.168.1.12:1180 added successfully"
+#
+#  SCENARIO B — App Restart Persist (SQLite)
+#    stopApp → launchApp → Settings → TRX Terminal
+#    → Assert terminal IP still shown (restored from SQLite)
+#
+#  SCENARIO C — Reconnect works (socket ID monotonicity)
+#    If shown reconnect button, tap it → verify connection succeeds
+#
+#  Prerequisites: TRX terminal at 192.168.1.12:1180 must be reachable
+# ─────────────────────────────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard_dev.yaml
+
+# ── SCENARIO A: Navigate to TRX Terminal Settings ────────────────────────────
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "settings-nav-trx_payment"
+    timeout: 8000
+
+- takeScreenshot: "qa_13_step1_settings_open"
+
+- tapOn:
+    id: "settings-nav-trx_payment"
+- waitForAnimationToEnd
+
+# Assert TCP available (dev build — no warning banner)
+- assertNotVisible: "requires a custom dev build"
+
+- takeScreenshot: "qa_13_step2_trx_screen"
+
+# ── Open the Terminal Management modal ───────────────────────────────────────
+# Button is below the fold — scroll down to reveal it
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-manage-terminals"
+    timeout: 8000
+- tapOn:
+    id: "btn-trx-manage-terminals"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_13_step2b_terminal_mgmt_open"
+
+# ── Expand manual IP input ────────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-add-manual"
+    timeout: 8000
+- tapOn:
+    id: "btn-trx-add-manual"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_13_step3_manual_input_open"
+
+# ── Select quick IP 192.168.1.12 (index 0) ───────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-quick-ip-0"
+    timeout: 5000
+- tapOn:
+    id: "btn-trx-quick-ip-0"
+- waitForAnimationToEnd
+
+# Assert IP field shows 192.168.1.12
+- assertVisible: "192.168.1.12"
+
+- takeScreenshot: "qa_13_step4_ip_selected"
+
+# ── Tap Connect — triggers TCP connection ─────────────────────────────────────
+- tapOn:
+    id: "btn-trx-connect"
+
+# Wait for connection success alert (TCP handshake may take up to 15s)
+- extendedWaitUntil:
+    visible:
+      text: "Terminal 192.168.1.12:1180 added successfully"
+    timeout: 20000
+
+- takeScreenshot: "qa_13_step5_connect_success"
+
+# Dismiss success alert
+- tapOn:
+    text: "OK"
+- waitForAnimationToEnd
+
+# ── ASSERTION A: IP visible in terminal list ──────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "terminal-item-192.168.1.12"
+    timeout: 8000
+
+- takeScreenshot: "qa_13_PASS_A_connected"
+
+# ── SCENARIO B: Force-stop + restart → SQLite persistence ────────────────────
+- stopApp
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_13_step6_app_stopped"
+
+# Restart app
+- launchApp
+- waitForAnimationToEnd
+
+# Wait for app to load (any tab visible = app ready)
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-settings"
+    timeout: 20000
+
+- takeScreenshot: "qa_13_step7_app_restarted"
+
+# Navigate back to TRX Terminal settings
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "settings-nav-trx_payment"
+    timeout: 8000
+- tapOn:
+    id: "settings-nav-trx_payment"
+- waitForAnimationToEnd
+
+# Open Terminal Management modal to verify persistence
+# Button is below the fold — scroll down to reveal it
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-manage-terminals"
+    timeout: 8000
+- tapOn:
+    id: "btn-trx-manage-terminals"
+- waitForAnimationToEnd
+
+# ── ASSERTION B: Terminal IP restored from SQLite ──────────────────────────
+# After restart the status bar shows the saved terminal (no scan needed)
+- extendedWaitUntil:
+    visible:
+      id: "trx-current-terminal-ip"
+    timeout: 10000
+
+- takeScreenshot: "qa_13_PASS_B_persist_after_restart"
+
+# ── SCENARIO C: Re-connect works (socket ID monotonicity) ────────────────────
+# If terminal shows reconnect button (not auto-connected), tap and verify
+- runFlow:
+    when:
+      visible:
+        id: "btn-trx-reconnect"
+    commands:
+      - tapOn:
+          id: "btn-trx-reconnect"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "trx-current-terminal-ip"
+          timeout: 15000
+
+- extendedWaitUntil:
+    visible:
+      id: "trx-current-terminal-ip"
+    timeout: 5000
+
+- takeScreenshot: "qa_13_PASS_C_reconnect_works"

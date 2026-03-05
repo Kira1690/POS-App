@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 name: "QA 03: Add Modifier Groups (Cup Size / Protein)"
 tags:
   - qa
@@ -14,11 +14,15 @@ tags:
 #
 #  CRITICAL rules:
 #    - NEVER tapOn: label: for TextInputs → opens Google Search
-#    - NEVER tapOn: label: for small icon buttons → may hit Android nav bar
-#    - NEVER tapOn: text: "Add Option" → hits modal TITLE, not the button
 #    - ALWAYS use tapOn: id: (testID) for TextInputs and icon buttons
 #    - ALWAYS use tapOn: id: "btn-save-modifier-option" to submit option form
-#    - waitForAnimationToEnd after hideKeyboard (KeyboardAvoidingView settle)
+#    - DO NOT hideKeyboard before tapping btn-save-modifier-option
+#      The save button is ABOVE the keyboard (confirmed in screenshots).
+#      After hideKeyboard, the KAV animates the modal DOWN, causing the
+#      save button coordinates to be unstable — the tap misses.
+#      Keep the keyboard visible; the button is always accessible above it.
+#    - After saving an option, use extendedWaitUntil visible btn-add-option
+#      before tapping — modal close animation temporarily removes it from tree
 # ─────────────────────────────────────────────────────
 
 - runFlow: helpers/ensure_dashboard.yaml
@@ -26,21 +30,24 @@ tags:
 - waitForAnimationToEnd
 
 - tapOn:
-    text: "Settings"
+    id: "tab-nav-settings"
 
 - extendedWaitUntil:
-    visible: "Menu Management"
-    timeout: 15000
+    visible:
+      id: "settings-nav-restaurant_profile"
+    timeout: 10000
 
+# tapOn auto-scrolls the sidebar to find the item
 - tapOn:
-    text: "Menu Management"
+    id: "settings-nav-menu_management"
 
 - extendedWaitUntil:
-    visible: "Items"
+    visible:
+      id: "tab-menu-items"
     timeout: 10000
 
 - tapOn:
-    text: "Modifiers"
+    id: "tab-menu-modifiers"
 
 - extendedWaitUntil:
     visible: "Add Group"
@@ -88,6 +95,12 @@ tags:
 - takeScreenshot: "qa_03_cup_size_group_created"
 
 # ── Option 1: Small — $0.00 ──
+# Wait for btn-add-option to be in accessibility tree before tapping
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-option"
+    timeout: 10000
+
 - tapOn:
     id: "btn-add-option"
 
@@ -100,22 +113,29 @@ tags:
 
 - inputText: "Small"
 
-- hideKeyboard
-
-- waitForAnimationToEnd
-
+# NOTE: Do NOT hideKeyboard here — save button is ABOVE keyboard.
+# Tapping save while keyboard is up avoids KAV animation timing issues.
 - tapOn:
     id: "btn-save-modifier-option"
 
-- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: "Add Option"
+    timeout: 12000
 
 - extendedWaitUntil:
     visible: "Small"
-    timeout: 5000
+    timeout: 8000
+
+- waitForAnimationToEnd
 
 - takeScreenshot: "qa_03_cup_size_small_added"
 
 # ── Option 2: Medium — +$0.75 ──
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-option"
+    timeout: 10000
+
 - tapOn:
     id: "btn-add-option"
 
@@ -128,10 +148,7 @@ tags:
 
 - inputText: "Medium"
 
-- hideKeyboard
-
-- waitForAnimationToEnd
-
+# Move to price field (keyboard stays open, focus moves)
 - tapOn:
     id: "input-modifier-option-price"
 
@@ -139,22 +156,28 @@ tags:
 
 - inputText: "0.75"
 
-- hideKeyboard
-
-- waitForAnimationToEnd
-
+# Tap save with keyboard still visible (button above keyboard)
 - tapOn:
     id: "btn-save-modifier-option"
 
-- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: "Add Option"
+    timeout: 12000
 
 - extendedWaitUntil:
     visible: "Medium"
-    timeout: 5000
+    timeout: 8000
+
+- waitForAnimationToEnd
 
 - takeScreenshot: "qa_03_cup_size_medium_added"
 
 # ── Option 3: Large — +$1.50 ──
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-option"
+    timeout: 10000
+
 - tapOn:
     id: "btn-add-option"
 
@@ -167,10 +190,7 @@ tags:
 
 - inputText: "Large"
 
-- hideKeyboard
-
-- waitForAnimationToEnd
-
+# Move to price field (keyboard stays open, focus moves)
 - tapOn:
     id: "input-modifier-option-price"
 
@@ -178,18 +198,19 @@ tags:
 
 - inputText: "1.50"
 
-- hideKeyboard
-
-- waitForAnimationToEnd
-
+# Tap save with keyboard still visible (button above keyboard)
 - tapOn:
     id: "btn-save-modifier-option"
 
-- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: "Add Option"
+    timeout: 12000
 
 - extendedWaitUntil:
     visible: "Large"
-    timeout: 5000
+    timeout: 8000
+
+- waitForAnimationToEnd
 
 - takeScreenshot: "qa_03_PASS_cup_size_complete"
 
@@ -226,6 +247,11 @@ tags:
 - takeScreenshot: "qa_03_protein_group_created"
 
 # ── Option 1: Regular — $0.00 (index 1 = Protein card) ──
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-option"
+    timeout: 10000
+
 - tapOn:
     id: "btn-add-option"
     index: 1
@@ -239,22 +265,28 @@ tags:
 
 - inputText: "Regular"
 
-- hideKeyboard
-
-- waitForAnimationToEnd
-
+# Tap save with keyboard visible (button above keyboard)
 - tapOn:
     id: "btn-save-modifier-option"
 
-- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: "Add Option"
+    timeout: 12000
 
 - extendedWaitUntil:
     visible: "Regular"
-    timeout: 5000
+    timeout: 8000
+
+- waitForAnimationToEnd
 
 - takeScreenshot: "qa_03_protein_regular_added"
 
 # ── Option 2: Extra — +$2.00 ──
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-option"
+    timeout: 10000
+
 - tapOn:
     id: "btn-add-option"
     index: 1
@@ -268,10 +300,7 @@ tags:
 
 - inputText: "Extra"
 
-- hideKeyboard
-
-- waitForAnimationToEnd
-
+# Move to price field (keyboard stays open, focus moves)
 - tapOn:
     id: "input-modifier-option-price"
 
@@ -279,18 +308,17 @@ tags:
 
 - inputText: "2.00"
 
-- hideKeyboard
-
-- waitForAnimationToEnd
-
+# Tap save with keyboard visible (button above keyboard)
 - tapOn:
     id: "btn-save-modifier-option"
 
-- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: "Add Option"
+    timeout: 12000
 
 - extendedWaitUntil:
     visible: "Extra"
-    timeout: 5000
+    timeout: 8000
 
 - takeScreenshot: "qa_03_protein_extra_added"
 

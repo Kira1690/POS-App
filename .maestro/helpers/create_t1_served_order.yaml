@@ -1,0 +1,141 @@
+appId: com.ajinkya123.POSReactNativeApp
+---
+# Helper: Ensure a T-1 order in SERVED/UNPAID state is available.
+# Mirrors create_b1_served_order.yaml logic for Table T-1.
+#
+# Returns: Order Management with T-1 order in SERVED/UNPAID state.
+
+# ── 1. Go to Kitchen, clear all stale tickets ──────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-kitchen"
+    timeout: 10000
+- runFlow: clear_all_kitchen_tickets.yaml
+
+# ── 2. Cancel any existing active T-1 orders ──────────────────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: cancel_t1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+- runFlow: cancel_t1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# ── 3. Create new T-1 POS order ───────────────────────────────────────────────
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-T-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-T-1"
+- waitForAnimationToEnd
+
+# Case A: existing active order → cancel and replace
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Case B: existing SERVED order → go back and use it
+- runFlow:
+    when:
+      visible:
+        text: "GO BACK"
+    commands:
+      - tapOn:
+          text: "GO BACK"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "tab-nav-orders"
+      - extendedWaitUntil:
+          visible:
+            id: "btn-new-order"
+          timeout: 10000
+
+# ── 4. Add items + send to kitchen (ONLY if still on POS screen) ──────────────
+- runFlow:
+    when:
+      visible:
+        id: "tab-category-chip-all"
+    commands:
+      - tapOn:
+          id: "tab-category-chip-all"
+          optional: true
+      - waitForAnimationToEnd
+
+      # Item 1: Spring Rolls (no modifier)
+      - extendedWaitUntil:
+          visible:
+            text: "Spring Rolls"
+          timeout: 8000
+      - tapOn:
+          text: "Spring Rolls"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "btn-cart-send-to-kitchen"
+          timeout: 8000
+
+      # Item 2: Garlic Bread (no modifier)
+      - tapOn:
+          text: "Garlic Bread"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "btn-cart-send-to-kitchen"
+          timeout: 8000
+
+      # Send to Kitchen
+      - tapOn:
+          id: "btn-cart-send-to-kitchen"
+      - waitForAnimationToEnd
+
+      # Wait for Order Management
+      - extendedWaitUntil:
+          visible:
+            id: "btn-new-order"
+          timeout: 15000
+
+      # ── Kitchen: CONFIRMED → PREPARING → READY → SERVED ─────────────────────
+      - tapOn:
+          id: "tab-nav-kitchen"
+      - waitForAnimationToEnd
+
+      - extendedWaitUntil:
+          visible:
+            id: "btn-kitchen-action-start"
+          timeout: 15000
+
+      - runFlow: clear_all_kitchen_tickets.yaml
+
+      # Return to Order Management
+      - tapOn:
+          id: "tab-nav-orders"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "btn-new-order"
+          timeout: 10000

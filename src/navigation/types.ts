@@ -74,6 +74,7 @@ export type OrdersStackParamList = {
       last_cleaned?: string;
       notes?: string;
     };
+    editOrderId?: string;  // if set, editing an existing order (add more items)
   };
   // Enhanced ordering screen with 3-panel layout
   Ordering: {

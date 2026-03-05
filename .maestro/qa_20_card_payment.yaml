@@ -1,0 +1,157 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 20: Full Card Payment via TRX Terminal"
+tags:
+  - qa
+  - payment
+  - card
+  - trx
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 20 — Full Card Payment (TRX Terminal)
+#  Requires: dev build + TRX terminal at 192.168.1.12:1180
+#  Run AFTER qa_13 (TRX connect) to ensure terminal connected.
+#
+#  Flow:
+#    Create B-1 order (Beef Burger+Extra + Garlic Bread) → SERVED
+#    → Order Management → SERVED filter → Pay (direct)
+#    → PaymentProcessingScreen → Select "Card"
+#    → TRXPaymentModal opens → btn-trx-charge
+#    → TRX processes payment → PaymentConfirmation
+#    → Continue → Order is PAID
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard_dev.yaml
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_20_step1_b1_served"
+
+# ── Find B-1 (SERVED) and navigate to payment ─────────────────────────────────
+# Navigate to Order Management and show all orders so B-1 card is visible
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+- tapOn:
+    id: "tab-status-all"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap B-1's card directly via per-table testID
+- extendedWaitUntil:
+    visible:
+      id: "order-card-b-1"
+    timeout: 10000
+- tapOn:
+    id: "order-card-b-1"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_20_step2_order_details"
+
+# OrderDetails → Process Payment → BillScreen
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+# BillScreen → Pay Full Bill → PaymentProcessingScreen
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 10000
+- tapOn:
+    id: "btn-pay-full"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_20_step2_payment_screen"
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+
+- takeScreenshot: "qa_20_step3_payment_screen"
+
+# ── Select Card Payment ───────────────────────────────────────────────────────
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-card"
+    timeout: 8000
+- tapOn:
+    id: "btn-pay-method-card"
+- waitForAnimationToEnd
+
+# ── TRXPaymentModal opens ─────────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-close"
+    timeout: 10000
+
+- takeScreenshot: "qa_20_step4_trx_modal_opened"
+
+# QA: TRX modal is open
+- assertVisible:
+    id: "btn-trx-close"
+
+# Wait for terminal to connect (reconnect if needed)
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 20000
+
+- takeScreenshot: "qa_20_step5_trx_ready_to_charge"
+
+# QA: Charge button enabled — terminal is connected
+- assertVisible:
+    id: "btn-trx-charge"
+
+# ── Charge ────────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+
+# TRX payment may take up to 30s (card reader + terminal comms)
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 30000
+
+- takeScreenshot: "qa_20_step6_payment_confirmed"
+
+# ── Complete ──────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+# QA: Order is PAID
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-paid"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 8000
+
+- takeScreenshot: "qa_20_PASS_card_payment_complete"

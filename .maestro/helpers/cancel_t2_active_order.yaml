@@ -1,0 +1,34 @@
+appId: com.ajinkya123.POSReactNativeApp
+---
+# Helper: Cancel any active order for Table T-2 (t-002) before POS tests.
+# Strategy: first filter to "Active" orders so cancelled T-2 orders don't trigger.
+# Assumes: currently on Order Management screen.
+
+# Filter to Active orders only
+- tapOn:
+    id: "tab-status-active"
+- waitForAnimationToEnd
+
+# Only run cancel flow if an active T-2 order is present
+- runFlow:
+    when:
+      visible: "Table t-002"
+    commands:
+      - tapOn:
+          text: "Table t-002"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "btn-cancel-order"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "input-cancel-reason"
+      - inputText: "QA test cleanup"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "btn-confirm-cancel-order"
+      - waitForAnimationToEnd
+
+# Reset filter back to All Orders
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd

@@ -1,0 +1,154 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 22: POS New Order — TableSelectionModal with Area Tabs (Feature 4)"
+tags:
+  - qa
+  - pos
+  - table-selection
+  - feature
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 22 — POS Area-Filtered Table Selection (Feature 4)
+#  Uses ONLY testIDs and text — no coordinate taps.
+#
+#  What is tested:
+#    ✓ "New Order" in Order Management opens TableSelectionModal
+#    ✓ TableSelectionModal shows area tabs (not old flat grid)
+#    ✓ "All" area tab is visible and tappable
+#    ✓ Area tab rows show available count badges
+#    ✓ Close button dismisses modal (no crash)
+#    ✓ Selecting a table proceeds to POS screen
+#    ✓ POS screen shows menu categories (modal closed successfully)
+#
+#  Flow (portrait mode):
+#    Order Management → New Order
+#    → TableSelectionModal opens with area tab strip
+#    → Verify All tab + area tabs visible
+#    → Tap All tab → tables shown
+#    → Close modal → back to Order Management
+#    → New Order again → tap B-1 → POS screen loads
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── Cleanup: cancel any lingering B-1 active order ────────────────────────────
+- runFlow: helpers/cancel_b1_active_order.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- takeScreenshot: "qa_22_step1_order_management"
+
+# ── Open New Order → TableSelectionModal ──────────────────────────────────────
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+# Verify TableSelectionModal (not old custom flat grid)
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-modal-close"
+    timeout: 10000
+
+- assertVisible:
+    id: "btn-table-modal-close"
+
+- takeScreenshot: "qa_22_step2_table_selection_modal_open"
+
+# QA: Area tab strip is rendered — "All" tab is visible
+- assertVisible:
+    id: "btn-area-tab-all"
+
+- takeScreenshot: "qa_22_step3_area_tabs_visible"
+
+# ── Tap All tab and verify tables grid shows ───────────────────────────────────
+- tapOn:
+    id: "btn-area-tab-all"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_22_step4_all_tables_shown"
+
+# ── Close modal ────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-table-modal-close"
+- waitForAnimationToEnd
+
+# Confirm modal closed — should be back on Order Management
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- assertVisible:
+    id: "btn-new-order"
+
+- takeScreenshot: "qa_22_step5_modal_closed"
+
+# ── Re-open modal and select table B-1 ────────────────────────────────────────
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-modal-close"
+    timeout: 10000
+
+# Select B-1 table (always available after cancel helper)
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 8000
+
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle "Existing Order Found" alert if it appears
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# POS screen should load with category chips
+- extendedWaitUntil:
+    visible:
+      id: "tab-category-chip-all"
+    timeout: 12000
+
+- assertVisible:
+    id: "tab-category-chip-all"
+
+- takeScreenshot: "qa_22_step6_pos_screen_loaded"
+
+# QA: Modal successfully selected table and POS screen is active
+# (This confirms the entire area tab → table select → POS flow works end-to-end)
+
+# ── Cleanup: go back without creating order ────────────────────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- runFlow: helpers/cancel_b1_active_order.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- takeScreenshot: "qa_22_PASS_pos_area_table_select_complete"

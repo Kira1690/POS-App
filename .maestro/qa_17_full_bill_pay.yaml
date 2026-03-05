@@ -1,0 +1,142 @@
+appId: host.exp.exponent
+name: "QA 17: Full Bill Pay — Via BillScreen Pay Full"
+tags:
+  - qa
+  - payment
+  - cash
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 17 — Pay Full Bill via BillScreen
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Different from qa_08: Goes through BillScreen first
+#  (which allows tip selection) then pays full amount.
+#
+#  Flow:
+#    Create B-1 → SERVED
+#    → OrderDetails → Process Payment → BillScreen
+#    → Select 15% tip → Pay Full
+#    → PaymentProcessingScreen → Cash Payment
+#    → CashPaymentModal → quick amount → Confirm
+#    → PaymentConfirmation → Continue → Order PAID
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_17_step1_b1_served"
+
+# ── View order → Process Payment ─────────────────────────────────────────────
+- tapOn:
+    id: "tab-payment-pending"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 10000
+
+- takeScreenshot: "qa_17_step2_bill_screen"
+
+# ── Select 15% tip ────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-tip-15"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_17_step3_tip_selected"
+
+# ── Pay Full ──────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-pay-full"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+
+- takeScreenshot: "qa_17_step4_payment_screen"
+
+# Select Cash Payment
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 8000
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-confirm"
+    timeout: 8000
+
+- takeScreenshot: "qa_17_step5_cash_modal"
+
+# Quick amount (order $20.89, tip not passed to payment screen → $25 covers it)
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-25"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-25"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+
+- takeScreenshot: "qa_17_step6_payment_confirmed"
+
+# ── Complete ──────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+# btn-continue navigates to Dashboard — tap Orders tab to go to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-paid"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 8000
+
+- takeScreenshot: "qa_17_PASS_full_bill_with_tip_complete"

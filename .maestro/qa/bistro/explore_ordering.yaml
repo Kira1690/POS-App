@@ -1,0 +1,65 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Explore Ordering & Tables Screens"
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# Login
+- tapOn:
+    text: ".*Manager Login.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "email-input"
+- inputText: "admin@blueplatebistro.io"
+- tapOn:
+    id: "password-input"
+- inputText: "BluePlate2026!"
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "order_01_after_login"
+
+# Tap "+ New Order"
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_02_new_order_screen"
+
+# Dump UI to understand the new order screen
+- waitForAnimationToEnd
+- takeScreenshot: "order_03_ordering_ui"
+
+# Try to go back and explore Dashboard tab
+- back
+- waitForAnimationToEnd
+- tapOn:
+    text: "Dashboard"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_04_dashboard_tab"
+
+# Look for Tables in Dashboard sidebar
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_05_tables_view"
+
+# Look for Overview in sidebar
+- tapOn:
+    text: "Overview"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_06_overview"
+
+# Check Settings tab
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "order_07_settings"

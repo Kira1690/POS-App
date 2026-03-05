@@ -96,7 +96,20 @@ CREATE TABLE IF NOT EXISTS terminal_history (
   notes TEXT
 );
 
--- Table 4: refunds
+-- Table 4: terminal_settings (selected terminal, persisted across reloads)
+CREATE TABLE IF NOT EXISTS terminal_settings (
+  id INTEGER PRIMARY KEY,
+  ip TEXT NOT NULL,
+  port INTEGER NOT NULL DEFAULT 1180,
+  name TEXT,
+  is_selected INTEGER NOT NULL DEFAULT 1,
+  connected_at TEXT,
+  last_ping_success TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Table 5: refunds
 CREATE TABLE IF NOT EXISTS refunds (
   id TEXT PRIMARY KEY,
   created_at TEXT NOT NULL,

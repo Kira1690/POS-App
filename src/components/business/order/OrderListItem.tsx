@@ -15,7 +15,7 @@ import { formatTimeAgo, formatTime } from '@/utils/date';
 import {
   AnyOrder,
   getOrderNumber,
-  getTableId,
+  getTableName,
   getCreatedAt,
   getOrderTotals,
   getSpecialInstructions,
@@ -31,6 +31,8 @@ interface OrderListItemProps {
   onProcessPayment?: (order: AnyOrder) => void;
   showActions?: boolean;
   style?: any;
+  /** Reduce padding 25% on phones */
+  compact?: boolean;
 }
 
 const OrderListItem: React.FC<OrderListItemProps> = ({
@@ -42,6 +44,7 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
   onProcessPayment,
   showActions = true,
   style,
+  compact = false,
 }) => {
   const { theme, isDark } = useTheme();
 
@@ -64,7 +67,7 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
 
   // Get order properties
   const orderNumber = getOrderNumber(order);
-  const tableId = getTableId(order);
+  const tableId = getTableName(order);
   const createdAt = getCreatedAt(order);
   const totals = getOrderTotals(order);
   const specialInstructions = getSpecialInstructions(order);
@@ -133,7 +136,7 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
     },
     // Content area
     content: {
-      padding: theme.spacing.md,
+      padding: compact ? theme.spacing.sm : theme.spacing.md,
     },
     // Header row with order info and badge
     headerRow: {
@@ -266,11 +269,15 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
     },
   });
 
+  // Per-table testID: "B-1" → "order-card-b-1" (used by Maestro to target specific orders)
+  const tableSlug = tableId ? tableId.toLowerCase().replace(/[^a-z0-9-]/g, '-') : undefined;
+
   return (
     <TouchableOpacity
       style={[styles.container, style]}
       onPress={handlePress}
       activeOpacity={0.8}
+      testID={tableSlug ? `order-card-${tableSlug}` : undefined}
     >
       {/* Status Banner - Consistent with KitchenOrderCard */}
       <View style={styles.statusBanner}>
@@ -344,6 +351,7 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
             <TouchableOpacity
               style={[styles.actionButton, styles.actionButtonSecondary]}
               onPress={() => onViewDetails && onViewDetails(order)}
+              testID="btn-order-view"
             >
               <MaterialIcons name="visibility" size={16} color={theme.colors.onPrimaryContainer} />
               <Text style={[styles.actionText, { color: theme.colors.onPrimaryContainer }]}>View</Text>
@@ -356,6 +364,7 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
               <TouchableOpacity
                 style={[styles.actionButton, styles.actionButtonPrimary]}
                 onPress={() => onProcessPayment(order)}
+                testID="btn-order-pay"
               >
                 <MaterialIcons name="payment" size={16} color={theme.colors.onPrimary} />
                 <Text style={[styles.actionText, { color: theme.colors.onPrimary }]}>Pay</Text>

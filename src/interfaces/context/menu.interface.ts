@@ -57,6 +57,7 @@ export type MenuEventType =
   | 'COMBO_TOGGLED'
   | 'NUTRITIONAL_INFO_UPDATED'
   | 'MENU_REFRESHED'
+  | 'MENU_SYNC_COMPLETE'
   | 'BULK_UPDATE';
 
 export interface MenuEventPayload {

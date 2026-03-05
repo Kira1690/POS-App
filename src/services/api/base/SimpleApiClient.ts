@@ -77,6 +77,9 @@ export class SimpleApiClient implements IBaseApiClient {
   }
 
   private handleError(error: any): void {
+    // Skip toasts for silent/background requests (e.g. sync engine calls)
+    if ((error.config as any)?.silent) return;
+
     const status = error.response?.status;
     const data = error.response?.data;
 
