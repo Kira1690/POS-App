@@ -1,0 +1,109 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 26: Printer Settings Panel"
+tags:
+  - qa
+  - settings
+  - printer
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 26 — Printer Settings Panel
+#  Tests printer settings UI (no real printer in emulator).
+#
+#  Flow:
+#    Settings → Printer Management
+#    → Enable receipt printer → Enter IP + port
+#    → Select 80mm paper → Save
+#    → Navigate away + back → Verify persistence
+#
+#  testIDs:
+#    settings-nav-printer_management  — sidebar nav item
+#    toggle-receipt-printer           — enable toggle
+#    input-receipt-ip                 — IP address input
+#    input-receipt-port               — port input
+#    chip-paper-80                    — 80mm paper chip
+#    btn-save-printer-settings        — save button
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── STEP 1: Navigate to Settings ──────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-nav-restaurant_profile"
+    timeout: 10000
+
+- takeScreenshot: "qa_26_step1_settings_screen"
+
+# ── STEP 2: Navigate to Printer Management (tapOn auto-scrolls sidebar) ───────
+- tapOn:
+    id: "settings-nav-printer_management"
+- extendedWaitUntil:
+    visible:
+      id: "toggle-receipt-printer"
+    timeout: 10000
+
+- takeScreenshot: "qa_26_step2_printer_panel"
+
+# ── STEP 3: Enable receipt printer ────────────────────────────────────────────
+- tapOn:
+    id: "toggle-receipt-printer"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_26_step3_receipt_enabled"
+
+# ── STEP 4: Enter IP address ───────────────────────────────────────────────────
+- tapOn:
+    id: "input-receipt-ip"
+- eraseText: 50
+- inputText: "192.168.1.105"
+- hideKeyboard
+- waitForAnimationToEnd
+
+# ── STEP 5: Enter port ────────────────────────────────────────────────────────
+- tapOn:
+    id: "input-receipt-port"
+- eraseText: 50
+- inputText: "9100"
+- hideKeyboard
+- waitForAnimationToEnd
+
+# ── STEP 6: Select 80mm paper ─────────────────────────────────────────────────
+- tapOn:
+    id: "chip-paper-80"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_26_step4_settings_configured"
+
+# ── STEP 7: Save settings ─────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-save-printer-settings"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_26_step5_settings_saved"
+
+# ── STEP 8: Navigate away and back to verify persistence ──────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-nav-settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-nav-restaurant_profile"
+    timeout: 10000
+- tapOn:
+    id: "settings-nav-printer_management"
+- extendedWaitUntil:
+    visible:
+      id: "input-receipt-ip"
+    timeout: 10000
+
+# QA: IP should still show 192.168.1.105 after reload
+- assertVisible:
+    text: "192.168.1.105"
+
+- takeScreenshot: "qa_26_PASS_printer_settings_persisted"

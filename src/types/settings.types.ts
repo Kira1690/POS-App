@@ -315,6 +315,8 @@ export type SettingsCategory =
   | 'trx_payment'
   | 'table_management'
   | 'menu_management'
+  | 'kitchen_management'
+  | 'printer_management'
   | 'integrations'
   | 'security_backup'
   | 'system_logs'

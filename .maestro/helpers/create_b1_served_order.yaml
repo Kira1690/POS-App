@@ -1,0 +1,173 @@
+appId: com.ajinkya123.POSReactNativeApp
+---
+# Helper: Ensure a B-1 order in SERVED/UNPAID state is available.
+# If a SERVED B-1 order already exists — uses it directly (no new order created).
+# If B-1 is active (PENDING/CONFIRMED/PREPARING/READY) — cancels it and creates a new one.
+# Uses ONLY testIDs — no coordinate taps.
+#
+# Flow:
+#   1. Clear stale kitchen tickets (advance all to SERVED)
+#   2. Cancel any existing active (non-SERVED) B-1 orders
+#   3. Attempt to create new B-1 order; if "GO BACK" alert (SERVED exists), use that order
+#   4. If new order created: add items → Kitchen → Start → Ready → Served
+#
+# Returns: Order Management with B-1 order in SERVED/UNPAID state.
+
+# ── 1. Go to Kitchen, clear all stale tickets ─────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-kitchen"
+    timeout: 10000
+- runFlow: clear_all_kitchen_tickets.yaml
+
+# ── 2. Cancel any existing active (non-SERVED) B-1 orders ─────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+- runFlow: cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# ── 3. Create new B-1 POS order ───────────────────────────────────────────────
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Case A: existing active order → cancel and replace
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Case B: existing SERVED order (can't cancel) → go back and use it directly
+- runFlow:
+    when:
+      visible:
+        text: "GO BACK"
+    commands:
+      - tapOn:
+          text: "GO BACK"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "tab-nav-orders"
+      - extendedWaitUntil:
+          visible:
+            id: "btn-new-order"
+          timeout: 10000
+
+# ── 4. Add items + send to kitchen (ONLY if we're still on the POS screen) ────
+# If "GO BACK" was tapped above, we're back on Order Management and this block is
+# skipped — the existing SERVED order is used as-is.
+- runFlow:
+    when:
+      visible:
+        id: "tab-category-chip-all"
+    commands:
+      - tapOn:
+          id: "tab-category-chip-all"
+          optional: true
+      - waitForAnimationToEnd
+
+      # Item 1: Beef Burger
+      - extendedWaitUntil:
+          visible:
+            text: "Beef Burger"
+          timeout: 8000
+      - tapOn:
+          text: "Beef Burger"
+      - waitForAnimationToEnd
+
+      # Handle Protein modifier if assigned
+      - runFlow:
+          when:
+            visible:
+              id: "btn-modifier-confirm"
+          commands:
+            - tapOn:
+                text: "Extra"
+                optional: true
+            - tapOn:
+                id: "btn-modifier-confirm"
+            - waitForAnimationToEnd
+
+      - extendedWaitUntil:
+          visible:
+            id: "btn-cart-send-to-kitchen"
+          timeout: 8000
+
+      # Item 2: Garlic Bread (no modifier)
+      - tapOn:
+          text: "Garlic Bread"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "btn-cart-send-to-kitchen"
+          timeout: 8000
+
+      # Send to Kitchen
+      - tapOn:
+          id: "btn-cart-send-to-kitchen"
+      - waitForAnimationToEnd
+
+      # Wait for Order Management to return
+      - extendedWaitUntil:
+          visible:
+            id: "btn-new-order"
+          timeout: 15000
+
+      # Wait for CONFIRMED status tab to appear
+      - extendedWaitUntil:
+          visible:
+            id: "tab-status-confirmed"
+          timeout: 15000
+
+      # ── Kitchen: CONFIRMED → PREPARING → READY → SERVED ───────────────────
+      - tapOn:
+          id: "tab-nav-kitchen"
+      - waitForAnimationToEnd
+
+      # Wait for at least 1 ticket
+      - extendedWaitUntil:
+          visible:
+            id: "btn-kitchen-action-start"
+          timeout: 15000
+
+      # Process ALL tickets across all stations
+      - runFlow: clear_all_kitchen_tickets.yaml
+
+      # Return to Order Management
+      - tapOn:
+          id: "tab-nav-orders"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "btn-new-order"
+          timeout: 10000

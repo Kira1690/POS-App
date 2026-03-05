@@ -280,7 +280,7 @@ export default function TRXSettingsPanel({ onChangesDetected }: TRXSettingsPanel
         </View>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => setShowTerminalScreen(true)}>
+      <TouchableOpacity style={styles.button} onPress={() => setShowTerminalScreen(true)} testID="btn-trx-manage-terminals">
         <Icon name="lan-connect" size={20} color={theme.colors.onPrimary} accessibilityLabel="Manage terminals" />
         <Text style={styles.buttonText}>Manage Terminals</Text>
       </TouchableOpacity>

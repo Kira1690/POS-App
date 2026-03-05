@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { AppleCard } from '../primitives/AppleCard';
 import { borderRadius, spacing } from '@/design-system/theme/spacing';
 import { AppleTopTabNavigation, AppleTopTabItem } from './AppleTopTabNavigation';
@@ -43,7 +44,7 @@ interface AppleContentPanelProps {
   style?: ViewStyle;
 
   // PULL TO REFRESH SYSTEM
-  refreshControl?: React.ReactElement;
+  refreshControl?: React.ReactElement<import('react-native').RefreshControlProps>;
 }
 
 // UNIVERSAL APPLE CONTENT PANEL COMPONENT (Single Responsibility)
@@ -63,11 +64,22 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
   flex = 1,
   height = 'auto',
   style,
+  refreshControl,
 }) => {
   const { theme, isDark } = useTheme();
+  const { isPhone, headingSize, captionSize } = useResponsive();
 
   // APPLE PADDING SYSTEM (optimized for space utilization)
   const getPaddingValue = () => {
+    if (isPhone) {
+      switch (padding) {
+        case 'none': return 0;
+        case 'small': return 4;
+        case 'medium': return 8;
+        case 'large': return 8;
+        default: return 8;
+      }
+    }
     switch (padding) {
       case 'none': return 0;
       case 'small': return spacing.sm; // 8px
@@ -89,8 +101,8 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
       padding: getPaddingValue(),
     },
     header: {
-      marginBottom: spacing.md,
-      paddingBottom: spacing.sm,
+      marginBottom: isPhone ? spacing.xs : spacing.md,
+      paddingBottom: isPhone ? spacing.xs : spacing.sm,
       borderBottomWidth: isDark ? 1 : 0,
       borderBottomColor: isDark ? theme.colors.layer2 : 'transparent',
     },
@@ -98,21 +110,23 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: subtitle ? spacing.sm : 0,
+      marginBottom: subtitle && !isPhone ? spacing.sm : 0,
     },
     title: {
-      fontSize: 24,
+      fontSize: headingSize,
       fontWeight: '600',
       color: theme.colors.onSurface,
     },
     subtitle: {
-      fontSize: 14,
+      fontSize: captionSize + 2,
       color: theme.colors.onSurfaceVariant,
-      lineHeight: 20,
+      lineHeight: captionSize + 8,
     },
     headerActions: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: spacing.sm,
+      marginTop: 0,
     },
     scrollContent: {
       flexGrow: 1,
@@ -128,7 +142,7 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
         <View style={panelStyles.headerTop}>
           <View style={{ flex: 1 }}>
             {title && <Text style={panelStyles.title}>{title}</Text>}
-            {subtitle && <Text style={panelStyles.subtitle}>{subtitle}</Text>}
+            {subtitle && !isPhone && <Text style={panelStyles.subtitle}>{subtitle}</Text>}
           </View>
 
           {headerActions && (
@@ -159,6 +173,7 @@ export const AppleContentPanel: React.FC<AppleContentPanelProps> = ({
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={panelStyles.scrollContent}
+          refreshControl={refreshControl}
         >
           {children}
         </ScrollView>

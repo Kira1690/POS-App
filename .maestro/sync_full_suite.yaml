@@ -1,0 +1,25 @@
+appId: host.exp.exponent
+name: "[SYNC] Full Sync Test Suite"
+---
+
+# Full sync integration test suite.
+# Runs all sync tests sequentially.
+#
+# Prerequisites:
+#   - All backend services running
+#   - Android emulator running with POS-App installed
+#   - EXPO_PUBLIC_API_URL=http://10.0.2.2:8080
+#   - EXPO_PUBLIC_WS_URL=ws://10.0.2.2:5005
+
+# Phase 1 — Menu Pull Sync
+- runFlow: sync_01_menu_pull.yaml
+
+# Phase 2 — Order Push Sync
+- runFlow: sync_02_order_push.yaml
+
+# Phase 6 — WebSocket Real-time (existing files)
+- runFlow: sync_03_menu_ws.yaml
+- runFlow: sync_04_table_ws.yaml
+
+# Phase 7 — Offline Resume (existing file)
+- runFlow: sync_05_offline_resume.yaml

@@ -38,12 +38,12 @@ name: "Helper: Fresh Login (after pm clear)"
 - tapOn:
     id: "email-input"
 
-- inputText: "manager@foodcorner.com"
+- inputText: "testadmin@foodcorner.com"
 
 - tapOn:
     id: "password-input"
 
-- inputText: "manager123"
+- inputText: "TestAdmin123!"
 
 - hideKeyboard
 

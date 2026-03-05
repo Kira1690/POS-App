@@ -401,6 +401,20 @@ class TableStorageService {
     const data = await this.getTableData(restaurantId);
 
     if (data && data.tables.length > 0) {
+      // Tables exist but areas might be missing (backend sync doesn't always include areas)
+      if (data.areas.length === 0) {
+        const areas: StoredArea[] = MOCK_AREAS.map((mockArea) => ({
+          id: mockArea.id,
+          name: mockArea.name,
+          description: mockArea.description,
+          icon: mockArea.icon,
+          isActive: mockArea.isActive,
+          color: mockArea.color,
+        }));
+        await this.saveAreas(areas);
+        data.areas = areas;
+        console.log(`[TableStorageService] Seeded ${areas.length} missing areas`);
+      }
       if (__DEV__) {
         console.log(`[TableStorageService] Loaded ${data.tables.length} tables, ${data.areas.length} areas`);
       }
@@ -442,7 +456,7 @@ class TableStorageService {
       table_number: mockTable.number,
       capacity: mockTable.capacity,
       status: mockTable.status as TableStatus,
-      section: mockTable.area,
+      section: mockTable.areaId,
       position_x: mockTable.positionX || 0,
       position_y: mockTable.positionY || 0,
       shape: mockTable.shape,

@@ -88,6 +88,12 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [tipPercentage, setTipPercentage] = useState<number>(18);
 
+  // Split-card sequencing: when SplitPaymentModal includes card entries, we must run
+  // TRXPaymentModal for each card split before finalising the overall split payment.
+  const [trxModalAmount, setTrxModalAmount] = useState<number | null>(null);
+  const [pendingCardQueue, setPendingCardQueue] = useState<Array<{ id: string; amount: number }>>([]);
+  const [pendingAllSplits, setPendingAllSplits] = useState<any[] | null>(null);
+
   // Get order from route params
   const order = route?.params?.order;
   const orderId = route?.params?.orderId || order?.id;
@@ -127,7 +133,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
     }
 
     const subtotal = order.subtotal || 0;
-    const tax = order.tax_amount || 0;
+    const tax = order.taxAmount || 0;
     const tip = tipAmount;
     const total = subtotal + tax + tip;
 
@@ -226,36 +232,58 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
     }
   }, [order, orderId, totals.total, tipAmount, tipPercentage, processCashPayment, navigation]);
 
-  // Handle split payment
-  const handleSplitPayment = useCallback(async (splitPayments: any[]) => {
+  // Execute full split payment after all card TRX steps are done (or immediately when no cards)
+  const executeFullSplitPayment = useCallback(async (allSplits: any[]) => {
     if (!order) return;
-
     try {
       const request: ProcessPaymentRequest = {
         orderId: orderId,
         amount: totals.total,
         method: ProfessionalPaymentMethod.SPLIT,
-        splitPayments,
+        splitPayments: allSplits,
         tipAmount: tipAmount,
         tipPercentage: tipPercentage,
         printReceipt: true,
       };
-
       const payment = await processSplitPayment(request);
-
-      closeSplitPaymentModal();
-
-      // Navigate to payment confirmation
       navigation.replace('PaymentConfirmation', {
         payment,
         order,
         orderId,
         splitPayment,
       });
-    } catch (error) {
-      console.error('Split payment failed:', error);
+    } catch (err) {
+      console.error('Split payment failed:', err);
     }
-  }, [order, orderId, totals.total, tipAmount, tipPercentage, processSplitPayment, navigation, closeSplitPaymentModal]);
+  }, [order, orderId, totals.total, tipAmount, tipPercentage, processSplitPayment, navigation, splitPayment]);
+
+  // Handle split payment — if card entries are present, route them through TRX first
+  const handleSplitPayment = useCallback(async (splitItems: any[]) => {
+    if (!order) return;
+
+    closeSplitPaymentModal();
+
+    // Detect card splits (SplitPaymentModal stores method as MethodOption object or raw key)
+    const cardSplits = splitItems.filter(
+      (s) => (s.method?.key ?? s.method) === 'card'
+    );
+
+    if (cardSplits.length > 0) {
+      // Store the full split plan; open TRX for the first card split
+      setPendingAllSplits(splitItems);
+      const queue = cardSplits.map((s: { id: string; amount: number }) => ({
+        id: s.id,
+        amount: s.amount,
+      }));
+      setPendingCardQueue(queue);
+      setTrxModalAmount(queue[0].amount);
+      setShowTRXModal(true);
+      return;
+    }
+
+    // No card splits — execute directly
+    await executeFullSplitPayment(splitItems);
+  }, [order, closeSplitPaymentModal, executeFullSplitPayment]);
 
   // Handle tip calculation
   const handleTipCalculation = useCallback((percentage: number, amount?: number) => {
@@ -275,6 +303,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
+        testID="btn-payment-back"
       >
         <MaterialIcons name="arrow-back" size={24} color={theme.colors.onSurface} />
       </TouchableOpacity>
@@ -286,7 +315,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         <Text style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
           {splitPayment
             ? `${splitPayment.guestName} — ${formatCurrency(splitPayment.amount)}`
-            : `${order?.tableId ? `Table ${order.tableId}` : 'Takeaway'} - Order #${order?.orderNumber}`}
+            : `${order?.tableId ? `Table ${order.tableId}` : 'Takeaway'} - Order #${order?.orderNumber ?? order?.id?.slice(-6) ?? 'N/A'}`}
         </Text>
       </View>
     </View>
@@ -305,6 +334,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: theme.colors.error }]}
           onPress={clearError}
+          testID="btn-dismiss-payment-error"
         >
           <Text style={[styles.retryButtonText, { color: theme.colors.onError }]}>
             Dismiss
@@ -321,6 +351,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         style={[styles.actionButton, styles.cancelButton, { borderColor: theme.colors.outline }]}
         onPress={() => navigation.goBack()}
         disabled={isLoading}
+        testID="btn-cancel-payment"
       >
         <MaterialIcons name="cancel" size={20} color={theme.colors.onSurfaceVariant} />
         <Text style={[styles.actionButtonText, { color: theme.colors.onSurfaceVariant }]}>
@@ -338,6 +369,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
           });
         }}
         disabled={isLoading}
+        testID="btn-print-receipt-payment"
       >
         <MaterialIcons name="print" size={20} color={theme.colors.onSecondaryContainer} />
         <Text style={[styles.actionButtonText, { color: theme.colors.onSecondaryContainer }]}>
@@ -416,9 +448,30 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
       
       <TRXPaymentModal
         visible={showTRXModal}
-        totalAmount={totals.total}
+        totalAmount={trxModalAmount ?? totals.total}
         onPayment={(result) => {
           setShowTRXModal(false);
+          setTrxModalAmount(null);
+
+          if (pendingAllSplits !== null) {
+            // Split-card sequencing: advance the queue
+            const remaining = pendingCardQueue.slice(1);
+            if (remaining.length > 0) {
+              // More card splits to process via TRX
+              setPendingCardQueue(remaining);
+              setTrxModalAmount(remaining[0].amount);
+              setShowTRXModal(true);
+            } else {
+              // All card splits done — finalise the full split payment
+              const allSplits = pendingAllSplits;
+              setPendingCardQueue([]);
+              setPendingAllSplits(null);
+              executeFullSplitPayment(allSplits);
+            }
+            return;
+          }
+
+          // Direct card payment (original flow)
           navigation.replace('PaymentConfirmation', {
             payment: result,
             order,
@@ -426,7 +479,15 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
             splitPayment,
           });
         }}
-        onCancel={() => setShowTRXModal(false)}
+        onCancel={() => {
+          setShowTRXModal(false);
+          setTrxModalAmount(null);
+          // If cancelled mid-split-card, abort the whole split sequence
+          if (pendingAllSplits !== null) {
+            setPendingCardQueue([]);
+            setPendingAllSplits(null);
+          }
+        }}
       />
     </SafeAreaView>
   );

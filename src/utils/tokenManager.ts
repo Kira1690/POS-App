@@ -231,9 +231,11 @@ export class TokenManager {
    * Following Single Responsibility Principle
    */
   private isTokenExpired(expiresAt: number): boolean {
+    // Normalize: if expiresAt looks like seconds (< year 2100 in ms), convert to ms
+    const expiresAtMs = expiresAt < 1e12 ? expiresAt * 1000 : expiresAt;
     // Add 5 minute buffer to refresh before actual expiry
     const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
-    return Date.now() > (expiresAt - bufferTime);
+    return Date.now() > (expiresAtMs - bufferTime);
   }
 
   /**
@@ -278,7 +280,9 @@ export class TokenManager {
     if (!expiryTime) {
       return null;
     }
-    return Math.max(0, expiryTime - Date.now());
+    // Normalize seconds to milliseconds
+    const expiryMs = expiryTime < 1e12 ? expiryTime * 1000 : expiryTime;
+    return Math.max(0, expiryMs - Date.now());
   }
 
   /**

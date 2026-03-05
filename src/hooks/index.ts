@@ -21,3 +21,5 @@ export * from './context';
 // Core hooks
 export { useTheme } from './useTheme';
 export { useMenu } from './useMenu';
+export { useResponsive } from './useResponsive';
+export type { ResponsiveValues, DeviceClass } from './useResponsive';

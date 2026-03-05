@@ -12,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -53,6 +54,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
   isEditing = false,
 }) => {
   const { theme } = useTheme();
+  const { height: windowHeight } = useWindowDimensions();
 
   // Internal state tracks selections per group using simpler InternalSelection type
   const [selectedOptions, setSelectedOptions] = useState<Map<string, InternalSelection[]>>(
@@ -85,7 +87,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
         item.modifier_groups.forEach((group) => {
           if (!group.options) return; // Skip if options is undefined
           const defaults = group.options
-            .filter((opt) => opt.is_default && opt.is_available)
+            .filter((opt) => opt.is_default && opt.is_available !== false)
             .map((opt): InternalSelection => ({
               optionId: opt.id,
               optionName: opt.name,
@@ -114,8 +116,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
     container: {
       width: '90%',
       maxWidth: 600,
-      minHeight: 400,
-      maxHeight: '90%',
+      height: windowHeight * 0.82,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.lg,
       overflow: 'hidden',
@@ -317,7 +318,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
 
   const handleSelectOption = useCallback(
     (group: ModifierGroup, option: ModifierOption) => {
-      if (!option.is_available) return;
+      if (option.is_available === false) return;
 
       setSelectedOptions((prev) => {
         const newMap = new Map(prev);
@@ -457,7 +458,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} testID="btn-modifier-modal-close">
               <MaterialCommunityIcons
                 name="close"
                 size={24}
@@ -484,16 +485,18 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
                 <View style={styles.optionsContainer}>
                   {(group.options || []).map((option) => {
                     const isSelected = isOptionSelected(group.id, option.id);
+                    const isAvailable = option.is_available !== false; // default true if undefined
                     return (
                       <TouchableOpacity
                         key={option.id}
                         style={[
                           styles.optionRow,
                           isSelected && styles.optionRowSelected,
-                          !option.is_available && styles.optionRowUnavailable,
+                          !isAvailable && styles.optionRowUnavailable,
                         ]}
                         onPress={() => handleSelectOption(group, option)}
-                        disabled={!option.is_available}
+                        disabled={!isAvailable}
+                        testID={`btn-modifier-option-${option.id}`}
                       >
                         <View
                           style={[
@@ -539,6 +542,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
                 value={notes}
                 onChangeText={setNotes}
                 multiline
+                testID="input-modifier-notes"
               />
             </View>
 
@@ -560,6 +564,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+                  testID="btn-modifier-qty-decrease"
                 >
                   <MaterialCommunityIcons
                     name="minus"
@@ -571,6 +576,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={() => setQuantity((q) => q + 1)}
+                  testID="btn-modifier-qty-increase"
                 >
                   <MaterialCommunityIcons
                     name="plus"
@@ -590,6 +596,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
               style={[styles.confirmButton, !isValid && styles.confirmButtonDisabled]}
               onPress={handleConfirm}
               disabled={!isValid}
+              testID="btn-modifier-confirm"
             >
               <MaterialCommunityIcons
                 name={isEditing ? 'cart-check' : 'cart-plus'}

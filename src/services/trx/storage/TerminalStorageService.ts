@@ -1,11 +1,20 @@
 /**
- * TerminalStorageService.ts - SQLite-based terminal history storage for TRX
+ * TerminalStorageService.ts - SQLite-based terminal history and selected terminal storage for TRX
  */
 
 import { StorageResult } from './interfaces/ISQLiteStorage';
 import { SQLiteStorageService } from './SQLiteStorageService';
 import { LoggingService } from '../logging/LoggingService';
 import { TerminalHistoryRecord, TerminalStatistics } from '@/types/trx/storage/TerminalStorage';
+
+export interface StoredTerminal {
+  ip: string;
+  port: number;
+  name?: string;
+  connectedAt: string;
+  lastPingSuccess: string;
+  isSelected: boolean;
+}
 
 export class TerminalStorageService {
   private static instance: TerminalStorageService;
@@ -129,6 +138,59 @@ export class TerminalStorageService {
       return { success: result.success, error: result.error };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
+  }
+
+  // ── Selected terminal (SQLite) ──────────────────────────────────────────────
+
+  public async saveSelectedTerminal(terminal: StoredTerminal): Promise<boolean> {
+    try {
+      await this.storage.execute('DELETE FROM terminal_settings');
+      await this.storage.execute(
+        `INSERT INTO terminal_settings (ip, port, name, is_selected, connected_at, last_ping_success, updated_at)
+         VALUES (?, ?, ?, 1, ?, ?, datetime('now'))`,
+        [terminal.ip, terminal.port, terminal.name ?? null, terminal.connectedAt, terminal.lastPingSuccess]
+      );
+      this.logger.debug(`Selected terminal saved: ${terminal.ip}:${terminal.port}`, 'TerminalStorageService.saveSelectedTerminal');
+      return true;
+    } catch (error) {
+      this.logger.error('Failed to save selected terminal', error instanceof Error ? error : new Error(String(error)), 'TerminalStorageService.saveSelectedTerminal');
+      return false;
+    }
+  }
+
+  public async getSelectedTerminal(): Promise<StoredTerminal | null> {
+    try {
+      const result = await this.storage.queryOne<{
+        ip: string; port: number; name?: string;
+        connected_at?: string; last_ping_success?: string;
+      }>('SELECT * FROM terminal_settings WHERE is_selected = 1 LIMIT 1');
+
+      if (!result.success || !result.data) return null;
+
+      const row = result.data;
+      return {
+        ip: row.ip,
+        port: row.port,
+        name: row.name,
+        connectedAt: row.connected_at ?? new Date().toISOString(),
+        lastPingSuccess: row.last_ping_success ?? new Date().toISOString(),
+        isSelected: true,
+      };
+    } catch (error) {
+      this.logger.error('Failed to get selected terminal', error instanceof Error ? error : new Error(String(error)), 'TerminalStorageService.getSelectedTerminal');
+      return null;
+    }
+  }
+
+  public async clearSelectedTerminal(): Promise<boolean> {
+    try {
+      await this.storage.execute('DELETE FROM terminal_settings');
+      this.logger.info('Selected terminal cleared', 'TerminalStorageService.clearSelectedTerminal');
+      return true;
+    } catch (error) {
+      this.logger.error('Failed to clear selected terminal', error instanceof Error ? error : new Error(String(error)), 'TerminalStorageService.clearSelectedTerminal');
+      return false;
     }
   }
 }

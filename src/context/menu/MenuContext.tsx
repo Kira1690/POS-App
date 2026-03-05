@@ -369,6 +369,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
     try {
       // First try to load from local storage
       if (useLocalStorage) {
+        await menuStorageService.initialize(restaurantId); // ensure DB ready first
         const storedData = await menuStorageService.getMenuData(restaurantId);
         if (storedData && (storedData.categories.length > 0 || storedData.menuItems.length > 0)) {
           // Convert stored items to base menu items
@@ -488,6 +489,9 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       dispatch({ type: 'SET_LOADING', payload: false });
       emitEvent('MENU_REFRESHED', {});
     } catch (error) {
+      if (__DEV__) {
+        console.error('[MenuContext] refreshMenu failed:', error);
+      }
       dispatch({
         type: 'SET_ERROR',
         payload: error instanceof Error ? error.message : 'Failed to load menu',
@@ -501,8 +505,20 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
     refreshMenu();
   }, [refreshMenu]);
 
+  // ============== SYNC COMPLETE LISTENER ==============
+  // Re-read from SQLite when PullSyncService writes new data
+  useEffect(() => {
+    const unsubscribe = menuEventEmitter.subscribe((event) => {
+      if (event.type === 'MENU_SYNC_COMPLETE') {
+        refreshMenu();
+      }
+    });
+    return unsubscribe;
+  }, [refreshMenu]);
+
   // ============== AUTO-PERSIST ON STATE CHANGE ==============
   // Persist to storage whenever menu data changes (debounced)
+  // Guards against overwriting complete SQLite data with partial in-memory state
   useEffect(() => {
     // Skip initial empty state
     if (state.categoriesWithStats.length === 0 && state.menuItemsExtended.length === 0) {
@@ -510,8 +526,28 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
     }
 
     // Debounce persistence to avoid too many writes
-    const timeoutId = setTimeout(() => {
-      persistToStorage();
+    const timeoutId = setTimeout(async () => {
+      try {
+        const storageInfo = await menuStorageService.getStorageInfo();
+        const memCategories = state.categoriesWithStats.length;
+        const memItems = state.menuItemsExtended.length;
+
+        // Don't overwrite if we'd lose data (partial state from race condition)
+        if (memCategories < storageInfo.categoriesCount || memItems < storageInfo.itemsCount) {
+          if (__DEV__) {
+            console.warn(
+              `[MenuContext] Skipping auto-persist — would lose data. ` +
+              `Memory: ${memCategories} cats, ${memItems} items. ` +
+              `Storage: ${storageInfo.categoriesCount} cats, ${storageInfo.itemsCount} items.`
+            );
+          }
+          return;
+        }
+
+        persistToStorage();
+      } catch {
+        // Storage check failed — skip persist to be safe
+      }
     }, 500);
 
     return () => clearTimeout(timeoutId);
@@ -903,6 +939,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
 
   const deleteModifierGroup = useCallback(
     async (id: string): Promise<void> => {
+      await menuStorageService.deleteModifierGroup(id);
       dispatch({ type: 'REMOVE_MODIFIER_GROUP', payload: id });
       emitEvent('MODIFIER_GROUP_DELETED', { modifierGroupId: id });
     },

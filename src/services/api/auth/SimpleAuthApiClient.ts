@@ -80,12 +80,23 @@ export class SimpleAuthApiClient extends SimpleApiClient implements ITokenProvid
     
     const loginData = response.data.data;
     
+    // Extract expiresAt from JWT if not in response
+    let expiresAt = loginData.expiresAt;
+    if (!expiresAt && loginData.accessToken) {
+      try {
+        const payload = JSON.parse(atob(loginData.accessToken.split('.')[1]));
+        expiresAt = payload.exp || Math.floor(Date.now() / 1000) + 900;
+      } catch {
+        expiresAt = Math.floor(Date.now() / 1000) + 900;
+      }
+    }
+
     // Store tokens
     if (loginData.accessToken && loginData.refreshToken) {
       await this.setTokens(
         loginData.accessToken,
         loginData.refreshToken,
-        loginData.expiresAt
+        expiresAt
       );
     }
     

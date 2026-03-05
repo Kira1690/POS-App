@@ -1,0 +1,181 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Visual Tour — All Screens with Live Data"
+tags:
+  - tour
+---
+
+# ─────────────────────────────────────────────────────
+#  Quick visual tour of all screens.
+#  No modifier dependency — uses simple items only.
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ═══════════════════════════════════════════
+# 1. DASHBOARD
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-dashboard"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "tour_01_dashboard"
+
+# ═══════════════════════════════════════════
+# 2. ORDER MANAGEMENT (empty / existing)
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- takeScreenshot: "tour_02_order_management"
+
+# ═══════════════════════════════════════════
+# 3. CREATE NEW ORDER: T-1 (Spring Rolls + Garlic Bread)
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Select Table"
+    timeout: 10000
+- takeScreenshot: "tour_03_table_selection"
+
+- tapOn:
+    text: "T-1"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Spring Rolls"
+    timeout: 12000
+- takeScreenshot: "tour_04_pos_screen"
+
+# Add Spring Rolls (Starters — no modifier)
+- tapOn:
+    text: "Spring Rolls"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_05_cart_with_item"
+
+# Add Garlic Bread
+- tapOn:
+    text: "Garlic Bread"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "tour_06_cart_two_items"
+
+# ═══════════════════════════════════════════
+# 4. SEND TO KITCHEN
+# ═══════════════════════════════════════════
+- tapOn:
+    text: "Send to Kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "CONFIRMED"
+    timeout: 15000
+- takeScreenshot: "tour_07_order_confirmed"
+
+# ═══════════════════════════════════════════
+# 5. ORDER MANAGEMENT — CONFIRMED ORDER VIEW
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_08_orders_with_order"
+
+# ═══════════════════════════════════════════
+# 6. KITCHEN DISPLAY
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-kitchen"
+    optional: true
+- waitForAnimationToEnd
+
+# Try Kitchen Operations tab
+- runFlow:
+    when:
+      notVisible:
+        text: "Kitchen Display"
+    commands:
+      - tapOn:
+          text: "Kitchen Operations"
+          optional: true
+      - waitForAnimationToEnd
+
+- takeScreenshot: "tour_09_kitchen_display"
+
+# ═══════════════════════════════════════════
+# 7. SETTINGS
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_10_settings_list"
+
+# ═══════════════════════════════════════════
+# 8. MENU MANAGEMENT (shows categories + items)
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "settings-nav-menu_management"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Items"
+    timeout: 10000
+- takeScreenshot: "tour_11_menu_items"
+
+# Switch to Modifiers tab
+- tapOn:
+    id: "tab-menu-modifiers"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "tour_12_menu_modifiers"
+
+# ═══════════════════════════════════════════
+# 9. KITCHEN MANAGEMENT
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+- tapOn:
+    id: "settings-nav-kitchen_management"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "tour_13_kitchen_management"
+
+# ═══════════════════════════════════════════
+# 10. TRX TERMINAL
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+- tapOn:
+    id: "settings-nav-trx_terminal"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "tour_14_trx_terminal"
+
+# ═══════════════════════════════════════════
+# 11. BACK TO ORDER — PAYMENT FLOW
+# ═══════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Mark as Served and trigger payment
+- runFlow:
+    when:
+      visible: "CONFIRMED"
+    commands:
+      - tapOn:
+          text: "CONFIRMED"
+          optional: true
+      - waitForAnimationToEnd
+
+- takeScreenshot: "tour_15_order_detail"
+
+# Go back to order list and pay
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- takeScreenshot: "tour_16_orders_final"

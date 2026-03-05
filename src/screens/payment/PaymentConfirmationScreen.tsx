@@ -15,9 +15,12 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useReceiptManagement } from '@/context/payment';
 import { useUnifiedOrder } from '@/context/unified-order';
 import { paymentStorageService } from '@/services/storage/PaymentStorageService';
+import { epsonPrinterService } from '@/services/printer/EpsonPrinterService';
+import { printerStorageService } from '@/services/storage/PrinterStorageService';
 import { Order } from '@/types/order.types';
 import { ProfessionalPayment, ReceiptType } from '@/types/payment.types';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
@@ -47,6 +50,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   route,
 }) => {
   const { theme } = useTheme();
+  const { isLargeTablet } = useResponsive();
   const {
     generateReceipt,
     printReceipt,
@@ -116,11 +120,29 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
 
   // Handle receipt actions
   const handlePrintReceipt = async () => {
+    // Try Epson network printer first
+    try {
+      const config = await printerStorageService.getConfig();
+      if (config.receipt_printer.enabled && config.receipt_printer.ip_address) {
+        // Build a minimal unified order from the route params for printing
+        const printOrder = order as any;
+        await epsonPrinterService.printReceipt(
+          config.receipt_printer.ip_address,
+          config.receipt_printer.port ?? 9100,
+          printOrder
+        );
+        showToast({ type: 'success', title: 'Printing', message: 'Sent to receipt printer' });
+        return;
+      }
+    } catch {
+      // Fall through to legacy receipt print
+    }
+
     if (!receiptId) {
       showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'No receipt available to print',
+        type: 'info',
+        title: 'Printer Not Configured',
+        message: 'Go to Settings > Printer Management to configure your printer',
       });
       return;
     }
@@ -226,7 +248,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             Order Number
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {order?.orderNumber || orderId}
+            {order?.orderNumber ?? (orderId?.slice(-6) ? `#${orderId.slice(-6)}` : 'N/A')}
           </Text>
         </View>
         
@@ -325,6 +347,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
           style={[styles.receiptButton, { backgroundColor: theme.colors.primaryContainer }]}
           onPress={handlePrintReceipt}
           disabled={isGeneratingReceipt}
+          testID="btn-print-receipt"
         >
           <MaterialIcons name="print" size={24} color={theme.colors.onPrimaryContainer} />
           <Text style={[styles.receiptButtonText, { color: theme.colors.onPrimaryContainer }]}>
@@ -336,6 +359,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
           style={[styles.receiptButton, { backgroundColor: theme.colors.secondaryContainer }]}
           onPress={handleEmailReceipt}
           disabled={isGeneratingReceipt}
+          testID="btn-email-receipt"
         >
           <MaterialIcons name="email" size={24} color={theme.colors.onSecondaryContainer} />
           <Text style={[styles.receiptButtonText, { color: theme.colors.onSecondaryContainer }]}>
@@ -347,6 +371,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
           style={[styles.receiptButton, { backgroundColor: theme.colors.tertiaryContainer }]}
           onPress={handleSmsReceipt}
           disabled={isGeneratingReceipt}
+          testID="btn-sms-receipt"
         >
           <MaterialIcons name="sms" size={24} color={theme.colors.onTertiaryContainer} />
           <Text style={[styles.receiptButtonText, { color: theme.colors.onTertiaryContainer }]}>
@@ -376,6 +401,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
           { backgroundColor: theme.colors.secondaryContainer },
         ]}
         onPress={handleNewOrder}
+        testID="btn-new-order"
       >
         <MaterialIcons name="add" size={20} color={theme.colors.onSecondaryContainer} />
         <Text style={[styles.actionButtonText, { color: theme.colors.onSecondaryContainer }]}>
@@ -390,6 +416,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
           { backgroundColor: theme.colors.primary },
         ]}
         onPress={handleContinue}
+        testID="btn-continue"
       >
         <MaterialIcons name="check" size={20} color={theme.colors.onPrimary} />
         <Text style={[styles.actionButtonText, { color: theme.colors.onPrimary }]}>
@@ -402,23 +429,25 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {renderHeader()}
-      
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {renderPaymentDetails()}
-        {renderReceiptOptions()}
-        
-        {/* Success Message */}
-        <View style={[styles.section, { backgroundColor: `${theme.colors.primary}10` }]}>
-          <View style={styles.successMessage}>
-            <MaterialIcons name="celebration" size={24} color={theme.colors.primary} />
-            <Text style={[styles.successText, { color: theme.colors.primary }]}>
-              Thank you for your business!
-            </Text>
+
+      <View style={[styles.centerWrapper, isLargeTablet && styles.centerWrapperTablet]}>
+        <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {renderPaymentDetails()}
+          {renderReceiptOptions()}
+
+          {/* Success Message */}
+          <View style={[styles.section, { backgroundColor: `${theme.colors.primary}10` }]}>
+            <View style={styles.successMessage}>
+              <MaterialIcons name="celebration" size={24} color={theme.colors.primary} />
+              <Text style={[styles.successText, { color: theme.colors.primary }]}>
+                Thank you for your business!
+              </Text>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-      
-      {renderActionButtons()}
+        </ScrollView>
+
+        {renderActionButtons()}
+      </View>
     </SafeAreaView>
   );
 };
@@ -426,6 +455,14 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  centerWrapper: {
+    flex: 1,
+  },
+  centerWrapperTablet: {
+    maxWidth: 560,
+    alignSelf: 'center',
+    width: '100%',
   },
   header: {
     padding: spacing.lg,

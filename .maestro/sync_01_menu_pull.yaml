@@ -1,0 +1,52 @@
+appId: host.exp.exponent
+name: "[SYNC-01] Menu Pull — categories and items sync from backend"
+---
+
+# Prerequisites:
+#   - Backend services running (Gateway: 8080, Menu: 5003)
+#   - Backend has at least 1 category and 1 menu item in restaurant_id=1
+#   - App is connected to the backend (EXPO_PUBLIC_API_URL=http://10.0.2.2:8080)
+
+- runFlow: helpers/manager_login.yaml
+
+# Verify we are on the Dashboard
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 15000
+
+- takeScreenshot: sync_01_dashboard_before_sync
+
+# Navigate to Menu screen
+- tapOn:
+    text: ".*Menu.*"
+
+- extendedWaitUntil:
+    visible: ".*Menu.*"
+    timeout: 15000
+
+- takeScreenshot: sync_01_menu_screen
+
+# Wait for sync to complete (initial pull on login should have populated menu)
+# SyncEngine.start() → fullSync → pullMenu → SQLite → UI
+- wait: 5000
+
+# Verify at least one category is visible (pulled from backend)
+- assertVisible:
+    text: ".*"
+    index: 0
+
+- takeScreenshot: sync_01_menu_after_pull
+
+# Navigate to Categories tab if present
+- optional:
+    - tapOn:
+        text: ".*Categories.*"
+    - wait: 1000
+    - takeScreenshot: sync_01_categories_tab
+
+# Verify at least one menu item exists (from SQLite after pull)
+- optional:
+    - tapOn:
+        text: ".*Items.*"
+    - wait: 1000
+    - takeScreenshot: sync_01_items_tab

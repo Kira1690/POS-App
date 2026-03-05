@@ -11,13 +11,13 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { formatCurrency } from '@/utils/currency';
 import { formatDateTime } from '@/utils/date';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
+import { panelWidths } from '@/design-system/theme/layout';
 import { typography } from '@/design-system/theme/typography';
 
 interface BillItemModifier {
@@ -55,12 +55,16 @@ interface BillPanelProps {
   onDiscount: () => void;
   onSplit: () => void;
   onEditItemModifiers?: (itemId: string) => void; // Optional: Edit modifiers for cart item
+  onItemDiscount?: (itemId: string) => void; // Optional: Apply discount to individual item
   isProcessing?: boolean;
   panelWidth?: number; // Override default fixed width (for portrait full-width layout)
+  isPortrait?: boolean; // Hide secondary actions in portrait to save space for cart items
+  // Edit mode: show read-only items from existing order above the new-items cart
+  alreadyOrderedItems?: BillItem[];
+  sendToKitchenLabel?: string; // Override button label in edit mode
+  sendToKitchenTestID?: string; // Override testID in edit mode
 }
 
-const { width: screenWidth } = Dimensions.get('window');
-const BILL_PANEL_WIDTH = Math.min(380, screenWidth * 0.35);
 
 export const BillPanel: React.FC<BillPanelProps> = memo(({
   orderNumber,
@@ -81,8 +85,13 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
   onDiscount,
   onSplit,
   onEditItemModifiers,
+  onItemDiscount,
   isProcessing = false,
   panelWidth,
+  isPortrait = false,
+  alreadyOrderedItems,
+  sendToKitchenLabel = 'Send to Kitchen',
+  sendToKitchenTestID = 'btn-cart-send-to-kitchen',
 }) => {
   const { theme } = useTheme();
 
@@ -106,7 +115,7 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
 
   // Render bill header with order info
   const renderBillHeader = () => (
-    <View style={[styles.billHeader, { borderBottomColor: theme.colors.outline }]}>
+    <View style={[styles.billHeader, { borderBottomColor: theme.colors.outline, padding: isPortrait ? spacing.xs : spacing.md, paddingHorizontal: isPortrait ? spacing.sm : spacing.md }]}>
       <View style={styles.headerRow}>
         <Text style={[styles.orderNumber, { color: theme.colors.primary }]}>
           Order #{orderNumber}
@@ -141,6 +150,16 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <MaterialIcons name="edit" size={14} color={theme.colors.primary} />
+            </TouchableOpacity>
+          )}
+          {/* Item discount button */}
+          {onItemDiscount && (
+            <TouchableOpacity
+              onPress={() => onItemDiscount(item.id)}
+              style={[styles.editButton, { backgroundColor: theme.colors.primaryContainer }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <MaterialIcons name="local-offer" size={14} color={theme.colors.primary} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -209,123 +228,187 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
 
   // Render bill totals section
   const renderBillTotals = () => (
-    <View style={[styles.billTotals, { borderTopColor: theme.colors.outline }]}>
-      <View style={styles.totalRow}>
-        <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
-          Subtotal
-        </Text>
-        <Text style={[styles.totalValue, { color: theme.colors.onSurface }]}>
-          {formatCurrency(subtotal)}
-        </Text>
-      </View>
-      
-      {discountAmount > 0 && (
-        <View style={styles.totalRow}>
-          <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
-            Discount
-          </Text>
-          <Text style={[styles.totalValue, styles.discountValue, { color: theme.colors.error }]}>
-            -{formatCurrency(discountAmount)}
-          </Text>
+    <View style={[styles.billTotals, { borderTopColor: theme.colors.outline, padding: isPortrait ? spacing.xs : spacing.md }]}>
+      {/* In portrait, show a compact single-row summary: Subtotal | Tax | Total */}
+      {isPortrait ? (
+        <View style={styles.compactTotalsRow}>
+          <View style={styles.compactTotalItem}>
+            <Text style={[styles.compactTotalLabel, { color: theme.colors.onSurfaceVariant }]}>Subtotal</Text>
+            <Text style={[styles.compactTotalValue, { color: theme.colors.onSurface }]}>{formatCurrency(subtotal)}</Text>
+          </View>
+          {discountAmount > 0 && (
+            <View style={styles.compactTotalItem}>
+              <Text style={[styles.compactTotalLabel, { color: theme.colors.onSurfaceVariant }]}>Discount</Text>
+              <Text style={[styles.compactTotalValue, { color: theme.colors.error }]}>-{formatCurrency(discountAmount)}</Text>
+            </View>
+          )}
+          <View style={styles.compactTotalItem}>
+            <Text style={[styles.compactTotalLabel, { color: theme.colors.onSurfaceVariant }]}>Tax</Text>
+            <Text style={[styles.compactTotalValue, { color: theme.colors.onSurface }]}>{formatCurrency(taxAmount)}</Text>
+          </View>
+          <View style={[styles.compactTotalItem, styles.compactGrandTotal]}>
+            <Text style={[styles.compactTotalLabel, { color: theme.colors.primary, fontWeight: '700' }]}>Total</Text>
+            <Text style={[styles.compactTotalValue, { color: theme.colors.primary, fontWeight: '700', fontSize: 16 }]}>{formatCurrency(total)}</Text>
+          </View>
         </View>
+      ) : (
+        <>
+          <View style={styles.totalRow}>
+            <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+              Subtotal
+            </Text>
+            <Text style={[styles.totalValue, { color: theme.colors.onSurface }]}>
+              {formatCurrency(subtotal)}
+            </Text>
+          </View>
+
+          {discountAmount > 0 && (
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+                Discount
+              </Text>
+              <Text style={[styles.totalValue, styles.discountValue, { color: theme.colors.error }]}>
+                -{formatCurrency(discountAmount)}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.totalRow}>
+            <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+              Tax ({(taxRate * 100).toFixed(1)}%)
+            </Text>
+            <Text style={[styles.totalValue, { color: theme.colors.onSurface }]}>
+              {formatCurrency(taxAmount)}
+            </Text>
+          </View>
+
+          <View style={[styles.totalRow, styles.grandTotalRow, { borderTopColor: theme.colors.outline }]}>
+            <Text style={[styles.grandTotalLabel, { color: theme.colors.primary }]}>
+              Total
+            </Text>
+            <Text style={[styles.grandTotalValue, { color: theme.colors.primary }]}>
+              {formatCurrency(total)}
+            </Text>
+          </View>
+        </>
       )}
-      
-      <View style={styles.totalRow}>
-        <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
-          Tax ({(taxRate * 100).toFixed(1)}%)
-        </Text>
-        <Text style={[styles.totalValue, { color: theme.colors.onSurface }]}>
-          {formatCurrency(taxAmount)}
-        </Text>
-      </View>
-      
-      <View style={[styles.totalRow, styles.grandTotalRow, { borderTopColor: theme.colors.outline }]}>
-        <Text style={[styles.grandTotalLabel, { color: theme.colors.primary }]}>
-          Total
-        </Text>
-        <Text style={[styles.grandTotalValue, { color: theme.colors.primary }]}>
-          {formatCurrency(total)}
-        </Text>
-      </View>
     </View>
   );
 
   // Render action buttons - Restaurant workflow focused
+  // In portrait mode, hide secondary buttons (Add Item, Discount, Split Bill, Print KOT)
+  // to give more space for the cart items list
   const renderActionButtons = () => (
-    <View style={styles.actionButtons}>
-      <View style={styles.secondaryActions}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant }]}
-          onPress={onAddItem}
-        >
-          <MaterialIcons name="add" size={18} color={theme.colors.onSurfaceVariant} />
-          <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-            Add Item
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant }]}
-          onPress={onDiscount}
-        >
-          <MaterialIcons name="local-offer" size={18} color={theme.colors.onSurfaceVariant} />
-          <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-            Discount
-          </Text>
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.secondaryActions}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant }]}
-          onPress={onSplit}
-        >
-          <MaterialIcons name="call-split" size={18} color={theme.colors.onSurfaceVariant} />
-          <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-            Split Bill
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant }]}
-          onPress={onPrint}
-        >
-          <MaterialIcons name="print" size={18} color={theme.colors.onSurfaceVariant} />
-          <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-            Print KOT
-          </Text>
-        </TouchableOpacity>
-      </View>
-      
+    <View style={[styles.actionButtons, isPortrait && { padding: spacing.xs, paddingHorizontal: spacing.sm, paddingBottom: spacing.xl }]}>
+      {!isPortrait && (
+        <>
+          <View style={styles.secondaryActions}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
+              onPress={onAddItem}
+            >
+              <MaterialIcons name="add" size={18} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
+                Add Item
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
+              onPress={onDiscount}
+            >
+              <MaterialIcons name="local-offer" size={18} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
+                Discount
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.secondaryActions}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
+              onPress={onSplit}
+            >
+              <MaterialIcons name="call-split" size={18} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
+                Split Bill
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
+              onPress={onPrint}
+            >
+              <MaterialIcons name="print" size={18} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
+                Print KOT
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
       {/* Primary Kitchen Action - Restaurant Workflow */}
       <TouchableOpacity
         style={[
           styles.actionButton,
           styles.primaryButton,
           styles.kitchenButton,
-          { backgroundColor: theme.colors.primary },
+          { backgroundColor: theme.colors.primary, paddingVertical: isPortrait ? spacing.sm : spacing.lg, minHeight: isPortrait ? 44 : 52 },
           isProcessing && { opacity: 0.7 }
         ]}
         onPress={onSendToKitchen}
         disabled={isProcessing || items.length === 0}
+        testID={sendToKitchenTestID}
       >
-        <MaterialIcons 
-          name="restaurant" 
-          size={22} 
-          color={theme.colors.onPrimary} 
+        <MaterialIcons
+          name="restaurant"
+          size={22}
+          color={theme.colors.onPrimary}
         />
         <Text style={[styles.primaryButtonText, { color: theme.colors.onPrimary }]}>
-          {isProcessing ? 'Sending...' : 'Send to Kitchen'}
+          {isProcessing ? 'Sending...' : sendToKitchenLabel}
         </Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surface, width: panelWidth ?? BILL_PANEL_WIDTH }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surface, borderLeftColor: theme.colors.outline, width: panelWidth ?? panelWidths.billPanelDefault }]}>
       {renderBillHeader()}
       
       <ScrollView style={styles.itemsContainer} showsVerticalScrollIndicator={false}>
+        {/* Edit mode: read-only already-ordered items section */}
+        {alreadyOrderedItems && alreadyOrderedItems.length > 0 && (
+          <View
+            style={[styles.alreadyOrderedSection, { backgroundColor: theme.colors.surfaceVariant, borderBottomColor: theme.colors.outline }]}
+            testID="section-already-ordered"
+          >
+            <Text style={[styles.alreadyOrderedTitle, { color: theme.colors.onSurfaceVariant }]}>
+              Already Ordered
+            </Text>
+            {alreadyOrderedItems.map((item) => (
+              <View key={item.id} style={styles.alreadyOrderedItem}>
+                <Text style={[styles.alreadyOrderedItemName, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
+                  {item.name} × {item.quantity}
+                </Text>
+                <Text style={[styles.alreadyOrderedItemPrice, { color: theme.colors.onSurfaceVariant }]}>
+                  {formatCurrency(item.price * item.quantity)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* New items cart section label in edit mode */}
+        {alreadyOrderedItems && (
+          <View style={[styles.newItemsLabel, { borderBottomColor: theme.colors.outline }]}>
+            <Text style={[styles.newItemsLabelText, { color: theme.colors.onSurfaceSecondary }]}>
+              New Items
+            </Text>
+          </View>
+        )}
+
         {items.length > 0 ? (
           items.map((item, index) => renderBillItem(item, index))
         ) : (
@@ -351,7 +434,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     borderLeftWidth: 1,
-    borderLeftColor: '#e0e0e0',
   },
   
   // Bill Header
@@ -507,6 +589,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 18,
   },
+
+  // Compact portrait totals — horizontal single row
+  compactTotalsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  compactTotalItem: {
+    alignItems: 'center',
+  },
+  compactTotalLabel: {
+    ...typography.bodySmall,
+    fontSize: 10,
+    marginBottom: 1,
+  },
+  compactTotalValue: {
+    ...typography.bodyMedium,
+    fontWeight: '500',
+    fontSize: 13,
+  },
+  compactGrandTotal: {
+    paddingLeft: spacing.sm,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(128,128,128,0.2)',
+  },
   
   // Empty State
   emptyState: {
@@ -562,7 +670,6 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   primaryButtonText: {
     ...typography.labelLarge,
@@ -571,6 +678,45 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     ...typography.labelSmall,
     fontWeight: '500',
+  },
+
+  // Edit mode: already-ordered read-only section
+  alreadyOrderedSection: {
+    padding: spacing.md,
+    borderBottomWidth: 1,
+  },
+  alreadyOrderedTitle: {
+    ...typography.labelMedium,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  alreadyOrderedItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs / 2,
+  },
+  alreadyOrderedItemName: {
+    ...typography.bodySmall,
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  alreadyOrderedItemPrice: {
+    ...typography.bodySmall,
+    fontWeight: '500',
+  },
+  newItemsLabel: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderBottomWidth: 0.5,
+  },
+  newItemsLabelText: {
+    ...typography.labelSmall,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
 

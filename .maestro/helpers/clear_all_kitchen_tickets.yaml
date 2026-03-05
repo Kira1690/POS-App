@@ -1,0 +1,286 @@
+appId: com.ajinkya123.POSReactNativeApp
+---
+# Helper: Advance ALL pending kitchen tickets to SERVED so kitchen is empty.
+# Runs up to 10 iterations of Start, Ready, Served — each conditional on testID visibility.
+# Uses testID "btn-kitchen-action-{start|ready|served}" to avoid matching stats bar labels.
+# 10 iterations handles up to 10 stale tickets per stage (enough for accumulated test runs).
+# After this helper, no tickets remain in Active kitchen view.
+# Assumes: currently on Kitchen Operations screen (Kitchen Display header visible).
+# Note: tapOn uses optional:true to handle race conditions where element disappears
+#       between the when:visible check and the actual tap execution.
+
+# ── Advance all CONFIRMED → PREPARING (up to 10 stale tickets) ───────────────
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          optional: true
+      - waitForAnimationToEnd
+
+# ── Advance all PREPARING → READY (up to 10) ─────────────────────────────────
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          optional: true
+      - waitForAnimationToEnd
+
+# ── Advance all READY → SERVED (up to 10) ────────────────────────────────────
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-served"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-served"
+          optional: true
+      - waitForAnimationToEnd

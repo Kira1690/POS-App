@@ -147,6 +147,11 @@ export interface UnifiedOrderItem {
   specialInstructions?: string;
   kitchenNotes?: string;
 
+  // Item-level discount
+  discountType?: 'percentage' | 'fixed';
+  discountValue?: number;
+  discountAmount?: number;
+
   // Combo support
   isComboItem: boolean;
   comboId?: string;

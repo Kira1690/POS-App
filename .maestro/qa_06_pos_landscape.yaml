@@ -1,5 +1,5 @@
-appId: host.exp.exponent
-name: "QA 06: POS Order in Landscape Mode — Table T-2"
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 06: POS Order in Landscape Mode — Table B-1"
 tags:
   - qa
   - pos
@@ -10,7 +10,7 @@ tags:
 #  QA Phase 6 — POS Order in Landscape mode
 #
 #  Test scenario (different table + items from portrait test):
-#    Table: T-2 (second available table)
+#    Table: B-1 (Bar Seating — always first in selector, no scroll needed)
 #    Item 1: Beef Burger + Protein "Extra" → $12.99 + $2.00 = $14.99
 #    Item 2: Garlic Bread (no modifier) → $4.00
 #    Action: Send to Kitchen → verify CONFIRMED
@@ -18,8 +18,12 @@ tags:
 #  Prerequisites:
 #    - qa_05 completed (first order sent from T-1)
 #    - Emulator rotated to landscape BEFORE running:
-#        adb shell settings put system accelerometer_rotation 1
+#        adb shell settings put system accelerometer_rotation 0
 #        adb shell settings put system user_rotation 1
+#
+#  NOTE: Tables sorted alphabetically in selector: B < P < T < VIP
+#        T-2 is at position 17 (after T-10, T-11, T-12) — too deep to scroll.
+#        B-1 is always at position 0 — reliably tappable.
 #
 #  QA Assertions:
 #    ✓ Protein modifier modal opens for Beef Burger
@@ -39,6 +43,16 @@ tags:
 
 - takeScreenshot: "qa_06_step1_order_management"
 
+# ── PRE-TEST CLEANUP: Cancel any lingering B-1 active order ──
+- runFlow: helpers/cancel_b1_active_order.yaml
+
+- tapOn:
+    text: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 8000
+
 # Tap New Order
 - tapOn:
     text: "+ New Order"
@@ -49,9 +63,9 @@ tags:
 
 - takeScreenshot: "qa_06_step2_table_selector"
 
-# Select second available table (T-2)
+# Select B-1 (always first in alphabetical list — no scrolling needed)
 - tapOn:
-    text: "T-2"
+    text: "B-1"
 
 - extendedWaitUntil:
     visible: "Mains"

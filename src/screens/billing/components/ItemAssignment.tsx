@@ -22,13 +22,14 @@ export interface ItemAssignmentProps {
 
 interface ItemRowProps {
   item: BillItem;
+  itemIndex: number;
   guests: GuestSplit[];
   onAssignItem: (itemId: string, guestId: string) => void;
   formatPrice: (price: number) => string;
 }
 
 const ItemRow: React.FC<ItemRowProps> = memo(
-  ({ item, guests, onAssignItem, formatPrice }) => {
+  ({ item, itemIndex, guests, onAssignItem, formatPrice }) => {
     const { theme } = useTheme();
 
     const styles = StyleSheet.create({
@@ -88,7 +89,7 @@ const ItemRow: React.FC<ItemRowProps> = memo(
           <Text style={styles.price}>{formatPrice(item.itemTotal)}</Text>
         </View>
         <View style={styles.assignButtons}>
-          {guests.map((guest) => {
+          {guests.map((guest, guestIndex) => {
             const isAssigned = guest.assignedItems.some(
               (ai) => ai.itemId === item.id
             );
@@ -102,6 +103,7 @@ const ItemRow: React.FC<ItemRowProps> = memo(
                 ]}
                 onPress={() => handleAssign(guest.id)}
                 activeOpacity={0.7}
+                testID={`btn-assign-item-${itemIndex}-guest-${guestIndex}`}
               >
                 {isAssigned && (
                   <MaterialCommunityIcons
@@ -177,9 +179,10 @@ export const ItemAssignment: React.FC<ItemAssignmentProps> = memo(
     });
 
     const renderItem = useCallback(
-      ({ item }: { item: BillItem }) => (
+      ({ item, index }: { item: BillItem; index: number }) => (
         <ItemRow
           item={item}
+          itemIndex={index}
           guests={guests}
           onAssignItem={onAssignItem}
           formatPrice={formatPrice}

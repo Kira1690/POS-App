@@ -1,0 +1,150 @@
+appId: host.exp.exponent
+name: "QA 12: Kitchen Management Settings — Station CRUD"
+tags:
+  - qa
+  - settings
+  - kitchen
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 12 — Kitchen Management Settings
+#
+#  Tests the new KitchenManagementScreen in Settings:
+#    - Navigate to Settings → Kitchen Management
+#    - Add a new station "Test Station"
+#    - Edit the station (save without changes)
+#    - Toggle station active/inactive
+#    - Delete the station
+#
+#  testIDs used:
+#    btn-add-station         — "Add Station" button in header
+#    input-station-name      — Name field in AddStationModal
+#    input-default-prep-time — Prep time field in AddStationModal
+#    btn-save-station        — "Add Station" save button in modal
+#    btn-edit-station-{slug} — Edit button per station
+#    btn-update-station      — "Save Changes" in EditStationModal
+#    switch-station-{slug}   — Active/inactive toggle per station
+#    btn-delete-station-{slug} — Delete button per station
+#
+#  The slug for "Test Station" → "test_station"
+#
+#  QA Assertions:
+#    ✓ Kitchen Management screen loads
+#    ✓ Add Station modal opens
+#    ✓ "Test Station" added and visible in list
+#    ✓ Edit Station modal opens and saves
+#    ✓ Switch toggle works without error
+#    ✓ Delete confirmation dialog appears
+#    ✓ "Test Station" removed after delete
+#
+#  Prerequisites: App logged in (qa_01 run first)
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── STEP 1: Navigate to Settings ─────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-nav-restaurant_profile"
+    timeout: 10000
+
+- takeScreenshot: "qa_12_step1_settings_screen"
+
+# ── STEP 2: Navigate to Kitchen Management ───────────────────────────────────
+- tapOn:
+    id: "settings-nav-kitchen_management"
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-station"
+    timeout: 10000
+
+- takeScreenshot: "qa_12_step2_kitchen_management_screen"
+
+# ── STEP 3: Open Add Station modal ───────────────────────────────────────────
+- tapOn:
+    id: "btn-add-station"
+- extendedWaitUntil:
+    visible: "Add Kitchen Station"
+    timeout: 8000
+
+- takeScreenshot: "qa_12_step3_add_modal_open"
+
+# ── STEP 4: Fill in station name and save ────────────────────────────────────
+- tapOn:
+    id: "input-station-name"
+- inputText: "Test Station"
+- hideKeyboard
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_12_step4_name_entered"
+
+- tapOn:
+    id: "btn-save-station"
+- waitForAnimationToEnd
+
+# Verify station appears in the list (use testID — FlatList only renders visible items)
+- extendedWaitUntil:
+    visible:
+      id: "btn-edit-station-test_station"
+    timeout: 10000
+
+- takeScreenshot: "qa_12_step5_station_added"
+
+# ── STEP 5: Edit the station ─────────────────────────────────────────────────
+- tapOn:
+    id: "btn-edit-station-test_station"
+- extendedWaitUntil:
+    visible: "Edit Station"
+    timeout: 8000
+
+- takeScreenshot: "qa_12_step6_edit_modal_open"
+
+# Save without changes
+- tapOn:
+    id: "btn-update-station"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-edit-station-test_station"
+    timeout: 8000
+
+- takeScreenshot: "qa_12_step7_station_updated"
+
+# ── STEP 6: Toggle station active/inactive ───────────────────────────────────
+- tapOn:
+    id: "switch-station-test_station"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_12_step8_station_toggled"
+
+# Toggle back to active
+- tapOn:
+    id: "switch-station-test_station"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_12_step9_station_reactivated"
+
+# ── STEP 7: Delete the station ───────────────────────────────────────────────
+- tapOn:
+    id: "btn-delete-station-test_station"
+- extendedWaitUntil:
+    visible: "Delete Station"
+    timeout: 8000
+
+- takeScreenshot: "qa_12_step10_delete_confirm"
+
+# Confirm deletion in the Alert dialog
+- tapOn:
+    text: "Delete"
+- waitForAnimationToEnd
+
+# Verify station is removed
+- extendedWaitUntil:
+    notVisible:
+      id: "btn-delete-station-test_station"
+    timeout: 10000
+
+- takeScreenshot: "qa_12_PASS_station_deleted"

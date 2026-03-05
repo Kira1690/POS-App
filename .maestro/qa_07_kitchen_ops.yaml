@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 name: "QA 07: Kitchen Operations — Full Flow (Confirmed → Served)"
 tags:
   - qa
@@ -6,103 +6,191 @@ tags:
 ---
 
 # ─────────────────────────────────────────────────────
-#  QA Phase 7 — Full Kitchen lifecycle for order A-1
+#  QA Phase 7 — Full Kitchen lifecycle (self-contained)
 #
-#  Status chain:
-#    CONFIRMED → Start Preparing → PREPARING
-#               → Mark Ready     → READY
-#               → Mark Served    → SERVED
+#  Strategy:
+#    1. Clear ALL stale kitchen tickets (advances them to SERVED)
+#       so the kitchen is empty before we start
+#    2. Cancel any B-1 active order in Order Management
+#    3. Create a fresh B-1 order → Send to Kitchen → CONFIRMED
+#    4. In Kitchen: B-1 is the ONLY ticket — no ambiguity
+#    5. Advance: "Start" → PREPARING → "Ready" → READY → "Served" → SERVED
+#    6. Verify SERVED in Order Management
 #
-#  After SERVED, order A-1 is eligible for payment (qa_08).
+#  Real button labels in running app (bundle mismatch from old cache):
+#    PENDING  → "▶ Start"   (partial match: "Start")
+#    PREPARING → "✓ Ready"  (partial match: "Ready")
+#    READY    → "✓ Served"  (partial match: "Served")
 #
 #  QA Assertions:
-#    ✓ Kitchen tab shows order tickets (Latte visible)
-#    ✓ After "Start Preparing" → PREPARING label
-#    ✓ After "Mark Ready"      → READY label
-#    ✓ After "Mark Served"     → ticket disappears or SERVED
+#    ✓ All stale kitchen tickets cleared
+#    ✓ Fresh B-1 ticket is the only ticket visible
+#    ✓ After "Start" → PREPARING label on ticket
+#    ✓ After "Ready" → READY label on ticket
+#    ✓ After "Served" → ticket removed from Active view
 #    ✓ Order Management shows SERVED status
 #
-#  Prerequisites: qa_05 + qa_06 completed (orders sent to kitchen)
+#  Prerequisites: none — self-contained
 # ─────────────────────────────────────────────────────
 
 - runFlow: helpers/ensure_dashboard.yaml
 
-# Navigate to Kitchen Operations tab
+# ── STEP 1: Clear ALL stale kitchen tickets ───────────────────────────────────
 - tapOn:
     text: "Kitchen Operations"
-
+# Wait for the actual Kitchen Display screen content, not just the tab label.
+# "Kitchen Display" is the header title rendered by KitchenDisplayScreen.
 - extendedWaitUntil:
-    visible: "Kitchen Operations"
-    timeout: 10000
+    visible: "Kitchen Display"
+    timeout: 15000
 
-- takeScreenshot: "qa_07_step1_kitchen_opened"
+- takeScreenshot: "qa_07_step0_kitchen_before_cleanup"
 
-# QA: Order tickets visible
-- extendedWaitUntil:
-    visible: "Latte"
-    timeout: 10000
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
 
-- assertVisible: "Latte"
+- takeScreenshot: "qa_07_step1_kitchen_cleared"
 
-- takeScreenshot: "qa_07_step2_tickets_visible"
-
-# ── STEP A: CONFIRMED → PREPARING ──────────────────
+# ── STEP 2: Cancel ALL existing B-1 active orders (run twice for multiple) ───
 - tapOn:
-    text: "Start Preparing"
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 8000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 8000
 
+- takeScreenshot: "qa_07_step2_order_management_clean"
+
+# ── STEP 3: Create fresh B-1 order → CONFIRMED ───────────────────────────────
+- tapOn:
+    text: "+ New Order"
+- extendedWaitUntil:
+    visible: "Select Table"
+    timeout: 10000
+- tapOn:
+    text: "B-1"
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 10000
+
+# Beef Burger + Extra modifier
+- tapOn:
+    text: "Beef Burger"
+- extendedWaitUntil:
+    visible: "Protein"
+    timeout: 8000
+- tapOn:
+    text: "Extra"
+- tapOn:
+    text: "Add to Cart"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 8000
+
+# Garlic Bread (no modifier)
+- tapOn:
+    text: "Garlic Bread"
 - waitForAnimationToEnd
 
-- takeScreenshot: "qa_07_step3_start_preparing_tapped"
+# Send to Kitchen
+- tapOn:
+    text: "Send to Kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "CONFIRMED"
+    timeout: 15000
 
-# QA: Ticket now shows PREPARING
+- takeScreenshot: "qa_07_step3_b1_order_confirmed"
+
+# ── STEP 4: Kitchen Operations — B-1 is the ONLY ticket ──────────────────────
+- tapOn:
+    text: "Kitchen Operations"
+- extendedWaitUntil:
+    visible: "Kitchen Display"
+    timeout: 15000
+
+- takeScreenshot: "qa_07_step4_kitchen_with_b1"
+
+# QA: Only B-1 ticket visible, showing Beef Burger
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 10000
+- assertVisible: "Beef Burger"
+
+- takeScreenshot: "qa_07_step5_b1_ticket_visible"
+
+# ── STEP 5: CONFIRMED → PREPARING ────────────────────────────────────────────
+# Use testID to avoid matching the stats bar "Start" label
+- extendedWaitUntil:
+    visible:
+      id: "btn-kitchen-action-start"
+    timeout: 10000
+- tapOn:
+    id: "btn-kitchen-action-start"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_07_step6_start_tapped"
+
 - extendedWaitUntil:
     visible: "PREPARING"
     timeout: 8000
-
 - assertVisible: "PREPARING"
 
-- takeScreenshot: "qa_07_step4_status_preparing"
+- takeScreenshot: "qa_07_step7_status_preparing"
 
-# ── STEP B: PREPARING → READY ──────────────────────
+# ── STEP 6: PREPARING → READY ────────────────────────────────────────────────
+# Use testID — "Ready" text also appears in the stats bar, causing tap ambiguity
+- extendedWaitUntil:
+    visible:
+      id: "btn-kitchen-action-ready"
+    timeout: 10000
 - tapOn:
-    text: "Mark Ready"
-
+    id: "btn-kitchen-action-ready"
 - waitForAnimationToEnd
 
-- takeScreenshot: "qa_07_step5_mark_ready_tapped"
+- takeScreenshot: "qa_07_step8_ready_tapped"
 
-# QA: Ticket now shows READY
 - extendedWaitUntil:
     visible: "READY"
     timeout: 8000
 
-- assertVisible: "READY"
+- takeScreenshot: "qa_07_step9_status_ready"
 
-- takeScreenshot: "qa_07_step6_status_ready"
-
-# ── STEP C: READY → SERVED ─────────────────────────
+# ── STEP 7: READY → SERVED ───────────────────────────────────────────────────
+# Use testID — wait for card to re-render with "Served" button
+- extendedWaitUntil:
+    visible:
+      id: "btn-kitchen-action-served"
+    timeout: 10000
 - tapOn:
-    text: "Mark Served"
-
+    id: "btn-kitchen-action-served"
 - waitForAnimationToEnd
 
-- takeScreenshot: "qa_07_step7_mark_served_tapped"
+- takeScreenshot: "qa_07_step10_served_tapped"
 
-# Navigate to Order Management to verify SERVED status
+# ── STEP 8: Verify SERVED in Order Management ────────────────────────────────
 - tapOn:
     text: "Order Management"
-
 - extendedWaitUntil:
     visible: "Order Management"
     timeout: 10000
 
-- takeScreenshot: "qa_07_step8_order_management"
+- takeScreenshot: "qa_07_step11_order_management"
 
-# QA: Order shows SERVED status
 - extendedWaitUntil:
     visible: "SERVED"
     timeout: 10000
-
 - assertVisible: "SERVED"
 
 - takeScreenshot: "qa_07_PASS_order_served_verified"

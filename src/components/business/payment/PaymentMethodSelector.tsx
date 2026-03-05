@@ -77,14 +77,15 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     return (
       <TouchableOpacity
         key={option.method}
+        testID={`btn-pay-method-${option.method}`}
         style={[
           styles.paymentMethodButton,
           {
-            backgroundColor: isSelected 
-              ? `${option.color}15` 
+            backgroundColor: isSelected
+              ? `${option.color}15`
               : theme.colors.surface,
-            borderColor: isSelected 
-              ? option.color 
+            borderColor: isSelected
+              ? option.color
               : theme.colors.outline,
             opacity: isDisabled ? 0.5 : 1,
           },

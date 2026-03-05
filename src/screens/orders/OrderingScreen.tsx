@@ -20,6 +20,8 @@ import { OrdersStackParamList } from '@/navigation/types';
 import { useUnifiedOrder, useUnifiedCart } from '@/context/unified-order';
 import { MenuItemExtended } from '@/types/menu-management-extended.types';
 import { MenuCategory } from '@/types/menu.types';
+import { useAuth } from '@/context/auth';
+import { menuApiClient } from '@/services/api/menu';
 import { SelectedModifier } from '@/types/unified-order.types';
 import { getStationForCategory } from '@/types/order-extended.types';
 import { TableStatus } from '@/types/common.types';
@@ -148,11 +150,42 @@ export const OrderingScreen: React.FC = () => {
     clear: clearCart,
   } = useUnifiedCart();
 
+  const { state: authState } = useAuth();
+  const rawRestaurantId = authState.restaurant?.id || (authState.user as any)?.default_restaurant_id || '';
+  // Menu Service uses numeric BigInt IDs; Auth Service may return UUID — fall back to '1'
+  const restaurantId = /^\d+$/.test(rawRestaurantId) ? rawRestaurantId : '1';
+
   // Local state
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItemExtended | null>(null);
   const [isModifierModalVisible, setIsModifierModalVisible] = useState(false);
   const [isSendModalVisible, setIsSendModalVisible] = useState(false);
+  const [categories, setCategories] = useState<MenuCategory[]>(MOCK_CATEGORIES);
+  const [allItems, setAllItems] = useState<MenuItemExtended[]>(MOCK_MENU_ITEMS);
+
+  // Load real categories from API
+  useEffect(() => {
+    if (!restaurantId) return;
+    menuApiClient.getCategories(restaurantId)
+      .then(cats => { if (cats && cats.length > 0) setCategories(cats); })
+      .catch(() => {});
+  }, [restaurantId]);
+
+  // Load items when category selected
+  useEffect(() => {
+    if (!restaurantId || !selectedCategoryId) return;
+    menuApiClient.getMenuByCategory(restaurantId, selectedCategoryId)
+      .then(items => {
+        const arr = Array.isArray(items) ? items : (items as any)?.items || [];
+        if (arr.length > 0) {
+          setAllItems(prev => {
+            const filtered = prev.filter(i => i.category_id !== selectedCategoryId);
+            return [...filtered, ...(arr as MenuItemExtended[])];
+          });
+        }
+      })
+      .catch(() => {});
+  }, [restaurantId, selectedCategoryId]);
 
   // Initialize order when screen mounts
   useEffect(() => {
@@ -216,16 +249,16 @@ export const OrderingScreen: React.FC = () => {
 
   // Filter items by category
   const filteredItems = useMemo(() => {
-    if (!selectedCategoryId) return MOCK_MENU_ITEMS;
-    return MOCK_MENU_ITEMS.filter((item) => item.category_id === selectedCategoryId);
-  }, [selectedCategoryId]);
+    if (!selectedCategoryId) return allItems;
+    return allItems.filter((item) => item.category_id === selectedCategoryId);
+  }, [selectedCategoryId, allItems]);
 
   // Get current category name
   const currentCategoryName = useMemo(() => {
     if (!selectedCategoryId) return 'All Items';
-    const category = MOCK_CATEGORIES.find((c) => c.id === selectedCategoryId);
+    const category = categories.find((c) => c.id === selectedCategoryId);
     return category?.name || 'All Items';
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, categories]);
 
   // Handler for category selection
   const handleSelectCategory = useCallback((categoryId: string) => {
@@ -398,7 +431,7 @@ export const OrderingScreen: React.FC = () => {
       <View style={styles.mainContent}>
         <View style={styles.categoryPanel}>
           <CategorySidebar
-            categories={MOCK_CATEGORIES}
+            categories={categories}
             selectedCategoryId={selectedCategoryId}
             onSelectCategory={handleSelectCategory}
             showAllOption={true}

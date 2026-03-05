@@ -9,7 +9,9 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   MainTabParamList,
   OrdersStackParamList,
@@ -123,6 +125,8 @@ const DashboardWithProvider = () => (
 
 export const MainNavigator: React.FC = () => {
   const { theme } = useTheme();
+  const { isPhone } = useResponsive();
+  const insets = useSafeAreaInsets();
 
   return (
     <FloorPlanProvider>
@@ -156,29 +160,34 @@ export const MainNavigator: React.FC = () => {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.outline,
+          height: (isPhone ? 56 : 64) + insets.bottom,
+          paddingBottom: insets.bottom + (isPhone ? 4 : 8),
         },
-        headerShown: true,
+        tabBarLabelStyle: {
+          fontSize: isPhone ? 10 : 12,
+        },
+        headerShown: false,
       })}
     >
       <Tab.Screen
         name="Dashboard"
         component={DashboardWithProvider}
-        options={{ title: 'Dashboard', headerShown: false }}
+        options={{ title: 'Dashboard', headerShown: false, tabBarTestID: 'tab-nav-dashboard' }}
       />
       <Tab.Screen
         name="Orders"
         component={OrdersStackNavigator}
-        options={{ title: 'Order Management', headerShown: false }}
+        options={{ title: 'Order Management', headerShown: false, tabBarTestID: 'tab-nav-orders' }}
       />
       <Tab.Screen
-        name="Kitchen" 
+        name="Kitchen"
         component={KitchenStackNavigator}
-        options={{ title: 'Kitchen Operations', headerShown: false }}
+        options={{ title: 'Kitchen Operations', headerShown: false, tabBarTestID: 'tab-nav-kitchen' }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ title: 'Settings', headerShown: false }}
+        options={{ title: 'Settings', headerShown: false, tabBarTestID: 'tab-nav-settings' }}
       />
     </Tab.Navigator>
     </FloorPlanProvider>

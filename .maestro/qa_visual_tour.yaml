@@ -1,0 +1,167 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Visual QA Tour — All Screens"
+---
+
+# ── Boot & Login ──────────────────────────────────────────────────────────────
+- launchApp
+- waitForAnimationToEnd
+
+- tapOn:
+    point: "96%, 96%"
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-welcome-manager-login"
+    optional: true
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        id: "email-input"
+    commands:
+      - tapOn:
+          id: "email-input"
+      - inputText: "manager@foodcorner.com"
+      - tapOn:
+          id: "password-input"
+      - inputText: "manager123"
+      - hideKeyboard
+      - tapOn:
+          id: "btn-manager-sign-in"
+      - extendedWaitUntil:
+          visible:
+            id: "tab-nav-orders"
+          timeout: 30000
+
+# ── 1. Dashboard — Overview ───────────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_01_dashboard_overview"
+
+# ── 2. Dashboard — Orders chip ────────────────────────────────────────────────
+- tapOn:
+    text: "Orders"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_02_dashboard_orders"
+
+# ── 3. Dashboard — Tables chip ────────────────────────────────────────────────
+- tapOn:
+    text: "Tables"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_03_dashboard_tables"
+
+# ── 4. Dashboard — Kitchen chip ───────────────────────────────────────────────
+- tapOn:
+    text: "Kitchen"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_04_dashboard_kitchen"
+
+# ── 5. Dashboard — Reports chip ───────────────────────────────────────────────
+- tapOn:
+    text: "Reports"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_05_dashboard_reports"
+
+# ── 6. Order Management ───────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_06_order_management"
+
+# ── 7. POS Order Screen ───────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_07_pos_order_screen"
+
+# Close table modal if it appears
+- runFlow:
+    when:
+      visible:
+        id: "btn-table-modal-close"
+    commands:
+      - takeScreenshot: "tour_07b_table_selection_modal"
+      - tapOn:
+          id: "btn-table-modal-close"
+      - waitForAnimationToEnd
+      - takeScreenshot: "tour_07c_pos_after_modal"
+
+# ── 8. Back to Order Management ───────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# ── 9. Kitchen Operations ─────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_09_kitchen_display"
+
+# ── 10. Settings — List ───────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_10_settings_list"
+
+# ── 11. Settings — Restaurant Profile ────────────────────────────────────────
+- tapOn:
+    text: "Restaurant Profile"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_11_restaurant_profile"
+
+# Back to settings
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+
+# ── 12. Settings — Menu Management ───────────────────────────────────────────
+- tapOn:
+    text: "Menu Management"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_12_menu_management"
+
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+
+# ── 13. Settings — Kitchen Management ────────────────────────────────────────
+- tapOn:
+    text: "Kitchen Management"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_13_kitchen_management"
+
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+
+# ── 14. Settings — TRX Terminal ──────────────────────────────────────────────
+- tapOn:
+    text: "TRX Terminal"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_14_trx_terminal"
+
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+
+# ── 15. Settings — Table Management ──────────────────────────────────────────
+- tapOn:
+    text: "Table Management"
+- waitForAnimationToEnd
+- takeScreenshot: "tour_15_table_management"
+
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd

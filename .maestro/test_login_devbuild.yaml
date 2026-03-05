@@ -1,0 +1,40 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Helper: Login on dev build"
+---
+
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 30000
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Manager Login.*"
+
+- extendedWaitUntil:
+    visible: "Email Address"
+    timeout: 15000
+
+- tapOn:
+    id: "email-input"
+
+- inputText: "manager@foodcorner.com"
+
+- tapOn:
+    id: "password-input"
+
+- inputText: "manager123"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Sign In.*"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000
+
+- takeScreenshot: "emu_restart_02_dashboard"

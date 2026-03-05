@@ -13,9 +13,11 @@ import {
   SafeAreaView,
   TextInput,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 import { formatCurrency } from '@/utils/currency';
@@ -34,6 +36,7 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
   onCancel,
 }) => {
   const { theme } = useTheme();
+  const { isPhone, modalMaxWidth } = useResponsive();
   const [cashTendered, setCashTendered] = useState<string>('');
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
 
@@ -191,15 +194,16 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
             style={[
               styles.quickAmountButton,
               {
-                backgroundColor: selectedAmount === amount 
-                  ? theme.colors.primary 
+                backgroundColor: selectedAmount === amount
+                  ? theme.colors.primary
                   : theme.colors.surface,
-                borderColor: selectedAmount === amount 
-                  ? theme.colors.primary 
+                borderColor: selectedAmount === amount
+                  ? theme.colors.primary
                   : theme.colors.outline,
               },
             ]}
             onPress={() => handleQuickAmountSelect(amount)}
+            testID={`btn-cash-quick-${amount}`}
           >
             <Text style={[
               styles.quickAmountText,
@@ -290,12 +294,13 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
           { borderColor: theme.colors.outline },
         ]}
         onPress={onCancel}
+        testID="btn-cash-cancel"
       >
         <Text style={[styles.actionButtonText, { color: theme.colors.onSurfaceVariant }]}>
           Cancel
         </Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity
         style={[
           styles.actionButton,
@@ -307,6 +312,7 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
         ]}
         onPress={handleConfirmPayment}
         disabled={!isValidPayment}
+        testID="btn-cash-confirm"
       >
         <MaterialIcons 
           name="check" 
@@ -330,20 +336,33 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      transparent={!isPhone}
+      presentationStyle={isPhone ? 'pageSheet' : 'overFullScreen'}
       onRequestClose={onCancel}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        {renderHeader()}
-        
-        <View style={styles.content}>
-          {renderAmountDisplay()}
-          {renderQuickAmounts()}
-          {renderNumberPad()}
+      {isPhone ? (
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          {renderHeader()}
+          <View style={[styles.content, { flex: 1 }]}>
+            {renderAmountDisplay()}
+            {renderQuickAmounts()}
+            {renderNumberPad()}
+          </View>
+          {renderActionButtons()}
+        </SafeAreaView>
+      ) : (
+        <View style={styles.overlay}>
+          <View style={[styles.dialogCard, { maxWidth: modalMaxWidth, backgroundColor: theme.colors.background }]}>
+            {renderHeader()}
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+              {renderAmountDisplay()}
+              {renderQuickAmounts()}
+              {renderNumberPad()}
+            </ScrollView>
+            {renderActionButtons()}
+          </View>
         </View>
-        
-        {renderActionButtons()}
-      </SafeAreaView>
+      )}
     </Modal>
   );
 };
@@ -351,6 +370,18 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialogCard: {
+    width: '90%',
+    maxHeight: '90%',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -373,7 +404,6 @@ const styles = StyleSheet.create({
     width: 48, // Same width as close button
   },
   content: {
-    flex: 1,
     padding: spacing.md,
   },
   amountContainer: {
@@ -443,7 +473,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs / 2,
   },
   numberPadContainer: {
-    flex: 1,
   },
   numberPadRow: {
     flexDirection: 'row',

@@ -14,7 +14,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
-  Platform,
+  
   Keyboard,
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
@@ -289,7 +289,7 @@ const AddFloorModal: React.FC<AddFloorModalProps> = ({
       <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); handleCancel(); }}>
         <View style={styles.overlay}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior="padding"
             style={styles.keyboardAvoidingView}
           >
             <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>

@@ -10,10 +10,10 @@ import {
   ScrollView,
   RefreshControl,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   AppleDashboardPanel,
   AppleCard,
@@ -36,14 +36,13 @@ import {
   getTopCategory,
 } from '@/data/dashboard/reportsDashboard';
 
-const { width } = Dimensions.get('window');
-
 interface KPICardProps {
   kpi: KPIMetric;
 }
 
 const KPICard: React.FC<KPICardProps> = ({ kpi }) => {
   const { theme } = useTheme();
+  const { cardPadding, captionSize, statValueSize } = useResponsive();
 
   const getTrendIcon = (trend?: string) => {
     const iconName = trend === 'up' ? 'trending-up' : trend === 'down' ? 'trending-down' : 'trending-flat';
@@ -66,24 +65,24 @@ const KPICard: React.FC<KPICardProps> = ({ kpi }) => {
     container: {
       flex: 1,
       alignItems: 'center' as const,
-      padding: 16,
+      padding: cardPadding,
     },
     icon: {
-      fontSize: 24,
-      marginBottom: 8,
+      fontSize: theme.spacing.xl,
+      marginBottom: theme.spacing.sm,
     },
     label: {
-      fontSize: 12,
+      fontSize: captionSize,
       color: theme.colors.onSurfaceVariant,
       textAlign: 'center' as const,
-      marginBottom: 4,
+      marginBottom: theme.spacing.xs,
     },
     value: {
-      fontSize: 20,
+      fontSize: statValueSize,
       fontWeight: '700' as const,
       color: theme.colors.onSurface,
       textAlign: 'center' as const,
-      marginBottom: 4,
+      marginBottom: theme.spacing.xs,
     },
     changeContainer: {
       flexDirection: 'row' as const,
@@ -327,6 +326,7 @@ const PerformanceReportCard: React.FC<PerformanceReportCardProps> = ({ report })
 
 const ReportsDashboard: React.FC = () => {
   const { theme, isDark } = useTheme();
+  const { screenWidth, isPhone, sectionGap, headingSize } = useResponsive();
   const [data, setData] = useState(REPORTS_DASHBOARD_DATA);
   const [selectedDateRange, setSelectedDateRange] = useState(data.selectedDateRange);
   const [refreshing, setRefreshing] = useState(false);
@@ -361,44 +361,49 @@ const ReportsDashboard: React.FC = () => {
     },
     kpiContainer: {
       flexDirection: 'row' as const,
-      gap: 8,
-      marginBottom: 16,
+      flexWrap: 'wrap' as const,
+      gap: theme.spacing.sm,
+      marginBottom: sectionGap,
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: headingSize,
       fontWeight: '600' as const,
       color: theme.colors.onSurface,
-      marginBottom: 12,
+      marginBottom: theme.spacing.md,
     },
     dateRangeContainer: {
       flexDirection: 'row' as const,
-      gap: 8,
-      marginBottom: 16,
+      flexWrap: 'wrap' as const,
+      gap: theme.spacing.sm,
+      marginBottom: sectionGap,
     },
     exportContainer: {
       flexDirection: 'row' as const,
-      gap: 8,
-      marginTop: 16,
+      flexWrap: 'wrap' as const,
+      gap: theme.spacing.sm,
+      marginTop: sectionGap,
     },
     chartsGrid: {
       flexDirection: 'row' as const,
       flexWrap: 'wrap' as const,
-      gap: 16,
+      gap: theme.spacing.lg,
     },
     chartCard: {
       flex: 1,
-      minWidth: width > 768 ? (width - 64) / 2 : width - 32,
+      minWidth: isPhone ? screenWidth - 32 : (screenWidth - 64) / 2,
     },
   };
 
-  // Header actions
+  // Header actions — wrap on phone to avoid overflow on 360dp
   const headerActions = (
-    <View style={{ flexDirection: 'row', gap: 12 }}>
-      <AppleStatusPill
-        status="success"
-        text={`${formatPercentage(data.kpis.find(k => k.label === 'Revenue')?.change || 0)} Growth`}
-        size="small"
-      />
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm, alignItems: 'center' }}>
+      {!isPhone && (
+        <AppleStatusPill
+          status="success"
+          text={`${formatPercentage(data.kpis.find(k => k.label === 'Revenue')?.change || 0)} Growth`}
+          size="small"
+        />
+      )}
       <AppleButton
         title="Export"
         icon={<MaterialIcons name="file-download" size={16} color={theme.colors.onPrimary} />}
@@ -432,7 +437,7 @@ const ReportsDashboard: React.FC = () => {
         }
       >
         {/* Date Range Filters */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <AppleCard layer="surface" size="large" style={{ marginBottom: sectionGap }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <MaterialIcons name="date-range" size={20} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>Date Range</Text>
@@ -468,7 +473,7 @@ const ReportsDashboard: React.FC = () => {
         </AppleCard>
 
         {/* Key Performance Indicators */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <AppleCard layer="surface" size="large" style={{ marginBottom: sectionGap }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <MaterialIcons name="analytics" size={20} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>Key Performance Indicators</Text>
@@ -483,7 +488,7 @@ const ReportsDashboard: React.FC = () => {
         </AppleCard>
 
         {/* Interactive Charts */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <AppleCard layer="surface" size="large" style={{ marginBottom: sectionGap }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <MaterialIcons name="trending-up" size={20} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>Performance Charts</Text>
@@ -511,7 +516,7 @@ const ReportsDashboard: React.FC = () => {
         </AppleCard>
 
         {/* Performance Reports */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <AppleCard layer="surface" size="large" style={{ marginBottom: sectionGap }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <MaterialIcons name="assessment" size={20} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>Detailed Performance Reports</Text>
@@ -524,7 +529,7 @@ const ReportsDashboard: React.FC = () => {
         </AppleCard>
 
         {/* Quick Insights */}
-        <AppleCard layer="surface" size="large" style={{ marginBottom: 16 }}>
+        <AppleCard layer="surface" size="large" style={{ marginBottom: sectionGap }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <MaterialIcons name="lightbulb" size={20} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>Quick Insights</Text>

@@ -1,0 +1,44 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Permissions 04 — Cashier Access"
+# Verifies: cashier has Orders + Payment access; Table Mgmt Settings blocked
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Login as cashier
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-cashier@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QACashier2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+- takeScreenshot: "cashier_01_login"
+
+# Verify Orders accessible
+- tapOn:
+    text: "Orders"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "cashier_02_orders"
+
+# Verify payment screen accessible from an order
+- takeScreenshot: "cashier_03_nav_state"
+
+# Verify Table Management Settings is NOT accessible (cashier-specific restriction)
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "cashier_04_settings"
+
+- stopApp

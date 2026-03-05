@@ -156,6 +156,7 @@ const CartItemRow: React.FC<CartItemRowProps> = React.memo(
             <TouchableOpacity
               style={styles.quantityButton}
               onPress={() => onUpdateQuantity(item.quantity - 1)}
+              testID={`btn-cart-item-decrease-${item.id}`}
             >
               <MaterialCommunityIcons
                 name="minus"
@@ -167,6 +168,7 @@ const CartItemRow: React.FC<CartItemRowProps> = React.memo(
             <TouchableOpacity
               style={styles.quantityButton}
               onPress={() => onUpdateQuantity(item.quantity + 1)}
+              testID={`btn-cart-item-increase-${item.id}`}
             >
               <MaterialCommunityIcons
                 name="plus"
@@ -177,14 +179,14 @@ const CartItemRow: React.FC<CartItemRowProps> = React.memo(
           </View>
 
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.actionButton} onPress={onEdit}>
+            <TouchableOpacity style={styles.actionButton} onPress={onEdit} testID={`btn-cart-item-edit-${item.id}`}>
               <MaterialCommunityIcons
                 name="pencil"
                 size={18}
                 color={theme.colors.primary}
               />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={onRemove}>
+            <TouchableOpacity style={styles.actionButton} onPress={onRemove} testID={`btn-cart-item-remove-${item.id}`}>
               <MaterialCommunityIcons
                 name="delete"
                 size={18}
@@ -441,7 +443,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({
             </View>
           </View>
           {!isEmpty && (
-            <TouchableOpacity style={styles.clearButton} onPress={onClearCart}>
+            <TouchableOpacity style={styles.clearButton} onPress={onClearCart} testID="btn-cart-clear">
               <MaterialCommunityIcons
                 name="delete-sweep"
                 size={24}
@@ -496,6 +498,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({
           style={[styles.sendButton, isEmpty && styles.sendButtonDisabled]}
           onPress={onSendToKitchen}
           disabled={isEmpty || isSubmitting}
+          testID="btn-cart-send-to-kitchen"
         >
           <MaterialCommunityIcons
             name="send"
@@ -508,7 +511,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({
         </TouchableOpacity>
 
         <View style={styles.secondaryActions}>
-          <TouchableOpacity style={styles.secondaryButton}>
+          <TouchableOpacity style={styles.secondaryButton} testID="btn-cart-save-draft">
             <MaterialCommunityIcons
               name="content-save"
               size={18}
@@ -517,7 +520,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({
             <Text style={styles.secondaryButtonText}>Save Draft</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.secondaryButton}>
+          <TouchableOpacity style={styles.secondaryButton} testID="btn-cart-print">
             <MaterialCommunityIcons
               name="printer"
               size={18}

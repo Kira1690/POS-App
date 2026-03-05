@@ -5,6 +5,7 @@
 
 import { BaseEntity } from './common.types';
 import { MenuItem, MenuCategory } from './menu.types';
+import { KitchenStation } from './order-extended.types';
 
 // ============== MODIFIER TYPES ==============
 
@@ -226,7 +227,11 @@ export interface MenuItemExtended extends MenuItem {
   tax_rate?: number;
   preparation_time?: number;
   sort_order?: number;
+  kitchen_station?: KitchenStation; // undefined = auto-derive from category
 }
+
+// Re-export KitchenStation for consumers of this module
+export type { KitchenStation };
 
 // ============== REQUEST TYPES ==============
 

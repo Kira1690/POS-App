@@ -5,7 +5,7 @@
  * and exposes the db instance via context + useDatabase() hook.
  */
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { type SQLiteDatabase } from 'expo-sqlite';
 import { databaseService } from './DatabaseService';
@@ -26,6 +26,10 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
   const [db, setDb] = useState<SQLiteDatabase | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Track initialization per JS session to handle Fast Refresh
+  // After Fast Refresh, React preserves state (isReady=true) but the native
+  // DB handle may be stale. This ref resets on each module evaluation.
+  const initDoneRef = useRef(false);
 
   const initializeDatabase = useCallback(async () => {
     try {
@@ -33,6 +37,8 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       await migrateFromAsyncStorage(database);
       setDb(database);
       setIsReady(true);
+      setError(null);
+      initDoneRef.current = true;
 
       if (__DEV__) {
         console.log('[DatabaseProvider] Database ready');
@@ -40,10 +46,28 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown database error';
       console.error('[DatabaseProvider] Failed to initialize:', message);
+      setIsReady(false);
+
+      // In dev mode, NativeDatabase errors after Fast Refresh are unrecoverable
+      // because the native SQLite module handle is stale. Trigger a full reload.
+      if (__DEV__ && message.includes('NativeDatabase')) {
+        console.log('[DatabaseProvider] Stale native handle detected — triggering full reload');
+        try {
+          const { DevSettings } = require('react-native');
+          DevSettings.reload();
+          return; // Don't show error state, reload is coming
+        } catch {
+          // DevSettings not available, fall through to error state
+        }
+      }
+
       setError(message);
     }
   }, []);
 
+  // Always re-initialize on mount. After Fast Refresh, React preserves
+  // isReady=true but the native SQLite handle is stale (NullPointerException).
+  // DatabaseService.initialize() validates the connection and re-opens if needed.
   useEffect(() => {
     initializeDatabase();
   }, [initializeDatabase]);

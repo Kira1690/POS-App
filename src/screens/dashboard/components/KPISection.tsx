@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { KPICard } from './KPICard';
 import { KPIMetrics } from '@/types/dashboard.types';
 
@@ -11,18 +12,17 @@ interface KPISectionProps {
 
 export const KPISection: React.FC<KPISectionProps> = ({ kpis, loading = false }) => {
   const { theme } = useTheme();
+  const { isPhone } = useResponsive();
 
   const styles = StyleSheet.create({
     container: {
-      paddingHorizontal: theme.spacing.md,
+      paddingHorizontal: isPhone ? theme.spacing.xs : theme.spacing.md,
     },
-
     grid: {
       flexDirection: 'row',
       marginHorizontal: -theme.spacing.sm,
       marginBottom: theme.spacing.sm,
     },
-
     gridItem: {
       flex: 1,
       marginHorizontal: theme.spacing.sm,

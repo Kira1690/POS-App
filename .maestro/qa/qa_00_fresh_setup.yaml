@@ -1,0 +1,146 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 00 — Fresh Setup & Data Seeding"
+# Pre-condition: App installed, emulator running, API gateway on port 8080
+# Run order: First setup file — must complete before other QA tests
+
+---
+- launchApp:
+    clearState: true
+
+# ============ LOGIN AS QA-MANAGER ============
+- waitForAnimationToEnd
+- tapOn:
+    id: "email-input"
+    optional: true
+- inputText: "qa-manager@blueplate2026.io"
+- tapOn:
+    id: "password-input"
+    optional: true
+- inputText: "QAManager2026!"
+- tapOn:
+    text: "Sign In"
+    optional: true
+
+# Alternative: use email field placeholder
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-manager@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAManager2026!"
+- tapOn:
+    text: "Login"
+    optional: true
+
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*"  # App has loaded some content
+
+# ============ NAVIGATE TO SETTINGS > MENU ============
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+
+# ============ CREATE CATEGORIES ============
+- tapOn:
+    text: "Menu"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add Category"
+    optional: true
+- inputText: "QA-Drinks"
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add Category"
+    optional: true
+- inputText: "QA-Mains"
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add Category"
+    optional: true
+- inputText: "QA-Starters"
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_00_categories_created"
+
+# ============ CREATE TABLE AREAS ============
+- tapOn:
+    text: "Table Management"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add Area"
+    optional: true
+- inputText: "QA-Floor"
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add Area"
+    optional: true
+- inputText: "QA-Patio"
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_00_areas_created"
+
+# ============ CREATE TABLES ============
+# QA-T1 in QA-Floor (4 seats)
+- tapOn:
+    text: "Add Table"
+    optional: true
+- waitForAnimationToEnd
+- inputText: "QA-T1"
+- tapOn:
+    text: "QA-Floor"
+    optional: true
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+# QA-T2 in QA-Floor (6 seats)
+- tapOn:
+    text: "Add Table"
+    optional: true
+- inputText: "QA-T2"
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+# QA-P1 in QA-Patio (2 seats)
+- tapOn:
+    text: "Add Table"
+    optional: true
+- inputText: "QA-P1"
+- tapOn:
+    text: "QA-Patio"
+    optional: true
+- tapOn:
+    text: "Save"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_00_tables_created"
+- stopApp

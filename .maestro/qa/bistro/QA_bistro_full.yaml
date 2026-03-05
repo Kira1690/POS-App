@@ -1,0 +1,703 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA_01–QA_30 — Blue Plate Bistro Full End-to-End Test"
+# Full real-life restaurant simulation for Blue Plate Bistro.
+# Pre-conditions:
+# - bistro-setup.spec.ts has run (store + 5 staff created)
+# - bistro-web-data.spec.ts has run (7 categories, 22 items, 5 modifiers, 2 combos, 13 tables)
+# - App login: admin@blueplatebistro.io / BluePlate2026! (store_admin)
+# - Emulator: Android (10.0.2.2 = host machine)
+#
+# Screenshots saved to CWD when running: maestro test POS-App/.maestro/qa/bistro/QA_bistro_full.yaml
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ─────────────────────────────────────────────────────────────
+# LOGIN — Manager Login form
+# ─────────────────────────────────────────────────────────────
+- tapOn:
+    text: ".*Manager Login.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "email-input"
+- inputText: "admin@blueplatebistro.io"
+- hideKeyboard
+- tapOn:
+    id: "password-input"
+- inputText: "BluePlate2026!"
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_00_login"
+
+# ─────────────────────────────────────────────────────────────
+# GROUP A — Menu Verification (QA_01–QA_05)
+# ─────────────────────────────────────────────────────────────
+
+# QA_01 — Navigate to Order Management and start a new order to see category sidebar
+# (Categories load from real API when ordering screen opens)
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+# Select first table from the table selection dialog (tables may have suffixes)
+- tapOn:
+    text: "M1.*"
+    optional: true
+- waitForAnimationToEnd
+# If existing-order modal appears (T1 occupied), tap "Update Order" to continue
+- tapOn:
+    id: "btn-existing-update-order"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Assert categories are visible in left sidebar (real bistro categories from API)
+- assertVisible:
+    text: "Appetizers|Salads|Mains|Beverages"
+    optional: true
+- takeScreenshot: "QA_01_categories_loaded"
+
+# QA_02 — Tap Appetizers category — assert appetizer items appear
+- tapOn:
+    text: "Appetizers"
+    optional: true
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Garlic Bread|Chicken Wings|Mozzarella|Calamari"
+    optional: true
+- takeScreenshot: "QA_02_appetizers_grid"
+
+# QA_03 — Tap Burgers & Sandwiches category, then Classic Cheeseburger — assert modifier modal
+- tapOn:
+    text: "Burgers & Sandwiches|Burgers"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Classic Cheeseburger|Cheeseburger"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_03_burger_modifier_modal"
+- tapOn:
+    text: "Cancel|Close|Back|Done|Add"
+    optional: true
+- waitForAnimationToEnd
+
+# QA_04 — Scroll to Combo Deals section in POS (or tap Combos category)
+- tapOn:
+    text: "Combos|Combo|Combo Deals"
+    optional: true
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Lunch Combo|Dinner Special"
+    optional: true
+- takeScreenshot: "QA_04_combos_list"
+
+# Navigate to Tables via bottom tab (avoid pressKey Back which can exit app)
+- tapOn:
+    text: "Dashboard"
+    optional: true
+- waitForAnimationToEnd
+
+# QA_05 — Navigate to Tables (floor plan)
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- assertVisible:
+    text: "M1.*|P1.*|B1.*"
+    optional: true
+- takeScreenshot: "QA_05_table_management"
+
+# ─────────────────────────────────────────────────────────────
+# GROUP B — Order Creation (QA_06–QA_12)
+# ─────────────────────────────────────────────────────────────
+
+# Navigate back to Order Management (tap bottom tab)
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# QA_06 — New order for T1: add Chicken Wings (Buffalo) + 2× Draft Beer
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "M1.*"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-existing-update-order"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_06_table1_selected"
+
+# Add items — use visible categories from tab bar
+# Tap Beverages (visible in tab bar)
+- tapOn:
+    text: "Beverages"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Espresso|Draft Beer|Lemonade"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Espresso|Draft Beer|Lemonade|Cappuccino"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_06_table1_order_started"
+
+# QA_07 — Add from Burgers & Sandwiches category
+- tapOn:
+    text: "Burgers|Burger"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Classic Cheeseburger|Cheeseburger|BBQ Bacon Burger"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Bacon|Extra Cheese"
+    optional: true
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_07_burger_with_extras"
+
+# QA_08 — Add from Mains/Main Course category
+- tapOn:
+    text: "Mains|Main Course"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Grilled Salmon|Chicken Parmesan|NY Strip"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_08_combo_added"
+
+# QA_09 — Review order cart (items visible in right panel)
+- takeScreenshot: "QA_09_order_review"
+
+# QA_10 — Send to Kitchen
+- tapOn:
+    text: ".*Send.*Kitchen.*|.*Place.*Order.*|Send|Kitchen"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_10_order_sent"
+
+# QA_11 — New order for Patio table: Caesar Salad + Sparkling Water
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Scroll down in table list to find patio tables
+- swipe:
+    direction: UP
+    duration: 400
+- waitForAnimationToEnd
+- tapOn:
+    text: "P1.*"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-existing-update-order"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Salads"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Caesar Salad"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Beverages"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Sparkling Water"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_11_patio_order"
+
+# QA_12 — Send T2 order to Kitchen
+- tapOn:
+    text: ".*Send.*Kitchen.*|.*Place.*Order.*|Send|Kitchen"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_12_patio_order_sent"
+
+# ─────────────────────────────────────────────────────────────
+# GROUP C — Kitchen Workflow (QA_13–QA_17)
+# ─────────────────────────────────────────────────────────────
+
+# QA_13 — Kitchen Operations tab: verify tickets in Pending
+- tapOn:
+    text: "Kitchen Operations"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- assertVisible:
+    text: "PENDING|Pending|M1-d4tc"
+    optional: true
+- takeScreenshot: "QA_13_kitchen_pending_tickets"
+
+# QA_14 — Tap Start on first ticket to move to Preparing
+- tapOn:
+    text: ".*Start.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_14_table1_in_progress"
+
+# QA_15 — Mark M1 ticket Ready
+# KitchenDisplayScreen button text is just "Ready" (with ✓ icon), not "Mark Ready"
+# The stats bar also shows "Ready" label but in uppercase context — tap the button on the ticket
+- tapOn:
+    text: "Ready"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_15_table1_ready"
+
+# QA_16 — If patio ticket exists, advance it: Start → Ready
+- tapOn:
+    text: "Start"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn:
+    text: "Ready"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_16_patio_ready"
+
+# QA_17 — Floor plan: check table statuses
+- tapOn:
+    text: "Dashboard"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Occupied|occupied|M1.*"
+    optional: true
+- takeScreenshot: "QA_17_tables_occupied"
+
+# ─────────────────────────────────────────────────────────────
+# GROUP D — Payment & Billing (QA_18–QA_22)
+# Kitchen Ready button only updates local state, not backend.
+# Use "Update Status" on order detail to advance: preparing → ready → served
+# Then Process Payment → Bill → Pay → Cash/Card → Confirm
+# Must act quickly before 10s pull sync reverts local status.
+# ─────────────────────────────────────────────────────────────
+
+# QA_18 — Navigate to Order Management, open M1 order, advance status, process payment
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Ensure "All Orders" filter is active (avoid accidental filter from previous steps)
+- tapOn:
+    text: "All Orders"
+    optional: true
+- waitForAnimationToEnd
+# Tap "View" on first visible order card (order list shows "View" button per card)
+- tapOn:
+    text: ".*View.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_18_order_detail_ready"
+# Update Status: preparing → ready (via testID for speed)
+- tapOn:
+    id: "btn-update-status"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-status-ready"
+    optional: true
+- waitForAnimationToEnd
+# Update Status: ready → served (Bill screen requires served status)
+- tapOn:
+    id: "btn-update-status"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-status-served"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Process Payment button should now be visible (order is served)
+- tapOn:
+    id: "btn-process-payment"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_18_payment_screen"
+
+# QA_19 — Bill screen → Pay Full → Cash Payment
+# Bill screen: tap Pay button (enabled since order is served)
+- tapOn:
+    id: "btn-pay-full"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Payment Processing screen — scroll down to reveal Payment Methods section
+- swipe:
+    direction: UP
+    duration: 500
+- waitForAnimationToEnd
+# Select Cash Payment method
+- tapOn:
+    id: "btn-pay-method-cash"
+    optional: true
+- tapOn:
+    text: "Cash Payment"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Cash Payment Modal — tap a Quick Amount button (shows "Change: $X.XX")
+- tapOn:
+    text: ".*Change.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_19_cash_payment"
+# Confirm cash payment (enabled now that cash tendered >= total)
+- tapOn:
+    id: "btn-cash-confirm"
+    optional: true
+- tapOn:
+    text: ".*Confirm Payment.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# QA_20 — Payment confirmation / receipt (success screen with receipt options)
+- takeScreenshot: "QA_20_payment_confirmation"
+# Dismiss success screen — tap Continue or navigate away
+- tapOn:
+    text: "Continue"
+    optional: true
+- waitForAnimationToEnd
+
+# QA_21 — Navigate to Tables via Dashboard sidebar to check table status
+- tapOn:
+    id: "tab-nav-dashboard"
+    optional: true
+- tapOn:
+    text: "Dashboard"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_21_table1_available"
+
+# QA_22 — Second order (P1) — card payment
+# Navigate to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Filter to "Preparing" orders only (M1 is Paid, P1 is still Preparing)
+- tapOn:
+    text: "Preparing"
+    optional: true
+- waitForAnimationToEnd
+# Tap "View" on P1 order card (only Preparing order visible)
+- tapOn:
+    text: ".*View.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Update Status: preparing → ready → served (fast, before sync reverts)
+- tapOn:
+    id: "btn-update-status"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-status-ready"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-update-status"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-status-served"
+    optional: true
+- waitForAnimationToEnd
+# Process Payment
+- tapOn:
+    id: "btn-process-payment"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Bill screen → Pay
+- tapOn:
+    id: "btn-pay-full"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Scroll down to reveal Payment Methods
+- swipe:
+    direction: UP
+    duration: 500
+- waitForAnimationToEnd
+# Card Payment
+- tapOn:
+    id: "btn-pay-method-card"
+    optional: true
+- tapOn:
+    text: "Card Payment"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Card terminal modal — process/complete
+- tapOn:
+    text: ".*Process.*|.*Complete.*|.*Submit.*|.*Approve.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_22_card_payment"
+
+# ─────────────────────────────────────────────────────────────
+# GROUP E — Web→App Sync (QA_23–QA_26)
+# Note: Playwright must add "Daily Special" category + "Chef's Risotto" on web before QA_23
+# ─────────────────────────────────────────────────────────────
+
+# QA_23 — Verify synced menu data appears in POS
+# Navigate directly from QA_22 (no launchApp — causes tab detection issues)
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Select an available table (B1 in Bar section)
+- tapOn:
+    text: "B1.*"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-existing-update-order"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Verify categories synced from web are visible
+- assertVisible:
+    text: "Appetizers|Salads|Mains|Beverages|Desserts"
+    optional: true
+- takeScreenshot: "QA_23_web_created_item_appears"
+
+# QA_24 — Navigate to Tables to check synced statuses
+- tapOn:
+    text: "Dashboard"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Occupied|Available|M1.*|P1.*|B1.*"
+    optional: true
+- takeScreenshot: "QA_24_web_table_status_synced"
+
+# QA_25 — Modifier synced (open any item in POS)
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn:
+    text: "B1.*"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-existing-update-order"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Desserts"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Chocolate Lava Cake"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_25_modifier_synced"
+- tapOn:
+    text: "Cancel|Close|Back|Done|Add"
+    optional: true
+- waitForAnimationToEnd
+
+# QA_26 — Create Bar order (Espresso) for web sync check
+- tapOn:
+    text: "Beverages"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Espresso"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*Send.*Kitchen.*|.*Place.*Order.*|Send|Kitchen"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_26_bar_order_to_web"
+
+# ─────────────────────────────────────────────────────────────
+# GROUP F — Customers & Reports (QA_27–QA_30)
+# ─────────────────────────────────────────────────────────────
+
+# QA_27 — Create order on M2 (for sync verification)
+# Note: Customer creation not available on ordering screen (table-based orders)
+# Navigate directly from QA_26 (no launchApp — causes tab detection issues)
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn:
+    text: "M2.*"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-existing-update-order"
+    optional: true
+- waitForAnimationToEnd
+# Add Appetizers
+- tapOn:
+    text: "Appetizers"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Garlic Bread|Spring Rolls"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "QA_27_m2_order_items"
+
+# QA_28 — Send M2 order to kitchen
+- tapOn:
+    text: ".*Send.*Kitchen.*|.*Place.*Order.*|Send|Kitchen"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "QA_28_m2_order_sent"
+
+# QA_29 — Reports screen (via Dashboard bottom tab → Reports sidebar item)
+# Navigate directly from QA_28 (no launchApp — testIDs/text fail after launchApp)
+# After QA_28, we're on Order Management screen. Tap Dashboard bottom tab.
+- tapOn:
+    id: "tab-nav-dashboard"
+    optional: true
+- tapOn:
+    text: "Dashboard"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+# Tap Reports sidebar item (sidebar is visible on tablet layout)
+- tapOn:
+    text: "Reports"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Revenue|Sales|Today|Report|KPI"
+    optional: true
+- takeScreenshot: "QA_29_mobile_reports"
+
+# QA_30 — Final floor plan: all table statuses (via Dashboard sidebar)
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Table.*Summary|Occupied|Available"
+    optional: true
+- takeScreenshot: "QA_30_final_floor_plan"

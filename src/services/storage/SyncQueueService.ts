@@ -92,7 +92,7 @@ const PRIORITY_MAP: Record<SyncEntityType, number> = {
 };
 
 class SyncQueueService {
-  private isProcessing = false;
+  // Note: removed isProcessing mutex — entity type filtering in processBatch() prevents cross-contamination
 
   private get db() {
     return databaseService.getDatabase();
@@ -168,8 +168,18 @@ class SyncQueueService {
     };
   }
 
-  async getNextItems(limit: number = 10): Promise<SyncQueueItem[]> {
+  async getNextItems(limit: number = 10, entityType?: string): Promise<SyncQueueItem[]> {
     const ts = now();
+    if (entityType) {
+      const rows = await this.db.getAllAsync<QueueItemRow>(
+        `SELECT * FROM sync_queue
+         WHERE status = 'pending' AND entity_type = ? AND (next_retry_at IS NULL OR next_retry_at <= ?)
+         ORDER BY priority ASC, created_at ASC
+         LIMIT ?`,
+        entityType, ts, limit
+      );
+      return rows.map((r) => this.itemFromRow(r));
+    }
     const rows = await this.db.getAllAsync<QueueItemRow>(
       `SELECT * FROM sync_queue
        WHERE status = 'pending' AND (next_retry_at IS NULL OR next_retry_at <= ?)
@@ -283,19 +293,15 @@ class SyncQueueService {
 
   async processBatch(
     processor: (item: SyncQueueItem) => Promise<boolean>,
-    batchSize: number = 10
+    batchSize: number = 10,
+    entityType?: string
   ): Promise<{ processed: number; succeeded: number; failed: number }> {
-    if (this.isProcessing) {
-      return { processed: 0, succeeded: 0, failed: 0 };
-    }
-
-    this.isProcessing = true;
     let processed = 0;
     let succeeded = 0;
     let failed = 0;
 
     try {
-      const items = await this.getNextItems(batchSize);
+      const items = await this.getNextItems(batchSize, entityType);
 
       for (const item of items) {
         await this.markInProgress(item.id);
@@ -316,8 +322,8 @@ class SyncQueueService {
           failed++;
         }
       }
-    } finally {
-      this.isProcessing = false;
+    } catch (err) {
+      if (__DEV__) console.error('[SyncQueueService] processBatch error:', err);
     }
 
     return { processed, succeeded, failed };
@@ -393,6 +399,10 @@ class SyncQueueService {
       `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('last_sync_time', ?, ?)`,
       now(), now()
     );
+  }
+
+  async resetLastSyncTime(): Promise<void> {
+    await this.db.runAsync(`DELETE FROM sync_metadata WHERE key = 'last_sync_time'`);
   }
 
   // ============== CLEANUP ==============

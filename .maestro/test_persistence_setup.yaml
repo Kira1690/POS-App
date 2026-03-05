@@ -1,0 +1,354 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Test: Setup data for persistence test (dev build)"
+---
+
+# ─────────────────────────────────────────────────────
+#  Phase 1: Login as Manager
+#  Phase 2: Create 3 categories (Drinks, Mains, Starters)
+#  Phase 3: Create 2 menu items (Latte, Beef Burger)
+#  Phase 4: Verify data in UI
+# ─────────────────────────────────────────────────────
+
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Welcome to FoodPOS"
+    timeout: 30000
+
+- waitForAnimationToEnd
+
+# ── LOGIN ──────────────────────────────────────────────
+- tapOn:
+    text: ".*Manager Login.*"
+
+- extendedWaitUntil:
+    visible: "Email Address"
+    timeout: 15000
+
+- tapOn:
+    id: "email-input"
+
+- inputText: "manager@foodcorner.com"
+
+- tapOn:
+    id: "password-input"
+
+- inputText: "manager123"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Sign In.*"
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000
+
+- takeScreenshot: "persist_01_dashboard"
+
+# ── NAVIGATE TO MENU MANAGEMENT ───────────────────────
+- tapOn:
+    text: "Settings"
+
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 15000
+
+- tapOn:
+    text: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Items"
+    timeout: 10000
+
+- takeScreenshot: "persist_02_menu_mgmt"
+
+# ── ADD CATEGORY: Drinks ──────────────────────────────
+- tapOn:
+    id: "btn-add-category"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Save Category"
+    timeout: 10000
+
+- tapOn:
+    id: "input-category-name"
+
+- inputText: "Drinks"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-save-category"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Drinks"
+    timeout: 8000
+
+- assertVisible: "Drinks"
+
+# ── ADD CATEGORY: Mains ───────────────────────────────
+- tapOn:
+    id: "btn-add-category"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Save Category"
+    timeout: 10000
+
+- tapOn:
+    id: "input-category-name"
+
+- inputText: "Mains"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-save-category"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 8000
+
+- assertVisible: "Mains"
+
+# ── ADD CATEGORY: Starters ────────────────────────────
+- tapOn:
+    id: "btn-add-category"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Save Category"
+    timeout: 10000
+
+- tapOn:
+    id: "input-category-name"
+
+- inputText: "Starters"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-save-category"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Starters"
+    timeout: 8000
+
+- assertVisible: "Starters"
+
+- takeScreenshot: "persist_03_all_categories"
+
+# ── ADD ITEM: Latte → Drinks → $5.00 ─────────────────
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Drinks"
+    timeout: 15000
+
+- tapOn:
+    text: "Drinks"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Latte"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "5.00"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+# Step 3: Modifiers — skip
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+# Step 4: Nutrition — create
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Latte"
+    timeout: 10000
+
+- assertVisible: "Latte"
+
+- takeScreenshot: "persist_04_latte_created"
+
+# ── ADD ITEM: Beef Burger → Mains → $12.99 ───────────
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 15000
+
+- tapOn:
+    text: "Mains"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Beef Burger"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "12.99"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 10000
+
+- assertVisible: "Beef Burger"
+
+# ── ADD ITEM: Garlic Bread → Starters → $4.00 ────────
+- tapOn:
+    text: "Add Item"
+
+- extendedWaitUntil:
+    visible: "Add Menu Item"
+    timeout: 8000
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Starters"
+    timeout: 15000
+
+- tapOn:
+    text: "Starters"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "input-item-name"
+
+- inputText: "Garlic Bread"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selling Price"
+    timeout: 8000
+
+- tapOn:
+    id: "input-selling-price"
+
+- inputText: "4.00"
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Next"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Calories"
+    timeout: 8000
+
+- tapOn:
+    text: "Create Item"
+
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 10000
+
+- assertVisible: "Garlic Bread"
+
+- takeScreenshot: "persist_05_all_items"
+
+# ── FINAL ASSERT: All data visible ────────────────────
+- assertVisible: "Drinks"
+- assertVisible: "Mains"
+- assertVisible: "Starters"
+- assertVisible: "Latte"
+- assertVisible: "Beef Burger"
+- assertVisible: "Garlic Bread"
+
+- takeScreenshot: "persist_06_SETUP_COMPLETE"

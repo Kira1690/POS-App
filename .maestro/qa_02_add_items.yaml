@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 name: "QA 02: Add 6 Menu Items (Drinks / Mains / Starters)"
 tags:
   - qa
@@ -32,14 +32,16 @@ tags:
 - waitForAnimationToEnd
 
 - tapOn:
-    text: "Settings"
+    id: "tab-nav-settings"
 
 - extendedWaitUntil:
-    visible: "Menu Management"
-    timeout: 15000
+    visible:
+      id: "settings-nav-restaurant_profile"
+    timeout: 10000
 
+# tapOn auto-scrolls the sidebar to find the item
 - tapOn:
-    text: "Menu Management"
+    id: "settings-nav-menu_management"
 
 - extendedWaitUntil:
     visible: "Add Item"
@@ -76,6 +78,10 @@ tags:
 
 - inputText: "Latte"
 
+- hideKeyboard
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: "Next"
 
@@ -90,6 +96,10 @@ tags:
     id: "input-selling-price"
 
 - inputText: "5.00"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
 
 - tapOn:
     text: "Next"
@@ -111,6 +121,12 @@ tags:
 
 - tapOn:
     text: "Create Item"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    notVisible: "Create Item"
+    timeout: 8000
 
 - extendedWaitUntil:
     visible: "Latte"
@@ -146,6 +162,10 @@ tags:
 
 - inputText: "Cappuccino"
 
+- hideKeyboard
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: "Next"
 
@@ -159,6 +179,10 @@ tags:
     id: "input-selling-price"
 
 - inputText: "4.75"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
 
 - tapOn:
     text: "Next"
@@ -176,6 +200,12 @@ tags:
 
 - tapOn:
     text: "Create Item"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    notVisible: "Create Item"
+    timeout: 8000
 
 - extendedWaitUntil:
     visible: "Cappuccino"
@@ -211,6 +241,10 @@ tags:
 
 - inputText: "Beef Burger"
 
+- hideKeyboard
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: "Next"
 
@@ -224,6 +258,10 @@ tags:
     id: "input-selling-price"
 
 - inputText: "12.99"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
 
 - tapOn:
     text: "Next"
@@ -241,6 +279,12 @@ tags:
 
 - tapOn:
     text: "Create Item"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    notVisible: "Create Item"
+    timeout: 8000
 
 - extendedWaitUntil:
     visible: "Beef Burger"
@@ -276,6 +320,10 @@ tags:
 
 - inputText: "Grilled Salmon"
 
+- hideKeyboard
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: "Next"
 
@@ -289,6 +337,10 @@ tags:
     id: "input-selling-price"
 
 - inputText: "15.50"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
 
 - tapOn:
     text: "Next"
@@ -306,6 +358,12 @@ tags:
 
 - tapOn:
     text: "Create Item"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    notVisible: "Create Item"
+    timeout: 8000
 
 - extendedWaitUntil:
     visible: "Grilled Salmon"
@@ -341,6 +399,10 @@ tags:
 
 - inputText: "Spring Rolls"
 
+- hideKeyboard
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: "Next"
 
@@ -354,6 +416,10 @@ tags:
     id: "input-selling-price"
 
 - inputText: "6.50"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
 
 - tapOn:
     text: "Next"
@@ -371,6 +437,12 @@ tags:
 
 - tapOn:
     text: "Create Item"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    notVisible: "Create Item"
+    timeout: 8000
 
 - extendedWaitUntil:
     visible: "Spring Rolls"
@@ -406,6 +478,10 @@ tags:
 
 - inputText: "Garlic Bread"
 
+- hideKeyboard
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: "Next"
 
@@ -419,6 +495,10 @@ tags:
     id: "input-selling-price"
 
 - inputText: "4.00"
+
+- hideKeyboard
+
+- waitForAnimationToEnd
 
 - tapOn:
     text: "Next"
@@ -436,6 +516,12 @@ tags:
 
 - tapOn:
     text: "Create Item"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    notVisible: "Create Item"
+    timeout: 8000
 
 - extendedWaitUntil:
     visible: "Garlic Bread"

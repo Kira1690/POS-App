@@ -1,14 +1,14 @@
 appId: host.exp.exponent
-name: "QA Full Suite — Menu Setup + POS Orders + Kitchen + Billing"
+name: "QA Full Suite — Menu Setup + POS Orders + Kitchen + Billing + Payment"
 tags:
   - qa
   - full-suite
 ---
 
 # ─────────────────────────────────────────────────────
-#  Full QA Test Suite
+#  Full QA Test Suite (Happy Path)
 #
-#  Test Data (different from manual baseline):
+#  Test Data:
 #    Categories:  Drinks, Mains, Starters
 #    Items:       Latte $5.00, Cappuccino $4.75,
 #                 Beef Burger $12.99, Grilled Salmon $15.50,
@@ -29,23 +29,43 @@ tags:
 #    4. Launch Expo Go on emulator
 #
 #  Phases:
-#    qa_01 — Add 3 categories: Drinks, Mains, Starters
-#    qa_02 — Add 6 menu items
-#    qa_03 — Add 2 modifier groups: Cup Size, Protein
-#    qa_04 — Assign modifiers to items
-#    qa_05 — POS order with modifier in portrait (Table A-1)
+#    QA 01 — Add 3 categories: Drinks, Mains, Starters
+#    QA 02 — Add 6 menu items
+#    QA 03 — Add 2 modifier groups: Cup Size, Protein
+#    QA 04 — Assign modifiers to items
+#    QA 05 — POS order with modifier in portrait (Table T-1, Latte+Large)
 #
-#    ⚠️  MANUAL STEP before qa_06:
+#    ⚠️  MANUAL STEP before QA 06:
 #         Rotate emulator to landscape:
 #           adb shell settings put system user_rotation 1
-#         OR press Ctrl+F11 in Android Studio emulator
 #
-#    qa_06 — POS order in landscape (Table A-2)
-#    qa_07 — Kitchen: Confirmed → Preparing → Ready → Served
-#    qa_08 — Billing: Pay SERVED order, Cash Payment, verify PAID
+#    QA 06 — POS order in landscape (Table B-1, Beef Burger+Extra + Garlic Bread)
+#    QA 07 — Kitchen: CONFIRMED → PREPARING → READY → SERVED (self-contained)
+#    QA 08 — Full Cash Payment: SERVED → Pay → Cash → PAID
+#    QA 09 — Equal Split Payment: 2 guests, each pay cash → PAID
+#    QA 10 — Multi-method Split: Cash + Cash via SplitPaymentModal → PAID
+#    QA 15 — Split by Items: 2 guests, items assigned, each pays cash → PAID
+#    QA 16 — Equal Split 3 Guests: increase guest count, all 3 pay cash → PAID
+#    QA 17 — Full Bill via BillScreen: tip selection → Pay Full → Cash → PAID
+#    QA 19 — Split Card+Cash: TRXPaymentModal MUST open for card portion (bug fix verification)
+#    QA 11 — Cancel order → verify removed from Kitchen Display (cancel bug fix)
+#    QA 12 — Kitchen Management Settings: add/edit/toggle/delete station
+#    QA 18 — Kitchen Station Override: per-item station picker, persistence, POS routing
+#    QA 21 — Dashboard Order Cards: tap card → OrderSummarySheet; View All nav
+#    QA 22 — POS TableSelectionModal: area tabs visible; table select works
+#    QA 23 — Combine Bills: merge T-1 into B-1; T-1 cancelled after merge
+#    QA 25 — Discount at Bill Level: 10% discount applied, order paid
+#    QA 26 — Printer Settings Panel: configure Epson receipt printer, persist
+#    QA 27 — Bill Transfer: move items from B-1 to T-1
+#    QA 28 — Activity Logs: open sheet, use filters (Today / 1h / Week)
+#    QA 29 — Print Receipt: tap print button on PaymentConfirmation (UI only)
+#    QA 30 — Update Existing Order: Add More Items → edit mode → Latte added
 #
-#  Screenshots saved to:
-#    ~/.maestro/tests/[timestamp]/
+#  Notes:
+#    - QA 07-12, 15-18 are self-contained: each creates/manages its own test data
+#    - Screenshots saved to: ~/.maestro/tests/[timestamp]/
+#    - Card payment (QA 10) uses two Cash entries since TRX terminal
+#      not available in emulator (requires 192.168.1.12:1180)
 # ─────────────────────────────────────────────────────
 
 - runFlow: qa_01_setup_categories.yaml
@@ -56,16 +76,35 @@ tags:
 
 # ─────────────────────────────────────────────────────
 #  MANUAL STEP REQUIRED before qa_06:
-#
 #  Rotate emulator to landscape:
 #    adb shell settings put system user_rotation 1
 #  OR press Ctrl+F11 in Android Studio emulator
-#
-#  Then run qa_06 and qa_07 separately:
-#    maestro test .maestro/qa_06_pos_landscape.yaml
-#    maestro test .maestro/qa_07_kitchen_ops.yaml
 # ─────────────────────────────────────────────────────
 
 - runFlow: qa_06_pos_landscape.yaml
+
+# ─────────────────────────────────────────────────────
+#  Rotate back to portrait for QA 07-10:
+#    adb shell settings put system user_rotation 0
+# ─────────────────────────────────────────────────────
+
 - runFlow: qa_07_kitchen_ops.yaml
-- runFlow: qa_08_billing_payment.yaml
+- runFlow: qa_08_cash_payment.yaml
+- runFlow: qa_09_split_equal.yaml
+- runFlow: qa_10_split_payment_modal.yaml
+- runFlow: qa_15_split_by_items.yaml
+- runFlow: qa_16_split_3_guests.yaml
+- runFlow: qa_17_full_bill_pay.yaml
+- runFlow: qa_19_split_card_cash.yaml
+- runFlow: qa_11_cancel_removes_from_kitchen.yaml
+- runFlow: qa_12_kitchen_management_settings.yaml
+- runFlow: qa_18_kitchen_station_override.yaml
+- runFlow: qa_21_dashboard_order_card.yaml
+- runFlow: qa_22_pos_area_table_select.yaml
+- runFlow: qa_23_combine_bills.yaml
+- runFlow: qa_25_discount_at_bill.yaml
+- runFlow: qa_26_printer_settings.yaml
+- runFlow: qa_27_bill_transfer.yaml
+- runFlow: qa_28_activity_logs.yaml
+- runFlow: qa_29_print_receipt.yaml
+- runFlow: qa_30_update_order.yaml

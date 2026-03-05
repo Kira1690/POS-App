@@ -1,0 +1,133 @@
+appId: host.exp.exponent
+name: "Helper: Ensure on Order Management"
+---
+
+# Opens the app and navigates to Order Management tab.
+# Uses testIDs only — no text-based selectors.
+# Avoids Dashboard tab (Manager Dashboard has sidebar that interferes with navigation).
+# NOTE: Does NOT use pressKey:back — that can navigate away from root screens on Android.
+
+- openLink: "exp://10.0.2.2:8081"
+- waitForAnimationToEnd
+
+# Dismiss any full-screen LogBox (dev warnings shown as full-screen overlay)
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- waitForAnimationToEnd
+
+# ── Login if app is on the welcome / auth screen ─────────────────────────────
+# Tap Manager Login button on WelcomeScreen (optional — skipped if already logged in)
+- tapOn:
+    id: "btn-welcome-manager-login"
+    optional: true
+- waitForAnimationToEnd
+
+# Fill credentials if ManagerLoginScreen is now showing
+- runFlow:
+    when:
+      visible:
+        id: "email-input"
+    commands:
+      - tapOn:
+          id: "email-input"
+      - inputText: "manager@foodcorner.com"
+      - tapOn:
+          id: "password-input"
+      - inputText: "manager123"
+      - tapOn:
+          id: "btn-manager-sign-in"
+      - extendedWaitUntil:
+          visible:
+            id: "tab-nav-orders"
+          timeout: 15000
+
+# Dismiss "Existing Order Found" alert if present (from a previous failed test run)
+- runFlow:
+    when:
+      visible:
+        text: "GO BACK"
+    commands:
+      - tapOn:
+          text: "GO BACK"
+      - waitForAnimationToEnd
+
+# Close TableSelectionModal if open (modal blocks tab bar in accessibility tree)
+- runFlow:
+    when:
+      visible:
+        id: "btn-table-modal-close"
+    commands:
+      - tapOn:
+          id: "btn-table-modal-close"
+      - waitForAnimationToEnd
+
+# Dismiss TRXPaymentModal if open (from a previous interrupted card payment test)
+- runFlow:
+    when:
+      visible:
+        id: "btn-trx-close"
+    commands:
+      - tapOn:
+          id: "btn-trx-close"
+      - waitForAnimationToEnd
+
+# Dismiss SplitPaymentModal if open (from a previous interrupted test)
+- runFlow:
+    when:
+      visible:
+        id: "btn-split-close"
+    commands:
+      - tapOn:
+          id: "btn-split-close"
+      - waitForAnimationToEnd
+
+# Dismiss CashPaymentModal if open (from a previous interrupted test)
+- runFlow:
+    when:
+      visible:
+        id: "btn-cash-cancel"
+    commands:
+      - tapOn:
+          id: "btn-cash-cancel"
+      - waitForAnimationToEnd
+
+# Dismiss PaymentProcessingScreen if open (back to Order Management)
+- runFlow:
+    when:
+      visible:
+        id: "btn-cancel-payment"
+    commands:
+      - tapOn:
+          id: "btn-cancel-payment"
+      - waitForAnimationToEnd
+
+# Dismiss PaymentConfirmationScreen if open (navigate to Order Management)
+- runFlow:
+    when:
+      visible:
+        id: "btn-continue"
+    commands:
+      - tapOn:
+          id: "btn-continue"
+      - waitForAnimationToEnd
+
+# Navigate to Order Management — stable screen with no sidebars
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+# Reset both status and payment filters to "All" for a clean starting state
+- tapOn:
+    id: "tab-status-all"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-all"
+    optional: true
+- waitForAnimationToEnd

@@ -3,6 +3,15 @@
 ## Feature Overview
 TRX/Verifone VP3350 payment terminal integration using MML (Merchant Mobile Link) TCP/IP protocol.
 
+## Bug Reports
+- [`bugs/trx-tcp-connection-failures.md`](bugs/trx-tcp-connection-failures.md) — All 6 bugs fixed (2026-02-28):
+  - Bug 1: TCP module null at parse time (New Architecture lazy getter patch)
+  - Bug 2: Socket ID conflict after hot reload (global counter patch)
+  - Bug 3: NativeEventEmitter null (lazy proxy patch)
+  - Bug 4: No retry on TCP connection validation → "connection failed" (testManualIP fix)
+  - Bug 5: AsyncStorage vs SQLite for terminal persistence (SQLite migration)
+  - Bug 6: **NativeTcpSocket registry checks — permanent false negative** (5 failed fixes before root cause found — removed all TurboModuleRegistry/NativeModules checks, matched reference implementation)
+
 ## Live Terminal (Confirmed — PAYMENTS WORKING)
 - **IP**: `192.168.1.12`
 - **Port**: `1180`
@@ -244,7 +253,7 @@ Runs the full flow: Settings → Add Terminal → Order Management → Pay → C
 - [x] Charge amount includes tip when selected
 - [x] TRXPaymentProgressModal shows PROCESSING animation (no ExpoBlurView crash)
 - [x] On SUCCESS: `onPayment()` called with approval code + card brand + last 4
-- [x] Terminal state persists after app reload (AsyncStorage)
+- [x] Terminal state persists after app reload (SQLite — migrated from AsyncStorage)
 - [x] Card Payment routes directly to TRX (no mock card fallback)
 - [ ] On FAILURE: progress modal shows error; retry possible
 - [ ] Live settings reload: tax/surcharge change in settings reflected in open modal

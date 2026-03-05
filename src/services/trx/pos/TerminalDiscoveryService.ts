@@ -1,11 +1,10 @@
 import { ConfigurationServiceFactory } from '../ConfigurationService';
 import { LoggerFactory } from '../logging/LoggingService';
-import { TRXTerminalPreferenceService } from '../TRXTerminalPreferenceService';
+import { TerminalStorageService, StoredTerminal } from '../storage/TerminalStorageService';
 import { ConnectAndSendService } from './ConnectAndSendService';
 import { BalanceRequest, MMLMessageBuilder, SaleRequest } from './MMLMessageBuilder';
 import { MMLResponseParser } from './MMLResponseParser';
 import { NetworkScanner } from './NetworkScanner';
-import { TerminalStorage, StoredTerminal } from './TerminalStorage';
 
 export interface DiscoveredTerminal {
   ip: string;
@@ -25,6 +24,9 @@ export interface TerminalConnectionManager {
   getCurrentTerminal: () => DiscoveredTerminal | null;
 }
 
+// Use global storage so singleton survives hot reload module re-evaluation
+const GLOBAL_DISCOVERY_KEY = '__terminalDiscoveryServiceInstance';
+
 export class TerminalDiscoveryService implements TerminalConnectionManager {
   private static instance: TerminalDiscoveryService;
   private logger = LoggerFactory.createLogger('TerminalDiscoveryService');
@@ -33,34 +35,39 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
   private messageBuilder = new MMLMessageBuilder();
   private responseParser = new MMLResponseParser();
 
-  private preferenceService = TRXTerminalPreferenceService.getInstance();
-  private terminalStorage = TerminalStorage.getInstance();
+  private terminalStorageService = TerminalStorageService.getInstance();
   private currentTerminal: DiscoveredTerminal | null = null;
   private discoveredTerminals: DiscoveredTerminal[] = [];
   private lastConnectedIP: string | null = null;
   private lastConnectedPort: number | null = null;
-  private preferenceLoaded = false;
   private storageRestorePromise: Promise<void> | null = null;
 
   private constructor() {
-    // Eagerly restore from storage so isTerminalOnline() works after app reload
+    // Eagerly restore from SQLite so isTerminalOnline() works after app reload/hot refresh
     this.storageRestorePromise = this.restoreFromStorage();
   }
 
   public static getInstance(): TerminalDiscoveryService {
+    // Check global first — survives hot reload module re-evaluation
+    // (static class properties are lost when the module is re-evaluated)
+    const globalInstance = (global as Record<string, unknown>)[GLOBAL_DISCOVERY_KEY] as TerminalDiscoveryService | undefined;
+    if (globalInstance) {
+      return globalInstance;
+    }
     if (!TerminalDiscoveryService.instance) {
       TerminalDiscoveryService.instance = new TerminalDiscoveryService();
     }
+    (global as Record<string, unknown>)[GLOBAL_DISCOVERY_KEY] = TerminalDiscoveryService.instance;
     return TerminalDiscoveryService.instance;
   }
 
   /**
-   * Eagerly restore terminal state from AsyncStorage on singleton creation.
+   * Eagerly restore terminal state from SQLite on singleton creation.
    * This ensures isTerminalOnline() returns true after app reload.
    */
   private async restoreFromStorage(): Promise<void> {
     try {
-      const stored = await this.terminalStorage.getSelectedTerminal();
+      const stored = await this.terminalStorageService.getSelectedTerminal();
       if (stored) {
         this.lastConnectedIP = stored.ip;
         this.lastConnectedPort = stored.port;
@@ -70,8 +77,7 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
           isOnline: true,
           lastChecked: new Date(),
         };
-        this.preferenceLoaded = true;
-        this.logger.info('Terminal restored from storage on init', 'restoreFromStorage', {
+        this.logger.info('Terminal restored from SQLite on init', 'restoreFromStorage', {
           ip: stored.ip, port: stored.port,
         });
       }
@@ -92,11 +98,6 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
   }
 
   async discoverTerminals(manualIPs: string[] = []): Promise<DiscoveredTerminal[]> {
-    // Restore preferred terminal from persistent storage on first call
-    if (!this.preferenceLoaded) {
-      await this.loadPreferredTerminal();
-    }
-
     // Include last connected IP in scan to preserve existing connection
     const scanIPs = [...manualIPs];
     if (this.lastConnectedIP && !scanIPs.includes(this.lastConnectedIP)) {
@@ -123,14 +124,6 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
         terminalsFound: this.discoveredTerminals.length,
       });
 
-      // Persist discovered terminals to storage
-      await this.terminalStorage.saveDiscoveredTerminals(
-        this.discoveredTerminals.map(t => ({
-          ip: t.ip, port: t.port, isOnline: t.isOnline,
-          responseTime: t.responseTime, discoveredAt: new Date().toISOString(),
-        }))
-      );
-
       return this.discoveredTerminals;
 
     } catch (error) {
@@ -142,8 +135,13 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
   async addManualTerminal(ip: string, port: number): Promise<boolean> {
     this.logger.info('Adding manual terminal', 'addManualTerminal', { ip, port });
 
+    console.log('');
+    console.log('[TerminalDiscovery] MANUAL CONNECTION');
+    console.log(`[TerminalDiscovery] Target: ${ip}:${port}`);
+
     try {
-      const terminal = await this.networkScanner.addManualTerminal(ip, port);
+      // Use testManualIP — retry-based validation (2 retries × 3 methods = 6 attempts)
+      const terminal = await this.networkScanner.testManualIP(ip, port);
 
       if (terminal && terminal.isOnline) {
         const discoveredTerminal: DiscoveredTerminal = {
@@ -161,7 +159,7 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
           this.discoveredTerminals.push(discoveredTerminal);
         }
 
-        // Directly set connected state and save to storage (reference app approach — no second TCP test)
+        // Directly set connected state and save to SQLite (no second TCP test)
         this.currentTerminal = discoveredTerminal;
         this.lastConnectedIP = ip;
         this.lastConnectedPort = port;
@@ -179,20 +177,25 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
           }
         });
 
-        // Persist terminal so it survives app reloads
+        // Persist terminal to SQLite so it survives app reloads
         const storedTerminal: StoredTerminal = {
           ip, port, isSelected: true,
           connectedAt: new Date().toISOString(),
           lastPingSuccess: new Date().toISOString(),
         };
-        await this.terminalStorage.saveSelectedTerminal(storedTerminal);
-        await this.preferenceService.setPreferredTerminal(ip, port);
+        await this.terminalStorageService.saveSelectedTerminal(storedTerminal);
 
-        console.log('✅ Manual terminal added and saved:', `${ip}:${port}`);
-        this.logger.info('Manual terminal added, saved, and set as current', 'addManualTerminal', { ip, port });
+        console.log('');
+        console.log('[TerminalDiscovery] MANUAL CONNECTION SUCCESS');
+        console.log(`[TerminalDiscovery] Terminal: ${ip}:${port}`);
+        console.log('[TerminalDiscovery] Saved to SQLite');
+        console.log('');
+
+        this.logger.info('Manual terminal added, saved to SQLite, set as current', 'addManualTerminal', { ip, port });
         return true;
       }
 
+      console.log(`[TerminalDiscovery] Terminal unreachable at ${ip}:${port}`);
       this.logger.warn('Manual terminal unreachable', 'addManualTerminal', { ip, port });
       return false;
 
@@ -202,39 +205,22 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
     }
   }
 
-  /**
-   * Load preferred terminal from AsyncStorage — restores connection after app reload
-   */
-  private async loadPreferredTerminal(): Promise<void> {
-    this.preferenceLoaded = true;
-    try {
-      const result = await this.preferenceService.getPreferredTerminal();
-      if (result.success && result.data) {
-        this.lastConnectedIP = result.data.ip;
-        this.lastConnectedPort = result.data.port;
-        this.logger.info('Preferred terminal restored from storage', 'loadPreferredTerminal', {
-          ip: result.data.ip, port: result.data.port
-        });
-      }
-    } catch (error) {
-      this.logger.warn('Failed to load preferred terminal', 'loadPreferredTerminal');
-    }
-  }
-
   async selectTerminal(ip: string, port: number): Promise<boolean> {
-    console.log('🔌 TERMINAL CONNECTION: Attempting to connect to terminal');
-    console.log('📍 Target IP:', ip);
-    console.log('📍 Target Port:', port);
+    console.log('');
+    console.log('[TerminalDiscovery] SELECTING TERMINAL');
+    console.log(`[TerminalDiscovery] Target: ${ip}:${port}`);
 
     this.logger.info('Selecting terminal', 'selectTerminal', { ip, port });
 
     try {
-      const isConnected = await this.connectAndSend.testConnection(ip, port, 5000);
+      // Use testManualIP — retry-based validation (2 retries × 3 methods = 6 attempts)
+      const testResult = await this.networkScanner.testManualIP(ip, port);
 
-      if (isConnected) {
+      if (testResult && testResult.isOnline) {
         this.currentTerminal = {
           ip, port,
           isOnline: true,
+          responseTime: testResult.responseTime,
           lastChecked: new Date()
         };
 
@@ -253,24 +239,21 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
           }
         });
 
-        // Persist as preferred terminal so it survives app reloads
-        await this.preferenceService.setPreferredTerminal(ip, port);
-
-        // Also save to TerminalStorage for the hook restore-from-storage flow
+        // Persist to SQLite so it survives app reloads
         const storedTerminal: StoredTerminal = {
           ip, port, isSelected: true,
           connectedAt: new Date().toISOString(),
           lastPingSuccess: new Date().toISOString(),
         };
-        await this.terminalStorage.saveSelectedTerminal(storedTerminal);
+        await this.terminalStorageService.saveSelectedTerminal(storedTerminal);
 
-        console.log('✅ TERMINAL CONNECTED SUCCESSFULLY!');
-        console.log('📡 Connected Terminal:', `${ip}:${port}`);
+        console.log('[TerminalDiscovery] TERMINAL CONNECTED SUCCESSFULLY');
+        console.log(`[TerminalDiscovery] Connected: ${ip}:${port}`);
 
-        this.logger.info('Terminal selected and persisted', 'selectTerminal', { ip, port });
+        this.logger.info('Terminal selected and persisted to SQLite', 'selectTerminal', { ip, port });
         return true;
       } else {
-        console.log('❌ Connection test FAILED');
+        console.log(`[TerminalDiscovery] Connection test FAILED for ${ip}:${port}`);
         this.logger.warn('Terminal connection test failed', 'selectTerminal', { ip, port });
         return false;
       }
@@ -282,9 +265,9 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
   }
 
   async processPayment(amount: number, tax: number): Promise<unknown> {
-    // Like the reference app: read from storage if in-memory state is empty
+    // Read from SQLite if in-memory state is empty (e.g. after hot reload)
     if (!this.lastConnectedIP || !this.lastConnectedPort) {
-      const stored = await this.terminalStorage.getSelectedTerminal();
+      const stored = await this.terminalStorageService.getSelectedTerminal();
       if (stored) {
         this.lastConnectedIP = stored.ip;
         this.lastConnectedPort = stored.port;
@@ -300,73 +283,90 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
     const terminalPort = this.lastConnectedPort;
 
     this.logger.info('Processing payment transaction', 'processPayment', {
-      amount, tax, total: amount + tax, terminal: terminalIP, port: terminalPort
+      amount, tax, terminal: terminalIP, port: terminalPort
     });
 
-    try {
-      const configService = ConfigurationServiceFactory.getInstance();
-      const posConfig = await configService.getPOSConfig();
+    const configService = ConfigurationServiceFactory.getInstance();
+    const posConfig = await configService.getPOSConfig();
 
-      const transactionId = this.messageBuilder.generateTransactionId();
-      const saleRequest: SaleRequest = {
-        transactionId,
-        amount: amount + tax,
-        tax,
-        level2Data: { localTaxAmount: tax }
-      };
+    const transactionId = this.messageBuilder.generateTransactionId();
+    const saleRequest: SaleRequest = {
+      transactionId,
+      // amount already includes tax from the hook caller — do NOT add tax again
+      amount: amount,
+      tax,
+      level2Data: { localTaxAmount: tax }
+    };
 
-      const messageData = this.messageBuilder.buildSaleMessage(saleRequest);
-      const validation = this.messageBuilder.validateMessage(messageData);
-      if (!validation.isValid) {
-        throw new Error(`Invalid message: ${validation.errors.join(', ')}`);
-      }
-
-      const response = await this.connectAndSend.connectAndSend({
-        host: terminalIP,
-        port: terminalPort,
-        sendTimeout: posConfig.timeout,
-        receiveTimeout: posConfig.timeout
-      }, messageData);
-
-      if (!response.success) {
-        throw new Error(response.error || 'Payment transaction failed');
-      }
-
-      const result = this.responseParser.parseSaleResponse(response.data || '');
-
-      console.log('🎉 PAYMENT RESPONSE:');
-      console.log('   • Status:', result.status === '00' ? '✅ APPROVED' : '❌ DECLINED');
-      console.log('   • Response:', result.responseText);
-      console.log('   • Approval Code:', result.approvalCode);
-      console.log('   • Card Brand:', result.accountBrand);
-      console.log('   • Last 4:', result.lastFour);
-      console.log('   • Response Time:', `${response.responseTime}ms`);
-
-      this.logger.info('Payment completed', 'processPayment', {
-        transactionId,
-        success: response.success,
-        responseTime: `${response.responseTime}ms`,
-        status: result.status,
-        approvalCode: result.approvalCode,
-      });
-
-      return {
-        transactionId: result.transactionId,
-        status: result.status,
-        responseText: result.responseText,
-        success: result.success,
-        approvalCode: result.approvalCode,
-        guid: result.guid,
-        purchaseId: result.purchaseId,
-        accountBrand: result.accountBrand,
-        lastFour: result.lastFour,
-        rawResponse: result.rawResponse
-      };
-
-    } catch (error) {
-      this.logger.error('Payment transaction failed', error instanceof Error ? error : new Error(String(error)), 'processPayment');
-      throw error;
+    const messageData = this.messageBuilder.buildSaleMessage(saleRequest);
+    const validation = this.messageBuilder.validateMessage(messageData);
+    if (!validation.isValid) {
+      throw new Error(`Invalid message: ${validation.errors.join(', ')}`);
     }
+
+    // Retry connection up to 3 total attempts for resilience after hot reload
+    const maxAttempts = 3;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await this.connectAndSend.connectAndSend({
+          host: terminalIP,
+          port: terminalPort,
+          sendTimeout: posConfig.timeout,
+          receiveTimeout: posConfig.timeout
+        }, messageData);
+
+        if (response.success) {
+          const result = this.responseParser.parseSaleResponse(response.data || '');
+
+          console.log('PAYMENT RESPONSE:');
+          console.log('   Status:', result.status === '00' ? 'APPROVED' : 'DECLINED');
+          console.log('   Response:', result.responseText);
+          console.log('   Approval Code:', result.approvalCode);
+          console.log('   Card Brand:', result.accountBrand);
+          console.log('   Last 4:', result.lastFour);
+          console.log('   Response Time:', `${response.responseTime}ms`);
+
+          this.logger.info('Payment completed', 'processPayment', {
+            transactionId,
+            success: response.success,
+            responseTime: `${response.responseTime}ms`,
+            status: result.status,
+            approvalCode: result.approvalCode,
+            attempt,
+          });
+
+          return {
+            transactionId: result.transactionId,
+            status: result.status,
+            responseText: result.responseText,
+            success: result.success,
+            approvalCode: result.approvalCode,
+            guid: result.guid,
+            purchaseId: result.purchaseId,
+            accountBrand: result.accountBrand,
+            lastFour: result.lastFour,
+            rawResponse: result.rawResponse
+          };
+        }
+
+        lastError = new Error(response.error || 'Payment transaction failed');
+        if (attempt < maxAttempts) {
+          this.logger.warn(`Payment attempt ${attempt} failed, retrying...`, 'processPayment');
+          await new Promise(r => setTimeout(r, 500));
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        if (attempt < maxAttempts) {
+          this.logger.warn(`Payment attempt ${attempt} threw, retrying...`, 'processPayment');
+          await new Promise(r => setTimeout(r, 500));
+        }
+      }
+    }
+
+    this.logger.error('Payment failed after all attempts', lastError || new Error('Unknown'), 'processPayment');
+    throw lastError || new Error(`Payment failed after ${maxAttempts} attempts`);
   }
 
   async processBalanceInquiry(): Promise<unknown> {

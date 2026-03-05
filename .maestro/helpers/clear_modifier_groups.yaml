@@ -1,19 +1,106 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 ---
-# Helper: Delete all modifier groups (up to 15)
-# Safe to run if 0 groups exist — all blocks are optional.
+# Helper: Delete all modifier groups (handles up to 10 existing groups).
+# Uses tapOn with optional:true — safe if 0 groups exist.
 # Assumes the Modifiers tab is already visible.
+# Each attempt: tap delete (optional), confirm (optional), wait.
 
-- repeat:
-    times: 15
-    commands:
-      - optional:
-        - tapOn:
-            id: "btn-delete-modifier-group"
-            index: 0
-        - extendedWaitUntil:
-            visible: "Delete Modifier Group"
-            timeout: 5000
-        - tapOn:
-            id: "btn-confirm-delete"
-        - waitForAnimationToEnd
+# Attempt 1
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 2
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 3
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 4
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 5
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 6
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 7
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 8
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 9
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd
+
+# Attempt 10
+- tapOn:
+    id: "btn-delete-modifier-group"
+    index: 0
+    optional: true
+- tapOn:
+    id: "btn-confirm-delete"
+    optional: true
+- waitForAnimationToEnd

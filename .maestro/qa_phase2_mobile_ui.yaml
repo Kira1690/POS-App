@@ -1,0 +1,128 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Phase 2: Mobile UI Rework — Settings Master-Detail + Dashboard"
+---
+
+# ── Boot & Login ──────────────────────────────────────────────────────────────
+- launchApp
+- waitForAnimationToEnd
+
+# Dismiss dev warnings banner (native overlay — not in accessibility tree)
+- tapOn:
+    point: "96%, 96%"
+- waitForAnimationToEnd
+
+# Dismiss full-screen LogBox if present
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap Manager Login button on Welcome screen (optional — already logged in on restart)
+- tapOn:
+    id: "btn-welcome-manager-login"
+    optional: true
+- waitForAnimationToEnd
+
+# Login flow — only runs if login screen is visible
+- runFlow:
+    when:
+      visible:
+        id: "email-input"
+    commands:
+      - tapOn:
+          id: "email-input"
+      - inputText: "manager@foodcorner.com"
+      - tapOn:
+          id: "password-input"
+      - inputText: "manager123"
+      - hideKeyboard
+      - tapOn:
+          id: "btn-manager-sign-in"
+      - extendedWaitUntil:
+          visible:
+            id: "tab-nav-orders"
+          timeout: 30000
+
+# ── Test 1: Dashboard tab — check compact layout ─────────────────────────────
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_01_dashboard_overview"
+
+# ── Test 2: Settings — verify master-detail list ─────────────────────────────
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_02_settings_list"
+
+# Verify list group headers are visible
+- assertVisible:
+    text: "GENERAL"
+- assertVisible:
+    text: "Restaurant Profile"
+- assertVisible:
+    text: "PAYMENTS"
+- assertVisible:
+    text: "OPERATIONS"
+- assertVisible:
+    text: "SYSTEM"
+
+# ── Test 3: Tap a category — verify detail view with back button ──────────────
+- tapOn:
+    text: "Restaurant Profile"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_03_settings_detail"
+
+# Back button "Settings" text should be visible
+- assertVisible:
+    text: "Settings"
+
+# ── Test 4: Back to list ──────────────────────────────────────────────────────
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_04_settings_back"
+
+# List should be visible again
+- assertVisible:
+    text: "GENERAL"
+
+# ── Test 5: Menu Management (full-screen modal category) ─────────────────────
+- tapOn:
+    text: "Menu Management"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_05_menu_mgmt"
+
+# Back to settings list
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+
+# ── Test 6: Kitchen Management ───────────────────────────────────────────────
+- tapOn:
+    text: "Kitchen Management"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_06_kitchen_mgmt"
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+
+# ── Test 7: Dashboard tab ─────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_07_dashboard_main"
+
+# ── Test 8: Kitchen Operations tab ───────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_08_kitchen_staff"
+
+# ── Test 9: Order Management tab ─────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- takeScreenshot: "phase2_09_order_mgmt"

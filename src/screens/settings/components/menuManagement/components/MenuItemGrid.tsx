@@ -13,6 +13,7 @@ import {
   ListRenderItem,
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { Icon } from '@/components/common';
 import { MenuItemExtended } from '@/types/menu-management-extended.types';
 import { MenuViewMode } from '@/types/menu-management-settings.types';
@@ -51,6 +52,7 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
   emptyMessage = 'No menu items found',
 }) => {
   const { theme } = useTheme();
+  const { menuGridColumns, isPhone } = useResponsive();
 
   const styles = StyleSheet.create({
     container: {
@@ -124,8 +126,8 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
       borderWidth: 2,
     },
     listItemImage: {
-      width: 60,
-      height: 60,
+      width: isPhone ? 44 : 60,
+      height: isPhone ? 44 : 60,
       borderRadius: theme.borderRadius.md,
       backgroundColor: theme.colors.surfaceLight,
       alignItems: 'center',
@@ -364,7 +366,7 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
     );
   }, [isLoading, emptyMessage, onAddItem, styles, theme.colors]);
 
-  const numColumns = viewMode === 'grid' ? GRID_COLUMNS : 1;
+  const numColumns = viewMode === 'grid' ? menuGridColumns : 1;
 
   return (
     <View style={styles.container}>
@@ -373,7 +375,7 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
         renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
         keyExtractor={keyExtractor}
         numColumns={numColumns}
-        key={viewMode} // Force re-render when switching view modes
+        key={`${viewMode}-${numColumns}`} // Force re-render when switching view modes or columns
         contentContainerStyle={viewMode === 'grid' ? styles.gridContent : styles.listContent}
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}

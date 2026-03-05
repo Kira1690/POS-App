@@ -27,9 +27,10 @@ import {
   FinancialSummaryCard,
   QuickReportsPanel,
 } from './components';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function ReportsScreen() {
+  const { theme } = useTheme();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
   const [topItems, setTopItems] = useState<ItemPerformance[]>([]);
@@ -142,6 +143,88 @@ export default function ReportsScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: 16,
+      color: theme.colors.onSurfaceVariant,
+    },
+    header: {
+      height: 80,
+      backgroundColor: theme.colors.primary,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 30,
+    },
+    headerLeft: {
+      flex: 1,
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: theme.colors.white,
+      marginBottom: 2,
+    },
+    headerSubtitle: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+    },
+    refreshButton: {
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: theme.borderRadius.sm,
+    },
+    refreshButtonText: {
+      color: theme.colors.white,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    content: {
+      flex: 1,
+    },
+    reportsGrid: {
+      padding: 20,
+      gap: 20,
+    },
+    bottomActions: {
+      flexDirection: 'row',
+      gap: 15,
+      paddingHorizontal: 30,
+      paddingVertical: 15,
+      backgroundColor: theme.colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.outline,
+    },
+    actionButton: {
+      flex: 1,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 12,
+      borderRadius: theme.borderRadius.sm,
+      alignItems: 'center',
+    },
+    scheduleButton: {
+      backgroundColor: theme.colors.warning,
+    },
+    historyButton: {
+      backgroundColor: theme.colors.outline,
+    },
+    actionButtonText: {
+      fontSize: 14,
+      color: theme.colors.white,
+      fontWeight: '600',
+    },
+  });
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -162,11 +245,11 @@ export default function ReportsScreen() {
             Performance insights and business analytics
           </Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.refreshButton}
           onPress={loadReportsData}
         >
-          <Text style={styles.refreshButtonText}>🔄 Refresh</Text>
+          <Text style={styles.refreshButtonText}>Refresh</Text>
         </TouchableOpacity>
       </View>
 
@@ -180,7 +263,7 @@ export default function ReportsScreen() {
 
         {/* Dashboard Metrics */}
         {metrics && (
-          <MetricsDashboard 
+          <MetricsDashboard
             metrics={metrics}
             selectedPeriod={selectedPeriod}
           />
@@ -225,109 +308,27 @@ export default function ReportsScreen() {
 
       {/* Bottom Actions */}
       <View style={styles.bottomActions}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.actionButton}
           onPress={() => handleExportReport('comprehensive', 'pdf')}
         >
-          <Text style={styles.actionButtonText}>📊 Full Report</Text>
+          <Text style={styles.actionButtonText}>Full Report</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.actionButton, styles.scheduleButton]}
           onPress={() => Alert.alert('Schedule Reports', 'Configure automated reports')}
         >
-          <Text style={styles.actionButtonText}>⏰ Schedule</Text>
+          <Text style={styles.actionButtonText}>Schedule</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.actionButton, styles.historyButton]}
           onPress={() => Alert.alert('Report History', 'View past reports')}
         >
-          <Text style={styles.actionButtonText}>📁 History</Text>
+          <Text style={styles.actionButtonText}>History</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-  },
-  header: {
-    height: 80,
-    backgroundColor: theme.colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 30,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.white,
-    marginBottom: 2,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#CCCCCC',
-  },
-  refreshButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  refreshButtonText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  content: {
-    flex: 1,
-  },
-  reportsGrid: {
-    padding: 20,
-    gap: 20,
-  },
-  bottomActions: {
-    flexDirection: 'row',
-    gap: 15,
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    backgroundColor: theme.colors.white,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  scheduleButton: {
-    backgroundColor: theme.colors.warning,
-  },
-  historyButton: {
-    backgroundColor: theme.colors.gray,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    color: theme.colors.white,
-    fontWeight: '600',
-  },
-});

@@ -1,0 +1,107 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Full Suite (Dev Build) — Complete with TRX Card Payment"
+tags:
+  - qa
+  - full-suite
+  - dev
+---
+
+# ─────────────────────────────────────────────────────
+#  Full QA Suite — Dev Build (com.ajinkya123.POSReactNativeApp)
+#  Includes TRX card payment tests not possible in Expo Go.
+#
+#  Prerequisites (run ONCE before suite):
+#    1. Install dev build:
+#         adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+#    2. Clear app data:
+#         adb shell pm clear com.ajinkya123.POSReactNativeApp
+#    3. Start Metro bundler:
+#         bun expo start --clear
+#    4. TRX terminal must be reachable at 192.168.1.12:1180
+#    5. Enable emulator auto-rotate:
+#         adb shell settings put system accelerometer_rotation 1
+#         adb shell settings put system user_rotation 0
+#
+#  Phase 1 — Menu Setup
+#    QA 01 — Add 3 categories: Drinks, Mains, Starters
+#    QA 02 — Add 6 menu items
+#    QA 03 — Add 2 modifier groups: Cup Size, Protein
+#    QA 04 — Assign modifiers to items
+#
+#  Phase 2 — POS Ordering
+#    QA 05 — POS order portrait (Table T-1, Latte+Large)
+#    QA 06 — POS order landscape (Table B-1, Beef Burger+Extra + Garlic Bread)
+#             ⚠️  MANUAL: rotate emulator to landscape before QA 06
+#               adb shell settings put system user_rotation 1
+#             ⚠️  MANUAL: rotate back to portrait after QA 06
+#               adb shell settings put system user_rotation 0
+#
+#  Phase 3 — Kitchen Operations
+#    QA 07 — Kitchen: CONFIRMED → PREPARING → READY → SERVED
+#
+#  Phase 4 — Cash Payments
+#    QA 08 — Full Cash Payment (direct Pay button) → PAID
+#    QA 09 — Split Equally 2 Guests, both cash → PAID
+#    QA 10 — SplitPaymentModal: Cash + Cash → PAID
+#    QA 15 — Split by Items: 2 guests, each pays cash → PAID
+#    QA 16 — Split Equally 3 Guests, all cash → PAID
+#    QA 17 — BillScreen: 15% tip → Pay Full → Cash → PAID
+#
+#  Phase 5 — TRX Card Payments (requires terminal at 192.168.1.12:1180)
+#    QA 13 — TRX Connect + App Restart Persist (SQLite)
+#    QA 19 — Split Card + Cash: card routes through TRX → cash modal → PAID
+#    QA 20 — Full Card Payment via TRX → PAID
+#
+#  Phase 6 — Order & Kitchen Management
+#    QA 11 — Cancel order → removed from Kitchen Display
+#    QA 12 — Kitchen Management Settings: add/edit/toggle/delete station
+#    QA 18 — Kitchen Station Override: per-item station assignment
+#
+#  Phase 7 — Persistence
+#    QA 14 — DB Persistence: menu + orders survive force-stop + restart
+# ─────────────────────────────────────────────────────
+
+# ── Phase 1: Menu Setup ───────────────────────────────────────────────────────
+- runFlow: qa_01_setup_categories.yaml
+- runFlow: qa_02_add_items.yaml
+- runFlow: qa_03_add_modifiers.yaml
+- runFlow: qa_04_assign_modifiers.yaml
+
+# ── Phase 2: POS Ordering ─────────────────────────────────────────────────────
+- runFlow: qa_05_pos_portrait.yaml
+
+# ─────────────────────────────────────────────────────
+#  ⚠️  MANUAL STEP: Rotate to landscape before qa_06
+#    adb shell settings put system user_rotation 1
+# ─────────────────────────────────────────────────────
+
+- runFlow: qa_06_pos_landscape.yaml
+
+# ─────────────────────────────────────────────────────
+#  ⚠️  MANUAL STEP: Rotate back to portrait after qa_06
+#    adb shell settings put system user_rotation 0
+# ─────────────────────────────────────────────────────
+
+# ── Phase 3: Kitchen ─────────────────────────────────────────────────────────
+- runFlow: qa_07_kitchen_ops.yaml
+
+# ── Phase 4: Cash Payments ────────────────────────────────────────────────────
+- runFlow: qa_08_cash_payment.yaml
+- runFlow: qa_09_split_equal.yaml
+- runFlow: qa_10_split_payment_modal.yaml
+- runFlow: qa_15_split_by_items.yaml
+- runFlow: qa_16_split_3_guests.yaml
+- runFlow: qa_17_full_bill_pay.yaml
+
+# ── Phase 5: TRX Card Payments ───────────────────────────────────────────────
+- runFlow: qa_13_trx_connect_persist.yaml
+- runFlow: qa_19_split_card_cash.yaml
+- runFlow: qa_20_card_payment.yaml
+
+# ── Phase 6: Order & Kitchen Management ──────────────────────────────────────
+- runFlow: qa_11_cancel_removes_from_kitchen.yaml
+- runFlow: qa_12_kitchen_management_settings.yaml
+- runFlow: qa_18_kitchen_station_override.yaml
+
+# ── Phase 7: Persistence ──────────────────────────────────────────────────────
+- runFlow: qa_14_db_persistence.yaml

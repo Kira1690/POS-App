@@ -7,3 +7,4 @@ export { default as SecurityBackupSettings } from './SecurityBackupSettings';
 export { default as SystemLogsSettings } from './SystemLogsSettings';
 export { default as HelpSupportSettings } from './HelpSupportSettings';
 export { default as TRXSettingsPanel } from './TRXSettingsPanel';
+export { default as PrinterSettingsPanel } from './PrinterSettingsPanel';

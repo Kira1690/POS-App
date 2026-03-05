@@ -12,19 +12,21 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  useWindowDimensions,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/context/auth/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
 import { useTableStats } from '@/hooks/context/useTableSelectors';
-import { useKitchenTickets } from '@/context/kitchen/EnhancedKitchenContext';
-import { UNIFIED_ORDER_STATUS_LABELS } from '@/types/unified-order.types';
+import { useKitchenStats } from '@/context/unified-order/UnifiedOrderContext';
+import { UNIFIED_ORDER_STATUS_LABELS, UnifiedOrder } from '@/types/unified-order.types';
 import { SimpleLineChart } from './components/SimpleLineChart';
+import OrderSummarySheet from './components/OrderSummarySheet';
+import ActivityLogsSheet from './components/ActivityLogsSheet';
 
 
 const formatCurrency = (amount: number) =>
@@ -46,16 +48,17 @@ const ManagerDashboard: React.FC = () => {
   const navigation = useNavigation();
   const { state: authState } = useAuth();
   const { theme } = useTheme();
-  const { width: screenWidth } = useWindowDimensions();
-  const isTablet = screenWidth >= 768;
+  const { isLargeTablet, isPhone, statValueSize } = useResponsive();
 
   const [refreshing, setRefreshing] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<UnifiedOrder | null>(null);
+  const [showActivityLogs, setShowActivityLogs] = useState(false);
 
   // Real data hooks
   const { orders, activeOrders, refreshOrders, isLoading } = useUnifiedOrder();
   const tableStats = useTableStats();
-  const { stats: kitchenStats } = useKitchenTickets();
+  const kitchenStats = useKitchenStats();
 
   // Refresh on screen focus
   useFocusEffect(
@@ -233,66 +236,77 @@ const ManagerDashboard: React.FC = () => {
     );
   };
 
-  const renderStatsCards = () => (
-    <View style={[styles.statsRow, { flexDirection: isTablet ? 'row' : 'column' }]}>
-      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
-        <View style={styles.statsHeader}>
-          <MaterialIcons name="attach-money" size={24} color={theme.colors.success} />
-          <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
-            Today's Sales
+  const renderStatsCards = () => {
+    const cardStyle = {
+      backgroundColor: theme.colors.surface,
+      flex: isPhone ? undefined : 1,
+      width: isPhone ? '48%' as const : undefined,
+    };
+    return (
+      <View style={[styles.statsRow, {
+        flexDirection: 'row',
+        flexWrap: isPhone ? 'wrap' : 'nowrap',
+        gap: isPhone ? 8 : undefined,
+      }]}>
+        <View style={[styles.statsCard, cardStyle]}>
+          <View style={styles.statsHeader}>
+            <MaterialIcons name="attach-money" size={isPhone ? 18 : 24} color={theme.colors.success} />
+            <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
+              Today's Sales
+            </Text>
+          </View>
+          <Text style={[styles.statsValue, { color: theme.colors.success, fontSize: statValueSize }]}>
+            {loading ? '--' : formatCurrency(todaysSales)}
           </Text>
         </View>
-        <Text style={[styles.statsValue, { color: theme.colors.success }]}>
-          {loading ? '--' : formatCurrency(todaysSales)}
-        </Text>
-      </View>
 
-      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
-        <View style={styles.statsHeader}>
-          <MaterialIcons name="receipt-long" size={24} color={theme.colors.tertiary} />
-          <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
-            Active Orders
+        <View style={[styles.statsCard, cardStyle]}>
+          <View style={styles.statsHeader}>
+            <MaterialIcons name="receipt-long" size={isPhone ? 18 : 24} color={theme.colors.tertiary} />
+            <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
+              Active Orders
+            </Text>
+          </View>
+          <Text style={[styles.statsValue, { color: theme.colors.tertiary, fontSize: statValueSize }]}>
+            {loading ? '--' : activeOrders.length}
+          </Text>
+          <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            {orders.length} total today
           </Text>
         </View>
-        <Text style={[styles.statsValue, { color: theme.colors.tertiary }]}>
-          {loading ? '--' : activeOrders.length}
-        </Text>
-        <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          {orders.length} total today
-        </Text>
-      </View>
 
-      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
-        <View style={styles.statsHeader}>
-          <MaterialIcons name="table-restaurant" size={24} color={theme.colors.warning} />
-          <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
-            Table Occupancy
+        <View style={[styles.statsCard, cardStyle]}>
+          <View style={styles.statsHeader}>
+            <MaterialIcons name="table-restaurant" size={isPhone ? 18 : 24} color={theme.colors.warning} />
+            <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
+              Table Occupancy
+            </Text>
+          </View>
+          <Text style={[styles.statsValue, { color: theme.colors.warning, fontSize: statValueSize }]}>
+            {tableStats.occupied}/{tableStats.total}
+          </Text>
+          <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            {tableStats.occupancyRate}% occupied
           </Text>
         </View>
-        <Text style={[styles.statsValue, { color: theme.colors.warning }]}>
-          {tableStats.occupied}/{tableStats.total}
-        </Text>
-        <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          {tableStats.occupancyRate}% occupied
-        </Text>
-      </View>
 
-      <View style={[styles.statsCard, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
-        <View style={styles.statsHeader}>
-          <MaterialIcons name="group" size={24} color={theme.colors.tertiary} />
-          <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
-            Staff On Duty
+        <View style={[styles.statsCard, cardStyle]}>
+          <View style={styles.statsHeader}>
+            <MaterialIcons name="group" size={isPhone ? 18 : 24} color={theme.colors.tertiary} />
+            <Text style={[styles.statsTitle, { color: theme.colors.onSurface }]}>
+              Staff On Duty
+            </Text>
+          </View>
+          <Text style={[styles.statsValue, { color: theme.colors.tertiary, fontSize: statValueSize }]}>
+            --
+          </Text>
+          <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            No staff tracking available
           </Text>
         </View>
-        <Text style={[styles.statsValue, { color: theme.colors.tertiary }]}>
-          --
-        </Text>
-        <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
-          No staff tracking available
-        </Text>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderContent = () => (
     <ScrollView
@@ -302,22 +316,25 @@ const ManagerDashboard: React.FC = () => {
     >
       {renderStatsCards()}
 
-      <View style={[styles.middleRow, { flexDirection: isTablet ? 'row' : 'column' }]}>
-        <View style={[styles.chartContainer, { backgroundColor: 'transparent', flex: isTablet ? 2 : undefined }]}>
+      <View style={[styles.middleRow, { flexDirection: isLargeTablet ? 'row' : 'column' }]}>
+        <View style={[styles.chartContainer, { backgroundColor: 'transparent', flex: isLargeTablet ? 2 : undefined }]}>
           <SimpleLineChart
             data={salesChartData}
             title="Sales Trend (Last 7 Days)"
-            height={320}
+            height={isPhone ? 180 : 320}
             accentColor={theme.colors.tertiary}
           />
         </View>
 
-        <View style={[styles.ordersContainer, { backgroundColor: theme.colors.surface, flex: isTablet ? 1 : undefined }]}>
+        <View style={[styles.ordersContainer, { backgroundColor: theme.colors.surface, flex: isLargeTablet ? 1 : undefined }]}>
           <View style={styles.ordersHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
               Recent Orders
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => (navigation as any).navigate('Orders')}
+              testID="btn-dashboard-view-all"
+            >
               <Text style={[styles.viewAllText, { color: theme.colors.primary }]}>
                 View All
               </Text>
@@ -334,34 +351,40 @@ const ManagerDashboard: React.FC = () => {
           ) : (
             recentOrders.map((order, index) => (
               <View key={order.id}>
-                <View style={[styles.orderItem, { backgroundColor: theme.colors.surface }]}>
-                  <View style={styles.orderContent}>
-                    <View style={styles.orderHeader}>
-                      <Text style={[styles.orderTitle, { color: theme.colors.onSurface }]}>
-                        {order.tableName} ({order.orderNumber})
-                      </Text>
-                      <Text style={[styles.orderAmount, { color: theme.colors.onSurface }]}>
-                        {formatCurrency(order.totalAmount)}
-                      </Text>
-                    </View>
-                    <View style={styles.orderStatus}>
-                      <View
-                        style={[
-                          styles.statusIndicator,
-                          { backgroundColor: getStatusColor(order.status, theme) }
-                        ]}
-                      />
-                      <Text style={[styles.statusText, { color: theme.colors.onSurfaceVariant }]}>
-                        {UNIFIED_ORDER_STATUS_LABELS[order.status]}
-                      </Text>
-                      <Text style={[styles.orderTime, { color: theme.colors.onSurfaceVariant }]}>
-                        {new Date(order.createdAt).toLocaleTimeString('en-US', {
-                          hour: '2-digit', minute: '2-digit'
-                        })}
-                      </Text>
+                <TouchableOpacity
+                  onPress={() => setSelectedOrder(order)}
+                  activeOpacity={0.7}
+                  testID={`btn-recent-order-${order.id}`}
+                >
+                  <View style={[styles.orderItem, { backgroundColor: theme.colors.surface }]}>
+                    <View style={styles.orderContent}>
+                      <View style={styles.orderHeader}>
+                        <Text style={[styles.orderTitle, { color: theme.colors.onSurface }]}>
+                          {order.tableName} ({order.orderNumber})
+                        </Text>
+                        <Text style={[styles.orderAmount, { color: theme.colors.onSurface }]}>
+                          {formatCurrency(order.totalAmount)}
+                        </Text>
+                      </View>
+                      <View style={styles.orderStatus}>
+                        <View
+                          style={[
+                            styles.statusIndicator,
+                            { backgroundColor: getStatusColor(order.status, theme) }
+                          ]}
+                        />
+                        <Text style={[styles.statusText, { color: theme.colors.onSurfaceVariant }]}>
+                          {UNIFIED_ORDER_STATUS_LABELS[order.status]}
+                        </Text>
+                        <Text style={[styles.orderTime, { color: theme.colors.onSurfaceVariant }]}>
+                          {new Date(order.createdAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit', minute: '2-digit'
+                          })}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
                 {index < recentOrders.length - 1 && (
                   <View style={[styles.orderSeparator, { backgroundColor: theme.colors.outline }]} />
                 )}
@@ -372,9 +395,19 @@ const ManagerDashboard: React.FC = () => {
       </View>
 
       <View style={[styles.quickActionsContainer, { backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          Quick Actions
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+            Quick Actions
+          </Text>
+          <TouchableOpacity
+            onPress={() => setShowActivityLogs(true)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8 }}
+            testID="btn-activity-logs"
+          >
+            <MaterialIcons name="history" size={20} color={theme.colors.primary} />
+            <Text style={{ ...typography.caption, color: theme.colors.primary }}>Activity Log</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.actionsGrid}>
           {quickActions.map((action, index) => (
             <TouchableOpacity
@@ -393,14 +426,33 @@ const ManagerDashboard: React.FC = () => {
     </ScrollView>
   );
 
+  const handleViewFullOrder = useCallback((orderId: string) => {
+    setSelectedOrder(null);
+    (navigation as any).navigate('Orders', {
+      screen: 'OrderDetails',
+      params: { orderId },
+    });
+  }, [navigation]);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {renderHeader()}
 
       <View style={styles.body}>
-        {renderSidebar()}
+        {!isPhone && renderSidebar()}
         {renderContent()}
       </View>
+
+      <OrderSummarySheet
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        onViewFull={handleViewFullOrder}
+      />
+
+      <ActivityLogsSheet
+        visible={showActivityLogs}
+        onClose={() => setShowActivityLogs(false)}
+      />
     </View>
   );
 };

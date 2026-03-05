@@ -1,0 +1,95 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Test: Verify data persists after force-stop + restart"
+---
+
+# ─────────────────────────────────────────────────────
+#  Verification after force-stop:
+#  - App should auto-login (session persisted)
+#  - Menu categories (Drinks, Mains, Starters) must exist
+#  - Menu items (Latte, Beef Burger, Garlic Bread) must exist
+#  - No data loss
+# ─────────────────────────────────────────────────────
+
+# Force-stop the app to kill process
+- stopApp
+
+- waitForAnimationToEnd
+
+# Restart
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 30000
+
+- takeScreenshot: "verify_01_dashboard_after_restart"
+
+# ── Navigate to Menu Management ───────────────────────
+- tapOn:
+    text: "Settings"
+
+- extendedWaitUntil:
+    visible: "Menu Management"
+    timeout: 15000
+
+- tapOn:
+    text: "Menu Management"
+
+- extendedWaitUntil:
+    visible: "Items"
+    timeout: 15000
+
+- takeScreenshot: "verify_02_menu_mgmt_after_restart"
+
+# ── ASSERT: All 3 categories survived ────────────────
+- assertVisible: "Drinks"
+- assertVisible: "Mains"
+- assertVisible: "Starters"
+
+- takeScreenshot: "verify_03_PASS_categories_persisted"
+
+# ── ASSERT: Menu items survived ───────────────────────
+# Tap Drinks to see Latte
+- tapOn:
+    text: "Drinks"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Latte"
+    timeout: 8000
+
+- assertVisible: "Latte"
+
+- takeScreenshot: "verify_04_PASS_latte_persisted"
+
+# Tap Mains to see Beef Burger
+- tapOn:
+    text: "Mains"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 8000
+
+- assertVisible: "Beef Burger"
+
+- takeScreenshot: "verify_05_PASS_beef_burger_persisted"
+
+# Tap Starters to see Garlic Bread
+- tapOn:
+    text: "Starters"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 8000
+
+- assertVisible: "Garlic Bread"
+
+- takeScreenshot: "verify_06_PASS_garlic_bread_persisted"
+
+# ── ALL DATA PERSISTED ────────────────────────────────
+- takeScreenshot: "verify_07_ALL_PASS_data_persisted"

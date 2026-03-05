@@ -1,0 +1,132 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 08: Full Cash Payment — Table B-1"
+tags:
+  - qa
+  - payment
+  - cash
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 8 — Full Cash Payment (happy path)
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Flow:
+#    Create B-1 order → Kitchen (CONFIRMED → SERVED)
+#    → Order Management → filter SERVED → tap "Pay"
+#    → PaymentProcessingScreen → Cash Payment
+#    → CashPaymentModal → quick amount → Confirm
+#    → PaymentConfirmation → Continue
+#    → Order Management → PAID
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: create B-1 order and advance to SERVED ────────────────────────────
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_08_step1_b1_served"
+
+# ── Filter to Unpaid orders to isolate our order ───────────────────────────────
+# SERVED+Unpaid order will appear at top — no need to also filter by status
+- tapOn:
+    id: "tab-payment-pending"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_08_step2_served_filter"
+
+# QA: SERVED order has "Pay" button
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-pay"
+    timeout: 10000
+
+- takeScreenshot: "qa_08_step3_pay_visible"
+
+# Tap the Pay button on the SERVED order
+- tapOn:
+    id: "btn-order-pay"
+- waitForAnimationToEnd
+
+# Wait for PaymentProcessingScreen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+
+- takeScreenshot: "qa_08_step4_payment_screen"
+
+# ── Select Cash Payment ───────────────────────────────────────────────────────
+# Scroll down to reveal Payment Methods section (below tip/summary on small screens)
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 8000
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+# Wait for CashPaymentModal
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-confirm"
+    timeout: 8000
+
+- takeScreenshot: "qa_08_step5_cash_modal_opened"
+
+# QA: Cash modal open — wait for first quick-amount button (total ~$20.89 → $25 quick amount)
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-25"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-25"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_08_step6_amount_selected"
+
+# Confirm Payment
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+# Wait for PaymentConfirmationScreen
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+
+- takeScreenshot: "qa_08_step7_payment_confirmed"
+
+# ── Return to Order Management ────────────────────────────────────────────────
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+# btn-continue navigates to Dashboard — tap Orders tab to go to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+- takeScreenshot: "qa_08_step8_back_to_orders"
+
+# QA: Order now shows PAID — clear status filter first, then filter to paid
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-paid"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 8000
+
+- takeScreenshot: "qa_08_PASS_cash_payment_complete"

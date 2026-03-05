@@ -6,6 +6,7 @@
  * Tries 3 methods sequentially for maximum compatibility.
  */
 
+import * as Network from 'expo-network';
 import { createTcpConnection, SocketConnection } from './TcpSocketWrapper';
 import { LoggerFactory } from '../logging/LoggingService';
 
@@ -18,15 +19,28 @@ export interface ConnectionTestResult {
 export class SimpleTCPTester {
   private logger = LoggerFactory.createLogger('SimpleTCPTester');
 
+  /**
+   * Get the device's local IP for socket binding.
+   * Consistent with ConnectAndSendService which also binds to localAddress.
+   */
+  private async getDeviceIP(): Promise<string | undefined> {
+    try {
+      return await Network.getIpAddressAsync();
+    } catch {
+      return undefined;
+    }
+  }
+
   async testConnection(host: string, port: number, timeoutMs: number = 3000): Promise<ConnectionTestResult> {
     this.logger.debug('Starting TCP connection test', 'testConnection', { host, port, timeoutMs });
 
     const startTime = Date.now();
+    const localAddress = await this.getDeviceIP();
 
     const methods = [
-      () => this.method1_simpleConnect(host, port, timeoutMs),
-      () => this.method2_quickConnect(host, port, timeoutMs),
-      () => this.method3_immediateClose(host, port, timeoutMs),
+      () => this.method1_simpleConnect(host, port, timeoutMs, localAddress),
+      () => this.method2_quickConnect(host, port, timeoutMs, localAddress),
+      () => this.method3_immediateClose(host, port, timeoutMs, localAddress),
     ];
 
     for (let i = 0; i < methods.length; i++) {
@@ -54,7 +68,7 @@ export class SimpleTCPTester {
     return { success: false, responseTimeMs: elapsed, error: `Connection failed after ${methods.length} attempts` };
   }
 
-  private method1_simpleConnect(host: string, port: number, timeoutMs: number): Promise<ConnectionTestResult> {
+  private method1_simpleConnect(host: string, port: number, timeoutMs: number, localAddress?: string): Promise<ConnectionTestResult> {
     return new Promise((resolve) => {
       const startTime = Date.now();
       let resolved = false;
@@ -68,7 +82,7 @@ export class SimpleTCPTester {
       }, timeoutMs);
 
       try {
-        socket = createTcpConnection({ host, port, timeout: timeoutMs }, () => {
+        socket = createTcpConnection({ host, port, timeout: timeoutMs, localAddress, reuseAddress: true }, () => {
           if (resolved) return;
           resolved = true;
           clearTimeout(timeoutId);
@@ -109,11 +123,11 @@ export class SimpleTCPTester {
     });
   }
 
-  private method2_quickConnect(host: string, port: number, timeoutMs: number): Promise<ConnectionTestResult> {
-    return this.method1_simpleConnect(host, port, Math.floor(timeoutMs / 2));
+  private method2_quickConnect(host: string, port: number, timeoutMs: number, localAddress?: string): Promise<ConnectionTestResult> {
+    return this.method1_simpleConnect(host, port, Math.floor(timeoutMs / 2), localAddress);
   }
 
-  private method3_immediateClose(host: string, port: number, timeoutMs: number): Promise<ConnectionTestResult> {
+  private method3_immediateClose(host: string, port: number, timeoutMs: number, localAddress?: string): Promise<ConnectionTestResult> {
     return new Promise((resolve) => {
       const startTime = Date.now();
       let resolved = false;
@@ -127,7 +141,7 @@ export class SimpleTCPTester {
       }, timeoutMs);
 
       try {
-        socket = createTcpConnection({ host, port, timeout: timeoutMs }, () => {
+        socket = createTcpConnection({ host, port, timeout: timeoutMs, localAddress, reuseAddress: true }, () => {
           if (resolved) return;
           resolved = true;
           clearTimeout(timeoutId);

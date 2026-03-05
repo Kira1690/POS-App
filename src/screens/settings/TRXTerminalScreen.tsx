@@ -129,9 +129,9 @@ export const TRXTerminalScreen: React.FC<TRXTerminalScreenProps> = ({ onClose })
       {/* Connection Status Bar */}
       <View style={styles.statusBar}>
         <View style={styles.statusDot} />
-        <Text style={styles.statusText}>{connectionStatus}</Text>
+        <Text testID="trx-connection-status" style={styles.statusText}>{connectionStatus}</Text>
         {currentTerminal && (
-          <Text style={styles.currentTerminalText}>
+          <Text testID="trx-current-terminal-ip" style={styles.currentTerminalText}>
             {currentTerminal.ip}:{currentTerminal.port}
           </Text>
         )}

@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -25,6 +24,7 @@ import {
   useBiometricAuth
 } from '../../components/forms';
 import { useTheme } from '../../hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useAuthForm, useAuthStatus } from '@/hooks/auth';
 import { spacing } from '../../design-system/theme/spacing';
 import { typography } from '../../design-system/theme/typography';
@@ -43,8 +43,7 @@ interface ManagerLoginScreenProps {
 export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
   const { theme, isDark } = useTheme();
   const navigation = useNavigation();
-  const { width: screenWidth } = Dimensions.get('window');
-  const isTablet = screenWidth >= 768;
+  const { isLargeTablet, isPhone } = useResponsive();
   
   // Auth hooks
   const authStatus = useAuthStatus();
@@ -165,8 +164,9 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
   // Get content styles
   const getContentStyles = () => ({
     flexGrow: 1,
-    padding: isTablet ? spacing['2xl'] : spacing.lg,
+    padding: isLargeTablet ? spacing['2xl'] : spacing.lg,
     justifyContent: 'center' as const,
+    alignItems: 'center' as const,
   });
 
   // Get header styles
@@ -217,16 +217,17 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
         backgroundColor={theme.colors.background}
       />
       
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={getContentStyles()}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={{ width: '100%', maxWidth: isLargeTablet ? 480 : undefined }}>
         {/* Header Section */}
         <View style={getHeaderStyles()}>
           <MaterialIcons
             name="admin-panel-settings"
-            size={isTablet ? 64 : 48}
+            size={isLargeTablet ? 64 : 48}
             color={theme.colors.managerRole}
             style={{ marginBottom: spacing.lg }}
           />
@@ -244,7 +245,7 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
         {/* APPLE LOGIN FORM CARD */}
         <AppleCard
           layer="surface"
-          size={isTablet ? 'large' : 'medium'}
+          size={isLargeTablet ? 'large' : 'medium'}
           shadow={true}
           style={{ marginBottom: spacing.lg }}
         >
@@ -312,12 +313,13 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
               <AppleButton
                 title="🔐 Sign In"
                 variant="primary"
-                size={isTablet ? 'large' : 'medium'}
+                size={isLargeTablet ? 'large' : 'medium'}
                 onPress={handleInitialLogin}
                 disabled={authForm.isLoading || !authForm.isValid}
                 loading={authForm.isLoading}
                 fullWidth={true}
                 style={{ marginTop: spacing.md }}
+                testID="btn-manager-sign-in"
               />
 
               {/* Biometric Login */}
@@ -378,7 +380,7 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
               <AppleButton
                 title="✅ Verify & Continue"
                 variant="primary"
-                size={isTablet ? 'large' : 'medium'}
+                size={isLargeTablet ? 'large' : 'medium'}
                 onPress={handleMFAVerification}
                 disabled={authForm.isLoading || !otpComplete}
                 loading={authForm.isLoading}
@@ -406,6 +408,7 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
             size="small"
             onPress={handleBack}
           />
+        </View>
         </View>
       </ScrollView>
 

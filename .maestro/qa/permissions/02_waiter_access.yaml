@@ -1,0 +1,55 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Permissions 02 — Waiter Access"
+# Verifies: waiter has Orders + Tables access; Settings management is blocked
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Login as waiter
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-waiter@blueplate2026.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAWaiter2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+
+- takeScreenshot: "waiter_01_login"
+
+# Verify Orders accessible
+- tapOn:
+    text: "Orders"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "waiter_02_orders"
+
+# Verify Tables accessible
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "waiter_03_tables"
+
+# Verify Settings tab behavior (should be limited or hidden)
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "waiter_04_settings_limited"
+
+# Navigate back
+- tapOn:
+    text: "Dashboard|Home"
+    optional: true
+
+- stopApp

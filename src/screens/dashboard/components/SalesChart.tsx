@@ -4,18 +4,16 @@
  */
 
 import React, { memo, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
+import {
+  View,
+  Text,
   StyleSheet,
-  Dimensions
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 export interface SalesChartData {
   date: string;
@@ -40,6 +38,7 @@ const SalesChart: React.FC<SalesChartProps> = ({
   colorScheme = 'professional'
 }) => {
   const { theme } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
 
   // Mock data for demonstration - will be replaced with real data
   const mockData: SalesChartData[] = useMemo(() => [

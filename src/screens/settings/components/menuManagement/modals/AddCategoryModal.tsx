@@ -13,7 +13,7 @@ import {
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
+  
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Icon } from '@/components/common';
@@ -311,7 +311,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         style={styles.overlay}
       >
         <View style={styles.container}>

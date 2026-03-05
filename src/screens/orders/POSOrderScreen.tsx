@@ -3,7 +3,7 @@
  * Integrates table selection with menu browsing and order management
  */
 
-import React, { useEffect, useCallback, useState, useMemo } from 'react';
+import React, { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -14,21 +14,22 @@ import {
   FlatList,
   ScrollView,
   TextInput,
-  Alert,
-  useWindowDimensions,
+
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useUnifiedOrder, useUnifiedCart } from '@/context/unified-order';
 import { useTable } from '@/context/table';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { MenuItemExtended, ComboDeal } from '@/types/menu-management-extended.types';
 import { SelectedModifier } from '@/types/unified-order.types';
 import { MenuItem } from '@/types/menu.types';
 import { useMenuContext } from '@/context/menu';
 import { Table } from '@/types/table.types';
-import { TableStatus } from '@/types/common.types';
 import { BillPanel } from '@/components/business/order';
+import { DiscountModal, type DiscountData } from '@/screens/orders/modals/DiscountModal';
+import TableSelectionModal from '@/components/modals/TableSelectionModal';
 import ModifierSelectionModal from '@/screens/orders/components/ModifierSelectionModal';
 import ComboSelectionModal, { ComboSelectionResult } from '@/screens/orders/modals/ComboSelectionModal';
 import { ComboGridSection } from '@/components/business/menu/ComboGridSection';
@@ -41,14 +42,22 @@ import { usePayment } from '@/context/payment/PaymentContext';
 
 const POSOrderScreen: React.FC = () => {
   const { theme } = useTheme();
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const isPortrait = screenHeight > screenWidth;
-  const isTablet = screenWidth >= 768;
+  const {
+    screenWidth,
+    isPhone,
+    isLargeTablet,
+    isPortrait,
+    menuGridColumns,
+    tableGridColumns,
+    billPanelWidth,
+    showPersistentSidebar,
+  } = useResponsive();
   const route = useRoute();
   const navigation = useNavigation();
 
   // Get table from navigation params
   const routeTable = (route.params as any)?.table as Table | undefined;
+  const editOrderId = (route.params as any)?.editOrderId as string | undefined;
 
   // Use Unified Order Context hooks
   const {
@@ -57,7 +66,10 @@ const POSOrderScreen: React.FC = () => {
     clearError,
     setSelectedTable,
     getActiveOrderForTable,
-    cancelOrder,
+    getOrderById,
+    addItemsToOrder,
+    applyOrderDiscount,
+    applyItemDiscount,
     state: orderState,
   } = useUnifiedOrder();
   const {
@@ -68,6 +80,7 @@ const POSOrderScreen: React.FC = () => {
     clear: clearCart,
     subtotal: cartTotal,
     itemCount: cartItemCount,
+    orderNumber: cartOrderNumber,
     selectedTable,
   } = useUnifiedCart();
 
@@ -89,7 +102,8 @@ const POSOrderScreen: React.FC = () => {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showTableSelector, setShowTableSelector] = useState(!routeTable);
+  // In edit mode (editOrderId set), skip table selector
+  const [showTableSelector, setShowTableSelector] = useState(!routeTable && !editOrderId);
 
   // Modifier modal state
   const [isModifierModalVisible, setIsModifierModalVisible] = useState(false);
@@ -101,6 +115,22 @@ const POSOrderScreen: React.FC = () => {
   const [isComboModalVisible, setIsComboModalVisible] = useState(false);
   const [selectedCombo, setSelectedCombo] = useState<ComboDeal | null>(null);
 
+  // Discount modal state
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [discountingItem, setDiscountingItem] = useState<{ id: string; name: string; price: number } | null>(null);
+
+  // Edit mode: the existing order being updated
+  const editingOrder = useMemo(
+    () => (editOrderId ? getOrderById(editOrderId) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editOrderId, orderState.orders]
+  );
+
+  // Prevent the table-init effect from re-firing after CLEAR_CURRENT_ORDER resets selectedTable
+  const tableInitializedRef = useRef(false);
+  // Track whether a table was selected so onClose doesn't navigate back due to stale closure
+  const tableWasSelectedRef = useRef(false);
+
   // Refresh table statuses whenever the table selector is shown to avoid stale data
   useEffect(() => {
     if (showTableSelector) {
@@ -110,38 +140,17 @@ const POSOrderScreen: React.FC = () => {
 
   // Initialize order when table is provided via navigation
   // Note: Uses handleTableSelect to check for existing orders
+  // tableInitializedRef prevents re-triggering after CLEAR_CURRENT_ORDER resets selectedTable to null
+  // Table is always pre-validated before navigation (ExistingOrderModal handles conflicts).
+  // Simply select the table when arriving at this screen.
   useEffect(() => {
-    if (routeTable && !selectedTable) {
-      // Check for existing order first (same logic as handleTableSelect)
-      const existingOrder = getActiveOrderForTable(routeTable.id);
-      if (existingOrder) {
-        // Show alert about existing order
-        Alert.alert(
-          'Existing Order Found',
-          `Table ${routeTable.table_number} has an active order (${existingOrder.orderNumber}) with ${existingOrder.items.length} item(s).\n\nStatus: ${existingOrder.status.toUpperCase()}\n\nWhat would you like to do?`,
-          [
-            {
-              text: 'Go Back',
-              style: 'cancel',
-              onPress: () => navigation.goBack(),
-            },
-            {
-              text: 'Continue Order',
-              onPress: () => {
-                selectTable(routeTable);
-                setSelectedTable(routeTable);
-                setShowTableSelector(false);
-              },
-            },
-          ]
-        );
-      } else {
-        selectTable(routeTable);
-        setSelectedTable(routeTable);
-        setShowTableSelector(false);
-      }
+    if (routeTable && !selectedTable && !tableInitializedRef.current) {
+      tableInitializedRef.current = true;
+      selectTable(routeTable);
+      setSelectedTable(routeTable);
+      setShowTableSelector(false);
     }
-  }, [routeTable, selectedTable, selectTable, setSelectedTable, getActiveOrderForTable, navigation]);
+  }, [routeTable, selectedTable, selectTable, setSelectedTable]);
 
   // Filter menu items based on category and search
   const filteredMenuItems = useMemo(() => {
@@ -163,70 +172,24 @@ const POSOrderScreen: React.FC = () => {
 
   // Handle table selection - check for existing active orders first
   const handleTableSelect = useCallback((table: Table) => {
-    // Check if this table already has an active order in storage
     const existingOrder = getActiveOrderForTable(table.id);
-
+    tableWasSelectedRef.current = true;
+    selectTable(table);
+    setSelectedTable(table);
+    setShowTableSelector(false);
     if (existingOrder) {
-      // Table has an existing order - ask user what to do
-      Alert.alert(
-        'Existing Order Found',
-        `Table ${table.table_number} has an active order (${existingOrder.orderNumber}) with ${existingOrder.items.length} item(s).\n\nStatus: ${existingOrder.status.toUpperCase()}\n\nWhat would you like to do?`,
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Cancel Old Order',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await cancelOrder(existingOrder.id, 'Cancelled to start new order');
-                // Now select the table with fresh state
-                selectTable(table);
-                setSelectedTable(table);
-                setShowTableSelector(false);
-                showToast({
-                  type: 'success',
-                  title: 'Order Cancelled',
-                  message: `Previous order ${existingOrder.orderNumber} has been cancelled. You can now start a new order.`,
-                });
-              } catch (error) {
-                showToast({
-                  type: 'error',
-                  title: 'Error',
-                  message: 'Failed to cancel the existing order.',
-                });
-              }
-            },
-          },
-          {
-            text: 'Continue Order',
-            onPress: () => {
-              // Select the table (user will work with the existing order)
-              selectTable(table);
-              setSelectedTable(table);
-              setShowTableSelector(false);
-              showToast({
-                type: 'info',
-                title: 'Continuing Order',
-                message: `Working with existing order ${existingOrder.orderNumber}. Complete or cancel it before starting a new one.`,
-              });
-            },
-          },
-        ]
-      );
-    } else {
-      // No existing order - proceed normally
-      selectTable(table);
-      setSelectedTable(table);
-      setShowTableSelector(false);
+      showToast({
+        type: 'info',
+        title: 'Existing Order',
+        message: `Continuing order ${existingOrder.orderNumber} for ${table.table_number}.`,
+      });
     }
-  }, [selectTable, setSelectedTable, getActiveOrderForTable, cancelOrder]);
+  }, [selectTable, setSelectedTable, getActiveOrderForTable]);
 
   // Handle menu item selection
   const handleMenuItemSelect = useCallback((menuItem: MenuItem) => {
-    if (!selectedTable) {
+    // In edit mode (editOrderId set), we don't need a selectedTable
+    if (!selectedTable && !editOrderId) {
       setError('Please select a table first');
       return;
     }
@@ -267,7 +230,7 @@ const POSOrderScreen: React.FC = () => {
     } catch (error) {
       setError(`Failed to add item: ${error}`);
     }
-  }, [selectedTable, addToCart, setError]);
+  }, [selectedTable, editOrderId, addToCart, setError]);
 
   // Handle modifier confirmation (for both new items and editing existing)
   const handleModifierConfirm = useCallback(
@@ -428,35 +391,6 @@ const POSOrderScreen: React.FC = () => {
     }
   }, [updateCartItemQuantity, removeFromCart]);
 
-  // Render table selector overlay
-  const renderTableSelector = () => (
-    <View style={[styles.tableSelector, { backgroundColor: theme.colors.surface }]}>
-      <Text style={[styles.tableSelectorTitle, { color: theme.colors.onSurface }]}>
-        Select a Table
-      </Text>
-      <FlatList
-        data={tableState.tables.filter(t =>
-          t.status === TableStatus.AVAILABLE && !getActiveOrderForTable(t.id)
-        )}
-        keyExtractor={(item) => item.id}
-        numColumns={4}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.tableItem, { backgroundColor: theme.colors.primaryContainer }]}
-            onPress={() => handleTableSelect(item)}
-          >
-            <Text style={[styles.tableNumber, { color: theme.colors.onPrimaryContainer }]}>
-              {item.table_number}
-            </Text>
-            <Text style={[styles.tableCapacity, { color: theme.colors.onPrimaryContainer }]}>
-              {item.capacity} seats
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
-    </View>
-  );
-
   // Render category sidebar (landscape) — vertical list
   const renderCategorySidebar = () => (
     <View style={[styles.categorySidebar, { backgroundColor: theme.colors.surfaceVariant }]}>
@@ -470,6 +404,7 @@ const POSOrderScreen: React.FC = () => {
           { backgroundColor: selectedCategory === 'ALL' ? theme.colors.primary : theme.colors.surface }
         ]}
         onPress={() => setSelectedCategory('ALL')}
+        testID="tab-category-all"
       >
         <Text style={[
           styles.categoryText,
@@ -487,6 +422,7 @@ const POSOrderScreen: React.FC = () => {
             { backgroundColor: selectedCategory === category.id ? theme.colors.primary : theme.colors.surface }
           ]}
           onPress={() => setSelectedCategory(category.id)}
+          testID={`tab-category-${category.id}`}
         >
           <Text style={[
             styles.categoryText,
@@ -513,6 +449,7 @@ const POSOrderScreen: React.FC = () => {
           { backgroundColor: selectedCategory === 'ALL' ? theme.colors.primary : theme.colors.surface }
         ]}
         onPress={() => setSelectedCategory('ALL')}
+        testID="tab-category-chip-all"
       >
         <Text style={[
           styles.categoryChipText,
@@ -530,6 +467,7 @@ const POSOrderScreen: React.FC = () => {
             { backgroundColor: selectedCategory === category.id ? theme.colors.primary : theme.colors.surface }
           ]}
           onPress={() => setSelectedCategory(category.id)}
+          testID={`tab-category-chip-${category.id}`}
         >
           <Text style={[
             styles.categoryChipText,
@@ -543,7 +481,7 @@ const POSOrderScreen: React.FC = () => {
   );
 
   // Render menu item grid
-  const menuColumns = isPortrait ? 2 : 3;
+  const menuColumns = menuGridColumns;
   const renderMenuGrid = () => (
     <View style={styles.menuGrid}>
       {/* Search bar + table info — shown in landscape only (portrait has it in posLayout header) */}
@@ -555,6 +493,7 @@ const POSOrderScreen: React.FC = () => {
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={theme.colors.onSurfaceVariant}
+            testID="input-menu-search"
           />
 
           {selectedTable && (
@@ -580,6 +519,7 @@ const POSOrderScreen: React.FC = () => {
               style={[styles.menuItemCard, { backgroundColor: theme.colors.surface }]}
               onPress={() => handleMenuItemSelect(item)}
               activeOpacity={0.8} // Professional interaction feedback
+              testID={`btn-menu-item-${item.id}`}
             >
               <View style={styles.menuItemContent}>
                 <Text style={[styles.menuItemName, { color: theme.colors.onSurface }]}>
@@ -680,13 +620,32 @@ const POSOrderScreen: React.FC = () => {
     };
 
     const handleSendToKitchen = async () => {
-      // Restaurant workflow: Send order to kitchen for preparation
       if (cart.length === 0) {
         showToast({
           type: 'warning',
           title: 'Empty Order',
           message: 'Add items before sending to kitchen',
         });
+        return;
+      }
+
+      // Edit mode: add new items to an existing order
+      if (editOrderId) {
+        try {
+          await addItemsToOrder(editOrderId, cart);
+          showToast({
+            type: 'success',
+            title: 'Order Updated',
+            message: 'New items sent to kitchen',
+          });
+          navigation.goBack();
+        } catch (error) {
+          showToast({
+            type: 'error',
+            title: 'Update Error',
+            message: 'Failed to add items to order. Please try again.',
+          });
+        }
         return;
       }
 
@@ -717,32 +676,50 @@ const POSOrderScreen: React.FC = () => {
     };
 
     const handleDiscount = () => {
-      showToast({
-        type: 'info',
-        title: 'Apply Discount',
-        message: 'Discount feature coming soon',
-      });
+      if (!currentOrder && !editingOrder) {
+        showToast({ type: 'warning', title: 'No Order', message: 'Create an order first' });
+        return;
+      }
+      setShowDiscountModal(true);
+    };
+
+    const handleItemDiscount = (itemId: string) => {
+      const item = billItems.find(i => i.id === itemId);
+      if (item) {
+        setDiscountingItem({ id: item.id, name: item.name, price: item.price * item.quantity });
+      }
     };
 
     const handleSplit = () => {
-      showToast({
-        type: 'info',
-        title: 'Split Bill',
-        message: 'Split bill feature coming soon',
-      });
+      const orderId = editingOrder?.id || currentOrder?.id;
+      if (!orderId) {
+        showToast({ type: 'warning', title: 'No Order', message: 'Create an order first' });
+        return;
+      }
+      (navigation as any).navigate('BillSplit', { orderId });
     };
+
+    // Build read-only "Already Ordered" items for edit mode
+    const alreadyOrderedItems = editingOrder
+      ? editingOrder.items.map(i => ({
+          id: i.id,
+          name: i.name,
+          quantity: i.quantity,
+          price: i.unitPrice,
+        }))
+      : undefined;
 
     return (
       <BillPanel
-        orderNumber={currentOrder?.orderNumber || '----'}
-        tableName={selectedTable?.table_number || 'No Table'}
+        orderNumber={editingOrder?.orderNumber || currentOrder?.orderNumber || cartOrderNumber || '----'}
+        tableName={editingOrder?.tableName || selectedTable?.table_number || 'No Table'}
         tableCapacity={selectedTable?.capacity || 0}
         items={billItems}
         subtotal={subtotal}
         taxRate={taxRate}
         taxAmount={taxAmount}
         total={total}
-        orderTime={currentOrder?.createdAt || new Date().toISOString()}
+        orderTime={editingOrder?.createdAt || currentOrder?.createdAt || new Date().toISOString()}
         onItemQuantityChange={handleItemQuantityChange}
         onItemRemove={handleItemRemove}
         onAddItem={handleAddItem}
@@ -751,8 +728,13 @@ const POSOrderScreen: React.FC = () => {
         onDiscount={handleDiscount}
         onSplit={handleSplit}
         onEditItemModifiers={handleEditCartItemModifiers}
+        onItemDiscount={handleItemDiscount}
         isProcessing={false}
-        panelWidth={isPortrait ? screenWidth : undefined}
+        panelWidth={isPhone || isPortrait ? screenWidth : billPanelWidth}
+        isPortrait={isPortrait}
+        alreadyOrderedItems={alreadyOrderedItems}
+        sendToKitchenLabel={editOrderId ? 'Add to Order' : 'Send to Kitchen'}
+        sendToKitchenTestID={editOrderId ? 'btn-add-to-order' : 'btn-cart-send-to-kitchen'}
       />
     );
   };
@@ -763,7 +745,19 @@ const POSOrderScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.surface} />
 
-      {showTableSelector && renderTableSelector()}
+      <TableSelectionModal
+        visible={showTableSelector}
+        onClose={() => {
+          setShowTableSelector(false);
+          if (!tableWasSelectedRef.current) navigation.goBack();
+        }}
+        onTableSelect={handleTableSelect}
+        tables={tableState.tables}
+        isLoading={tableState.isLoading}
+        title="Select a Table"
+        subtitle="Choose an area and table to start order"
+        allowOccupied
+      />
 
       {!showTableSelector && isPortrait && (
         // Portrait layout: vertical stack
@@ -776,6 +770,7 @@ const POSOrderScreen: React.FC = () => {
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholderTextColor={theme.colors.onSurfaceVariant}
+              testID="input-menu-search-portrait"
             />
             {selectedTable && (
               <View style={styles.tableInfo}>
@@ -804,9 +799,11 @@ const POSOrderScreen: React.FC = () => {
       {!showTableSelector && !isPortrait && (
         // Landscape layout: 3-column side-by-side
         <View style={styles.posLayout}>
-          {isTablet && renderCategorySidebar()}
+          {showPersistentSidebar && renderCategorySidebar()}
 
           <View style={styles.mainContent}>
+            {/* Category chips row when sidebar isn't shown (small tablet landscape) */}
+            {!showPersistentSidebar && renderCategoryRow()}
             {renderMenuGrid()}
           </View>
 
@@ -838,6 +835,46 @@ const POSOrderScreen: React.FC = () => {
         />
       )}
 
+      {/* Discount Modal */}
+      <DiscountModal
+        visible={showDiscountModal || !!discountingItem}
+        currentAmount={discountingItem ? discountingItem.price : cartTotal}
+        itemName={discountingItem?.name}
+        currentDiscount={editingOrder?.discountType ? {
+          type: editingOrder.discountType,
+          value: editingOrder.discountValue || 0,
+          reason: '',
+          requiresApproval: false,
+        } : undefined}
+        onApply={async (discount: DiscountData) => {
+          const orderId = editingOrder?.id || currentOrder?.id;
+          if (!orderId) return;
+          if (discountingItem) {
+            await applyItemDiscount(orderId, discountingItem.id, discount.type, discount.value);
+            setDiscountingItem(null);
+          } else {
+            await applyOrderDiscount(orderId, discount.type, discount.value);
+            setShowDiscountModal(false);
+          }
+        }}
+        onRemove={() => {
+          const orderId = editingOrder?.id || currentOrder?.id;
+          if (orderId) {
+            if (discountingItem) {
+              applyItemDiscount(orderId, discountingItem.id, 'percentage', 0);
+              setDiscountingItem(null);
+            } else {
+              applyOrderDiscount(orderId, 'percentage', 0);
+              setShowDiscountModal(false);
+            }
+          }
+        }}
+        onCancel={() => {
+          setShowDiscountModal(false);
+          setDiscountingItem(null);
+        }}
+      />
+
     </SafeAreaView>
   );
 };
@@ -845,34 +882,6 @@ const POSOrderScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  
-  // Table selector overlay
-  tableSelector: {
-    flex: 1,
-    padding: spacing.lg,
-  },
-  tableSelectorTitle: {
-    ...typography.headlineMedium,
-    fontWeight: '600',
-    marginBottom: spacing.lg,
-    textAlign: 'center',
-  },
-  tableItem: {
-    flex: 1,
-    margin: spacing.sm,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    minHeight: cardDimensions.tableCard.minHeight,
-  },
-  tableNumber: {
-    ...typography.titleLarge,
-    fontWeight: '700',
-  },
-  tableCapacity: {
-    ...typography.bodySmall,
-    marginTop: spacing.xs,
   },
   
   // POS Layout — landscape (3-panel horizontal)
@@ -887,16 +896,15 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
 
-  // Portrait: menu grid takes remaining space
+  // Portrait: menu grid gets less space so bill panel has room for totals + send button
   menuGridPortrait: {
-    flex: 1,
+    flex: 45,
   },
 
-  // Portrait: bill panel at bottom, fixed height (tall enough for all action buttons)
+  // Portrait: bill panel gets more space — scrollable cart + totals + send button
   billPanelPortrait: {
-    height: 400,
+    flex: 55,
     borderTopWidth: 1,
-    overflow: 'hidden',
   },
 
   // Portrait: horizontal category scroll row — fixed height to prevent vertical stretch
@@ -981,6 +989,7 @@ const styles = StyleSheet.create({
   
   menuItemsContainer: {
     padding: spacing.md,
+    paddingBottom: spacing.xl,
     alignItems: 'stretch', // Professional alignment
   },
   menuItemRow: {

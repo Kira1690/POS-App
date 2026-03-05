@@ -33,6 +33,7 @@ interface AppleButtonProps {
   // UNIVERSAL STYLING SYSTEM (extensible)
   style?: ViewStyle;
   textStyle?: TextStyle;
+  testID?: string;
 }
 
 // UNIVERSAL APPLE BUTTON COMPONENT (Single Responsibility)
@@ -49,6 +50,7 @@ export const AppleButton: React.FC<AppleButtonProps> = ({
   iconPosition = 'left',
   style,
   textStyle,
+  testID,
 }) => {
   const { theme, isDark } = useTheme();
 
@@ -206,6 +208,7 @@ export const AppleButton: React.FC<AppleButtonProps> = ({
       disabled={disabled || loading}
       feedbackType={variant === 'ghost' ? 'opacity' : 'scale'}
       style={buttonStyles.container}
+      testID={testID}
     >
       {renderContent()}
     </AppleInteractive>

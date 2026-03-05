@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { AppleCard, AppleProgressBar } from '@/components/apple';
 import { useUnifiedKitchen } from '@/context/unified-order/UnifiedOrderContext';
 import { UnifiedOrder, UnifiedOrderStatus } from '@/types/unified-order.types';
@@ -315,6 +316,7 @@ const KitchenOrderCard: React.FC<OrderCardProps> = ({ order, onUpdateStatus }) =
             style={[styles.actionBtn, { backgroundColor: statusConfig.bg }]}
             onPress={() => onUpdateStatus(order, statusConfig.next)}
             activeOpacity={0.8}
+            testID={`btn-kitchen-action-${order.id}`}
           >
             <Text style={[styles.actionBtnText, { color: '#FFFFFF' }]}>
               {statusConfig.nextLabel}
@@ -337,12 +339,13 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ icon, iconColor, value, label }) => {
   const { theme } = useTheme();
+  const { statValueSize, captionSize, cardPadding } = useResponsive();
   return (
     <View style={{
       flex: 1,
       backgroundColor: theme.colors.surfaceVariant,
       borderRadius: theme.borderRadius.md,
-      padding: 12,
+      padding: cardPadding,
       alignItems: 'center',
     }}>
       <View style={{
@@ -357,13 +360,13 @@ const StatCard: React.FC<StatCardProps> = ({ icon, iconColor, value, label }) =>
         <MaterialIcons name={icon} size={20} color={iconColor} />
       </View>
       <Text style={{
-        fontSize: 22,
+        fontSize: statValueSize,
         fontWeight: '700',
         color: theme.colors.onSurface,
         marginBottom: 2,
       }}>{value}</Text>
       <Text style={{
-        fontSize: 11,
+        fontSize: captionSize,
         color: theme.colors.onSurfaceVariant,
         textAlign: 'center',
       }}>{label}</Text>
@@ -377,6 +380,7 @@ type StatusFilter = 'all' | 'pending' | 'preparing' | 'ready';
 
 const KitchenStaffDashboard: React.FC = () => {
   const { theme, isDark } = useTheme();
+  const { isPhone, headingSize } = useResponsive();
   const { orders, updateOrderStatus, refreshOrders, isLoading } = useUnifiedKitchen();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -449,9 +453,9 @@ const KitchenStaffDashboard: React.FC = () => {
   const renderHeader = () => (
     <View style={{ padding: 16 }}>
       {/* Title */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: isPhone ? 12 : 20 }}>
         <View>
-          <Text style={{ fontSize: 26, fontWeight: '700', color: theme.colors.onSurface }}>
+          <Text style={{ fontSize: isPhone ? headingSize : 26, fontWeight: '700', color: theme.colors.onSurface }}>
             Kitchen Dashboard
           </Text>
           <Text style={{ fontSize: 13, color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
@@ -470,6 +474,7 @@ const KitchenStaffDashboard: React.FC = () => {
           }}
           onPress={handleRefresh}
           disabled={isLoading || refreshing}
+          testID="btn-kitchen-refresh"
         >
           <MaterialIcons name="refresh" size={18} color={theme.colors.onPrimaryContainer} />
           <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.onPrimaryContainer }}>
@@ -498,12 +503,23 @@ const KitchenStaffDashboard: React.FC = () => {
         </View>
       )}
 
-      {/* Stats row */}
-      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-        <StatCard icon="pending-actions" iconColor="#3B82F6" value={String(stats.pending)} label="Confirmed" />
-        <StatCard icon="local-fire-department" iconColor="#F59E0B" value={String(stats.active)} label="Preparing" />
-        <StatCard icon="check-circle" iconColor="#10B981" value={String(stats.ready)} label="Ready" />
-        <StatCard icon="schedule" iconColor={theme.colors.onSurfaceVariant} value={`${stats.avgTime}m`} label="Avg Wait" />
+      {/* Stats row — 2×2 grid on phone, 4-in-a-row on tablet */}
+      <View style={{
+        flexDirection: 'row',
+        flexWrap: isPhone ? 'wrap' : 'nowrap',
+        gap: 10,
+        marginBottom: isPhone ? 12 : 20,
+      }}>
+        {[
+          { icon: 'pending-actions' as const, iconColor: '#3B82F6', value: String(stats.pending), label: 'Confirmed' },
+          { icon: 'local-fire-department' as const, iconColor: '#F59E0B', value: String(stats.active), label: 'Preparing' },
+          { icon: 'check-circle' as const, iconColor: '#10B981', value: String(stats.ready), label: 'Ready' },
+          { icon: 'schedule' as const, iconColor: theme.colors.onSurfaceVariant, value: `${stats.avgTime}m`, label: 'Avg Wait' },
+        ].map((stat) => (
+          <View key={stat.label} style={{ flex: isPhone ? undefined : 1, width: isPhone ? '48%' : undefined }}>
+            <StatCard {...stat} />
+          </View>
+        ))}
       </View>
 
       {/* Status filter chips */}
@@ -526,6 +542,7 @@ const KitchenStaffDashboard: React.FC = () => {
               }}
               onPress={() => setStatusFilter(opt.key)}
               activeOpacity={0.7}
+              testID={`tab-kitchen-filter-${opt.key}`}
             >
               <Text style={{
                 fontSize: 13,

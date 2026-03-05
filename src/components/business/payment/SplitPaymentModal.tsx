@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 import { formatCurrency } from '@/utils/currency';
@@ -66,6 +67,7 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
   initialSplits,
 }) => {
   const { theme } = useTheme();
+  const { isPhone, modalMaxWidth } = useResponsive();
 
   const [splits, setSplits] = useState<SplitItem[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<MethodOption | null>(null);
@@ -136,6 +138,18 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
   const styles = StyleSheet.create({
     flex: { flex: 1 },
     container: { flex: 1 },
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    dialogCard: {
+      width: '90%',
+      height: '90%',
+      borderRadius: 20,
+      overflow: 'hidden',
+    },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -208,6 +222,7 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
     },
     methodRow: {
       flexDirection: 'row',
+      flexWrap: isPhone ? 'wrap' : 'nowrap',
       gap: spacing.xs,
     },
     methodButton: {
@@ -340,6 +355,7 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
           onPress={() => handleRemoveSplit(item.id)}
           style={styles.removeButton}
           accessibilityLabel={`Remove ${item.method.label} split`}
+          testID={`btn-split-remove-${item.id}`}
         >
           <MaterialCommunityIcons name="close-circle" size={20} color={theme.colors.error} />
         </TouchableOpacity>
@@ -370,6 +386,7 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
                 ]}
                 onPress={() => handleSelectMethod(method)}
                 accessibilityLabel={method.label}
+                testID={`btn-split-method-${method.key}`}
               >
                 <MaterialCommunityIcons
                   name={method.icon as any}
@@ -404,6 +421,7 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
                 returnKeyType="done"
                 onSubmitEditing={handleAddSplit}
                 autoFocus
+                testID="input-split-amount"
               />
             </View>
             <TouchableOpacity
@@ -413,6 +431,7 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
               ]}
               onPress={handleAddSplit}
               disabled={!inputAmount || parseFloat(inputAmount) <= 0}
+              testID="btn-split-add"
             >
               <Text style={styles.addButtonText}>Add</Text>
             </TouchableOpacity>
@@ -439,21 +458,14 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
     </View>
   );
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onCancel}
-    >
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+  const modalInner = (
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.closeButton} onPress={onCancel}>
+            <TouchableOpacity style={styles.closeButton} onPress={onCancel} testID="btn-split-close">
               <MaterialCommunityIcons name="close" size={24} color={theme.colors.onSurface} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Split Payment</Text>
@@ -504,6 +516,7 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
               ]}
               onPress={handleProcess}
               disabled={!canProcess}
+              testID="btn-split-process"
             >
               <MaterialCommunityIcons
                 name="check-circle-outline"
@@ -527,7 +540,27 @@ export const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={!isPhone}
+      presentationStyle={isPhone ? 'pageSheet' : 'overFullScreen'}
+      onRequestClose={onCancel}
+    >
+      {isPhone ? (
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          {modalInner}
+        </SafeAreaView>
+      ) : (
+        <View style={styles.overlay}>
+          <View style={[styles.dialogCard, { maxWidth: modalMaxWidth, backgroundColor: theme.colors.background }]}>
+            {modalInner}
+          </View>
+        </View>
+      )}
     </Modal>
   );
 };

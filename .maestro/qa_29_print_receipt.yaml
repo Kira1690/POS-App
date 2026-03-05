@@ -1,0 +1,103 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 29: Print Receipt Button (UI Flow)"
+tags:
+  - qa
+  - payment
+  - print
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 29 — Print Receipt Button
+#  Note: Print fires but silently fails — no real printer
+#  in emulator. Tests the UI flow only.
+#
+#  Flow:
+#    Complete cash payment for B-1 order
+#    → PaymentConfirmationScreen
+#    → Assert btn-print-receipt visible
+#    → Tap btn-print-receipt
+#    → Toast appears (Printing... or Printer not configured)
+#    → Tap btn-continue → Return to Dashboard
+#
+#  testIDs:
+#    btn-print-receipt   — print button on PaymentConfirmation
+#    btn-continue        — continue button on PaymentConfirmation
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_29_step1_b1_served"
+
+# ── Navigate to payment ────────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-payment-pending"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-order-pay"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+
+- scroll
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 8000
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-confirm"
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-25"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-25"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+# Wait for PaymentConfirmationScreen
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+
+- takeScreenshot: "qa_29_step2_payment_confirmed"
+
+# ── STEP: Assert print receipt button visible ──────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-print-receipt"
+    timeout: 8000
+
+- takeScreenshot: "qa_29_step3_print_btn_visible"
+
+# ── STEP: Tap print receipt ───────────────────────────────────────────────────
+- tapOn:
+    id: "btn-print-receipt"
+- waitForAnimationToEnd
+
+# Toast will appear (Printing... or Printer not configured — both are acceptable)
+- takeScreenshot: "qa_29_step4_print_tapped"
+
+# ── STEP: Continue to Dashboard ───────────────────────────────────────────────
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_29_PASS_print_receipt_flow"

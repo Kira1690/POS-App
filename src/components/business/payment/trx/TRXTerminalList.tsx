@@ -146,6 +146,7 @@ export const TRXTerminalList: React.FC<TRXTerminalListProps> = ({
     return (
       <View
         key={`${item.ip}:${item.port}`}
+        testID={`terminal-item-${item.ip}`}
         style={[
           styles.terminalItem,
           isPreferred && styles.preferredTerminal,
@@ -153,7 +154,7 @@ export const TRXTerminalList: React.FC<TRXTerminalListProps> = ({
         ]}
       >
         <View style={styles.terminalInfo}>
-          <Text style={[styles.terminalIp, isPreferred && styles.preferredText]}>
+          <Text testID={`terminal-ip-${item.ip}`} style={[styles.terminalIp, isPreferred && styles.preferredText]}>
             {item.ip}:{item.port}
           </Text>
           <Text style={[styles.terminalStatus, isPreferred && styles.preferredText]}>

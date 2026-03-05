@@ -3,15 +3,15 @@
  * Transformed to use universal Apple components with advanced filtering
  */
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import {
   View,
   SafeAreaView,
   FlatList,
+  ScrollView,
   Text,
   TextInput,
   RefreshControl,
-  Dimensions,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -19,12 +19,16 @@ import { useUnifiedOrderManagement, useUnifiedOrder } from '@/context/unified-or
 import { UnifiedPaymentStatus } from '@/types/unified-order.types';
 import { useTable } from '@/context/table';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { UnifiedOrder, UnifiedOrderStatus } from '@/types/unified-order.types';
 import { Table } from '@/types/table.types';
-import { OrderStatus, PaymentStatus } from '@/types/common.types';
+import { OrderStatus, PaymentStatus, TableStatus } from '@/types/common.types';
 import { OrderListItem, OrderStatusBadge } from '@/components/business/order';
 import { TableSelectionModal } from '@/components/modals';
+import { ExistingOrderModal } from '@/components/modals/ExistingOrderModal';
+import { UnifiedOrder as UOrder } from '@/types/unified-order.types';
 import { showToast } from '@/utils/toast';
+import { useAuth } from '@/context/auth';
 
 // APPLE COMPONENT SYSTEM (Advanced Search & Filter Components)
 import {
@@ -35,8 +39,6 @@ import {
   AppleInteractive
 } from '@/components/apple';
 
-const { width } = Dimensions.get('window');
-const isTablet = width >= 768;
 
 interface OrderManagementScreenProps {
   navigation?: any;
@@ -57,6 +59,8 @@ const statusFilters: Array<{ value: UnifiedOrderStatus | 'all' | 'active'; label
 
 const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigation }) => {
   const { theme, isDark } = useTheme();
+  const { isPhone, orderListColumns } = useResponsive();
+  const { state: authState } = useAuth();
   const {
     orders,
     filteredOrders,
@@ -71,15 +75,33 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     setPaymentStatusFilter,
   } = useUnifiedOrderManagement();
 
-  // Get payment filter from context state
-  const { state: orderState } = useUnifiedOrder();
+  // Get payment filter and active orders from context state
+  const { state: orderState, activeOrders } = useUnifiedOrder();
   const paymentFilter = orderState.paymentStatusFilter;
 
   const { state: tableState, selectTable, refreshTables } = useTable();
 
+  // Compute table occupancy: local active orders take precedence (always up to date),
+  // otherwise trust the server status (don't downgrade OCCUPIED → AVAILABLE just because
+  // there is no local order — the sync may not have completed yet).
+  const tablesWithRealOccupancy = useMemo(() => {
+    const occupiedTableIds = new Set(activeOrders.map(o => o.tableId).filter(Boolean));
+    return tableState.tables.map(table =>
+      occupiedTableIds.has(table.id)
+        ? { ...table, status: TableStatus.OCCUPIED }
+        : table
+    );
+  }, [tableState.tables, activeOrders]);
+
   const [refreshing, setRefreshing] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [showTableModal, setShowTableModal] = useState(false);
+  // Order being shifted to another table (null when not in shift flow)
+  const [orderToShift, setOrderToShift] = useState<UOrder | null>(null);
+  const [existingOrderModal, setExistingOrderModal] = useState<{
+    visible: boolean;
+    table: Table | null;
+    order: UOrder | null;
+  }>({ visible: false, table: null, order: null });
 
   // Load orders and tables on component mount and when screen is focused
   // Using useFocusEffect ensures data is refreshed after payment completion
@@ -120,20 +142,76 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     }
   }, [loadOrders]);
 
-  // Handle new order - show table selection modal
+  // Handle new order - refresh tables then show selection modal
   const handleNewOrder = useCallback(() => {
-    setShowTableModal(true);
-  }, []);
+    refreshTables().catch(() => {}).finally(() => setShowTableModal(true));
+  }, [refreshTables]);
 
-  // Handle table selection from modal
-  const handleTableSelect = useCallback((table: Table) => {
+  // Handle table selection from modal:
+  // - Shift flow: update the shifting order's tableId → navigate
+  // - Available table: go straight to POS
+  // - Occupied table: show ExistingOrderModal with 3 choices
+  const handleTableSelect = useCallback(async (table: Table) => {
+    // Shift flow: move existing order to this (available) table
+    if (orderToShift) {
+      setOrderToShift(null);
+      setShowTableModal(false);
+      try {
+        await cancelOrder(orderToShift.id, `Shifted to ${table.table_number}`);
+        selectTable(table);
+        navigation?.navigate('POSOrder', { table });
+        showToast({ type: 'success', title: 'Table Shifted', message: `Order moved to ${table.table_number}.` });
+      } catch {
+        showToast({ type: 'error', title: 'Error', message: 'Could not shift the order.' });
+      }
+      return;
+    }
+
+    const occupied = activeOrders.find(o => o.tableId === table.id);
+    if (occupied) {
+      setShowTableModal(false);
+      setExistingOrderModal({ visible: true, table, order: occupied });
+      return;
+    }
     selectTable(table);
     setShowTableModal(false);
-    // Pass the full Table object - POSOrderScreen expects params.table
-    navigation?.navigate('POSOrder', {
-      table: table,
-    });
-  }, [selectTable, navigation]);
+    navigation?.navigate('POSOrder', { table });
+  }, [orderToShift, activeOrders, selectTable, navigation, cancelOrder]);
+
+  const closeExistingOrderModal = useCallback(() => {
+    setExistingOrderModal({ visible: false, table: null, order: null });
+  }, []);
+
+  // Option 1: Update Order — open POS to add/edit items on same table
+  const handleUpdateOrder = useCallback(() => {
+    const { table } = existingOrderModal;
+    if (!table) return;
+    closeExistingOrderModal();
+    selectTable(table);
+    navigation?.navigate('POSOrder', { table });
+  }, [existingOrderModal, selectTable, navigation, closeExistingOrderModal]);
+
+  // Option 2: Shift Table — re-open table picker; pick an available table to move the order
+  const handleShiftTable = useCallback(() => {
+    const { order } = existingOrderModal;
+    closeExistingOrderModal();
+    if (order) setOrderToShift(order);
+    setShowTableModal(true);
+  }, [existingOrderModal, closeExistingOrderModal]);
+
+  // Option 3: Cancel existing order and start fresh on the same table
+  const handleCancelAndNew = useCallback(async () => {
+    const { table, order } = existingOrderModal;
+    if (!table || !order) return;
+    closeExistingOrderModal();
+    try {
+      await cancelOrder(order.id, 'Cancelled to start a new order on the same table');
+      selectTable(table);
+      navigation?.navigate('POSOrder', { table });
+    } catch {
+      showToast({ type: 'error', title: 'Error', message: 'Could not cancel the existing order.' });
+    }
+  }, [existingOrderModal, cancelOrder, selectTable, navigation, closeExistingOrderModal]);
 
   // Handle order item press
   const handleOrderPress = useCallback((order: UnifiedOrder) => {
@@ -258,9 +336,10 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
         placeholderTextColor={theme.colors.onSurfaceVariant}
         value={searchQuery}
         onChangeText={setSearchQuery}
+        testID="input-order-search"
       />
       {searchQuery.length > 0 && (
-        <AppleInteractive onPress={() => setSearchQuery('')} feedbackType="opacity">
+        <AppleInteractive onPress={() => setSearchQuery('')} feedbackType="opacity" testID="btn-clear-search">
           <MaterialIcons
             name="clear"
             size={20}
@@ -295,16 +374,18 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
           }}>
             Status
           </Text>
-          <FlatList
-            data={statusCounts}
+          <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.value}
-            renderItem={({ item }) => (
+            contentContainerStyle={{ paddingRight: 8 }}
+          >
+            {statusCounts.map((item) => (
               <AppleInteractive
+                key={item.value}
                 onPress={() => setStatusFilter(item.value)}
                 feedbackType="scale"
                 style={{ marginRight: 6 }}
+                testID={`tab-status-${item.value}`}
               >
                 <View
                   style={{
@@ -334,7 +415,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
                   <View style={{
                     marginLeft: 6,
                     backgroundColor: statusFilter === item.value
-                      ? 'rgba(255,255,255,0.25)'
+                      ? theme.colors.primaryContainer
                       : theme.colors.surfaceVariant,
                     paddingHorizontal: 6,
                     paddingVertical: 2,
@@ -344,7 +425,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
                       fontSize: 11,
                       fontWeight: '600',
                       color: statusFilter === item.value
-                        ? theme.colors.onPrimary
+                        ? theme.colors.onPrimaryContainer
                         : theme.colors.onSurfaceVariant,
                     }}>
                       {item.count}
@@ -352,8 +433,8 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
                   </View>
                 </View>
               </AppleInteractive>
-            )}
-          />
+            ))}
+          </ScrollView>
         </View>
 
         {/* Payment Status Filter Row */}
@@ -374,6 +455,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
                 onPress={() => setPaymentStatusFilter(filter.value)}
                 feedbackType="scale"
                 style={{ marginRight: 6 }}
+                testID={`tab-payment-${filter.value}`}
               >
                 <View
                   style={{
@@ -411,7 +493,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
                   <View style={{
                     marginLeft: 6,
                     backgroundColor: paymentFilter === filter.value
-                      ? 'rgba(255,255,255,0.25)'
+                      ? theme.colors.primaryContainer
                       : theme.colors.surfaceVariant,
                     paddingHorizontal: 6,
                     paddingVertical: 2,
@@ -421,7 +503,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
                       fontSize: 11,
                       fontWeight: '600',
                       color: paymentFilter === filter.value
-                        ? theme.colors.onPrimary
+                        ? theme.colors.onPrimaryContainer
                         : theme.colors.onSurfaceVariant,
                     }}>
                       {filter.count}
@@ -454,6 +536,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
         onUpdateStatus={() => handleStatusUpdate(item)}
         onProcessPayment={() => handleProcessPayment(item)}
         showActions={true}
+        compact={isPhone}
       />
     );
   };
@@ -496,6 +579,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
               variant="secondary"
               size="medium"
               onPress={() => setSearchQuery('')}
+              testID="btn-clear-search-empty"
             />
           )}
           {statusFilter !== 'all' && (
@@ -504,6 +588,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
               variant="primary"
               size="medium"
               onPress={() => setStatusFilter('all')}
+              testID="btn-show-all-orders"
             />
           )}
         </View>
@@ -513,23 +598,27 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
 
   // APPLE HEADER ACTIONS (using universal components)
   const headerActions = (
-    <View style={{ flexDirection: 'row', gap: 12 }}>
-      <AppleStatusPill
-        status={isLoading ? "warning" : "success"}
-        text={`${filteredOrders.length} Orders`}
-        size="small"
-      />
+    <View style={{ flexDirection: 'row', gap: isPhone ? 8 : 12 }}>
+      {!isPhone && (
+        <AppleStatusPill
+          status={isLoading ? "warning" : "success"}
+          text={`${filteredOrders.length} Orders`}
+          size="small"
+        />
+      )}
       <AppleButton
-        title="+ New Order"
+        title={isPhone ? 'New' : '+ New Order'}
         variant="primary"
-        size="medium"
+        size={isPhone ? 'small' : 'medium'}
         onPress={handleNewOrder}
+        testID="btn-new-order"
       />
       <AppleButton
         title="Refresh"
         variant="secondary"
-        size="medium"
+        size={isPhone ? 'small' : 'medium'}
         onPress={handleRefresh}
+        testID="btn-refresh-orders"
       />
     </View>
   );
@@ -542,16 +631,16 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     }}>
       <AppleDashboardPanel
         title="Order Management"
-        subtitle={`Restaurant • ${orders.length} Total Orders`}
+        subtitle={`${authState?.restaurant?.name || 'Restaurant'} \u2022 ${orders.length} Total Orders`}
         headerActions={headerActions}
+        scrollable={false}
       >
-        {renderSearchBar()}
-        {renderFilters()}
-
         <FlatList
           data={filteredOrders}
           keyExtractor={(item) => item.id}
           renderItem={renderOrderItem}
+          numColumns={orderListColumns}
+          key={`order-list-${orderListColumns}`}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -560,6 +649,12 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
               tintColor={theme.colors.primary}
             />
           }
+          ListHeaderComponent={
+            <>
+              {renderSearchBar()}
+              {renderFilters()}
+            </>
+          }
           ListEmptyComponent={renderEmptyState}
           contentContainerStyle={filteredOrders.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
@@ -567,14 +662,27 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
       </AppleDashboardPanel>
 
       {/* Table Selection Modal for New Orders */}
+      {/* Table selection — occupied tables are tappable; selection handled by handleTableSelect */}
       <TableSelectionModal
         visible={showTableModal}
         onClose={() => setShowTableModal(false)}
         onTableSelect={handleTableSelect}
-        tables={tableState.tables}
+        tables={tablesWithRealOccupancy}
         isLoading={tableState.isLoading}
+        allowOccupied
         title="Select Table"
         subtitle="Choose a table to start a new order"
+      />
+
+      {/* In-app dialog for occupied table — 3-option choice */}
+      <ExistingOrderModal
+        visible={existingOrderModal.visible}
+        table={existingOrderModal.table}
+        existingOrder={existingOrderModal.order}
+        onUpdateOrder={handleUpdateOrder}
+        onShiftTable={handleShiftTable}
+        onCancelAndNew={handleCancelAndNew}
+        onClose={closeExistingOrderModal}
       />
     </SafeAreaView>
   );

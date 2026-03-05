@@ -7,6 +7,7 @@
  */
 
 import { authApiClient } from '@/services/api/authApiClient';
+import { apiClient } from '@/services/api/apiClient';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User, Restaurant } from '@/types';
 import { RegisterUserRequest } from '@/interfaces';
 import { findUserByCredentials, generateDummyTokens, DUMMY_CREDENTIALS, DUMMY_RESTAURANTS } from '@/constants/dummyData';
@@ -77,21 +78,99 @@ export class CoreAuthService {
       }
 
       // If not dummy credentials, proceed with real API call
-      const response = await authApiClient.login(credentials);
+      try {
+        const response = await authApiClient.login(credentials);
 
-      // Persist session from API response
-      await authStorageService.saveSession(response);
+        // Extract expiresAt from JWT if not in response
+        if (!response.expiresAt && response.accessToken) {
+          try {
+            const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
+            response.expiresAt = payload.exp || Math.floor(Date.now() / 1000) + 900;
+          } catch {
+            response.expiresAt = Math.floor(Date.now() / 1000) + 900; // 15 min default
+          }
+        }
 
-      if (__DEV__) {
-        console.log('Login successful:', {
-          userId: response.user.id,
-          role: response.user.role,
-          restaurant: response.restaurant?.name,
-        });
+        // Map backend user fields to expected shape
+        const rawUser = response.user as any;
+        if (!response.user.first_name && rawUser.username) {
+          const parts = rawUser.username.split('_');
+          response.user.first_name = parts[0] || rawUser.username;
+          response.user.last_name = parts.slice(1).join('_') || '';
+        }
+        if (!response.user.default_restaurant_id && rawUser.store_id) {
+          response.user.default_restaurant_id = rawUser.store_id;
+        }
+
+        // Map restaurant from store_id if not provided
+        if (!response.restaurant && rawUser.store_id) {
+          response.restaurant = {
+            id: rawUser.store_id,
+            name: rawUser.store_name || 'Restaurant',
+            address: '',
+            phone: '',
+            timezone: 'America/New_York',
+            is_active: true,
+          };
+        }
+
+        // Bridge tokens to apiClient (both defaults header AND TokenManager/SecureStore)
+        const expiresAt = typeof response.expiresAt === 'number'
+          ? response.expiresAt
+          : Math.floor(Date.now() / 1000) + 900;
+        await apiClient.setAuthTokens(response.accessToken, response.refreshToken, expiresAt);
+
+        // Persist session from API response
+        await authStorageService.saveSession(response);
+
+        if (__DEV__) {
+          console.log('[Auth] Real API login successful:', {
+            userId: response.user.id,
+            role: response.user.role,
+            restaurantId: rawUser.store_id,
+          });
+        }
+
+        return response;
+      } catch (apiError: any) {
+        // Check if this is a network/connection error (not an auth error)
+        const isNetworkError =
+          apiError.code === 'ECONNREFUSED' ||
+          apiError.code === 'ENOTFOUND' ||
+          apiError.code === 'ETIMEDOUT' ||
+          apiError.message?.toLowerCase().includes('network') ||
+          apiError.message?.toLowerCase().includes('connect') ||
+          apiError.message?.toLowerCase().includes('timeout') ||
+          !apiError.status; // no HTTP status = network-level error
+
+        if (isNetworkError) {
+          // Attempt to restore from a previously saved session (offline fallback)
+          const existingSession = await authStorageService.getSession();
+          const email = credentials.email || credentials.identifier || '';
+
+          if (existingSession?.user && existingSession.user.email === email) {
+            if (__DEV__) {
+              console.log('[Auth] Network unavailable — restoring offline session for:', email);
+            }
+            return {
+              user: existingSession.user,
+              restaurant: existingSession.restaurant,
+              accessToken: existingSession.accessToken,
+              refreshToken: existingSession.refreshToken,
+              expiresAt: Math.floor(new Date(existingSession.expiresAt).getTime() / 1000),
+            };
+          }
+
+          // No stored session for this user
+          throw new Error('Invalid credentials (offline)');
+        }
+
+        // Re-throw auth errors (401, 403) as-is
+        console.error('Login failed:', apiError.message);
+        throw new Error(apiError.message || 'Login failed');
       }
-
-      return response;
     } catch (error: any) {
+      if (error.message) throw error;
       console.error('Login failed:', error.message);
       throw new Error(error.message || 'Login failed');
     }

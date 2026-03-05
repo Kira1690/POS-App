@@ -1,0 +1,229 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Blue Plate Bistro — Mobile Visual Tour (20 screens)"
+# Captures 20 mobile screenshots for side-by-side comparison with web dashboard.
+# Login: manager@blueplatebistro.io / BluePlateMgr2026!
+# Screenshots correspond to BP-01–BP-17 web pages.
+#
+# Pull screenshots: adb pull /sdcard/Pictures/maestro/ prep/testing/screenshots/bistro-mobile/
+#
+# Usage: maestro test POS-App/.maestro/qa/bistro/bistro_visual_tour.yaml
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Login as bistro admin (store_admin role required for Manager Login)
+- tapOn:
+    text: ".*Manager Login.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "email-input"
+- inputText: "admin@blueplatebistro.io"
+- hideKeyboard
+- tapOn:
+    id: "password-input"
+- inputText: "BluePlate2026!"
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# mob_01 — Manager Dashboard (tap Dashboard bottom tab first)
+- tapOn:
+    text: "Dashboard"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_01_dashboard"
+
+# mob_04 — Floor Plan (Tables in Dashboard sidebar)
+- tapOn:
+    text: "Tables"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_04_floor_plan"
+
+# mob_05 — Kitchen board (Kitchen Operations bottom tab)
+- tapOn:
+    text: "Kitchen Operations"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_05_kitchen"
+
+# mob_06 — Active orders list (Order Management bottom tab)
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_06_orders_list"
+
+# mob_02 — POS item grid (open ordering screen, tap Burgers)
+- tapOn:
+    text: ".*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "T1"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-existing-update-order"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Burgers|Burger"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_02_pos_grid"
+
+# mob_03 — Modifier modal (Classic Cheeseburger)
+- tapOn:
+    text: "Classic Cheeseburger|Cheeseburger|Chicken Wings"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_03_modifier_modal"
+- tapOn:
+    text: "Cancel|Close|Back|Done|×"
+    optional: true
+- waitForAnimationToEnd
+
+# mob_16 — Order detail (tap first active order)
+- tapOn:
+    text: "ORD-|Active|open"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_16_order_detail"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# Navigate to Settings for remaining screens
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+
+# mob_13 — Account / session
+- takeScreenshot: "mob_13_account"
+
+# mob_12 — Restaurant Profile
+- tapOn:
+    text: "Restaurant Profile"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_12_restaurant_profile"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_09 — Table Management
+- tapOn:
+    text: "Table Management|Tables"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_09_table_settings"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_07 — Category sidebar/list (Menu Management in Settings)
+- tapOn:
+    text: "Menu Management|Menu"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_07_categories"
+
+# mob_08 — Combos list (Lunch Combo + Dinner Special)
+- tapOn:
+    text: "Combos|Combo"
+    optional: true
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Lunch Combo"
+    optional: true
+- assertVisible:
+    text: "Dinner Special"
+    optional: true
+- takeScreenshot: "mob_08_combos"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_17 — Kitchen Settings
+- tapOn:
+    text: "Kitchen Settings|Kitchen.*Config"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_17_kitchen_settings"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_11 — Staff / User Management
+- tapOn:
+    text: "User Management|Staff|Users"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_11_staff"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_10 — Reports
+- tapOn:
+    text: "Reports"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_10_reports"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_14 — Payment/Checkout screen
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "T1"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Espresso"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Confirm|OK|Done"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Pay|Checkout|Bill"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_14_payment_screen"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_15 — Customer search
+- tapOn:
+    text: "Add Customer|Customer|Search Customer"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_15_customer_search"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_20 — Combo in POS order (from ordering screen)
+- tapOn:
+    text: "Combos|Lunch Combo"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "mob_20_combos_in_pos"
+- pressKey: "Back"
+- waitForAnimationToEnd
+
+# mob_18 — Network offline banner
+# Run: adb shell svc wifi disable
+# then re-enable: adb shell svc wifi enable after screenshot
+- takeScreenshot: "mob_18_network_offline"
+
+# mob_19 — Post-reconnect state
+- takeScreenshot: "mob_19_sync_done"
+
+- stopApp

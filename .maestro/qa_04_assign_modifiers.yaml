@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 name: "QA 04: Assign Modifiers — Cup Size to drinks, Protein to mains"
 tags:
   - qa
@@ -11,10 +11,13 @@ tags:
 #  Cup Size  → Latte, Cappuccino
 #  Protein   → Beef Burger, Grilled Salmon
 #
-#  Flow: Items tab → tap "Assign modifiers to X" icon
+#  Flow: Items tab → tap btn-assign-modifiers-{name} (testID)
 #        → AssignModifiersModal opens
 #        → tap the modifier group name to select
 #        → tap "Save"
+#
+#  CRITICAL: Use tapOn: id: NOT tapOn: label:
+#            label: taps can trigger Android nav bar / Google Search
 #
 #  Prerequisites: qa_03 completed (Cup Size + Protein groups exist)
 #
@@ -28,22 +31,25 @@ tags:
 - waitForAnimationToEnd
 
 - tapOn:
-    text: "Settings"
+    id: "tab-nav-settings"
 
 - extendedWaitUntil:
-    visible: "Menu Management"
-    timeout: 15000
+    visible:
+      id: "settings-nav-restaurant_profile"
+    timeout: 10000
 
+# tapOn auto-scrolls the sidebar to find the item
 - tapOn:
-    text: "Menu Management"
+    id: "settings-nav-menu_management"
 
 - extendedWaitUntil:
-    visible: "Items"
+    visible:
+      id: "tab-menu-items"
     timeout: 10000
 
 # Make sure we're on Items tab
 - tapOn:
-    text: "Items"
+    id: "tab-menu-items"
 
 - extendedWaitUntil:
     visible: "Latte"
@@ -55,7 +61,7 @@ tags:
 # Assign Cup Size → Latte
 # ════════════════════════════════════════════════════
 - tapOn:
-    label: "Assign modifiers to Latte"
+    id: "btn-assign-modifiers-latte"
 
 - extendedWaitUntil:
     visible: "Assign Modifiers"
@@ -63,7 +69,10 @@ tags:
 
 - takeScreenshot: "qa_04_latte_assign_modal"
 
-# Select Cup Size modifier group
+# Clear any pre-existing selection, then select Cup Size
+- tapOn:
+    text: "Clear"
+
 - tapOn:
     text: "Cup Size"
 
@@ -84,11 +93,14 @@ tags:
 # Assign Cup Size → Cappuccino
 # ════════════════════════════════════════════════════
 - tapOn:
-    label: "Assign modifiers to Cappuccino"
+    id: "btn-assign-modifiers-cappuccino"
 
 - extendedWaitUntil:
     visible: "Assign Modifiers"
     timeout: 8000
+
+- tapOn:
+    text: "Clear"
 
 - tapOn:
     text: "Cup Size"
@@ -108,11 +120,14 @@ tags:
 # Assign Protein → Beef Burger
 # ════════════════════════════════════════════════════
 - tapOn:
-    label: "Assign modifiers to Beef Burger"
+    id: "btn-assign-modifiers-beef-burger"
 
 - extendedWaitUntil:
     visible: "Assign Modifiers"
     timeout: 8000
+
+- tapOn:
+    text: "Clear"
 
 - tapOn:
     text: "Protein"
@@ -132,11 +147,14 @@ tags:
 # Assign Protein → Grilled Salmon
 # ════════════════════════════════════════════════════
 - tapOn:
-    label: "Assign modifiers to Grilled Salmon"
+    id: "btn-assign-modifiers-grilled-salmon"
 
 - extendedWaitUntil:
     visible: "Assign Modifiers"
     timeout: 8000
+
+- tapOn:
+    text: "Clear"
 
 - tapOn:
     text: "Protein"

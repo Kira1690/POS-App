@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { KPICardProps } from '@/types/dashboard.types';
 
 export const KPICard: React.FC<KPICardProps> = ({
@@ -15,6 +16,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   loading = false,
 }) => {
   const { theme } = useTheme();
+  const { isPhone, cardPadding, statValueSize, bodySize, captionSize } = useResponsive();
 
   const getIconName = (iconName: string) => {
     // Return the icon name directly since we're now passing proper MaterialIcons names
@@ -44,11 +46,11 @@ export const KPICard: React.FC<KPICardProps> = ({
     card: {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.lg,
-      padding: theme.spacing.lg,
+      padding: cardPadding,
       ...theme.shadows.md,
       borderWidth: 1,
       borderColor: theme.colors.outline,
-      minHeight: 140,
+      minHeight: isPhone ? 100 : 140,
       elevation: 4,
     },
 
@@ -60,8 +62,8 @@ export const KPICard: React.FC<KPICardProps> = ({
     },
 
     iconContainer: {
-      width: 48,
-      height: 48,
+      width: isPhone ? 36 : 48,
+      height: isPhone ? 36 : 48,
       borderRadius: theme.borderRadius.lg,
       justifyContent: 'center',
       alignItems: 'center',
@@ -96,21 +98,22 @@ export const KPICard: React.FC<KPICardProps> = ({
     },
 
     value: {
-      ...theme.typography.h2,
+      fontSize: statValueSize,
+      lineHeight: statValueSize * 1.3,
       fontWeight: '700',
-      marginBottom: 4,
+      marginBottom: 2,
       color: theme.colors.onSurface,
     },
 
     title: {
-      ...theme.typography.body2,
+      fontSize: bodySize,
       color: theme.colors.onSurface,
       fontWeight: '600',
-      marginBottom: 4,
+      marginBottom: 2,
     },
 
     period: {
-      ...theme.typography.caption,
+      fontSize: captionSize,
       color: theme.colors.onSurfaceVariant,
       fontWeight: '500',
     },
@@ -161,7 +164,7 @@ export const KPICard: React.FC<KPICardProps> = ({
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: color }]}>
-          <MaterialIcons name={getIconName(icon) as any} size={24} color={theme.colors.onPrimary} />
+          <MaterialIcons name={getIconName(icon) as any} size={isPhone ? 20 : 24} color={theme.colors.onPrimary} />
         </View>
         <View style={styles.changeContainer}>
           {getChangeIcon()}

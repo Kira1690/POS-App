@@ -1,0 +1,149 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 21: Dashboard Order Cards — OrderSummarySheet Modal"
+tags:
+  - qa
+  - dashboard
+  - feature
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 21 — Dashboard Recent Order Cards (Feature 1)
+#  Uses ONLY testIDs and text — no coordinate taps.
+#
+#  What is tested:
+#    ✓ Recent order cards in ManagerDashboard are tappable
+#    ✓ Tapping a card opens OrderSummarySheet (bottom-sheet modal)
+#    ✓ Sheet shows order number, table name, status badge, total
+#    ✓ Sheet shows itemised list (if items present)
+#    ✓ "Close" button dismisses the sheet
+#    ✓ "View Full Details" navigates to OrderDetails
+#    ✓ "View All" navigates to Orders tab
+#
+#  Flow:
+#    Ensure dashboard → Create B-1 SERVED order
+#    → Dashboard tab → tap recent order card
+#    → OrderSummarySheet slides up
+#    → Assert sheet content visible
+#    → Close sheet → confirm dismissed
+#    → Re-open sheet → View Full Details → OrderDetails
+#    → Back → Dashboard → View All → Orders tab
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+- runFlow: helpers/create_b1_served_order.yaml
+
+# ── Navigate to Dashboard tab ─────────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Wait for top-level dashboard to load (Key Metrics visible)
+- extendedWaitUntil:
+    visible:
+      text: "Key Metrics"
+    timeout: 15000
+
+# Scroll until "View All" button (in Recent Orders section) is visible
+- scrollUntilVisible:
+    element:
+      id: "btn-dashboard-view-all"
+    direction: DOWN
+    timeout: 15000
+
+- takeScreenshot: "qa_21_step1_dashboard_with_orders"
+
+- assertVisible:
+    id: "btn-dashboard-view-all"
+
+# ── Tap first recent order card ────────────────────────────────────────────────
+# Cards have testID btn-recent-order-{uuid} — use regex to tap any card
+- tapOn:
+    id: "btn-recent-order-.*"
+- waitForAnimationToEnd
+
+# ── Verify OrderSummarySheet opened ───────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-summary-close"
+    timeout: 8000
+
+- assertVisible:
+    id: "btn-order-summary-close"
+- assertVisible:
+    id: "btn-order-summary-view-full"
+
+- takeScreenshot: "qa_21_step2_order_summary_sheet_open"
+
+# QA: Sheet header content is visible (order number shows up)
+- assertVisible:
+    id: "btn-order-summary-view-full"
+
+- takeScreenshot: "qa_21_step3_sheet_content_verified"
+
+# ── Close the sheet ────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-order-summary-close"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Verify sheet is dismissed — close button should no longer be visible
+- assertNotVisible:
+    id: "btn-order-summary-close"
+
+- takeScreenshot: "qa_21_step4_sheet_dismissed"
+
+# ── Re-open sheet and tap "View Full Details" ──────────────────────────────────
+- tapOn:
+    id: "btn-recent-order-.*"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-summary-view-full"
+    timeout: 8000
+
+- takeScreenshot: "qa_21_step5_sheet_reopened"
+
+- tapOn:
+    id: "btn-order-summary-view-full"
+- waitForAnimationToEnd
+
+# Should navigate to OrderDetails screen
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+
+- assertVisible:
+    id: "btn-process-payment"
+
+- takeScreenshot: "qa_21_step6_order_details_opened"
+
+# ── Navigate back to Dashboard and test "View All" ────────────────────────────
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+
+# Scroll down to reveal Recent Orders section + View All button
+- scrollUntilVisible:
+    element:
+      id: "btn-dashboard-view-all"
+    direction: DOWN
+    timeout: 12000
+
+- tapOn:
+    id: "btn-dashboard-view-all"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Should land on Orders (Order Management) tab
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- assertVisible:
+    id: "btn-new-order"
+
+- takeScreenshot: "qa_21_PASS_dashboard_order_cards_complete"

@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 name: "QA 05: POS Order with Modifiers (Portrait) — Table T-1"
 tags:
   - qa
@@ -35,6 +35,18 @@ tags:
     timeout: 10000
 
 - takeScreenshot: "qa_05_step1_order_management"
+
+# ── PRE-TEST CLEANUP: Cancel any lingering T-1 active order ──
+# Ensures idempotency — safe if no T-1 order exists
+- runFlow: helpers/cancel_t1_active_order.yaml
+
+# Navigate back to Order Management tab after cleanup
+- tapOn:
+    text: "Order Management"
+
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 8000
 
 # Tap New Order
 - tapOn:

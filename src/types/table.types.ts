@@ -53,6 +53,7 @@ export interface CreateTableRequest {
   capacity: number;
   location?: string;
   section?: string;
+  section_id?: number; // Server-side numeric section/area ID
   position?: TablePosition;
   service_area?: string; // Service area assignment
   area_id?: string; // Alternative area identifier

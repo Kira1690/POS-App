@@ -1,0 +1,231 @@
+appId: host.exp.exponent
+name: "QA 16: Split Equally — 3 Guests, Mixed Cash Payments"
+tags:
+  - qa
+  - payment
+  - split
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 16 — Split Equally (3 guests)
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Tests that:
+#    - Guest count can be increased to 3
+#    - All 3 guests can pay independently
+#    - Order completes when all 3 pay
+#
+#  Flow:
+#    Create B-1 → SERVED
+#    → OrderDetails → Process Payment → BillScreen
+#    → Split Equally → BillSplitScreen
+#    → Increase guest count to 3
+#    → Guest 1 → Cash → Confirm → Back
+#    → Guest 2 → Cash → Confirm → Back
+#    → Guest 3 → Cash → Confirm → Back
+#    → All paid → Order Management → PAID
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_16_step1_b1_served"
+
+# ── View → BillScreen → Split Equally ────────────────────────────────────────
+- tapOn:
+    id: "tab-payment-pending"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-split-equally"
+    timeout: 10000
+- tapOn:
+    id: "btn-split-equally"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "tab-split-equal"
+    timeout: 10000
+
+- takeScreenshot: "qa_16_step2_split_screen_2guests"
+
+# ── Increase guest count to 3 ────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-guest-count-increase"
+    timeout: 8000
+- tapOn:
+    id: "btn-guest-count-increase"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_16_step3_3guests"
+
+# ── Guest 1 Payment ───────────────────────────────────────────────────────────
+- tapOn:
+    text: "Pay Now"
+- waitForAnimationToEnd
+
+# PaymentProcessingScreen — select Cash
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 10000
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+# Each guest owes ~$6.33 → $10 covers it
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-10"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-10"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_16_step4_guest1_paid"
+
+# ── Guest 2 Payment ───────────────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      text: "Pay Now"
+    timeout: 8000
+- tapOn:
+    text: "Pay Now"
+- waitForAnimationToEnd
+
+# PaymentProcessingScreen — select Cash
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 10000
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-10"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-10"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_16_step5_guest2_paid"
+
+# ── Guest 3 Payment ───────────────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      text: "Pay Now"
+    timeout: 8000
+- tapOn:
+    text: "Pay Now"
+- waitForAnimationToEnd
+
+# PaymentProcessingScreen — select Cash
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+- scroll
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 10000
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-10"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-10"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_16_step6_guest3_paid"
+
+# ── All Paid → Order Management ──────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+# Clear status filter first, then filter to paid
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-paid"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 8000
+
+- takeScreenshot: "qa_16_PASS_3guest_split_complete"

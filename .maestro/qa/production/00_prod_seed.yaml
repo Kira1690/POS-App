@@ -1,0 +1,260 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Production QA Seed — Create Prod Data (Menu, Tables)"
+# Seeds production QA data for Phase 2 bidirectional sync tests.
+# Login as qa-prod-manager (created by e2e/qa/production-setup.spec.ts).
+# Run after production-setup.spec.ts has created the prod accounts.
+#
+# Usage: maestro test POS-App/.maestro/qa/production/00_prod_seed.yaml
+
+---
+- launchApp
+- waitForAnimationToEnd
+
+# ── Login as prod manager ──────────────────────────────────────────
+- tapOn:
+    text: "Email"
+    optional: true
+- inputText: "qa-prod-manager@blueplate.io"
+- tapOn:
+    text: "Password"
+    optional: true
+- inputText: "QAProdMgr2026!"
+- tapOn:
+    text: ".*Sign.*In.*|.*Login.*"
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_00_login"
+
+# ── Navigate to Menu / Category creation ──────────────────────────
+- tapOn:
+    text: "Settings"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Menu"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_01_menu_settings"
+
+# Create category: Prod-Drinks
+- tapOn:
+    text: "Add|Create|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*|.*[Cc]ategory.*"
+    optional: true
+- inputText: "Prod-Drinks"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_02_category_drinks"
+
+# Create category: Prod-Mains
+- tapOn:
+    text: "Add|Create|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*|.*[Cc]ategory.*"
+    optional: true
+- inputText: "Prod-Mains"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_03_category_mains"
+
+# Create category: Prod-Starters
+- tapOn:
+    text: "Add|Create|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*|.*[Cc]ategory.*"
+    optional: true
+- inputText: "Prod-Starters"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_04_categories_done"
+
+# ── Create menu items ──────────────────────────────────────────────
+# Item: Prod-Coffee ($3.50) in Prod-Drinks
+- tapOn:
+    text: "Items|Menu Items"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Create|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*"
+    optional: true
+- inputText: "Prod-Coffee"
+- tapOn:
+    text: ".*[Pp]rice.*"
+    optional: true
+- inputText: "3.50"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_05_item_coffee"
+
+# Item: Prod-Juice ($4.00)
+- tapOn:
+    text: "Add|Create|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*"
+    optional: true
+- inputText: "Prod-Juice"
+- tapOn:
+    text: ".*[Pp]rice.*"
+    optional: true
+- inputText: "4.00"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_06_item_juice"
+
+# Item: Prod-Burger ($12.99)
+- tapOn:
+    text: "Add|Create|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*"
+    optional: true
+- inputText: "Prod-Burger"
+- tapOn:
+    text: ".*[Pp]rice.*"
+    optional: true
+- inputText: "12.99"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_07_item_burger"
+
+# Item: Prod-Salad ($9.50)
+- tapOn:
+    text: "Add|Create|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*"
+    optional: true
+- inputText: "Prod-Salad"
+- tapOn:
+    text: ".*[Pp]rice.*"
+    optional: true
+- inputText: "9.50"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_08_item_salad"
+
+# ── Create modifier group: Prod-Size ──────────────────────────────
+- tapOn:
+    text: "Modifier|Modifiers"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|Create|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*|.*[Gg]roup.*"
+    optional: true
+- inputText: "Prod-Size"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_09_modifier_size"
+
+# ── Navigate to Table Management ──────────────────────────────────
+- pressKey: "Back"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Table Management"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_10_table_mgmt"
+
+# Create section: Prod-Floor
+- tapOn:
+    text: "Add.*Area|Create.*Section|Add.*Section|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*|.*[Ss]ection.*"
+    optional: true
+- inputText: "Prod-Floor"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_11_area_floor"
+
+# Create section: Prod-Bar
+- tapOn:
+    text: "Add.*Area|Create.*Section|Add.*Section|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]ame.*|.*[Ss]ection.*"
+    optional: true
+- inputText: "Prod-Bar"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_12_area_bar"
+
+# Create tables in Prod-Floor
+- tapOn:
+    text: "Add.*Table|Create.*Table|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]umber.*|.*[Tt]able.*[Nn].*"
+    optional: true
+- inputText: "P-T1"
+- tapOn:
+    text: ".*[Ss]eats.*|.*[Cc]apacity.*"
+    optional: true
+- inputText: "4"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_13_table_pt1"
+
+- tapOn:
+    text: "Add.*Table|Create.*Table|\\+"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*[Nn]umber.*|.*[Tt]able.*[Nn].*"
+    optional: true
+- inputText: "P-T2"
+- tapOn:
+    text: ".*[Ss]eats.*|.*[Cc]apacity.*"
+    optional: true
+- inputText: "2"
+- tapOn:
+    text: "Save|Submit|Create"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "prod_seed_14_table_pt2"
+
+# Final state screenshot
+- takeScreenshot: "prod_seed_15_complete"
+- stopApp

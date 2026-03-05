@@ -1,0 +1,100 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 28: Activity Logs Sheet"
+tags:
+  - qa
+  - dashboard
+  - logs
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 28 — Activity Logs Sheet
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Prerequisites:
+#    At least one order has been created/served/paid in
+#    session (run qa_08 first or any order flow).
+#    create_b1_served_order seeds activity events.
+#
+#  Flow:
+#    Create an activity event via a B-1 served order
+#    → Navigate to Dashboard
+#    → Tap Activity Log button (btn-activity-logs)
+#    → ActivityLogsSheet opens
+#    → Assert list visible (activity-log-list)
+#    → Tap filter-1h → list refreshes
+#    → Tap filter-today → list shows today's events
+#    → Close sheet
+#
+#  testIDs:
+#    btn-activity-logs    — trigger button on ManagerDashboard
+#    activity-log-list    — FlatList inside ActivityLogsSheet
+#    filter-today         — "Today" filter chip
+#    filter-1h            — "Last 1h" filter chip
+#    filter-week          — "This Week" filter chip
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Seed at least one activity event ───────────────────────────────────
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_28_step1_order_created"
+
+# ── STEP 1: Navigate to Dashboard ─────────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_28_step2_dashboard"
+
+# ── STEP 2: Open Activity Logs ────────────────────────────────────────────────
+# tapOn auto-scrolls to find element (works better than scrollUntilVisible
+# when multiple ScrollViews exist in a tablet layout)
+- tapOn:
+    id: "btn-activity-logs"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "activity-log-list"
+    timeout: 10000
+
+- takeScreenshot: "qa_28_step3_logs_open"
+
+# ── STEP 3: Tap Last 1h filter ────────────────────────────────────────────────
+- tapOn:
+    id: "filter-1h"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "activity-log-list"
+    timeout: 8000
+
+- takeScreenshot: "qa_28_step4_filter_1h"
+
+# ── STEP 4: Tap Today filter ──────────────────────────────────────────────────
+- tapOn:
+    id: "filter-today"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "activity-log-list"
+    timeout: 8000
+
+- takeScreenshot: "qa_28_step5_filter_today"
+
+# ── STEP 5: Tap This Week filter ──────────────────────────────────────────────
+- tapOn:
+    id: "filter-week"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "activity-log-list"
+    timeout: 8000
+
+- takeScreenshot: "qa_28_PASS_activity_logs_all_filters"

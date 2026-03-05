@@ -1,0 +1,140 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 27: Bill Transfer — Move Items Between Tables"
+tags:
+  - qa
+  - payment
+  - transfer
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 27 — Bill Transfer (Move Items)
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Prerequisites:
+#    Two active orders: B-1 (SERVED) and T-1 (SERVED).
+#    Uses create_b1_served_order and create_t1_served_order.
+#
+#  Flow:
+#    Setup: B-1 SERVED order + T-1 SERVED order
+#    → B-1 BillScreen → Transfer Items button
+#    → BillTransferModal Step 1: select first item
+#    → Next: select T-1 as target
+#    → Assert success toast
+#    → Assert B-1 total updated (lower or order gone if all transferred)
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Create B-1 SERVED order ────────────────────────────────────────────
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_27_step1_b1_served"
+
+# ── SETUP: Create T-1 SERVED order ────────────────────────────────────────────
+- runFlow: helpers/create_t1_served_order.yaml
+
+- takeScreenshot: "qa_27_step2_t1_served"
+
+# ── Navigate to B-1 order's Bill screen ───────────────────────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+- tapOn:
+    id: "tab-payment-pending"
+- waitForAnimationToEnd
+
+# Find B-1 order and view it
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 10000
+
+# Scroll down to reveal Transfer Items button (below split options)
+- scroll
+- waitForAnimationToEnd
+- scroll
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-bill-transfer"
+    timeout: 8000
+
+- takeScreenshot: "qa_27_step3_bill_screen"
+
+# ── STEP 1: Open Transfer Modal ────────────────────────────────────────────────
+- tapOn:
+    id: "btn-bill-transfer"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-transfer-next"
+    timeout: 10000
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_27_step4_transfer_modal_step1"
+
+# ── STEP 2: Select first item, tap Next ───────────────────────────────────────
+# Wait for loadOrders() to finish: ScrollView gets testID only when !isLoadingOrders
+- extendedWaitUntil:
+    visible:
+      id: "transfer-items-loaded"
+    timeout: 30000
+- waitForAnimationToEnd
+
+# Tap the first item row by testID regex (transfer-item-{generatedId})
+- tapOn:
+    id: "transfer-item-.*"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_27_step5_item_selected"
+
+- tapOn:
+    id: "btn-transfer-next"
+- waitForAnimationToEnd
+
+# ── STEP 3: Select target order ───────────────────────────────────────────────
+# Wait for step 2 order list to load (ScrollView testID = transfer-orders-loaded)
+- extendedWaitUntil:
+    visible:
+      id: "transfer-orders-loaded"
+    timeout: 15000
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_27_step6_transfer_target_list"
+
+# Tap first available target order by testID regex (transfer-target-{orderId})
+- tapOn:
+    id: "transfer-target-.*"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_27_step7_transfer_confirmed"
+
+# ── VERIFY: B-1 bill shows updated total ──────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 10000
+
+- takeScreenshot: "qa_27_PASS_items_transferred"

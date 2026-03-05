@@ -159,7 +159,7 @@ export const GuestCard: React.FC<GuestCardProps> = memo(
         </View>
 
         {!isPaid && onPayPress && (
-          <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
+          <TouchableOpacity style={styles.payButton} onPress={handlePayPress} testID={`btn-guest-pay-${guest.id}`}>
             <MaterialCommunityIcons
               name="cash"
               size={16}

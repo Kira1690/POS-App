@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { Icon } from '@/components/common';
 import { MenuItemExtended } from '@/types/menu-management-extended.types';
 
@@ -31,6 +32,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
   onAssignModifiersPress,
 }) => {
   const { theme } = useTheme();
+  const { subheadingSize, bodySize } = useResponsive();
 
   const styles = StyleSheet.create({
     container: {
@@ -100,12 +102,12 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
     },
     name: {
       flex: 1,
-      fontSize: 14,
+      fontSize: subheadingSize,
       fontWeight: '600',
       color: theme.colors.onSurface,
     },
     price: {
-      fontSize: 14,
+      fontSize: bodySize,
       fontWeight: '700',
       color: theme.colors.primary,
     },
@@ -272,6 +274,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
                 }}
                 accessibilityLabel={`Assign modifiers to ${item.name}`}
                 accessibilityRole="button"
+                testID={`btn-assign-modifiers-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <Icon
                   name="tune-variant"
@@ -289,6 +292,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
               }}
               accessibilityLabel={`Edit ${item.name}`}
               accessibilityRole="button"
+              testID={`btn-edit-item-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <Icon
                 name="pencil-outline"

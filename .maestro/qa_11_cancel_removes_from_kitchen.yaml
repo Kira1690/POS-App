@@ -1,0 +1,151 @@
+appId: host.exp.exponent
+name: "QA 11: Cancel Order → Verify Removed from Kitchen Display"
+tags:
+  - qa
+  - kitchen
+  - cancel
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 11 — Cancel order disappears from Kitchen Display
+#
+#  Bug fixed: Previously, cancelling an order in Order Management
+#  did NOT remove it from the Kitchen Display (EnhancedKitchenContext
+#  tickets were not cleaned up on ORDER_CANCELLED).
+#
+#  With new unified architecture:
+#    - Kitchen Display reads from UnifiedOrderContext directly
+#    - useKitchenStationViews() only returns orders with status
+#      in ['confirmed', 'preparing', 'ready']
+#    - Cancel → status='cancelled' → automatically filtered out
+#
+#  Flow:
+#    1. Clear any stale kitchen orders
+#    2. Create fresh B-1 order → Send to Kitchen → CONFIRMED
+#    3. Go to Kitchen Operations → assert Beef Burger visible
+#    4. Go back to Order Management → cancel the B-1 order
+#    5. Go back to Kitchen Operations → assert "No Active Orders"
+#
+#  QA Assertions:
+#    ✓ After Send to Kitchen → order appears in Kitchen Display
+#    ✓ After Cancel → order NOT visible in Kitchen Display
+#    ✓ "No Active Orders" shown after cancel
+#
+#  Prerequisites: Menu items seeded (qa_01–qa_02 run first)
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── STEP 1: Clear stale kitchen orders ───────────────────────────────────────
+- tapOn:
+    text: "Kitchen Operations"
+- extendedWaitUntil:
+    visible: "Kitchen Display"
+    timeout: 10000
+
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- takeScreenshot: "qa_11_step0_kitchen_cleared"
+
+# ── STEP 2: Cancel any existing B-1 active orders ────────────────────────────
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 8000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 8000
+
+- takeScreenshot: "qa_11_step1_clean_state"
+
+# ── STEP 3: Create new B-1 order with Beef Burger → Send to Kitchen ──────────
+- tapOn:
+    text: "+ New Order"
+- extendedWaitUntil:
+    visible: "Select Table"
+    timeout: 10000
+- tapOn:
+    text: "B-1"
+- extendedWaitUntil:
+    visible: "Mains"
+    timeout: 10000
+
+# Beef Burger (requires Protein modifier)
+- tapOn:
+    text: "Beef Burger"
+- extendedWaitUntil:
+    visible: "Protein"
+    timeout: 8000
+- tapOn:
+    text: "Extra"
+- tapOn:
+    text: "Add to Cart"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 8000
+
+# Send to Kitchen → status = CONFIRMED
+- tapOn:
+    text: "Send to Kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "CONFIRMED"
+    timeout: 15000
+
+- takeScreenshot: "qa_11_step2_order_confirmed"
+
+# ── STEP 4: Kitchen Operations — verify order IS visible ─────────────────────
+- tapOn:
+    text: "Kitchen Operations"
+- extendedWaitUntil:
+    visible: "Kitchen Display"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "Beef Burger"
+    timeout: 10000
+- assertVisible: "Beef Burger"
+
+- takeScreenshot: "qa_11_step3_order_visible_in_kitchen"
+
+# ── STEP 5: Cancel the B-1 order in Order Management ─────────────────────────
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    text: "Order Management"
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+- takeScreenshot: "qa_11_step4_order_cancelled"
+
+# ── STEP 6: Kitchen Operations — verify order is GONE ────────────────────────
+- tapOn:
+    text: "Kitchen Operations"
+- extendedWaitUntil:
+    visible: "Kitchen Display"
+    timeout: 10000
+
+# Wait a moment for the UI to reflect cancellation
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_11_step5_kitchen_after_cancel"
+
+# QA: Cancelled order must NOT appear — Kitchen should show "No Active Orders"
+- assertVisible: "No Active Orders"
+
+- takeScreenshot: "qa_11_PASS_cancel_removes_from_kitchen"

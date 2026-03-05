@@ -1,0 +1,175 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 25: Discount at Bill Level"
+tags:
+  - qa
+  - payment
+  - discount
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 25 — Discount at Bill Level
+#  Uses ONLY testIDs — no text-based selectors.
+#
+#  Flow:
+#    Create B-1 SERVED order
+#    → Order Management → View order → Process Payment
+#    → BillScreen → tap "Apply Discount"
+#    → DiscountModal → select 10% percentage
+#    → Apply → BillScreen shows discount line
+#    → Pay Full → Cash → Confirm
+#    → PaymentConfirmation → Continue → Order PAID
+#
+#  testIDs:
+#    btn-bill-discount         — discount button on BillScreen
+#    btn-discount-type-percentage — percentage tab in modal
+#    btn-preset-10             — 10% preset chip
+#    btn-apply-discount        — apply button in modal
+#    btn-pay-full              — pay full button on BillScreen
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+- runFlow: helpers/create_b1_served_order.yaml
+
+- takeScreenshot: "qa_25_step1_b1_served"
+
+# ── Navigate to bill screen ────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-payment-pending"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 10000
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-bill-discount"
+    timeout: 10000
+
+- takeScreenshot: "qa_25_step2_bill_screen"
+
+# ── Open Discount Modal ────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-bill-discount"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-discount-type-percentage"
+    timeout: 8000
+
+- takeScreenshot: "qa_25_step3_discount_modal_open"
+
+# ── Select percentage type + 10% preset ───────────────────────────────────────
+- tapOn:
+    id: "btn-discount-type-percentage"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-preset-10"
+    timeout: 6000
+- tapOn:
+    id: "btn-preset-10"
+- waitForAnimationToEnd
+
+# Select a required reason
+- tapOn:
+    id: "btn-reason-manager-comp"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_25_step4_10pct_selected"
+
+# ── Apply discount ─────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-apply-discount"
+- waitForAnimationToEnd
+
+# Verify BillScreen is back and discount is applied
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 10000
+
+- takeScreenshot: "qa_25_step5_discount_applied"
+
+# ── Pay full bill ──────────────────────────────────────────────────────────────
+- tapOn:
+    id: "btn-pay-full"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cancel-payment"
+    timeout: 10000
+
+- scroll
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-method-cash"
+    timeout: 8000
+- tapOn:
+    id: "btn-pay-method-cash"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-confirm"
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-quick-25"
+    timeout: 6000
+- tapOn:
+    id: "btn-cash-quick-25"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-continue"
+    timeout: 10000
+
+- takeScreenshot: "qa_25_step6_payment_confirmed_with_discount"
+
+# ── Return to orders, verify PAID ─────────────────────────────────────────────
+- tapOn:
+    id: "btn-continue"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+- tapOn:
+    id: "tab-status-all"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-paid"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 8000
+
+- takeScreenshot: "qa_25_PASS_discount_order_paid"

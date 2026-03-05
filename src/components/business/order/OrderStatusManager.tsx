@@ -74,6 +74,7 @@ export const OrderStatusManager: React.FC<OrderStatusManagerProps> = ({
         style={[styles.updateButton, { backgroundColor: theme.colors.primary }]}
         onPress={() => setShowStatusModal(true)}
         disabled={loading}
+        testID="btn-update-status"
       >
         <MaterialIcons name="update" size={20} color={theme.colors.onPrimary} />
         <Text style={[styles.updateButtonText, { color: theme.colors.onPrimary }]}>
@@ -99,6 +100,7 @@ export const OrderStatusManager: React.FC<OrderStatusManagerProps> = ({
                 style={[styles.statusOption, { borderColor: theme.colors.outline }]}
                 onPress={() => handleStatusUpdate(status)}
                 disabled={loading}
+                testID={`btn-status-${status}`}
               >
                 <OrderStatusBadge status={status} size="small" />
                 <Text style={[styles.statusOptionText, { color: theme.colors.onSurface }]}>
@@ -111,6 +113,7 @@ export const OrderStatusManager: React.FC<OrderStatusManagerProps> = ({
               style={[styles.modalCancelButton, { backgroundColor: theme.colors.surfaceVariant }]}
               onPress={() => setShowStatusModal(false)}
               disabled={loading}
+              testID="btn-status-modal-cancel"
             >
               <Text style={[styles.modalCancelText, { color: theme.colors.onSurfaceVariant }]}>
                 Cancel

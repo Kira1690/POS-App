@@ -206,6 +206,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(
         onPress={() => isAvailable && onPress(item)}
         activeOpacity={isAvailable ? 0.7 : 1}
         disabled={!isAvailable}
+        testID={`btn-menu-item-card-${item.id}`}
       >
         <View style={styles.imageContainer}>
           {item.image_url ? (

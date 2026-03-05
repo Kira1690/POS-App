@@ -3,17 +3,18 @@
  * Provider component for shared floor plan state
  */
 
-import React, { useReducer, useCallback, useMemo, ReactNode } from 'react';
+import React, { useReducer, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import {
   Floor,
   FloorZone,
   FloorPlanTablePosition,
 } from '@/types/settings/table-management.types';
 import {
-  MOCK_FLOORS,
   MOCK_ZONES,
   MOCK_TABLE_POSITIONS,
 } from '@/data/tables/mockFloorPlans';
+import { MOCK_AREAS } from '@/data/tables/mockAreas';
+import { tableStorageService, StoredArea } from '@/services/storage/TableStorageService';
 import { FloorPlanContext, FloorPlanContextValue } from './FloorPlanContext';
 
 // ==================== STATE INTERFACE ====================
@@ -41,7 +42,8 @@ type FloorPlanAction =
   | { type: 'DELETE_ZONE'; payload: string }
   | { type: 'MOVE_ZONE'; payload: { zoneId: string; x: number; y: number } }
   | { type: 'RESIZE_ZONE'; payload: { zoneId: string; width: number; height: number } }
-  | { type: 'MARK_SAVED' };
+  | { type: 'MARK_SAVED' }
+  | { type: 'LOAD_FROM_STORAGE'; payload: { floors: Floor[]; tablePositions: FloorPlanTablePosition[] } };
 
 // ==================== REDUCER ====================
 
@@ -193,6 +195,19 @@ const floorPlanReducer = (
         hasUnsavedChanges: false,
       };
 
+    case 'LOAD_FROM_STORAGE': {
+      const { floors, tablePositions } = action.payload;
+      if (floors.length === 0) return state;
+      const defaultFloor = floors.find(f => f.is_default) || floors[0];
+      return {
+        ...state,
+        floors,
+        tablePositions,
+        activeFloorId: defaultFloor.id,
+        hasUnsavedChanges: false,
+      };
+    }
+
     default:
       return state;
   }
@@ -200,12 +215,34 @@ const floorPlanReducer = (
 
 // ==================== INITIAL STATE ====================
 
+// Map old MOCK_FLOORS floor_id to MOCK_AREAS area id
+const FLOOR_TO_AREA: Record<string, string> = {
+  'floor-main': 'area-1',   // Main Floor → Main Dining
+  'floor-patio': 'area-3',  // Outdoor Patio → Patio
+  'floor-bar': 'area-4',    // Bar Area → Bar Seating
+};
+
 const getInitialState = (): FloorPlanState => {
-  const defaultFloor = MOCK_FLOORS.find(f => f.is_default) || MOCK_FLOORS[0];
+  // Use MOCK_AREAS as the single source of truth for floor tabs
+  const initialFloors = MOCK_AREAS.map(areaToFloor);
+  const defaultFloor = initialFloors[0];
+
+  // Remap mock table positions from old floor IDs to area IDs
+  const remappedPositions = MOCK_TABLE_POSITIONS.map(tp => ({
+    ...tp,
+    floor_id: FLOOR_TO_AREA[tp.floor_id] || tp.floor_id,
+  }));
+
+  // Remap mock zones from old floor IDs to area IDs
+  const remappedZones = MOCK_ZONES.map(z => ({
+    ...z,
+    floor_id: FLOOR_TO_AREA[z.floor_id] || z.floor_id,
+  }));
+
   return {
-    floors: [...MOCK_FLOORS],
-    zones: [...MOCK_ZONES],
-    tablePositions: [...MOCK_TABLE_POSITIONS],
+    floors: initialFloors,
+    zones: remappedZones,
+    tablePositions: remappedPositions,
     activeFloorId: defaultFloor?.id || '',
     hasUnsavedChanges: false,
   };
@@ -219,10 +256,87 @@ interface FloorPlanProviderProps {
 
 // ==================== PROVIDER COMPONENT ====================
 
+// Convert a StoredArea to a Floor for the floor plan canvas
+const areaToFloor = (area: StoredArea, index: number): Floor => ({
+  id: String(area.id),
+  restaurant_id: 'rest_001',
+  name: area.name,
+  display_order: index + 1,
+  is_active: area.isActive,
+  is_default: index === 0,
+  canvas_width: 1200,
+  canvas_height: 800,
+  grid_size: 50,
+  grid_enabled: true,
+  created_at: new Date(),
+  updated_at: new Date(),
+});
+
 export const FloorPlanProvider: React.FC<FloorPlanProviderProps> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(floorPlanReducer, undefined, getInitialState);
+
+  // On mount: pull from server (non-blocking), then load areas + tables from SQLite
+  useEffect(() => {
+    const loadFromStorage = async () => {
+      try {
+        // Note: Table/area sync is handled by SyncProvider (PullSyncService).
+        // We only read from local SQLite here to avoid pulling server sections
+        // that create duplicate floor tabs.
+
+        const [rawAreas, tables] = await Promise.all([
+          tableStorageService.getAreas(),
+          tableStorageService.getTables(),
+        ]);
+
+        if (rawAreas.length === 0 && tables.length === 0) return;
+
+        // Filter to only MOCK_AREAS names, deduplicate, and sort by MOCK_AREAS order.
+        const mockAreaOrder = new Map(MOCK_AREAS.map((a, i) => [a.name.toLowerCase(), i]));
+        const seenNames = new Set<string>();
+        const areas = rawAreas
+          .filter(a => {
+            const key = a.name.toLowerCase();
+            if (!mockAreaOrder.has(key) || seenNames.has(key)) return false;
+            seenNames.add(key);
+            return true;
+          })
+          .sort((a, b) => {
+            const orderA = mockAreaOrder.get(a.name.toLowerCase()) ?? 999;
+            const orderB = mockAreaOrder.get(b.name.toLowerCase()) ?? 999;
+            return orderA - orderB;
+          });
+
+        const floors: Floor[] = areas.map(areaToFloor);
+
+        const tablePositions: FloorPlanTablePosition[] = tables.map((table, idx) => {
+          // Match table.section to a floor by ID (mock data uses areaId) or by name (server data uses name)
+          const matchingFloor = floors.find(
+            f => f.id === table.section || f.name === table.section
+          );
+          const floorId = matchingFloor?.id ?? floors[0]?.id ?? 'floor-main';
+
+          // Use stored position if available, otherwise lay out in a grid
+          const col = idx % 6;
+          const row = Math.floor(idx / 6);
+          return {
+            table_id: table.id,
+            floor_id: floorId,
+            x: table.position_x > 0 ? table.position_x : 100 + col * 150,
+            y: table.position_y > 0 ? table.position_y : 150 + row * 150,
+            rotation: 0,
+          };
+        });
+
+        dispatch({ type: 'LOAD_FROM_STORAGE', payload: { floors, tablePositions } });
+      } catch (err) {
+        console.warn('[FloorPlanProvider] Failed to load from storage:', err);
+      }
+    };
+
+    loadFromStorage();
+  }, []);
 
   // ==================== COMPUTED VALUES ====================
 

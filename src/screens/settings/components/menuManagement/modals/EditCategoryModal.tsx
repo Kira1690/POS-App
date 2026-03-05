@@ -13,7 +13,7 @@ import {
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
+  
   Switch,
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
@@ -333,7 +333,7 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         style={styles.overlay}
       >
         <View style={styles.container}>
@@ -390,6 +390,7 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
                 maxLength={50}
                 accessibilityLabel="Category name"
+                testID="input-category-name-edit"
               />
               {errors.name ? (
                 <Text style={styles.errorText}>{errors.name}</Text>
@@ -498,6 +499,7 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                   trackColor={{ false: theme.colors.outline, true: theme.colors.tertiaryContainer }}
                   thumbColor={formData.is_active ? theme.colors.tertiary : theme.colors.surface}
                   accessibilityLabel="Toggle category active status"
+                  testID="switch-category-active"
                 />
               </View>
             </View>
@@ -510,6 +512,7 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
               onPress={onClose}
               accessibilityLabel="Cancel"
               accessibilityRole="button"
+              testID="btn-cancel-edit-category"
             >
               <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
             </TouchableOpacity>
@@ -523,6 +526,7 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
               disabled={isSubmitting}
               accessibilityLabel="Save changes"
               accessibilityRole="button"
+              testID="btn-save-category-changes"
             >
               {isSubmitting ? (
                 <Icon

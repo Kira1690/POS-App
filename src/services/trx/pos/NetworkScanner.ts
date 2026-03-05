@@ -247,6 +247,39 @@ export class NetworkScanner {
     }
   }
 
+  /**
+   * Test a manual IP address with retry-based validation.
+   * Uses SimpleTCPTester.validateTerminal with multiple retries × 3 methods
+   * for maximum reliability (matches reference TerminalManager approach).
+   */
+  async testManualIP(ip: string, port: number = this.defaultPort): Promise<TerminalDevice | null> {
+    console.log('');
+    console.log('[NetworkScanner] MANUAL IP TEST (with retries)');
+    console.log(`[NetworkScanner] Testing: ${ip}:${port}`);
+
+    if (!this.isValidIPAddress(ip)) {
+      console.log('[NetworkScanner] Invalid IP address format');
+      return null;
+    }
+
+    // Use validateTerminal — 2 retries × 3 methods = 6 total attempts
+    const result = await this.tcpTester.validateTerminal(ip, port, 2);
+
+    if (result.success) {
+      this.logger.info('Manual IP test successful', 'testManualIP', {
+        ip, port, responseTime: result.responseTimeMs,
+      });
+      console.log(`[NetworkScanner] SUCCESS — ${ip}:${port} responded in ${result.responseTimeMs}ms`);
+      return { ip, port, isOnline: true, responseTime: result.responseTimeMs };
+    }
+
+    this.logger.warn('Manual IP test failed', 'testManualIP', {
+      ip, port, error: result.error,
+    });
+    console.log(`[NetworkScanner] FAILED — ${result.error}`);
+    return null;
+  }
+
   async comprehensiveScan(port: number = this.defaultPort, manualIPs: string[] = []): Promise<TerminalDevice[]> {
     this.logger.info('Starting comprehensive terminal scan', 'comprehensiveScan', { port, manualIPs: manualIPs.length });
 

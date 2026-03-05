@@ -8,7 +8,7 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   TouchableOpacity,
   Animated,
   PanResponder,
@@ -23,8 +23,6 @@ import Svg, {
   Line,
 } from 'react-native-svg';
 import { useTheme } from '@/hooks/useTheme';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 interface ChartDataPoint {
   label: string;
@@ -50,6 +48,7 @@ export const AppleStyleChart: React.FC<AppleStyleChartProps> = ({
   accentColor,
 }) => {
   const { theme } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [isPressed, setIsPressed] = useState(false);
   const animatedValue = useRef(new Animated.Value(0)).current;
