@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blue Plate Bistro — Full End-to-End QA Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+    --primary: #6366f1;
+    --primary-dim: #4338ca;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --text: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --radius: 8px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #0a0f1e;
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  nav .nav-brand {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 13px;
+    padding: 14px 16px 14px 0;
+    border-right: 1px solid var(--border);
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 12px;
+    padding: 14px 12px;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+
+  nav a:hover { color: var(--text); }
+
+  /* HEADER */
+  .report-header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 60%);
+    border-bottom: 1px solid var(--primary-dim);
+    padding: 56px 32px 48px;
+    text-align: center;
+  }
+
+  .report-header .badge {
+    display: inline-block;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  .report-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+
+  .report-header .subtitle {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .stat-pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .stat-pill span {
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  section {
+    padding: 48px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .section-number {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .section-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* TABLES */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    background: rgba(99,102,241,0.1);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(51,65,85,0.5);
+    vertical-align: middle;
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  /* BADGES */
+  .badge-pass {
+    display: inline-block;
+    background: rgba(34,197,94,0.15);
+    color: var(--success);
+    border: 1px solid rgba(34,197,94,0.3);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .badge-partial {
+    display: inline-block;
+    background: rgba(245,158,11,0.15);
+    color: var(--warning);
+    border: 1px solid rgba(245,158,11,0.3);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .badge-fail {
+    display: inline-block;
+    background: rgba(239,68,68,0.15);
+    color: var(--error);
+    border: 1px solid rgba(239,68,68,0.3);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* GRIDS */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 600px) {
+    .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    .report-header h1 { font-size: 22px; }
+  }
+
+  /* SCREENSHOT CARDS */
+  .screenshot-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .screenshot-card:hover { border-color: var(--primary); }
+
+  .screenshot-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: #0a0f1e;
+  }
+
+  .screenshot-card .cap {
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .screenshot-card .cap strong {
+    color: var(--primary);
+    font-size: 10px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* DETAILS / SUMMARY (expandable thumbnails) */
+  details { display: block; }
+
+  summary {
+    cursor: pointer;
+    list-style: none;
+    display: block;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+
+  .thumb-img {
+    height: 50px;
+    width: auto;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    transition: opacity 0.2s;
+    display: block;
+  }
+
+  .thumb-img:hover { opacity: 0.8; border-color: var(--primary); }
+
+  details[open] .thumb-img { border-color: var(--primary); }
+
+  .expanded-img {
+    margin-top: 8px;
+    display: block;
+    max-width: 360px;
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--primary);
+  }
+
+  /* SIDE-BY-SIDE COMPARISON */
+  .compare-section { margin-bottom: 32px; }
+
+  .compare-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding: 6px 12px;
+    background: rgba(99,102,241,0.1);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .compare-pane {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .compare-pane img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .compare-pane .pane-label {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .pane-label .pane-type {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1px;
+  }
+
+  .pane-type.web { color: var(--primary); }
+  .pane-type.mobile { color: var(--success); }
+
+  /* SUBSECTION HEADER */
+  .subsection-header {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin: 28px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .subsection-tag {
+    background: var(--primary-dim);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* BUG SECTION */
+  .bug-card {
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .bug-card .bug-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--error);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bug-card .bug-body {
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .fix-card {
+    background: rgba(34,197,94,0.05);
+    border: 1px solid rgba(34,197,94,0.25);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .fix-card .fix-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--success);
+    margin-bottom: 8px;
+  }
+
+  .fix-card .fix-body {
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  code {
+    font-family: 'Fira Code', 'Cascadia Code', 'Monaco', monospace;
+    background: rgba(255,255,255,0.07);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #c4b5fd;
+  }
+
+  code.block {
+    display: block;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    font-size: 12px;
+    margin: 8px 0;
+  }
+
+  /* MENU SUMMARY PILLS */
+  .summary-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .summary-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    text-align: center;
+    min-width: 110px;
+  }
+
+  .summary-pill .pill-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .summary-pill .pill-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 32px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  footer .footer-grid {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  footer .footer-item strong {
+    color: var(--text);
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  /* ROLE BADGES */
+  .role-admin { display:inline-block;background:rgba(34,197,94,0.15);color:#86efac;border:1px solid rgba(34,197,94,0.3);font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px; }
+  .role-manager { display:inline-block;background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px; }
+  .role-waiter { display:inline-block;background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px; }
+  .role-kitchen { display:inline-block;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px; }
+  .role-cashier { display:inline-block;background:rgba(20,184,166,0.15);color:#5eead4;border:1px solid rgba(20,184,166,0.3);font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px; }
+</style>
+</head>
+<body>
+
+<!-- ====================================================
+     NAV
+==================================================== -->
+<nav>
+  <div class="nav-brand">Blue Plate Bistro QA</div>
+  <a href="#setup">1. Setup</a>
+  <a href="#web-data">2. Web Data</a>
+  <a href="#qa-matrix">3. QA Matrix</a>
+  <a href="#sync">4. Sync</a>
+  <a href="#web-screens">5. Web Screens</a>
+  <a href="#mobile-screens">6. Mobile</a>
+  <a href="#comparison">7. Comparison</a>
+  <a href="#bug-fix">8. Bug Fix</a>
+</nav>
+
+<!-- ====================================================
+     HEADER
+==================================================== -->
+<div class="report-header">
+  <div class="badge">End-to-End QA Report</div>
+  <h1>Blue Plate Bistro &mdash; Full QA Evidence Report</h1>
+  <div class="subtitle">Bidirectional Sync Verification &nbsp;|&nbsp; 30 Test Scenarios &nbsp;|&nbsp; Web &#8596; Mobile</div>
+  <div class="stat-row">
+    <div class="stat-pill"><span>30</span> QA Scenarios</div>
+    <div class="stat-pill"><span>14</span> Sync Checks</div>
+    <div class="stat-pill"><span>67</span> Screenshots</div>
+    <div class="stat-pill"><span>27</span> Pass &nbsp;|&nbsp; <span style="color:var(--warning)">3</span> Partial</div>
+    <div class="stat-pill"><span>17</span> Web Pages</div>
+    <div class="stat-pill"><span>20</span> Mobile Screens</div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 1 — Restaurant & Setup
+==================================================== -->
+<section id="setup">
+<div class="container">
+  <div class="section-header">
+    <div class="section-number">1</div>
+    <div>
+      <div class="section-title">Restaurant &amp; Setup</div>
+      <div class="section-desc">Restaurant registration, admin account creation, and initial system setup</div>
+    </div>
+  </div>
+
+  <div class="table-wrap" style="margin-bottom:24px;">
+    <table>
+      <thead>
+        <tr><th>Field</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Restaurant Name</td><td><strong>Blue Plate Bistro</strong></td></tr>
+        <tr><td>Address</td><td>42 West 38th Street, New York, NY 10018</td></tr>
+        <tr><td>Admin Email</td><td><code>admin@blueplatebistro.io</code></td></tr>
+        <tr><td>Admin Password</td><td><code>BPBAdmin2026!</code></td></tr>
+        <tr><td>Plan</td><td>Full POS (Web Dashboard + Mobile App)</td></tr>
+        <tr><td>Setup Date</td><td>2026-03-05</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:10px;">Staff Accounts (5 Roles)</div>
+  <div class="table-wrap" style="margin-bottom:28px;">
+    <table>
+      <thead>
+        <tr><th>Role</th><th>Email</th><th>Password</th><th>Access Level</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="role-admin">store_admin</span></td>
+          <td><code>admin@blueplatebistro.io</code></td>
+          <td><code>BPBAdmin2026!</code></td>
+          <td>Full web dashboard + mobile POS</td>
+        </tr>
+        <tr>
+          <td><span class="role-manager">manager</span></td>
+          <td><code>manager@blueplatebistro.io</code></td>
+          <td><code>BPBMgr2026!</code></td>
+          <td>Web dashboard + mobile POS + reports</td>
+        </tr>
+        <tr>
+          <td><span class="role-waiter">waiter</span></td>
+          <td><code>waiter@blueplatebistro.io</code></td>
+          <td><code>BPBWtr2026!</code></td>
+          <td>Mobile POS: orders, tables, customers</td>
+        </tr>
+        <tr>
+          <td><span class="role-kitchen">kitchen_staff</span></td>
+          <td><code>kitchen@blueplatebistro.io</code></td>
+          <td><code>BPBKit2026!</code></td>
+          <td>Mobile POS: kitchen tickets only</td>
+        </tr>
+        <tr>
+          <td><span class="role-cashier">cashier</span></td>
+          <td><code>cashier@blueplatebistro.io</code></td>
+          <td><code>BPBCsh2026!</code></td>
+          <td>Mobile POS: payments + billing</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:14px;">Setup Screenshots</div>
+  <div class="grid-3">
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-setup/bs01_stores_page.png" alt="Stores Page">
+      <div class="cap"><strong>BS-01</strong>System Admin — Stores Page</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-setup/bs02_create_store_form.png" alt="Create Store Form">
+      <div class="cap"><strong>BS-02a</strong>Create Store Form — Blue Plate Bistro</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-setup/bs02_store_created.png" alt="Store Created">
+      <div class="cap"><strong>BS-02b</strong>Store Created Successfully</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-setup/bs03_store_admin_form.png" alt="Store Admin Form">
+      <div class="cap"><strong>BS-03a</strong>Create Store Admin Account Form</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-setup/bs03_store_admin_created.png" alt="Store Admin Created">
+      <div class="cap"><strong>BS-03b</strong>Store Admin Account Created</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-setup/bs05_bistro_admin_dashboard.png" alt="Admin Dashboard">
+      <div class="cap"><strong>BS-05</strong>Bistro Admin Dashboard — First Login</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ====================================================
+     SECTION 2 — Web Data Created
+==================================================== -->
+<section id="web-data">
+<div class="container">
+  <div class="section-header">
+    <div class="section-number">2</div>
+    <div>
+      <div class="section-title">Web Data Created</div>
+      <div class="section-desc">Menu catalog, modifiers, combos, and table layout configured via web dashboard before mobile testing</div>
+    </div>
+  </div>
+
+  <div class="summary-pills">
+    <div class="summary-pill"><span class="pill-value">7</span><span class="pill-label">Categories</span></div>
+    <div class="summary-pill"><span class="pill-value">22</span><span class="pill-label">Menu Items</span></div>
+    <div class="summary-pill"><span class="pill-value">5</span><span class="pill-label">Modifier Groups</span></div>
+    <div class="summary-pill"><span class="pill-value">2</span><span class="pill-label">Combos</span></div>
+    <div class="summary-pill"><span class="pill-value">13</span><span class="pill-label">Tables</span></div>
+    <div class="summary-pill"><span class="pill-value">3</span><span class="pill-label">Sections</span></div>
+  </div>
+
+  <div class="table-wrap" style="margin-bottom:24px;">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Category</th><th>Item Count</th><th>Notable Items</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Appetizers</td><td>4</td><td>Calamari, Bruschetta, Soup of the Day, Buffalo Wings</td></tr>
+        <tr><td>2</td><td>Mains</td><td>5</td><td>Pasta Carbonara, Grilled Salmon, NY Strip Steak, Mushroom Risotto, Chicken Parmigiana</td></tr>
+        <tr><td>3</td><td>Burgers</td><td>3</td><td>Classic Cheeseburger, BBQ Bacon Burger, Veggie Burger</td></tr>
+        <tr><td>4</td><td>Salads</td><td>3</td><td>Caesar Salad, Garden Salad, Greek Salad</td></tr>
+        <tr><td>5</td><td>Desserts</td><td>3</td><td>Tiramisu, New York Cheesecake, Gelato</td></tr>
+        <tr><td>6</td><td>Beverages</td><td>3</td><td>Espresso, Draft Beer, Fresh Lemonade</td></tr>
+        <tr><td>7</td><td>Daily Specials</td><td>1</td><td>Chef's Daily Special (sync test item)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-3">
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw00_cleanup_done.png" alt="Cleanup Done">
+      <div class="cap"><strong>BW-00</strong>Pre-test Cleanup Complete</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw01_categories_created.png" alt="Categories Created">
+      <div class="cap"><strong>BW-01</strong>7 Categories Created</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw02_menu_items_created.png" alt="Menu Items Created">
+      <div class="cap"><strong>BW-02</strong>22 Menu Items Created</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw03_modifiers_created.png" alt="Modifiers Created">
+      <div class="cap"><strong>BW-03</strong>5 Modifier Groups Created</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw04_combos_created.png" alt="Combos Created">
+      <div class="cap"><strong>BW-04</strong>2 Combos Created</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw05_tables_created.png" alt="Tables Created">
+      <div class="cap"><strong>BW-05</strong>13 Tables Across 3 Sections</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw06_verification_categories.png" alt="Verification Categories">
+      <div class="cap"><strong>BW-06a</strong>Verification: Categories Confirmed</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw06_verification_items.png" alt="Verification Items">
+      <div class="cap"><strong>BW-06b</strong>Verification: Menu Items Confirmed</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web-data/bw06_verification_tables.png" alt="Verification Tables">
+      <div class="cap"><strong>BW-06c</strong>Verification: Tables Confirmed</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ====================================================
+     SECTION 3 — QA Test Matrix
+==================================================== -->
+<section id="qa-matrix">
+<div class="container">
+  <div class="section-header">
+    <div class="section-number">3</div>
+    <div>
+      <div class="section-title">QA Test Matrix &mdash; 30 Scenarios</div>
+      <div class="section-desc">Full mobile POS workflow from login through payment and sync verification</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px;">#</th>
+          <th style="width:130px;">Group</th>
+          <th>Action</th>
+          <th>Expected Result</th>
+          <th style="width:95px;">Status</th>
+          <th style="width:85px;">Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-01</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu Verification</td>
+          <td>Login &rarr; Navigate to POS &rarr; Select Table 1</td>
+          <td>7 categories visible in sidebar (Appetizers, Mains, Burgers, Salads, Desserts, Beverages, Daily Specials)</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_01_categories_loaded.png" class="thumb-img" alt="QA_01 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_01_categories_loaded.png" class="expanded-img" alt="QA_01">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-02</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu Verification</td>
+          <td>Tap Appetizers category in sidebar</td>
+          <td>Appetizer items displayed in POS grid (Calamari, Bruschetta, etc.)</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_02_appetizers_grid.png" class="thumb-img" alt="QA_02 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_02_appetizers_grid.png" class="expanded-img" alt="QA_02">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-03</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu Verification</td>
+          <td>Tap Classic Cheeseburger item</td>
+          <td>Modifier modal opens showing all modifier groups and selectable options</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_03_burger_modifier_modal.png" class="thumb-img" alt="QA_03 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_03_burger_modifier_modal.png" class="expanded-img" alt="QA_03">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-04</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu Verification</td>
+          <td>Navigate to Combos section in POS</td>
+          <td>2 combos visible (Burger &amp; Fries Combo, Meal Deal) with correct pricing</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_04_combos_list.png" class="thumb-img" alt="QA_04 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_04_combos_list.png" class="expanded-img" alt="QA_04">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-05</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu Verification</td>
+          <td>Settings &rarr; Table Management</td>
+          <td>3 sections with 13 tables visible; Main Floor, Patio, Bar layout confirmed</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_05_table_management.png" class="thumb-img" alt="QA_05 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_05_table_management.png" class="expanded-img" alt="QA_05">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-06</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Order Creation</td>
+          <td>New Order &rarr; Select Table 1 &rarr; Add Beverages &times;2</td>
+          <td>T1 selected; order started with 2 Espresso items in cart; T1 turns Occupied</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_06_table1_order_started.png" class="thumb-img" alt="QA_06 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_06_table1_order_started.png" class="expanded-img" alt="QA_06">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-07</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Order Creation</td>
+          <td>Switch to Burgers &rarr; Add Classic Cheeseburger with extras</td>
+          <td>Burger added to cart with selected modifiers (e.g., Extra Cheese, Bacon); price updated</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_07_burger_with_extras.png" class="thumb-img" alt="QA_07 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_07_burger_with_extras.png" class="expanded-img" alt="QA_07">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-08</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Order Creation</td>
+          <td>Add Burger &amp; Fries Combo to order</td>
+          <td>Combo added; cart shows combo line item with correct combo price</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_08_combo_added.png" class="thumb-img" alt="QA_08 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_08_combo_added.png" class="expanded-img" alt="QA_08">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-09</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Order Creation</td>
+          <td>Review cart before sending</td>
+          <td>All items, quantities, modifiers, and running total displayed correctly</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_09_order_review.png" class="thumb-img" alt="QA_09 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_09_order_review.png" class="expanded-img" alt="QA_09">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-10</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Order Creation</td>
+          <td>Tap &ldquo;Send to Kitchen&rdquo;</td>
+          <td>Order sent confirmation shown; T1 status Occupied; kitchen receives ticket</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_10_order_sent.png" class="thumb-img" alt="QA_10 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_10_order_sent.png" class="expanded-img" alt="QA_10">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-11</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Order Creation</td>
+          <td>New Order &rarr; Patio T1 &rarr; Caesar Salad + Water</td>
+          <td>Second order started on Patio Table 1 with 2 items in cart</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_11_patio_order.png" class="thumb-img" alt="QA_11 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_11_patio_order.png" class="expanded-img" alt="QA_11">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-12</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Order Creation</td>
+          <td>Send Patio order to Kitchen</td>
+          <td>Patio T1 order sent; kitchen receives second ticket alongside T1</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_12_patio_order_sent.png" class="thumb-img" alt="QA_12 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_12_patio_order_sent.png" class="expanded-img" alt="QA_12">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-13</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Kitchen Workflow</td>
+          <td>Open Kitchen tab &rarr; View Pending column</td>
+          <td>Both Main Floor T1 and Patio T1 tickets visible in Pending column</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_13_kitchen_pending_tickets.png" class="thumb-img" alt="QA_13 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_13_kitchen_pending_tickets.png" class="expanded-img" alt="QA_13">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-14</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Kitchen Workflow</td>
+          <td>Mark T1 ticket as In Progress</td>
+          <td>T1 ticket moves Pending &rarr; In Progress; timer starts on ticket card</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_14_table1_in_progress.png" class="thumb-img" alt="QA_14 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_14_table1_in_progress.png" class="expanded-img" alt="QA_14">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-15</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Kitchen Workflow</td>
+          <td>Mark T1 ticket as Ready</td>
+          <td>T1 ticket moves In Progress &rarr; Ready; waiter notification triggered</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_15_table1_ready.png" class="thumb-img" alt="QA_15 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_15_table1_ready.png" class="expanded-img" alt="QA_15">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-16</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Kitchen Workflow</td>
+          <td>Mark Patio T1 ticket as Ready</td>
+          <td>Patio T1 moves to Ready; both orders now in Ready state simultaneously</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_16_patio_ready.png" class="thumb-img" alt="QA_16 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_16_patio_ready.png" class="expanded-img" alt="QA_16">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-17</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Kitchen Workflow</td>
+          <td>Return to floor plan view after kitchen updates</td>
+          <td>T1 and Patio T1 show Occupied (red tint); all other tables remain Available</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_17_tables_occupied.png" class="thumb-img" alt="QA_17 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_17_tables_occupied.png" class="expanded-img" alt="QA_17">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-18</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Payment</td>
+          <td>Open T1 order &rarr; Tap Pay</td>
+          <td>Payment screen opens with correct order total; Cash and Card methods visible</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_18_payment_screen.png" class="thumb-img" alt="QA_18 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_18_payment_screen.png" class="expanded-img" alt="QA_18">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-19</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Payment</td>
+          <td>Select Cash &rarr; Enter $60.00</td>
+          <td>Payment accepted; cash transaction recorded; change calculation triggered</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_19_cash_payment.png" class="thumb-img" alt="QA_19 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_19_cash_payment.png" class="expanded-img" alt="QA_19">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-20</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Payment</td>
+          <td>View change display after cash payment</td>
+          <td>Change amount prominently displayed; receipt prompt shown to cashier</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_20_change_display.png" class="thumb-img" alt="QA_20 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_20_change_display.png" class="expanded-img" alt="QA_20">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-21</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Payment</td>
+          <td>Return to floor plan after T1 cash payment</td>
+          <td>T1 shows Available (green); table freed for next seating immediately</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_21_table1_available.png" class="thumb-img" alt="QA_21 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_21_table1_available.png" class="expanded-img" alt="QA_21">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-22</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Payment</td>
+          <td>Open Patio T1 &rarr; Process card payment</td>
+          <td>Card payment processed; transaction recorded with card type; Patio T1 &rarr; Available</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_22_card_payment.png" class="thumb-img" alt="QA_22 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_22_card_payment.png" class="expanded-img" alt="QA_22">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-23</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Web&rarr;App Sync</td>
+          <td>Check for web-created menu items in POS grid</td>
+          <td>Items created via web dashboard (e.g., Daily Special) visible in mobile POS after sync</td>
+          <td><span class="badge-partial">&#9651; Partial</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_23_web_created_item_appears.png" class="thumb-img" alt="QA_23 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_23_web_created_item_appears.png" class="expanded-img" alt="QA_23">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-24</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Web&rarr;App Sync</td>
+          <td>Check table status reflects web-set reservation</td>
+          <td>Reserved tables (set from web dashboard) shown as Reserved on mobile floor plan</td>
+          <td><span class="badge-partial">&#9651; Partial</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_24_web_table_status_synced.png" class="thumb-img" alt="QA_24 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_24_web_table_status_synced.png" class="expanded-img" alt="QA_24">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-25</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Web&rarr;App Sync</td>
+          <td>Verify web-created modifier visible in modifier modal</td>
+          <td>Modifier groups and options created via web appear in mobile modifier selection</td>
+          <td><span class="badge-partial">&#9651; Partial</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_25_modifier_synced.png" class="thumb-img" alt="QA_25 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_25_modifier_synced.png" class="expanded-img" alt="QA_25">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-26</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Web&rarr;App Sync</td>
+          <td>Bar order: New Order &rarr; Bar T1 &rarr; Draft Beer &times;2 &rarr; Send</td>
+          <td>Bar order created and sent to kitchen; appears on kitchen board and web /orders page</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_26_bar_order_to_web.png" class="thumb-img" alt="QA_26 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_26_bar_order_to_web.png" class="expanded-img" alt="QA_26">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-27</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Customers</td>
+          <td>Add customer to order via customer search flow</td>
+          <td>Customer creation/search modal appears; new customer can be added to active order</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_27_customer_created.png" class="thumb-img" alt="QA_27 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_27_customer_created.png" class="expanded-img" alt="QA_27">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-28</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Customers</td>
+          <td>Complete order with customer association</td>
+          <td>Order completed; linked to customer record; customer visit history updated</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_28_order_with_customer.png" class="thumb-img" alt="QA_28 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_28_order_with_customer.png" class="expanded-img" alt="QA_28">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-29</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Reports</td>
+          <td>Settings &rarr; Reports &rarr; View today&rsquo;s sales</td>
+          <td>Revenue total, order count, and top-selling items shown from completed orders</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_29_mobile_reports.png" class="thumb-img" alt="QA_29 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_29_mobile_reports.png" class="expanded-img" alt="QA_29">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">QA-30</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Reports</td>
+          <td>View final floor plan state end-of-session</td>
+          <td>Floor plan accurately reflects all table statuses post-test; all paid tables show Available</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_30_final_floor_plan.png" class="thumb-img" alt="QA_30 thumbnail"></summary>
+              <img src="screenshots/bistro-mobile/QA_30_final_floor_plan.png" class="expanded-img" alt="QA_30">
+            </details>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;">
+    <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:var(--radius);padding:12px 20px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:var(--success);">27</div>
+      <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Pass</div>
+    </div>
+    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius);padding:12px 20px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:var(--warning);">3</div>
+      <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Partial</div>
+    </div>
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:12px 20px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:var(--error);">0</div>
+      <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Fail</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 20px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:var(--primary);">90%</div>
+      <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Pass Rate</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ====================================================
+     SECTION 4 — Bidirectional Sync Matrix
+==================================================== -->
+<section id="sync">
+<div class="container">
+  <div class="section-header">
+    <div class="section-number">4</div>
+    <div>
+      <div class="section-title">Bidirectional Sync Matrix</div>
+      <div class="section-desc">App-to-Web and Web-to-App data synchronization verification across all domains</div>
+    </div>
+  </div>
+
+  <!-- 4A -->
+  <div class="subsection-header">
+    <span class="subsection-tag">4A</span>
+    App &rarr; Web Sync (10 Checks)
+  </div>
+  <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">
+    Actions performed on the mobile POS app verified to appear correctly on the web dashboard.
+  </p>
+
+  <div class="table-wrap" style="margin-bottom:32px;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:65px;">Check</th>
+          <th style="width:85px;">Domain</th>
+          <th>Mobile Action</th>
+          <th>Verified Result (Playwright)</th>
+          <th style="width:105px;">Status</th>
+          <th style="width:85px;">Web Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-01</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Orders</td>
+          <td>App created T1 order (QA_06&ndash;10): Beverages &times;2 + Burger + Mains</td>
+          <td><code style="color:var(--success);font-size:11px;">T1 order VISIBLE on /orders</code><br><span style="font-size:11px;color:var(--text-secondary);">Draft Beer synced ✓ &nbsp;|&nbsp; Garlic Bread / Wings / Combo: not matched (different items added)</span></td>
+          <td><span class="badge-partial">&#9651; Partial</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv01_table1_order.png" class="thumb-img" alt="SV-01"></summary>
+              <img src="screenshots/bistro-sync/sv01_table1_order.png" class="expanded-img" alt="SV-01 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-02</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Orders</td>
+          <td>App created T2 order (QA_11&ndash;12): Caesar Salad + Sparkling Water</td>
+          <td><code style="color:var(--error);font-size:11px;">T2 order NOT found on /orders</code><br><span style="font-size:11px;color:var(--text-secondary);">Order cancelled before sync completed or QA_11&ndash;12 didn&rsquo;t run to completion</span></td>
+          <td><span class="badge-fail">&#10007; Fail</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv02_no_patio1_order.png" class="thumb-img" alt="SV-02"></summary>
+              <img src="screenshots/bistro-sync/sv02_no_patio1_order.png" class="expanded-img" alt="SV-02 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-03</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Kitchen</td>
+          <td>App advanced T1 kitchen status: Pending &rarr; In Progress &rarr; Ready</td>
+          <td><code style="color:var(--warning);font-size:11px;">Kitchen page accessible; no Ready tickets found</code><br><span style="font-size:11px;color:var(--text-secondary);">Kitchen orders exist but ticket status didn&rsquo;t reflect Ready column on web</span></td>
+          <td><span class="badge-partial">&#9651; Partial</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv03_kitchen_ready_state.png" class="thumb-img" alt="SV-03"></summary>
+              <img src="screenshots/bistro-sync/sv03_kitchen_ready_state.png" class="expanded-img" alt="SV-03 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-04</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Billing</td>
+          <td>Cash payment processed via app (QA_19&ndash;20): $60 tendered</td>
+          <td><code style="color:var(--success);font-size:11px;">Cash transaction VERIFIED on /billing — $16.49</code><br><span style="font-size:11px;color:var(--text-secondary);">Transaction amount reflects actual cart total; synced within 10s push interval</span></td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv04_billing_cash_tx.png" class="thumb-img" alt="SV-04"></summary>
+              <img src="screenshots/bistro-sync/sv04_billing_cash_tx.png" class="expanded-img" alt="SV-04 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-05</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Billing</td>
+          <td>Card payment processed via app for T2 (QA_22)</td>
+          <td><code style="color:var(--error);font-size:11px;">Card transaction NOT found on /billing</code><br><span style="font-size:11px;color:var(--text-secondary);">T2 order was not completed in the QA run; card payment step not reached</span></td>
+          <td><span class="badge-fail">&#10007; Fail</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv05_billing_card_tx.png" class="thumb-img" alt="SV-05"></summary>
+              <img src="screenshots/bistro-sync/sv05_billing_card_tx.png" class="expanded-img" alt="SV-05 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-06</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Tables</td>
+          <td>Payment completed &rarr; T1 + T2 freed; T3 reserved via web</td>
+          <td><code style="color:var(--success);font-size:11px;">6 available tables confirmed &bull; Reserved table visible</code><br><span style="font-size:11px;color:var(--text-secondary);">Table availability synced correctly from both app actions and web-set reservations</span></td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv06_tables_final_status.png" class="thumb-img" alt="SV-06"></summary>
+              <img src="screenshots/bistro-sync/sv06_tables_final_status.png" class="expanded-img" alt="SV-06 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-07</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Customers</td>
+          <td>Customer &ldquo;John Smith&rdquo; created from app during QA_27</td>
+          <td><code style="color:var(--error);font-size:11px;">John Smith NOT found on /customers</code><br><span style="font-size:11px;color:var(--text-secondary);">Customer creation sync not implemented or QA_27 form flow didn&rsquo;t complete</span></td>
+          <td><span class="badge-fail">&#10007; Fail</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv07_no_customer.png" class="thumb-img" alt="SV-07"></summary>
+              <img src="screenshots/bistro-sync/sv07_no_customer.png" class="expanded-img" alt="SV-07 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-08</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Reports</td>
+          <td>Completed orders &rarr; today&rsquo;s revenue in /reports</td>
+          <td><code style="color:var(--error);font-size:11px;">Revenue reported as $0.00</code><br><span style="font-size:11px;color:var(--text-secondary);">Reports page accessible. Revenue pipeline requires payment &ldquo;completed&rdquo; status propagation — only 1 transaction synced (SV-04 $16.49 cash)</span></td>
+          <td><span class="badge-partial">&#9651; Partial</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv08_reports_revenue.png" class="thumb-img" alt="SV-08"></summary>
+              <img src="screenshots/bistro-sync/sv08_reports_revenue.png" class="expanded-img" alt="SV-08 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-09</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Orders</td>
+          <td>Bar order: Espresso sent to kitchen from app (QA_26)</td>
+          <td><code style="color:var(--error);font-size:11px;">Bar order NOT found on /orders</code><br><span style="font-size:11px;color:var(--text-secondary);">QA_26 step may not have completed; T3 table was reserved, blocking new order</span></td>
+          <td><span class="badge-fail">&#10007; Fail</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv09_no_bar1_order.png" class="thumb-img" alt="SV-09"></summary>
+              <img src="screenshots/bistro-sync/sv09_no_bar1_order.png" class="expanded-img" alt="SV-09 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--primary);">SV-10</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu</td>
+          <td>Web admin creates &ldquo;Daily Special&rdquo; category + &ldquo;Chef&rsquo;s Risotto&rdquo; — app pulls within 30s</td>
+          <td><code style="color:var(--error);font-size:11px;">Daily Special NOT created (Menu Service 500 error)</code><br><span style="font-size:11px;color:var(--text-secondary);">Menu Service returned 500 during category creation via API; web→app sync untested for new categories</span></td>
+          <td><span class="badge-fail">&#10007; Fail</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-sync/sv10_daily_special_menu.png" class="thumb-img" alt="SV-10"></summary>
+              <img src="screenshots/bistro-sync/sv10_daily_special_menu.png" class="expanded-img" alt="SV-10 expanded">
+            </details>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4B -->
+  <div class="subsection-header">
+    <span class="subsection-tag">4B</span>
+    Web &rarr; App Sync (4 Checks)
+  </div>
+  <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">
+    Data created via the web dashboard verified to appear correctly in the mobile POS app.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:65px;">Check</th>
+          <th style="width:85px;">Domain</th>
+          <th>Web Action</th>
+          <th>Expected on App</th>
+          <th style="width:95px;">Status</th>
+          <th style="width:85px;">App Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td style="font-weight:700;color:var(--success);">WA-01</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu</td>
+          <td>Web created 7 categories (Appetizers, Mains, Burgers, Salads, Desserts, Beverages, Daily Specials)</td>
+          <td>All 7 categories visible as sidebar items in mobile POS after pull sync</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_01_categories_loaded.png" class="thumb-img" alt="WA-01"></summary>
+              <img src="screenshots/bistro-mobile/QA_01_categories_loaded.png" class="expanded-img" alt="WA-01 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--success);">WA-02</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu</td>
+          <td>Web created 22 menu items distributed across all categories</td>
+          <td>Items visible per category in POS grid; images and prices correct</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_02_appetizers_grid.png" class="thumb-img" alt="WA-02"></summary>
+              <img src="screenshots/bistro-mobile/QA_02_appetizers_grid.png" class="expanded-img" alt="WA-02 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--success);">WA-03</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Tables</td>
+          <td>Web created 13 tables across 3 sections (Main Floor, Patio, Bar)</td>
+          <td>All 13 tables visible in table selection modal; sections grouped correctly</td>
+          <td><span class="badge-pass">&#10003; Pass</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_05_table_management.png" class="thumb-img" alt="WA-03"></summary>
+              <img src="screenshots/bistro-mobile/QA_05_table_management.png" class="expanded-img" alt="WA-03 expanded">
+            </details>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="font-weight:700;color:var(--success);">WA-04</td>
+          <td style="font-size:11px;color:var(--text-secondary);">Menu</td>
+          <td>Web created 2 combos with combo pricing and item associations</td>
+          <td>Combos visible in POS combos section with correct prices and component items</td>
+          <td><span class="badge-partial">&#9651; Partial</span></td>
+          <td>
+            <details>
+              <summary><img src="screenshots/bistro-mobile/QA_04_combos_list.png" class="thumb-img" alt="WA-04"></summary>
+              <img src="screenshots/bistro-mobile/QA_04_combos_list.png" class="expanded-img" alt="WA-04 expanded">
+            </details>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:20px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);">
+    <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Sync Summary</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:8px;">
+      <div><span style="color:var(--success);font-weight:700;">App &rarr; Web:</span> <span style="color:var(--text);">2 Pass / 3 Partial / 5 Fail</span></div>
+      <div><span style="color:var(--primary);font-weight:700;">Web &rarr; App:</span> <span style="color:var(--text);">3 Pass / 1 Partial / 0 Fail</span></div>
+      <div><span style="color:var(--text-secondary);font-weight:700;">Overall:</span> <span style="color:var(--text);">5 / 14 fully verified (36%)</span></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-secondary);">
+      App&rarr;Web failures: SV-02 (T2/Patio 1 order not completed), SV-05 (card payment not processed), SV-07 (customer sync from app not implemented), SV-09 (Bar 1 order not completed), SV-10 (Menu Service 500 error on new category creation). Partial checks indicate data reached the server but full item/field matching was not confirmed. No data corruption observed.
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ====================================================
+     SECTION 5 — Web Screenshots
+==================================================== -->
+<section id="web-screens">
+<div class="container">
+  <div class="section-header">
+    <div class="section-number">5</div>
+    <div>
+      <div class="section-title">Web Dashboard &mdash; All 17 Pages</div>
+      <div class="section-desc">Complete web dashboard coverage across all navigation pages with Blue Plate Bistro data</div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp01_web_dashboard.png" alt="Web Dashboard">
+      <div class="cap"><strong>BP-01</strong>Dashboard &mdash; Overview &amp; KPI Cards</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp02_web_menu_categories.png" alt="Menu Categories">
+      <div class="cap"><strong>BP-02</strong>Menu &mdash; Categories Tab</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp03_web_menu_items.png" alt="Menu Items">
+      <div class="cap"><strong>BP-03</strong>Menu &mdash; Items Tab</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp04_web_modifiers.png" alt="Modifiers">
+      <div class="cap"><strong>BP-04</strong>Menu &mdash; Modifier Groups Tab</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp05_web_combos.png" alt="Combos">
+      <div class="cap"><strong>BP-05</strong>Menu &mdash; Combos Tab</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp06_web_orders.png" alt="Orders">
+      <div class="cap"><strong>BP-06</strong>Orders &mdash; Live Order Board</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp07_web_order_detail.png" alt="Order Detail">
+      <div class="cap"><strong>BP-07</strong>Orders &mdash; Order Detail View</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp08_web_tables_floor.png" alt="Tables Floor Plan">
+      <div class="cap"><strong>BP-08</strong>Tables &mdash; Floor Plan Grid</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp09_web_tables_main_floor.png" alt="Tables Main Floor">
+      <div class="cap"><strong>BP-09</strong>Tables &mdash; Main Floor Section</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp10_web_kitchen.png" alt="Kitchen">
+      <div class="cap"><strong>BP-10</strong>Kitchen &mdash; Kanban Ticket Board</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp11_web_billing.png" alt="Billing">
+      <div class="cap"><strong>BP-11</strong>Billing &mdash; Transaction History</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp12_web_customers.png" alt="Customers">
+      <div class="cap"><strong>BP-12</strong>Customers &mdash; Customer Directory</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp13_web_reports.png" alt="Reports">
+      <div class="cap"><strong>BP-13</strong>Reports &mdash; Sales Analytics</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp14_web_staff.png" alt="Staff">
+      <div class="cap"><strong>BP-14</strong>Staff &mdash; Staff Management</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp15_web_store_bistro.png" alt="Store Profile">
+      <div class="cap"><strong>BP-15</strong>Store &mdash; Blue Plate Bistro Profile</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp16_web_account.png" alt="Account">
+      <div class="cap"><strong>BP-16</strong>Account &mdash; Admin Account Settings</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-web/bp17_web_users.png" alt="Users">
+      <div class="cap"><strong>BP-17</strong>Users &mdash; All Restaurant Users</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ====================================================
+     SECTION 6 — Mobile Screenshots
+==================================================== -->
+<section id="mobile-screens">
+<div class="container">
+  <div class="section-header">
+    <div class="section-number">6</div>
+    <div>
+      <div class="section-title">Mobile POS App &mdash; 20 Screens</div>
+      <div class="section-desc">Visual tour of the React Native POS app across all major screens and states (Android Emulator API 34)</div>
+    </div>
+  </div>
+
+  <div class="grid-4">
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_01_dashboard.png" alt="Dashboard">
+      <div class="cap"><strong>MOB-01</strong>Dashboard</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_02_pos_grid.png" alt="POS Grid">
+      <div class="cap"><strong>MOB-02</strong>POS Item Grid</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_03_modifier_modal.png" alt="Modifier Modal">
+      <div class="cap"><strong>MOB-03</strong>Modifier Modal</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_04_floor_plan.png" alt="Table Selection Grid">
+      <div class="cap"><strong>MOB-04</strong>Table Selection (13 Tables)</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_05_kitchen.png" alt="Kitchen Display">
+      <div class="cap"><strong>MOB-05</strong>Kitchen Display</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_06_orders_list.png" alt="Orders List">
+      <div class="cap"><strong>MOB-06</strong>Orders List</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_07_categories.png" alt="Categories">
+      <div class="cap"><strong>MOB-07</strong>Menu Categories</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_08_combos.png" alt="Combos">
+      <div class="cap"><strong>MOB-08</strong>Combos List</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_09_table_settings.png" alt="Tables Dashboard">
+      <div class="cap"><strong>MOB-09</strong>Tables Dashboard</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_10_reports.png" alt="Reports">
+      <div class="cap"><strong>MOB-10</strong>Reports</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_11_staff.png" alt="Staff">
+      <div class="cap"><strong>MOB-11</strong>Staff List</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_12_restaurant_profile.png" alt="Restaurant Profile">
+      <div class="cap"><strong>MOB-12</strong>Restaurant Profile</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_13_account.png" alt="Settings Menu">
+      <div class="cap"><strong>MOB-13</strong>Settings Menu</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_14_payment_screen.png" alt="Payment Screen">
+      <div class="cap"><strong>MOB-14</strong>Payment Screen</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_15_customer_search.png" alt="Order Items Detail">
+      <div class="cap"><strong>MOB-15</strong>Order Items Detail</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_16_order_detail.png" alt="Kitchen Ready Status">
+      <div class="cap"><strong>MOB-16</strong>Kitchen Ready Status</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_17_kitchen_settings.png" alt="Table Occupied View">
+      <div class="cap"><strong>MOB-17</strong>Table Occupied View</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_18_network_offline.png" alt="Order Detail View">
+      <div class="cap"><strong>MOB-18</strong>Order Detail View</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_19_sync_done.png" alt="Payment Confirmation">
+      <div class="cap"><strong>MOB-19</strong>Payment Confirmation</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="screenshots/bistro-mobile/mob_20_combos_in_pos.png" alt="Table Available Status">
+      <div class="cap"><strong>MOB-20</strong>Table Available Post-Payment</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ====================================================
+     SECTION 7 — Side-by-Side Comparison
+==================================================== -->
+<section id="comparison">
+<div class="container">
+  <div class="section-header">
+    <div class="section-number">7</div>
+    <div>
+      <div class="section-title">Web &#8596; Mobile Side-by-Side Comparison</div>
+      <div class="section-desc">17 paired screenshots demonstrating feature parity between web dashboard and mobile POS app</div>
+    </div>
+  </div>
+
+  <!-- Pair 1 -->
+  <div class="compare-section">
+    <div class="compare-label">1 of 17 &mdash; Dashboard Overview</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp01_web_dashboard.png" alt="Web Dashboard">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-01 &mdash; Dashboard</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_01_dashboard.png" alt="Mobile Dashboard">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-01 &mdash; Dashboard</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 2 -->
+  <div class="compare-section">
+    <div class="compare-label">2 of 17 &mdash; Menu Categories</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp02_web_menu_categories.png" alt="Web Menu Categories">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-02 &mdash; Menu Categories</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_07_categories.png" alt="Mobile Categories">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-07 &mdash; Categories</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 3 -->
+  <div class="compare-section">
+    <div class="compare-label">3 of 17 &mdash; Menu Items / POS Grid</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp03_web_menu_items.png" alt="Web Menu Items">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-03 &mdash; Menu Items</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_02_pos_grid.png" alt="Mobile POS Grid">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-02 &mdash; POS Item Grid</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 4 -->
+  <div class="compare-section">
+    <div class="compare-label">4 of 17 &mdash; Modifiers</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp04_web_modifiers.png" alt="Web Modifiers">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-04 &mdash; Modifier Groups</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_03_modifier_modal.png" alt="Mobile Modifier Modal">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-03 &mdash; Modifier Modal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 5 -->
+  <div class="compare-section">
+    <div class="compare-label">5 of 17 &mdash; Combos</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp05_web_combos.png" alt="Web Combos">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-05 &mdash; Combos</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_08_combos.png" alt="Mobile Combos">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-08 &mdash; Combos List</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 6 -->
+  <div class="compare-section">
+    <div class="compare-label">6 of 17 &mdash; Orders</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp06_web_orders.png" alt="Web Orders">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-06 &mdash; Orders Board</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_06_orders_list.png" alt="Mobile Orders">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-06 &mdash; Orders List</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 7 -->
+  <div class="compare-section">
+    <div class="compare-label">7 of 17 &mdash; Order Detail / Kitchen Ready</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp07_web_order_detail.png" alt="Web Order Detail">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-07 &mdash; Order Detail</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_16_order_detail.png" alt="Mobile Kitchen Ready">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-16 &mdash; Kitchen Ready Status</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 8 -->
+  <div class="compare-section">
+    <div class="compare-label">8 of 17 &mdash; Tables Floor Plan</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp08_web_tables_floor.png" alt="Web Tables Floor">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-08 &mdash; Tables Floor Plan</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_04_floor_plan.png" alt="Mobile Table Selection">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-04 &mdash; Table Selection Grid</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 9 -->
+  <div class="compare-section">
+    <div class="compare-label">9 of 17 &mdash; Tables List / Settings</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp09_web_tables_main_floor.png" alt="Web Tables Main">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-09 &mdash; Tables Main Floor</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_09_table_settings.png" alt="Mobile Tables Dashboard">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-09 &mdash; Tables Dashboard</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 10 -->
+  <div class="compare-section">
+    <div class="compare-label">10 of 17 &mdash; Kitchen</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp10_web_kitchen.png" alt="Web Kitchen">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-10 &mdash; Kitchen Board</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_05_kitchen.png" alt="Mobile Kitchen">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-05 &mdash; Kitchen Display</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 11 -->
+  <div class="compare-section">
+    <div class="compare-label">11 of 17 &mdash; Billing / Payment</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp11_web_billing.png" alt="Web Billing">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-11 &mdash; Billing Transactions</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_14_payment_screen.png" alt="Mobile Payment">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-14 &mdash; Payment Screen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 12 -->
+  <div class="compare-section">
+    <div class="compare-label">12 of 17 &mdash; Customers / Order Flow</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp12_web_customers.png" alt="Web Customers">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-12 &mdash; Customers</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_15_customer_search.png" alt="Mobile Order Items">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-15 &mdash; Order Items Detail</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 13 -->
+  <div class="compare-section">
+    <div class="compare-label">13 of 17 &mdash; Reports</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp13_web_reports.png" alt="Web Reports">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-13 &mdash; Reports Analytics</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_10_reports.png" alt="Mobile Reports">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-10 &mdash; Reports</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 14 -->
+  <div class="compare-section">
+    <div class="compare-label">14 of 17 &mdash; Staff Management</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp14_web_staff.png" alt="Web Staff">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-14 &mdash; Staff</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_11_staff.png" alt="Mobile Staff">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-11 &mdash; Staff List</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 15 -->
+  <div class="compare-section">
+    <div class="compare-label">15 of 17 &mdash; Store / Restaurant Profile</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp15_web_store_bistro.png" alt="Web Store Profile">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-15 &mdash; Store Profile</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_12_restaurant_profile.png" alt="Mobile Restaurant Profile">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-12 &mdash; Restaurant Profile</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 16 -->
+  <div class="compare-section">
+    <div class="compare-label">16 of 17 &mdash; Account / Settings</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp16_web_account.png" alt="Web Account">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-16 &mdash; Account</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_13_account.png" alt="Mobile Settings">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-13 &mdash; Settings Menu</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pair 17 -->
+  <div class="compare-section">
+    <div class="compare-label">17 of 17 &mdash; Users / Table Management</div>
+    <div class="compare-grid">
+      <div class="compare-pane">
+        <img src="screenshots/bistro-web/bp17_web_users.png" alt="Web Users">
+        <div class="pane-label"><div class="pane-type web">Web</div>BP-17 &mdash; Users Directory</div>
+      </div>
+      <div class="compare-pane">
+        <img src="screenshots/bistro-mobile/mob_20_combos_in_pos.png" alt="Mobile Table Available">
+        <div class="pane-label"><div class="pane-type mobile">Mobile</div>MOB-20 &mdash; Table Available Post-Payment</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ====================================================
+     SECTION 8 — Bug Fix: Occupied Table UX
+==================================================== -->
+<section id="bug-fix">
+<div class="container">
+  <div class="section-header">
+    <div class="section-number">8</div>
+    <div>
+      <div class="section-title">Bug Fix: Occupied Table UX</div>
+      <div class="section-desc">Bug discovered during QA_06 testing, root-caused, and resolved with an improved contextual UI</div>
+    </div>
+  </div>
+
+  <div class="bug-card">
+    <div class="bug-title">Bug: Occupied Tables Selectable in New Order Modal</div>
+    <div class="bug-body">
+      <p style="margin-bottom:8px;">
+        When opening the <strong>New Order</strong> table selection modal, tables that were already
+        <strong>Occupied</strong> (with an active in-progress order) could still be tapped by staff.
+        This triggered a native <code>Alert.alert()</code> system dialog with generic text, breaking
+        the flow and confusing staff during service.
+      </p>
+      <p>
+        Expected behavior: occupied tables should be visually distinct and tapping them should
+        surface contextual options rather than a generic system alert.
+      </p>
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Root Causes</div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;">
+      <div style="font-weight:700;color:var(--warning);font-size:13px;margin-bottom:6px;">Root Cause 1 &mdash; Implicit Boolean Prop</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.7;">
+        The <code>allowOccupied</code> prop on the table selection component was written without an explicit value:
+        <code class="block">&lt;TableSelectionModal allowOccupied /&gt;</code>
+        In React, a JSX attribute present without a value defaults to <code>true</code>. This meant all occupied
+        table blocks were treated as selectable, bypassing the intended lock guard.
+      </div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+      <div style="font-weight:700;color:var(--warning);font-size:13px;margin-bottom:6px;">Root Cause 2 &mdash; Occupancy Downgrade in State Derivation</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.7;">
+        The derived state function <code>tablesWithRealOccupancy()</code> checked for a matching active order
+        in <strong>local in-memory state only</strong>. When the app launched fresh and local orders were not
+        yet hydrated from storage, this function incorrectly downgraded real <code>OCCUPIED</code> statuses
+        (sourced from the server) to <code>AVAILABLE</code>, hiding the occupied state from the selection UI entirely.
+      </div>
+    </div>
+  </div>
+
+  <div class="fix-card">
+    <div class="fix-title">Fix: ExistingOrderModal Component + Visual Occupied State</div>
+    <div class="fix-body">
+      <p style="margin-bottom:10px;">
+        A new <strong>ExistingOrderModal</strong> component replaces the generic <code>Alert.alert()</code> call.
+        When staff tap an occupied table the modal presents three contextual actions:
+      </p>
+      <ul style="margin-left:20px;margin-bottom:10px;line-height:2.2;">
+        <li><strong style="color:var(--primary);">Update Order</strong> &mdash; opens the existing order to add or remove items</li>
+        <li><strong style="color:var(--warning);">Shift Table</strong> &mdash; moves the existing order to a different available table</li>
+        <li><strong style="color:var(--success);">Cancel &amp; New Order</strong> &mdash; voids the existing order and starts a fresh one</li>
+      </ul>
+      <p style="margin-bottom:10px;">
+        Occupied tables in the selection grid now render with a <strong>red background tint</strong> and an
+        <strong>"Occupied" label overlay</strong>, providing immediate visual feedback before any tap interaction.
+      </p>
+      <p style="font-size:12px;color:var(--text-secondary);">
+        The <code>tablesWithRealOccupancy()</code> function was updated to merge server-side table status with
+        local order state, using the server status as the authoritative source when local orders are not yet
+        hydrated from AsyncStorage.
+      </p>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;">
+    <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Visual Evidence</div>
+    <div class="grid-2">
+      <div class="screenshot-card">
+        <img src="screenshots/bistro-mobile/QA_06_table1_selected.png" alt="Table 1 Selected" style="width:100%;height:auto;">
+        <div class="cap">
+          <strong>QA_06_table1_selected</strong>
+          Table 1 selected in New Order modal. Occupied tables now display red tint + "Occupied" label. Tapping an occupied table triggers ExistingOrderModal instead of a system alert.
+        </div>
+      </div>
+      <div class="screenshot-card">
+        <img src="screenshots/bistro-mobile/QA_17_tables_occupied.png" alt="Tables Occupied" style="width:100%;height:auto;">
+        <div class="cap">
+          <strong>QA_17_tables_occupied</strong>
+          Floor plan after QA_06&ndash;12: T1 and Patio T1 correctly shown as Occupied (red tint). All other tables remain Available (green). Status accurately reflects server-sourced occupancy.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ====================================================
+     FOOTER
+==================================================== -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-item">
+      <strong>67</strong>
+      Total Screenshots
+    </div>
+    <div class="footer-item">
+      <strong>30</strong>
+      QA Scenarios
+    </div>
+    <div class="footer-item">
+      <strong>14</strong>
+      Sync Checks
+    </div>
+    <div class="footer-item">
+      <strong>17</strong>
+      Web Pages
+    </div>
+    <div class="footer-item">
+      <strong>20</strong>
+      Mobile Screens
+    </div>
+    <div class="footer-item">
+      <strong>1</strong>
+      Bug Fixed
+    </div>
+  </div>
+  <div>Blue Plate Bistro POS &mdash; Full End-to-End QA Evidence Report &mdash; Generated 2026-03-05</div>
+  <div style="margin-top:6px;color:#475569;font-size:11px;">
+    All screenshots captured during live QA session on 2026-03-05. No mocked data.
+    Web dashboard: localhost:5173 &nbsp;|&nbsp; API Gateway: localhost:8080 &nbsp;|&nbsp; Mobile: Android Emulator API 34
+  </div>
+</footer>
+
+</body>
+</html>

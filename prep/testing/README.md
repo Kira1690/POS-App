@@ -1,69 +1,188 @@
-# FoodPOS Test Suite — Master Plan
+# POS System — Master QA Testing Strategy
 
-> **Rule:** Every new feature shipped must have a corresponding test added here before it is considered complete.
+## Key Documents
+
+| Document | Purpose |
+|----------|---------|
+| [`BISTRO-QA-RUNBOOK.md`](./BISTRO-QA-RUNBOOK.md) | Step-by-step guide to run full QA suite (30 scenarios, 14 sync checks, 87 screenshots) |
+| [`SPRINT-COMPLETION-REPORT.md`](./SPRINT-COMPLETION-REPORT.md) | Gantt chart v4 task-by-task completion status (22/22 implemented, session history) |
+| [`REMAINING-WORK-PLAN.md`](./REMAINING-WORK-PLAN.md) | 11 remaining items: P0 stubs, P1 features, P2 sync fixes, with execution phases |
+| [`index.html`](./index.html) | HTML evidence report — open in browser for visual QA results |
+
+---
+
+## Overview
+
+Two test runners cover the full POS system:
+
+| Runner | Target | Mode |
+|--------|--------|------|
+| **Playwright** | POS Web Dashboard (`localhost:5173`) | Chromium, headed (visible) |
+| **Maestro** | POS Mobile App (Android emulator) | Native APK on `10.0.2.2:8080` |
+
+---
+
+## Credentials Reference
+
+### Web Dashboard (POS-Authentication-Frontend)
+
+| Role | Email | Password | Access |
+|------|-------|----------|--------|
+| system_admin | `admin@system.com` | `SuperAdmin123!` | Everything |
+| store_admin | `admin@demo-store.com` | `StoreAdmin123!` | Demo Store only |
+| user | `user@demo-store.com` | `User123!` | Demo Store, read-heavy |
+
+### Additional QA Users (created via UI in `setup/create-test-users.spec.ts`)
+
+| Role | Email | Password | Purpose |
+|------|-------|----------|---------|
+| system_admin | `qa.sysadmin@pos.test` | `QASysAdmin123!` | Second sysadmin to test limits |
+| store_admin | `qa.storeadmin@pos.test` | `QAStoreAdmin123!` | Second store_admin |
+| user | `qa.user@pos.test` | `QAUser123!` | Second regular user |
+
+### Mobile App (POS-App — Dummy Offline Auth)
+
+| Role | Credential | Password | Entry |
+|------|-----------|----------|-------|
+| manager | `manager@foodcorner.com` | `manager123` | Manager Login |
+| restaurant_staff | `EMP001` | `staff123` | Staff Login |
+| kitchen_staff | `CHEF001` | `kitchen123` | Staff Login |
+| admin | `admin@foodcorner.com` | `admin123` | Manager Login |
+| superadmin | `superadmin@foodpos.com` | `super123` | Manager Login |
+
+---
+
+## Test Execution Order
+
+### Web Dashboard (Playwright)
+
+Run in this order — each phase depends on the previous:
+
+```bash
+# Phase 0: Pre-flight (backend must be running)
+cd POS-Authentication-Frontend
+bunx playwright test e2e/setup/create-test-users.spec.ts --headed --project=chromium
+
+# Phase 1: Authentication
+bunx playwright test e2e/auth/ --headed --project=chromium
+
+# Phase 2: User Management (system_admin features)
+bunx playwright test e2e/users/ --headed --project=chromium
+
+# Phase 3: All pages per role
+bunx playwright test e2e/pages/ --headed --project=chromium
+
+# Phase 4: Account & Settings
+bunx playwright test e2e/account/ --headed --project=chromium
+
+# Run ALL (after setup is done)
+bunx playwright test --headed --project=chromium
+```
+
+### Mobile App (Maestro)
+
+```bash
+# Pre-flight
+adb shell pm clear host.exp.exponent
+bun expo start --clear   # in POS-App directory
+
+# Full offline suite (all 5 roles + all features)
+maestro test .maestro/qa_full_suite.yaml
+
+# Individual suites
+maestro test .maestro/01_staff_login_offline.yaml
+maestro test .maestro/02_manager_login_offline.yaml
+maestro test .maestro/03_kitchen_staff_login_offline.yaml
+
+# Split payment suite
+maestro test .maestro/split-payment-tests/
+
+# Sync tests (backend must be running at port 8080)
+maestro test .maestro/sync_full_suite.yaml
+```
+
+---
+
+## Services Required
+
+```bash
+# Auth Service (port 3000)
+cd POS-Authentication && bun run dev
+
+# Core Service (port 5005)
+cd POS-Services && bun run dev:core
+
+# Menu Service (port 5003)
+cd POS-Services && bun run dev:menu
+
+# API Gateway (port 8080)
+cd POS-API-Gateway && bun run dev
+
+# Web Dashboard (port 5173)
+cd POS-Authentication-Frontend && bun run dev
+
+# Android emulator
+# Start via Android Studio or: emulator -avd <avd_name>
+
+# Expo dev server (port 8081)
+cd POS-App && bun expo start --clear
+```
+
+---
 
 ## Folder Structure
 
 ```
 prep/testing/
-├── README.md                          ← this file (overview + rules)
-├── 01-auth.md                         ← Authentication (login, session, roles)
-├── 02-dashboard.md                    ← All dashboard screens
-├── 03-order-management.md             ← Order lifecycle (create → pay)
-├── 04-kitchen.md                      ← Kitchen display & ticket management
-├── 05-tables.md                       ← Table management & floor plan
-├── 06-menu.md                         ← Menu & category management
-├── 07-payment.md                      ← Payment processing & billing
-├── 08-settings.md                     ← All settings screens
-├── 09-offline.md                      ← Full offline test suite
-├── 10-online.md                       ← Online / API-connected tests
-├── 11-new-feature-template.md         ← Template to copy for every new feature
-└── progress.md                        ← Which tests are implemented vs pending
-```
+├── README.md                    ← This file (master strategy)
+├── BISTRO-QA-RUNBOOK.md         ← ★ Step-by-step Bistro QA guide (start here)
+├── SPRINT-COMPLETION-REPORT.md  ← ★ Gantt chart completion status + session history
+├── REMAINING-WORK-PLAN.md       ← ★ 11 remaining items with execution phases
+├── index.html                   ← HTML evidence report (open in browser)
+├── bistro_manifest.md           ← Bistro restaurant/login verification log
+├── rules/
+│   ├── playwright-rules.md      ← Playwright coding standards
+│   └── maestro-rules.md         ← Maestro coding standards
+├── scenarios/
+│   ├── web-dashboard-scenarios.md       ← All web test scenarios
+│   ├── mobile-app-scenarios.md          ← Mobile offline test scenarios
+│   ├── mobile-sync-integration-plan.md  ← 55 sync/integration test cases
+│   └── roles-matrix.md                  ← Role × feature access matrix
+├── setup/
+│   ├── credentials.md           ← All test credentials reference
+│   └── test-data.md             ← Menu items, orders, table IDs used in tests
+├── execution/
+│   ├── run-order.md             ← Sequential test run guide
+│   ├── ci-commands.md           ← One-liners for CI pipelines
+│   └── web-dashboard-test-results.md  ← 102/102 Playwright results
+└── screenshots/
+    ├── bistro-setup/            ← Store creation evidence (6 files)
+    ├── bistro-web-data/         ← Data seeding verification (14 files)
+    ├── bistro-mobile/           ← QA + mob screenshots (56+ files)
+    ├── bistro-sync/             ← Sync verification evidence (11 files)
+    └── bistro-web/              ← Web page captures (17 files)
 
-## Test Layers
-
-Every feature is tested at **three layers**:
-
-| Layer | Tool | What it tests | When it runs |
-|-------|------|--------------|-------------|
-| **Unit** | Jest + `@testing-library/react-native` | Service logic, context reducers, utility functions, individual components | Every commit (fast, <30s) |
-| **Integration** | Jest + mocked providers | Full screen render with context/hooks wired up | Every PR |
-| **E2E** | Maestro on `POS_Tablet` AVD | Real user flows, visible on emulator screen | Before every release |
-
-## Offline vs Online
-
-| Mode | How to run | What is different |
-|------|-----------|-------------------|
-| **Offline** | Airplane mode on device, `bun expo start` on host | SQLite only, dummy users, no API calls |
-| **Online (local)** | Backend running at `localhost:4000` | Real JWT, real database, real microservices |
-| **Online (staging)** | `EXPO_PUBLIC_API_URL` pointed at staging server | Full production-like environment |
-
-## How to Add Tests for a New Feature
-
-1. Copy `11-new-feature-template.md` → name it after the feature (e.g., `12-reservations.md`)
-2. Fill in every section: unit, integration, E2E offline, E2E online
-3. Write the Maestro `.yaml` files in `.maestro/` named `NN_feature_name.yaml`
-4. Write the Jest test files in `__tests__/` next to the source files
-5. Update `progress.md` with the new feature row
-
-## Running the Tests
-
-```bash
-# Unit + Integration (Jest)
-bun test                          # run all
-bun test --testPathPattern auth   # run one module
-
-# E2E Offline (Maestro on running emulator)
-maestro test .maestro/full_offline_test.yaml
-maestro test .maestro/            # run all flows
-
-# E2E Full Suite
-maestro test .maestro/ --format junit --output reports/maestro-results.xml
-
-# Type check (must pass before committing)
-bun run type-check
-
-# Lint
-bun run lint
+POS-Authentication-Frontend/e2e/
+├── fixtures/
+│   ├── auth.ts                  ← Login helpers for each role
+│   └── users.ts                 ← Test user definitions
+├── setup/
+│   └── create-test-users.spec.ts  ← Creates QA users via dashboard UI (run once)
+├── auth/
+│   ├── login.spec.ts            ← Login/logout all 3 roles
+│   └── session.spec.ts          ← Session persistence & token refresh
+├── users/
+│   ├── user-management.spec.ts  ← CRUD for users (system_admin)
+│   └── role-access.spec.ts      ← Role-based route restrictions
+├── pages/
+│   ├── dashboard.spec.ts        ← Home page per role
+│   ├── menu.spec.ts             ← Menu management CRUD
+│   ├── orders.spec.ts           ← Orders page
+│   ├── tables.spec.ts           ← Tables page
+│   ├── kitchen.spec.ts          ← Kitchen page
+│   ├── reports.spec.ts          ← Reports & analytics
+│   ├── staff.spec.ts            ← Staff page
+│   └── stores.spec.ts           ← Stores management
+└── account/
+    └── account-settings.spec.ts ← Profile, sessions, password
 ```
