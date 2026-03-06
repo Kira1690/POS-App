@@ -616,10 +616,83 @@ class MenuStorageService {
       { id: 'item_7', restaurant_id: restaurantId, category_id: 'cat_3', name: 'Fish Fry', description: 'Crispy fried fish', price: 21.99, is_available: true, preparation_time_minutes: 18, sort_order: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
     ] as MenuItemExtended[];
 
+    // Modifier groups with options
+    const modifierGroups: ModifierGroup[] = [
+      {
+        id: 'mod_1', restaurant_id: restaurantId, name: 'Spice Level',
+        description: 'Choose your spice level', selection_type: 'single',
+        is_required: false, min_selections: 0, max_selections: 1,
+        is_active: true, sort_order: 1,
+        created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z',
+        options: [
+          { id: 'opt_1a', modifier_group_id: 'mod_1', name: 'Mild', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1 },
+          { id: 'opt_1b', modifier_group_id: 'mod_1', name: 'Medium', price_adjustment: 0, is_default: false, is_available: true, sort_order: 2 },
+          { id: 'opt_1c', modifier_group_id: 'mod_1', name: 'Hot', price_adjustment: 0, is_default: false, is_available: true, sort_order: 3 },
+          { id: 'opt_1d', modifier_group_id: 'mod_1', name: 'Extra Hot', price_adjustment: 0.50, is_default: false, is_available: true, sort_order: 4 },
+        ],
+      },
+      {
+        id: 'mod_2', restaurant_id: restaurantId, name: 'Add-ons',
+        description: 'Extra toppings and sides', selection_type: 'multiple',
+        is_required: false, min_selections: 0, max_selections: 4,
+        is_active: true, sort_order: 2,
+        created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z',
+        options: [
+          { id: 'opt_2a', modifier_group_id: 'mod_2', name: 'Extra Cheese', price_adjustment: 1.50, is_default: false, is_available: true, sort_order: 1 },
+          { id: 'opt_2b', modifier_group_id: 'mod_2', name: 'Extra Sauce', price_adjustment: 0.75, is_default: false, is_available: true, sort_order: 2 },
+          { id: 'opt_2c', modifier_group_id: 'mod_2', name: 'Extra Butter', price_adjustment: 0.50, is_default: false, is_available: true, sort_order: 3 },
+          { id: 'opt_2d', modifier_group_id: 'mod_2', name: 'Raita', price_adjustment: 2.00, is_default: false, is_available: true, sort_order: 4 },
+        ],
+      },
+      {
+        id: 'mod_3', restaurant_id: restaurantId, name: 'Drink Size',
+        description: 'Choose your drink size', selection_type: 'single',
+        is_required: true, min_selections: 1, max_selections: 1,
+        is_active: true, sort_order: 3,
+        created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z',
+        options: [
+          { id: 'opt_3a', modifier_group_id: 'mod_3', name: 'Small', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1 },
+          { id: 'opt_3b', modifier_group_id: 'mod_3', name: 'Medium', price_adjustment: 1.00, is_default: false, is_available: true, sort_order: 2 },
+          { id: 'opt_3c', modifier_group_id: 'mod_3', name: 'Large', price_adjustment: 2.00, is_default: false, is_available: true, sort_order: 3 },
+        ],
+      },
+      {
+        id: 'mod_4', restaurant_id: restaurantId, name: 'Cooking Preference',
+        description: 'How would you like it cooked', selection_type: 'single',
+        is_required: false, min_selections: 0, max_selections: 1,
+        is_active: true, sort_order: 4,
+        created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z',
+        options: [
+          { id: 'opt_4a', modifier_group_id: 'mod_4', name: 'Grilled', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1 },
+          { id: 'opt_4b', modifier_group_id: 'mod_4', name: 'Deep Fried', price_adjustment: 1.00, is_default: false, is_available: true, sort_order: 2 },
+          { id: 'opt_4c', modifier_group_id: 'mod_4', name: 'Steamed', price_adjustment: 0, is_default: false, is_available: true, sort_order: 3 },
+        ],
+      },
+    ];
+
+    // Assignments: which items get which modifier groups
+    // Beverages (Coffee, Tea) → Drink Size
+    // Curries (Paneer, Dal, Chicken) → Spice Level + Add-ons
+    // Fish Fry → Cooking Preference + Spice Level
+    // Roti → Add-ons (extra butter)
+    const assignments: Array<{ menuItemId: string; modifierGroupIds: string[] }> = [
+      { menuItemId: 'item_1', modifierGroupIds: ['mod_3'] },              // Coffee → Drink Size
+      { menuItemId: 'item_2', modifierGroupIds: ['mod_3'] },              // Tea → Drink Size
+      { menuItemId: 'item_3', modifierGroupIds: ['mod_1', 'mod_2'] },     // Paneer Butter Masala → Spice Level + Add-ons
+      { menuItemId: 'item_4', modifierGroupIds: ['mod_1', 'mod_2'] },     // Dal Makhani → Spice Level + Add-ons
+      { menuItemId: 'item_5', modifierGroupIds: ['mod_2'] },              // Roti → Add-ons
+      { menuItemId: 'item_6', modifierGroupIds: ['mod_1', 'mod_2'] },     // Chicken Curry → Spice Level + Add-ons
+      { menuItemId: 'item_7', modifierGroupIds: ['mod_1', 'mod_4'] },     // Fish Fry → Spice Level + Cooking Preference
+    ];
+
     await this.saveCategories(categories);
     await this.saveMenuItems(menuItems);
+    await this.saveModifierGroups(modifierGroups);
+    for (const a of assignments) {
+      await this.assignModifiersToMenuItem(a.menuItemId, a.modifierGroupIds);
+    }
 
-    console.log(`[MenuStorageService] Seeded ${categories.length} categories and ${menuItems.length} menu items`);
+    console.log(`[MenuStorageService] Seeded ${categories.length} categories, ${menuItems.length} items, ${modifierGroups.length} modifier groups`);
   }
 
   // ============== UTILITIES ==============
