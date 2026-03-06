@@ -59,3 +59,7 @@ report.xml
 
 # Allow prep documentation screenshots
 !prep/**/*.png
+
+# Root-level screenshot folders (copies already in prep/)
+/visual-tour/
+/android/v2_*.png
