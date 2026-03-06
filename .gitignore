@@ -47,12 +47,15 @@ android/app/build/
 *.apk
 *.aab
 
-screenshots/
+/screenshots/
 
 # QA/debug testing artifacts
 qa_*.png
 debug_*.png
 report.xml
 
-# Testing PNGs (root level)
-*.png
+# Testing PNGs (root level only — not prep/)
+/*.png
+
+# Allow prep documentation screenshots
+!prep/**/*.png
