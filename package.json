@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "test": "jest",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "postinstall": "patch --forward -p1 -d node_modules/react-native-tcp-socket < patches/react-native-tcp-socket@6.4.1.patch || true"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -76,7 +77,4 @@
   "engines": {
     "node": ">=18"
   },
-  "patchedDependencies": {
-    "react-native-tcp-socket@6.4.1": "patches/react-native-tcp-socket@6.4.1.patch"
-  }
 }
