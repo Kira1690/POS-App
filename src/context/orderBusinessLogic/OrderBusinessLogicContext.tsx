@@ -3,7 +3,7 @@
  * Follows Single Responsibility Principle - handles business validation and rules
  */
 
-import React, { createContext, useContext, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useCallback, useMemo, ReactNode } from 'react';
 import { Order } from '@/types/order.types';
 import { OrderStatus } from '@/types/common.types';
 import { CartItem } from '@/context/cart';

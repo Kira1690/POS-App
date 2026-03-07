@@ -100,7 +100,7 @@ export default function SettingsScreen() {
       id: 'printer_management',
       label: 'Printer Management',
       icon: <Icon name="printer" size={20} color={theme.colors.white} accessibilityLabel="Printer management" />,
-      iconBackground: '#8E44AD',
+      iconBackground: theme.colors.purple,
     },
     {
       id: 'integrations',

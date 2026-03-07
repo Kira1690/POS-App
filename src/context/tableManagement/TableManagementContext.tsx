@@ -9,6 +9,7 @@ import React, {
   useContext,
   useReducer,
   useCallback,
+  useMemo,
   ReactNode,
 } from 'react';
 import {
@@ -373,23 +374,18 @@ export const TableManagementProvider: React.FC<
 
   // ==================== CONTEXT VALUE ====================
 
-  const value: TableManagementContextType = {
+  const value: TableManagementContextType = useMemo(() => ({
     state,
-    loadTables,
-    createTable,
-    updateTable,
-    deleteTable,
-    updateTableStatus,
-    updateTablePosition,
-    loadAreas,
-    createArea,
-    updateArea,
-    deleteArea,
-    selectTable,
-    setFilters,
-    setSearchQuery,
-    clearError,
-  };
+    loadTables, createTable, updateTable, deleteTable,
+    updateTableStatus, updateTablePosition,
+    loadAreas, createArea, updateArea, deleteArea,
+    selectTable, setFilters, setSearchQuery, clearError,
+  }), [
+    state, loadTables, createTable, updateTable, deleteTable,
+    updateTableStatus, updateTablePosition,
+    loadAreas, createArea, updateArea, deleteArea,
+    selectTable, setFilters, setSearchQuery, clearError,
+  ]);
 
   return (
     <TableManagementContext.Provider value={value}>

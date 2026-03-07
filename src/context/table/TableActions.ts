@@ -8,9 +8,19 @@ import { Table, CreateTableRequest, UpdateTableStatusRequest } from '@/types/tab
 import { MenuItem } from '@/types/menu.types';
 import { showToast } from '@/utils/toast';
 import { TableAction } from './TableReducer';
-import { tableStorageService } from '@/services/storage';
+import { tableStorageService, authStorageService } from '@/services/storage';
 import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
 import { TableStatus } from '@/types/common.types';
+
+/** Returns true when the stored access token belongs to dummy/offline credentials. */
+async function isUsingDummyCredentials(): Promise<boolean> {
+  try {
+    const session = await authStorageService.getSession();
+    return session?.accessToken?.startsWith('dummy_') ?? false;
+  } catch {
+    return false;
+  }
+}
 
 // Reconcile table statuses against actual active orders.
 // Resets OCCUPIED tables to AVAILABLE if they have no active order in storage.
@@ -66,6 +76,20 @@ export const createTableActions = (
   const loadTables = async (restaurantId: string): Promise<void> => {
     dispatch({ type: 'TABLE_LOAD_START' });
 
+    // Dummy/offline credentials — skip API entirely, go straight to SQLite
+    const isDummy = await isUsingDummyCredentials();
+    if (isDummy) {
+      try {
+        const data = await tableStorageService.initialize(restaurantId);
+        const reconciled = await reconcileTableStatuses(data.tables);
+        dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: reconciled });
+      } catch (storageError: unknown) {
+        const errorMessage = (storageError as Error).message || 'Failed to load tables';
+        dispatch({ type: 'TABLE_LOAD_FAILURE', payload: errorMessage });
+      }
+      return;
+    }
+
     try {
       const apiTables = await tableService.getTables(restaurantId);
 
@@ -119,6 +143,14 @@ export const createTableActions = (
   };
 
   const updateTableStatus = async (tableId: string, updateData: UpdateTableStatusRequest): Promise<void> => {
+    // Dummy/offline credentials — update locally only, no API call
+    const isDummy = await isUsingDummyCredentials();
+    if (isDummy) {
+      await tableStorageService.updateTableStatus(tableId, updateData.status);
+      dispatch({ type: 'TABLE_STATUS_UPDATE', payload: { tableId, status: updateData.status } });
+      return;
+    }
+
     try {
       const updatedTable = await tableService.updateTableStatus(tableId, updateData);
       dispatch({ type: 'TABLE_UPDATE', payload: updatedTable });
@@ -299,28 +331,36 @@ export const createTableActions = (
   let unsubscribe: (() => void) | null = null;
 
   const connectToUpdates = (restaurantId: string): void => {
-    try {
-      // Disconnect any existing connection first
-      if (unsubscribe) {
-        unsubscribe();
-        unsubscribe = null;
+    // Skip WebSocket for dummy/offline credentials
+    isUsingDummyCredentials().then(isDummy => {
+      if (isDummy) {
+        if (__DEV__) console.log('[TableActions] Dummy credentials — skipping WebSocket');
+        return;
       }
-      
-      // Only connect if WebSocket service is available
-      if (tableWebSocketService) {
-        tableWebSocketService.connect(restaurantId);
-        dispatch({ type: 'REALTIME_CONNECT' });
-        
-        // Subscribe to updates and store unsubscribe function
-        unsubscribe = tableWebSocketService.subscribe((update) => {
-          dispatch({ type: 'REALTIME_UPDATE', payload: update });
-        });
-      } else {
-        console.warn('WebSocket service not available, skipping real-time updates');
+
+      try {
+        // Disconnect any existing connection first
+        if (unsubscribe) {
+          unsubscribe();
+          unsubscribe = null;
+        }
+
+        // Only connect if WebSocket service is available
+        if (tableWebSocketService) {
+          tableWebSocketService.connect(restaurantId);
+          dispatch({ type: 'REALTIME_CONNECT' });
+
+          // Subscribe to updates and store unsubscribe function
+          unsubscribe = tableWebSocketService.subscribe((update) => {
+            dispatch({ type: 'REALTIME_UPDATE', payload: update });
+          });
+        } else {
+          console.warn('WebSocket service not available, skipping real-time updates');
+        }
+      } catch (error: unknown) {
+        console.error('Failed to connect to real-time updates:', (error as Error).message);
       }
-    } catch (error: any) {
-      console.error('Failed to connect to real-time updates:', error.message);
-    }
+    }).catch(() => {});
   };
 
   const disconnectFromUpdates = (): void => {

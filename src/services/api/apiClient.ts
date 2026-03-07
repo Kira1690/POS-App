@@ -104,6 +104,11 @@ class ApiClient {
     const status = error.response?.status;
     const data = error.response?.data as ApiResponse;
 
+    // Pure network failures (no HTTP status) are silently ignored —
+    // the app works offline via local SQLite and the SyncProvider
+    // handles connectivity transitions with a single toast.
+    if (!status) return;
+
     switch (status) {
       case HTTP_STATUS.BAD_REQUEST:
         showToast({

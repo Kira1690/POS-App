@@ -8,7 +8,7 @@
  * - Manager approval flag
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -73,7 +73,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
   const [reason, setReason] = useState(currentDiscount?.reason || '');
   const [customReason, setCustomReason] = useState('');
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     overlay: {
       flex: 1,
       backgroundColor: 'rgba(0,0,0,0.5)',
@@ -310,7 +310,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
       color: theme.colors.onPrimary,
       marginLeft: theme.spacing.xs,
     },
-  });
+  }), [theme]);
 
   useEffect(() => {
     if (visible && currentDiscount) {

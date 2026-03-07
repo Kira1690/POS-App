@@ -133,9 +133,10 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
     }
 
     const subtotal = order.subtotal || 0;
+    const discountAmount = (order as any).discountAmount || 0;
     const tax = order.taxAmount || 0;
     const tip = tipAmount;
-    const total = subtotal + tax + tip;
+    const total = subtotal - discountAmount + tax + tip;
 
     return { subtotal, tax, tip, total };
   }, [order, tipAmount, splitPayment]);

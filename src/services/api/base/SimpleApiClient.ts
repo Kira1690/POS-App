@@ -83,6 +83,10 @@ export class SimpleApiClient implements IBaseApiClient {
     const status = error.response?.status;
     const data = error.response?.data;
 
+    // Pure network failures (no HTTP status) are silently ignored —
+    // the app works offline via local SQLite.
+    if (!status) return;
+
     switch (status) {
       case 400:
         this.showError('Invalid Request', data?.message || 'Please check your input');

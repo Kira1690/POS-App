@@ -4,7 +4,7 @@
  * Under 300 lines, focused on state management and data orchestration
  */
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { UserRole } from '@/types/auth.types';
 import { useAuth } from '@/context/auth/AuthContext';
 
@@ -325,45 +325,55 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
     }
   }, [authState.isAuthenticated, authState.user?.role, loadDashboardData]);
 
-  // Real-time connection management
+  // Real-time connection management — track interval ref so disconnect cleans it up
+  const realTimeIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
   const connectRealTime = useCallback(() => {
     dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'connecting' });
-    
-    // Mock WebSocket connection - replace with actual WebSocket
+
     setTimeout(() => {
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'connected' });
-      
-      // Start periodic updates
-      const interval = setInterval(() => {
-        dispatch({ type: 'REFRESH_TIMESTAMP' });
-      }, 30000); // Update every 30 seconds
-
-      return () => clearInterval(interval);
     }, 1000);
+
+    // Clear any previous leaked interval before starting a new one
+    if (realTimeIntervalRef.current) clearInterval(realTimeIntervalRef.current);
+    realTimeIntervalRef.current = setInterval(() => {
+      dispatch({ type: 'REFRESH_TIMESTAMP' });
+    }, 30000);
   }, []);
 
   const disconnectRealTime = useCallback(() => {
+    if (realTimeIntervalRef.current) {
+      clearInterval(realTimeIntervalRef.current);
+      realTimeIntervalRef.current = null;
+    }
     dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'disconnected' });
   }, []);
 
-  // Actions
-  const actions = {
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (realTimeIntervalRef.current) clearInterval(realTimeIntervalRef.current);
+    };
+  }, []);
+
+  // Actions — memoized to stabilize context value
+  const actions = useMemo(() => ({
     refreshDashboard: () => loadDashboardData(authState.user?.role || UserRole.RESTAURANT_STAFF),
     markTaskComplete: (taskId: string) => dispatch({ type: 'MARK_TASK_COMPLETE', payload: taskId }),
-    updateOrderStatus: (orderId: string, status: OrderItem['status']) => 
+    updateOrderStatus: (orderId: string, status: OrderItem['status']) =>
       dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, status } }),
-    acknowledgeNotification: (notificationId: string) => {
-      // TODO: Implement notification acknowledgment
-      console.log('Acknowledging notification:', notificationId);
+    acknowledgeNotification: (_notificationId: string) => {
+      // no-op until notification service is wired
     },
     connectRealTime,
     disconnectRealTime,
-  };
+  }), [loadDashboardData, authState.user?.role, connectRealTime, disconnectRealTime]);
 
-  const value: DashboardContextValue = {
+  const value: DashboardContextValue = useMemo(() => ({
     state,
     actions,
-  };
+  }), [state, actions]);
 
   return (
     <DashboardContext.Provider value={value}>

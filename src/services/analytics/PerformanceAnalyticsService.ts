@@ -270,10 +270,7 @@ class PerformanceAnalyticsService {
 
     this.events.push(performanceEvent);
 
-    // In development, log events
-    if (__DEV__) {
-      console.log(`📊 Analytics: ${event}`, properties);
-    }
+    // Analytics logging disabled — was causing JS thread blocking via bridge overhead
 
     // Batch send events when buffer is full
     if (this.events.length >= 50) {
@@ -400,9 +397,6 @@ class PerformanceAnalyticsService {
 
     try {
       // In a real app, send to analytics service (Mixpanel, Amplitude, etc.)
-      if (__DEV__) {
-        console.log(`📤 Flushing ${eventsToSend.length} analytics events`);
-      }
 
       // Simulate API call
       // await analyticsAPI.sendEvents(eventsToSend);

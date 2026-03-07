@@ -1,153 +1,209 @@
 /**
- * Simple Line Chart - Basic working chart without complex dependencies
- * Temporary component to fix Metro bundler issues
+ * BarChart — Reusable bar chart with responsive sizing, color support, labels, touch highlight.
+ * Renamed from SimpleLineChart for clarity; imported as SimpleLineChart for backward compat.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 
-interface ChartDataPoint {
+export interface BarChartDataPoint {
   label: string;
   value: number;
-  date: string;
+  color?: string;
+  date?: string;
 }
 
-interface SimpleLineChartProps {
-  data: ChartDataPoint[];
+interface BarChartProps {
+  data: BarChartDataPoint[];
   title: string;
   height?: number;
   accentColor?: string;
+  showValues?: boolean;
+  horizontal?: boolean;
 }
 
-export const SimpleLineChart: React.FC<SimpleLineChartProps> = ({
+export const BarChart: React.FC<BarChartProps> = ({
   data,
   title,
   height = 320,
   accentColor,
+  showValues = false,
+  horizontal = false,
 }) => {
   const { theme } = useTheme();
+  const { isPhone, isSmallTablet, captionSize, bodySize } = useResponsive();
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const chartHeight = height - 80; // Space for title and labels
-  const maxValue = Math.max(...data.map(d => d.value));
-  const minValue = Math.min(...data.map(d => d.value));
+  const primaryColor = accentColor ?? theme.colors.tertiary;
+  const chartHeight = height - 80;
+
+  const maxValue = data.length > 0 ? Math.max(...data.map((d) => d.value), 1) : 1;
+  const minValue = data.length > 0 ? Math.min(...data.map((d) => d.value)) : 0;
   const valueRange = maxValue - minValue || 1;
 
-  const primaryColor = accentColor || theme.colors.tertiary;
+  const formatValue = (v: number) =>
+    v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v.toFixed(0)}`;
 
-  const formatValue = (value: number) => {
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}k`;
-    }
-    return `$${value}`;
-  };
+  const totalValue = data.reduce((s, d) => s + d.value, 0);
+  const avgValue = data.length > 0 ? totalValue / data.length : 0;
+  const growth =
+    data.length > 1 && data[0].value > 0
+      ? ((data[data.length - 1].value - data[0].value) / data[0].value) * 100
+      : 0;
 
   const styles = StyleSheet.create({
     container: {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.xl,
-      padding: theme.spacing.lg,
+      padding: isPhone ? 12 : isSmallTablet ? 14 : theme.spacing.lg,
       ...theme.shadows.md,
     },
     title: {
-      ...theme.typography.title3,
+      fontSize: isPhone ? 13 : isSmallTablet ? 14 : 16,
       color: theme.colors.onSurface,
       fontWeight: '600',
-      marginBottom: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
       textAlign: 'center',
     },
-    chartContainer: {
+    chartArea: {
       height: chartHeight,
-      flexDirection: 'row',
-      alignItems: 'flex-end',
+      flexDirection: horizontal ? 'column' : 'row',
+      alignItems: horizontal ? 'flex-start' : 'flex-end',
       justifyContent: 'space-between',
-      marginBottom: theme.spacing.md,
-      paddingHorizontal: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
     },
-    barContainer: {
-      flex: 1,
+    barWrap: {
+      flex: horizontal ? undefined : 1,
+      width: horizontal ? '100%' : undefined,
       alignItems: 'center',
-      marginHorizontal: 2,
+      marginHorizontal: horizontal ? 0 : 2,
+      marginBottom: horizontal ? 4 : 0,
+    },
+    valueLabel: {
+      fontSize: captionSize,
+      color: theme.colors.onSurfaceSecondary,
+      marginBottom: 2,
     },
     bar: {
-      width: '80%',
       borderRadius: 4,
-      marginBottom: 4,
+      minHeight: 4,
     },
-    label: {
-      ...theme.typography.caption2,
-      color: theme.colors.onSurfaceVariant,
-      fontSize: 10,
+    xLabel: {
+      fontSize: captionSize,
+      color: theme.colors.onSurfaceSecondary,
       textAlign: 'center',
+      marginTop: 4,
     },
-    statsContainer: {
+    statsRow: {
       flexDirection: 'row',
       justifyContent: 'space-around',
-      paddingTop: theme.spacing.md,
+      paddingTop: theme.spacing.sm,
       borderTopWidth: 0.5,
       borderTopColor: theme.colors.outline,
+      marginTop: theme.spacing.sm,
     },
-    statItem: {
-      alignItems: 'center',
-    },
+    statItem: { alignItems: 'center' },
     statValue: {
-      ...theme.typography.headline,
+      fontSize: isPhone ? 14 : isSmallTablet ? 16 : 18,
       color: theme.colors.onSurface,
       fontWeight: '600',
     },
     statLabel: {
-      ...theme.typography.caption1,
-      color: theme.colors.onSurfaceVariant,
+      fontSize: captionSize,
+      color: theme.colors.onSurfaceSecondary,
       marginTop: 2,
+    },
+    emptyText: {
+      textAlign: 'center',
+      fontSize: bodySize,
+      color: theme.colors.onSurfaceSecondary,
+      marginVertical: theme.spacing.lg,
     },
   });
 
-  const totalValue = data.reduce((sum, point) => sum + point.value, 0);
-  const avgValue = totalValue / data.length;
-  const growthRate = data.length > 1
-    ? ((data[data.length - 1].value - data[0].value) / data[0].value * 100)
-    : 0;
+  if (data.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.emptyText}>No data available</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
 
-      <View style={styles.chartContainer}>
+      <View style={styles.chartArea}>
         {data.map((point, index) => {
-          const barHeight = Math.max(
-            ((point.value - minValue) / valueRange) * (chartHeight - 40),
-            8
+          const barLength = Math.max(
+            ((point.value - minValue) / valueRange) * (horizontal ? 160 : chartHeight - 30),
+            4,
           );
+          const isActive = activeIndex === index;
+          const barColor = point.color ?? (isActive ? theme.colors.primary : primaryColor);
+
+          if (horizontal) {
+            return (
+              <TouchableOpacity
+                key={index}
+                style={styles.barWrap}
+                onPress={() => setActiveIndex(isActive ? null : index)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.xLabel} numberOfLines={1}>{point.label}</Text>
+                <View
+                  style={[
+                    styles.bar,
+                    { width: barLength, height: 16, backgroundColor: barColor },
+                  ]}
+                />
+                {showValues && (
+                  <Text style={styles.valueLabel}>{point.value}</Text>
+                )}
+              </TouchableOpacity>
+            );
+          }
 
           return (
-            <View key={index} style={styles.barContainer}>
+            <TouchableOpacity
+              key={index}
+              style={styles.barWrap}
+              onPress={() => setActiveIndex(isActive ? null : index)}
+              activeOpacity={0.8}
+            >
+              {showValues && (
+                <Text style={styles.valueLabel}>{formatValue(point.value)}</Text>
+              )}
               <View
                 style={[
                   styles.bar,
-                  {
-                    height: barHeight,
-                    backgroundColor: primaryColor,
-                  },
+                  { height: barLength, width: '80%', backgroundColor: barColor },
                 ]}
               />
-              <Text style={styles.label}>{point.label}</Text>
-            </View>
+              <Text style={styles.xLabel} numberOfLines={1}>{point.label}</Text>
+            </TouchableOpacity>
           );
         })}
       </View>
 
-      <View style={styles.statsContainer}>
+      <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{formatValue(totalValue)}</Text>
-          <Text style={styles.statLabel}>Total Sales</Text>
+          <Text style={styles.statLabel}>Total</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{formatValue(avgValue)}</Text>
-          <Text style={styles.statLabel}>Daily Avg</Text>
+          <Text style={styles.statLabel}>Avg</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: growthRate >= 0 ? theme.colors.success : theme.colors.error }]}>
-            {growthRate >= 0 ? '+' : ''}{growthRate.toFixed(1)}%
+          <Text style={[
+            styles.statValue,
+            { color: growth >= 0 ? theme.colors.success : theme.colors.error },
+          ]}>
+            {growth >= 0 ? '+' : ''}{growth.toFixed(1)}%
           </Text>
           <Text style={styles.statLabel}>Growth</Text>
         </View>
@@ -155,3 +211,6 @@ export const SimpleLineChart: React.FC<SimpleLineChartProps> = ({
     </View>
   );
 };
+
+// Backward-compat named export
+export const SimpleLineChart = BarChart;

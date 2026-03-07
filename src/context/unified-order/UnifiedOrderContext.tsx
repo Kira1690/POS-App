@@ -71,6 +71,7 @@ export interface UnifiedOrderContextValue {
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
   setCartDiscount: (type: 'percentage' | 'fixed', value: number) => void;
+  setCartItemDiscount: (itemId: string, discountType: 'percentage' | 'fixed', discountValue: number) => void;
 
   // Table Selection
   setSelectedTable: (table: Table | null) => void;
@@ -268,6 +269,10 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
 
   const setCartDiscount = useCallback((type: 'percentage' | 'fixed', value: number) => {
     dispatch({ type: 'SET_CART_DISCOUNT', payload: { type, value } });
+  }, []);
+
+  const setCartItemDiscount = useCallback((itemId: string, discountType: 'percentage' | 'fixed', discountValue: number) => {
+    dispatch({ type: 'SET_CART_ITEM_DISCOUNT', payload: { itemId, discountType, discountValue } });
   }, []);
 
   // ============== TABLE SELECTION ==============
@@ -848,59 +853,18 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
 
   // ============== CONTEXT VALUE ==============
 
-  const contextValue: UnifiedOrderContextValue = {
-    // State
+  const contextValue: UnifiedOrderContextValue = useMemo(() => ({
     state,
-
-    // Cart Actions
-    addToCart,
-    updateCartItemQuantity,
-    removeFromCart,
-    clearCart,
-    setCartDiscount,
-
-    // Table Selection
+    addToCart, updateCartItemQuantity, removeFromCart, clearCart, setCartDiscount, setCartItemDiscount,
     setSelectedTable,
-
-    // Order Lifecycle
-    submitToKitchen,
-    loadOrders,
-    refreshOrders,
-
-    // Kitchen Status Updates
-    updateOrderStatus,
-    updateItemStatus,
-
-    // Payment
+    submitToKitchen, loadOrders, refreshOrders,
+    updateOrderStatus, updateItemStatus,
     processPayment,
-
-    // Order Management
-    getOrderById,
-    getActiveOrderForTable,
-    cancelOrder,
-    mergeOrders,
-
-    // Bill-level operations
-    applyOrderDiscount,
-    applyItemDiscount,
-    transferItems,
-    addItemsToOrder,
-
-    // Filters
-    setSearchQuery,
-    setStatusFilter,
-    setPaymentStatusFilter,
-    clearFilters,
-
-    // UI
-    setError,
-    clearError,
-    setSelectedOrderId,
-
-    // Data Reset
+    getOrderById, getActiveOrderForTable, cancelOrder, mergeOrders,
+    applyOrderDiscount, applyItemDiscount, transferItems, addItemsToOrder,
+    setSearchQuery, setStatusFilter, setPaymentStatusFilter, clearFilters,
+    setError, clearError, setSelectedOrderId,
     resetAllState,
-
-    // Convenience Getters
     cart: state.cart,
     cartTotal: state.cartTotal,
     cartItemCount: state.cartItemCount,
@@ -912,10 +876,17 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     isLoading: state.isLoading,
     isSubmitting: state.isSubmitting,
     error: state.error,
-
-    // Utility
     canProcessPayment: canProcessPaymentFn,
-  };
+  }), [
+    state, filteredOrders,
+    addToCart, updateCartItemQuantity, removeFromCart, clearCart, setCartDiscount, setCartItemDiscount,
+    setSelectedTable, submitToKitchen, loadOrders, refreshOrders,
+    updateOrderStatus, updateItemStatus, processPayment,
+    getOrderById, getActiveOrderForTable, cancelOrder, mergeOrders,
+    applyOrderDiscount, applyItemDiscount, transferItems, addItemsToOrder,
+    setSearchQuery, setStatusFilter, setPaymentStatusFilter, clearFilters,
+    setError, clearError, setSelectedOrderId, resetAllState, canProcessPaymentFn,
+  ]);
 
   return (
     <UnifiedOrderContext.Provider value={contextValue}>
@@ -959,6 +930,7 @@ export const useUnifiedCart = () => {
     removeItem: context.removeFromCart,
     clear: context.clearCart,
     setDiscount: context.setCartDiscount,
+    setItemDiscount: context.setCartItemDiscount,
     setTable: context.setSelectedTable,
   };
 };

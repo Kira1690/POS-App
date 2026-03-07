@@ -12,6 +12,7 @@ export class TableWebSocketService implements ITableWebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 5000;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   connect(restaurantId: string): void {
     if (this.connection && this.restaurantId === restaurantId) {
@@ -31,9 +32,6 @@ export class TableWebSocketService implements ITableWebSocketService {
       this.connection = new WebSocket(wsUrl);
 
       this.connection.onopen = () => {
-        if (__DEV__) {
-          console.log(`[TableWS] Connected to restaurant ${this.restaurantId}`);
-        }
         this.reconnectAttempts = 0;
       };
 
@@ -41,46 +39,45 @@ export class TableWebSocketService implements ITableWebSocketService {
         try {
           const update = JSON.parse(event.data);
           this.notifyCallbacks(update);
-        } catch (error) {
-          console.error('[TableWS] Failed to parse message:', error);
+        } catch {
+          // Ignore malformed messages
         }
       };
 
-      this.connection.onerror = (error) => {
-        console.error('[TableWS] Connection error:', error);
+      this.connection.onerror = () => {
+        // Silent — reconnect handles recovery
       };
 
       this.connection.onclose = () => {
-        if (__DEV__) {
-          console.log('[TableWS] Connection closed');
-        }
         this.connection = null;
         this.scheduleReconnect();
       };
-    } catch (error) {
-      console.error('[TableWS] Failed to create connection:', error);
+    } catch {
       this.scheduleReconnect();
     }
   }
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('[TableWS] Max reconnection attempts reached');
+      if (__DEV__) console.error('[TableWS] Max reconnection attempts reached');
       return;
     }
 
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectAttempts++;
-    setTimeout(() => {
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
       if (this.restaurantId) {
-        if (__DEV__) {
-          console.log(`[TableWS] Reconnection attempt ${this.reconnectAttempts}`);
-        }
         this.createConnection();
       }
     }, this.reconnectDelay);
   }
 
   disconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.connection) {
       this.connection.close();
       this.connection = null;
@@ -102,12 +99,12 @@ export class TableWebSocketService implements ITableWebSocketService {
     return this.connection?.readyState === WebSocket.OPEN;
   }
 
-  private notifyCallbacks(update: any): void {
+  private notifyCallbacks(update: unknown): void {
     this.callbacks.forEach(callback => {
       try {
         callback(update);
-      } catch (error) {
-        console.error('[TableWS] Callback error:', error);
+      } catch {
+        // Silent — callback errors shouldn't crash WS service
       }
     });
   }

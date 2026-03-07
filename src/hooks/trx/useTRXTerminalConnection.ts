@@ -237,10 +237,12 @@ export const useTRXTerminalConnection = (): UseTRXTerminalConnectionReturn => {
         logger.info('Found stored terminal in SQLite', 'useEffect:restore', { ip: stored.ip, port: stored.port });
         setCurrentTerminal({ ip: stored.ip, port: stored.port, isOnline: true, lastChecked: new Date() });
 
-        // Verify connection in background (don't block UI)
-        connectToTerminal(stored.ip, stored.port).catch(() => {
-          logger.warn('Stored terminal verification failed', 'useEffect:restore');
-        });
+        // Skip TCP re-validation if singleton already has this terminal online
+        if (!terminalService.isTerminalOnline()) {
+          connectToTerminal(stored.ip, stored.port).catch(() => {
+            logger.warn('Stored terminal verification failed', 'useEffect:restore');
+          });
+        }
       }
 
       // Load cached discovered terminals from AsyncStorage (UI cache only, not critical)

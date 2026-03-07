@@ -3,7 +3,7 @@
  * Follows Single Responsibility Principle - handles cart state and operations
  */
 
-import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useMemo, ReactNode } from 'react';
 import { MenuItem } from '@/types/menu.types';
 import { Table } from '@/types/table.types';
 
@@ -242,18 +242,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     dispatch({ type: 'SET_PROCESSING', payload: { processing } });
   }, []);
   
-  const contextValue: CartContextValue = {
+  const contextValue: CartContextValue = useMemo(() => ({
     ...state,
-    addItem,
-    updateItem,
-    removeItem,
-    clearCart,
-    setSelectedTable,
-    calculateTotal,
-    setError,
-    clearError,
-    setProcessing,
-  };
+    addItem, updateItem, removeItem, clearCart,
+    setSelectedTable, calculateTotal,
+    setError, clearError, setProcessing,
+  }), [
+    state, addItem, updateItem, removeItem, clearCart,
+    setSelectedTable, calculateTotal, setError, clearError, setProcessing,
+  ]);
   
   return (
     <CartContext.Provider value={contextValue}>

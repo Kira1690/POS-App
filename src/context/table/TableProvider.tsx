@@ -3,7 +3,7 @@
  * Under 200 lines, focused on providing table context
  */
 
-import React, { useReducer, useCallback, useEffect } from 'react';
+import React, { useReducer, useCallback, useEffect, useMemo } from 'react';
 import { ITableService, ITableWebSocketService, ITableContext } from '@/interfaces';
 import { Table, UpdateTableStatusRequest, CreateTableRequest } from '@/types/table.types';
 import { MenuItem } from '@/types/menu.types';
@@ -82,7 +82,7 @@ export const TableProvider: React.FC<TableProviderProps> = ({
 
   const updateOrderItemQuantity = useCallback(async (itemId: string, quantity: number) => {
     // This will be implemented when orderService is enhanced
-    console.log('updateOrderItemQuantity:', itemId, quantity);
+    if (__DEV__) console.log('updateOrderItemQuantity:', itemId, quantity);
   }, []);
 
   const clearActiveOrder = useCallback(() => {
@@ -121,65 +121,41 @@ export const TableProvider: React.FC<TableProviderProps> = ({
   // Subscribe to order events for table status management
   useEffect(() => {
     // ORDER_CREATED: Mark table as OCCUPIED when order is submitted
-    const unsubscribeCreated = orderEventEmitter.subscribe('ORDER_CREATED', (orderId, data) => {
+    const unsubscribeCreated = orderEventEmitter.subscribe('ORDER_CREATED', (_orderId, data) => {
       const tableId = data?.tableId as string;
       if (tableId) {
-        console.log('[TableProvider] Order created - marking table OCCUPIED:', tableId);
-        // Set table to OCCUPIED
         updateTableStatus(tableId, { status: TableStatus.OCCUPIED })
           .then(() => {
-            // Also persist to storage
             tableStorageService.updateTableStatus(tableId, TableStatus.OCCUPIED);
-            console.log('[TableProvider] ✅ Table', tableId, 'set to OCCUPIED');
           })
-          .catch((error) => {
-            console.error('[TableProvider] ❌ Failed to mark table occupied:', error);
-          });
+          .catch(() => { /* silent — table status is non-critical */ });
       }
     });
 
-    // ORDER_PAID: Release table when payment is complete
-    const unsubscribePaid = orderEventEmitter.subscribe('ORDER_PAID', (orderId, data) => {
+    const unsubscribePaid = orderEventEmitter.subscribe('ORDER_PAID', (_orderId, data) => {
       const tableId = data?.tableId as string;
       if (tableId) {
-        console.log('[TableProvider] Order paid - releasing table:', tableId);
-        // Set table back to AVAILABLE
         updateTableStatus(tableId, { status: TableStatus.AVAILABLE })
           .then(() => {
-            // Also persist to storage
             tableStorageService.updateTableStatus(tableId, TableStatus.AVAILABLE);
-            console.log('[TableProvider] ✅ Table', tableId, 'set to AVAILABLE');
           })
-          .catch((error) => {
-            console.error('[TableProvider] ❌ Failed to release table:', error);
-          });
+          .catch(() => { /* silent */ });
       }
     });
 
-    // ORDER_CANCELLED: Release table when order is cancelled
-    const unsubscribeCancelled = orderEventEmitter.subscribe('ORDER_CANCELLED', (orderId, data) => {
+    const unsubscribeCancelled = orderEventEmitter.subscribe('ORDER_CANCELLED', (_orderId, data) => {
       const tableId = data?.tableId as string;
       if (tableId) {
-        console.log('[TableProvider] Order cancelled - releasing table:', tableId);
-        // Set table back to AVAILABLE
         updateTableStatus(tableId, { status: TableStatus.AVAILABLE })
           .then(() => {
-            // Also persist to storage
             tableStorageService.updateTableStatus(tableId, TableStatus.AVAILABLE);
-            console.log('[TableProvider] ✅ Table', tableId, 'set to AVAILABLE');
           })
-          .catch((error) => {
-            console.error('[TableProvider] ❌ Failed to release table:', error);
-          });
+          .catch(() => { /* silent */ });
       }
     });
 
-    // SYSTEM_RESET: Refresh tables when data is cleared
     const unsubscribeReset = orderEventEmitter.subscribe('SYSTEM_RESET', () => {
-      console.log('[TableProvider] System reset - refreshing tables');
-      refreshTables().catch((error) => {
-        console.error('[TableProvider] Failed to refresh tables:', error);
-      });
+      refreshTables().catch(() => { /* silent */ });
     });
 
     // TABLE_SYNC_COMPLETE: Refresh tables when sync pulls new data from server
@@ -205,7 +181,7 @@ export const TableProvider: React.FC<TableProviderProps> = ({
     };
   }, [disconnectFromUpdates]);
 
-  const contextValue: ITableContext = {
+  const contextValue: ITableContext = useMemo(() => ({
     state,
     selectTable,
     updateTableStatus,
@@ -223,7 +199,13 @@ export const TableProvider: React.FC<TableProviderProps> = ({
     getTableById,
     getAvailableTables,
     getOccupiedTables,
-  };
+  }), [
+    state, selectTable, updateTableStatus, createTable, deleteTable,
+    refreshTables, createOrderForTable, addItemToOrder, removeItemFromOrder,
+    updateOrderItemQuantity, clearActiveOrder, connectToUpdates,
+    disconnectFromUpdates, clearError, getTableById, getAvailableTables,
+    getOccupiedTables,
+  ]);
 
   return (
     <TableContext.Provider value={contextValue}>

@@ -124,7 +124,7 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
       dispatch({ type: 'SET_STATION_CONFIGS', payload: stationConfigsRecord });
       dispatch({ type: 'SET_ERROR', payload: null });
     } catch (error) {
-      console.error('[EnhancedKitchenContext] Load error:', error);
+      if (__DEV__) console.error('[EnhancedKitchenContext] Load error:', error);
       dispatch({ type: 'SET_ERROR', payload: String(error) });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -140,8 +140,8 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
       const tickets = await kitchenStorageService.getTickets();
       dispatch({ type: 'SET_TICKETS', payload: tickets });
       dispatch({ type: 'MARK_TICKETS_OVERDUE' });
-    } catch (error) {
-      console.error('[EnhancedKitchenContext] Refresh error:', error);
+    } catch {
+      // Silent — refresh failure is non-critical
     } finally {
       dispatch({ type: 'SET_REFRESHING', payload: false });
     }
@@ -153,7 +153,7 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
       await kitchenStorageService.saveTicket(ticket);
       dispatch({ type: 'ADD_TICKET', payload: ticket });
     } catch (error) {
-      console.error('[EnhancedKitchenContext] Add ticket error:', error);
+      if (__DEV__) console.error('[EnhancedKitchenContext] Add ticket error:', error);
       dispatch({ type: 'SET_ERROR', payload: String(error) });
     }
   }, []);
@@ -164,7 +164,7 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
       await Promise.all(tickets.map((t) => kitchenStorageService.saveTicket(t)));
       dispatch({ type: 'ADD_TICKETS', payload: tickets });
     } catch (error) {
-      console.error('[EnhancedKitchenContext] Add tickets error:', error);
+      if (__DEV__) console.error('[EnhancedKitchenContext] Add tickets error:', error);
       dispatch({ type: 'SET_ERROR', payload: String(error) });
     }
   }, []);
@@ -235,16 +235,14 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
               status: orderStatus,
             });
 
-            if (__DEV__) {
-              console.log(`[Kitchen→Order Sync] Order ${ticket.orderId} status updated to: ${orderStatus}`);
-            }
+            // Status synced — no log to avoid JS bridge flooding on 24/7 terminals
           } catch (syncError) {
-            console.error('[EnhancedKitchenContext] Order sync error:', syncError);
+            if (__DEV__) console.error('[EnhancedKitchenContext] Order sync error:', syncError);
             // Don't fail the ticket update if order sync fails
           }
         }
       } catch (error) {
-        console.error('[EnhancedKitchenContext] Update status error:', error);
+        if (__DEV__) console.error('[EnhancedKitchenContext] Update status error:', error);
         dispatch({ type: 'SET_ERROR', payload: String(error) });
       }
     },
@@ -265,7 +263,7 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
         await kitchenStorageService.updateTicket(ticketId, { items: updatedItems });
         dispatch({ type: 'UPDATE_ITEM_STATUS', payload: { ticketId, itemId, status } });
       } catch (error) {
-        console.error('[EnhancedKitchenContext] Update item status error:', error);
+        if (__DEV__) console.error('[EnhancedKitchenContext] Update item status error:', error);
         dispatch({ type: 'SET_ERROR', payload: String(error) });
       }
     },
@@ -278,7 +276,7 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
       await kitchenStorageService.deleteTicket(ticketId);
       dispatch({ type: 'REMOVE_TICKET', payload: ticketId });
     } catch (error) {
-      console.error('[EnhancedKitchenContext] Remove ticket error:', error);
+      if (__DEV__) console.error('[EnhancedKitchenContext] Remove ticket error:', error);
       dispatch({ type: 'SET_ERROR', payload: String(error) });
     }
   }, []);
@@ -488,32 +486,23 @@ export const EnhancedKitchenProvider: React.FC<EnhancedKitchenProviderProps> = (
     return () => clearInterval(overdueCheck);
   }, []);
 
-  // Context value
-  const contextValue: EnhancedKitchenContextValue = {
+  // Context value — memoized to prevent cascading re-renders
+  const contextValue: EnhancedKitchenContextValue = useMemo(() => ({
     state,
-    loadTickets,
-    refreshTickets,
-    addTicket,
-    addTickets,
-    updateTicketStatus,
-    updateItemStatus,
-    removeTicket,
-    bumpTicket,
-    recallTicket,
-    setSelectedStation,
-    setSelectedStatus,
-    setSearchQuery,
-    toggleAllergenFilter,
-    toggleOverdueFilter,
-    clearFilters,
-    setViewMode,
-    setSortBy,
-    setAutoRefresh,
-    selectTicket,
-    filteredTickets,
-    sortedTickets,
-    selectedTicket,
-  };
+    loadTickets, refreshTickets, addTicket, addTickets,
+    updateTicketStatus, updateItemStatus, removeTicket, bumpTicket, recallTicket,
+    setSelectedStation, setSelectedStatus, setSearchQuery,
+    toggleAllergenFilter, toggleOverdueFilter, clearFilters,
+    setViewMode, setSortBy, setAutoRefresh, selectTicket,
+    filteredTickets, sortedTickets, selectedTicket,
+  }), [
+    state, filteredTickets, sortedTickets, selectedTicket,
+    loadTickets, refreshTickets, addTicket, addTickets,
+    updateTicketStatus, updateItemStatus, removeTicket, bumpTicket, recallTicket,
+    setSelectedStation, setSelectedStatus, setSearchQuery,
+    toggleAllergenFilter, toggleOverdueFilter, clearFilters,
+    setViewMode, setSortBy, setAutoRefresh, selectTicket,
+  ]);
 
   return (
     <EnhancedKitchenContext.Provider value={contextValue}>

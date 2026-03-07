@@ -78,6 +78,8 @@ export const AppleButton: React.FC<AppleButtonProps> = ({
         return {
           backgroundColor: 'transparent',
           textColor: theme.colors.primary,
+          borderColor: theme.colors.outline,
+          borderWidth: 1,
         };
       case 'destructive':
         return {
@@ -157,6 +159,8 @@ export const AppleButton: React.FC<AppleButtonProps> = ({
       justifyContent: 'center',
       flexDirection: 'row',
       alignSelf: fullWidth ? 'stretch' : 'flex-start',
+      borderWidth: colors.borderWidth || 0,
+      borderColor: colors.borderColor || 'transparent',
       ...style,
     },
     content: {
@@ -168,7 +172,9 @@ export const AppleButton: React.FC<AppleButtonProps> = ({
     text: {
       color: colors.textColor,
       fontSize: sizeStyles.fontSize,
-      fontWeight: variant === 'ghost' ? '500' : '600',
+      fontWeight: '700', // Bolder font weights for modern POS
+      textTransform: 'uppercase', // Uppercase for structured hardware feel
+      letterSpacing: 0.5,
       textAlign: 'center',
       ...textStyle,
     },

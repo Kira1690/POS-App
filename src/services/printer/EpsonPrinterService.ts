@@ -3,7 +3,7 @@
  * Requires react-native-tcp-socket (same dependency used by TRX terminal).
  */
 
-import { NativeTcpSocket } from '@/services/trx/pos/NativeTcpSocket';
+import nativeTcpSocket, { isTcpSocketAvailable } from '@/services/trx/pos/NativeTcpSocket';
 import type { UnifiedOrder } from '@/types/unified-order.types';
 
 // ESC/POS byte sequences
@@ -36,7 +36,7 @@ const formatCurrency = (amount: number): string => `$${amount.toFixed(2)}`;
 
 class EpsonPrinterService {
   private async sendBytes(ip: string, port: number, bytes: number[]): Promise<void> {
-    if (!NativeTcpSocket.isTcpSocketAvailable()) {
+    if (!isTcpSocketAvailable()) {
       throw new Error('TCP socket unavailable — requires custom dev build');
     }
 
@@ -46,20 +46,26 @@ class EpsonPrinterService {
         reject(new Error('Printer connection timeout'));
       }, TIMEOUT_MS);
 
-      const client = NativeTcpSocket.createConnection(
+      const client = nativeTcpSocket.createConnection(
         { host: ip, port, timeout: TIMEOUT_MS },
         () => {
-          client.write(buffer, (_err?: Error | null) => {
+          client!.write(buffer, undefined, (_err?: Error) => {
             clearTimeout(timer);
-            client.destroy();
+            client!.destroy();
             resolve();
           });
         }
       );
 
-      client.on('error', (err: Error) => {
+      if (!client) {
         clearTimeout(timer);
-        reject(err);
+        reject(new Error('Failed to create TCP connection to printer'));
+        return;
+      }
+
+      client.on('error', (err: unknown) => {
+        clearTimeout(timer);
+        reject(err instanceof Error ? err : new Error(String(err)));
       });
     });
   }
@@ -96,7 +102,11 @@ class EpsonPrinterService {
     await this.sendBytes(ip, port, bytes);
   }
 
-  async printReceipt(ip: string, port: number, order: UnifiedOrder): Promise<void> {
+  async printReceipt(ip: string, port: number, order: UnifiedOrder, paperSize: '58mm' | '80mm' = '80mm'): Promise<void> {
+    const colWidth = paperSize === '58mm' ? 32 : 40;
+    const separator = '='.repeat(colWidth);
+    const divider = '-'.repeat(colWidth);
+
     const bytes: number[] = [
       ...INIT,
       ...CENTER,
@@ -108,19 +118,20 @@ class EpsonPrinterService {
       ...line('123 Main Street'),
       ...line('Tel: (555) 123-4567'),
       ...line(''),
-      ...line('================================'),
+      ...line(separator),
       ...LEFT,
       ...line(`Order: ${order.orderNumber}`),
       ...line(`Table: ${order.tableName}`),
       ...line(`Date:  ${new Date(order.createdAt).toLocaleString()}`),
-      ...line('--------------------------------'),
+      ...line(divider),
     ];
 
     for (const item of order.items) {
       const qty = `x${item.quantity}`;
       const price = formatCurrency(item.itemTotal);
-      const labelWidth = 40 - qty.length - price.length - 2;
-      bytes.push(...line(`${padRight(item.name, labelWidth)} ${qty} ${padLeft(price, price.length)}`));
+      const labelWidth = colWidth - qty.length - price.length - 2;
+      const name = item.name.length > labelWidth ? item.name.substring(0, labelWidth) : item.name;
+      bytes.push(...line(`${padRight(name, labelWidth)} ${qty} ${padLeft(price, price.length)}`));
       if (item.selectedModifiers) {
         for (const grp of item.selectedModifiers) {
           for (const opt of grp.options ?? []) {
@@ -131,22 +142,22 @@ class EpsonPrinterService {
     }
 
     bytes.push(
-      ...line('--------------------------------'),
-      ...priceLine('Subtotal:', formatCurrency(order.subtotal)),
-      ...priceLine('Tax (10%):', formatCurrency(order.taxAmount ?? 0)),
+      ...line(divider),
+      ...priceLine('Subtotal:', formatCurrency(order.subtotal), colWidth),
+      ...priceLine('Tax (10%):', formatCurrency(order.taxAmount ?? 0), colWidth),
     );
 
     if ((order.discountAmount ?? 0) > 0) {
-      bytes.push(...priceLine('Discount:', `-${formatCurrency(order.discountAmount ?? 0)}`));
+      bytes.push(...priceLine('Discount:', `-${formatCurrency(order.discountAmount ?? 0)}`, colWidth));
     }
     if ((order.tipAmount ?? 0) > 0) {
-      bytes.push(...priceLine('Tip:', formatCurrency(order.tipAmount ?? 0)));
+      bytes.push(...priceLine('Tip:', formatCurrency(order.tipAmount ?? 0), colWidth));
     }
 
     bytes.push(
-      ...line('================================'),
+      ...line(separator),
       ...BOLD_ON,
-      ...priceLine('TOTAL:', formatCurrency(order.totalAmount)),
+      ...priceLine('TOTAL:', formatCurrency(order.totalAmount), colWidth),
       ...BOLD_OFF,
       ...line(''),
       ...CENTER,

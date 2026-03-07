@@ -124,12 +124,12 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
     try {
       const config = await printerStorageService.getConfig();
       if (config.receipt_printer.enabled && config.receipt_printer.ip_address) {
-        // Build a minimal unified order from the route params for printing
-        const printOrder = order as any;
+        const printOrder = order as unknown as import('@/types/unified-order.types').UnifiedOrder;
         await epsonPrinterService.printReceipt(
           config.receipt_printer.ip_address,
           config.receipt_printer.port ?? 9100,
-          printOrder
+          printOrder,
+          config.receipt_printer.paper_size ?? '80mm'
         );
         showToast({ type: 'success', title: 'Printing', message: 'Sent to receipt printer' });
         return;

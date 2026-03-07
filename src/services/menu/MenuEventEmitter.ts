@@ -51,17 +51,12 @@ class MenuEventEmitterService {
       this.eventLog.shift();
     }
 
-    // Log in development
-    if (__DEV__) {
-      console.log('[MenuEventEmitter] Event:', event.type, event.payload);
-    }
-
     // Notify all subscribers
     this.handlers.forEach((handler) => {
       try {
         handler(event);
-      } catch (error) {
-        console.error('[MenuEventEmitter] Handler error:', error);
+      } catch {
+        // Silent — handler errors shouldn't crash emitter
       }
     });
   }

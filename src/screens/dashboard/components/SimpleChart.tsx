@@ -1,167 +1,221 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+/**
+ * SimpleChart — Professional responsive bar chart for POS reports.
+ * Features: capped bar widths, currency formatting, responsive sizing,
+ * proper Y-axis labels, touch highlights, dark mode support.
+ */
+
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { ChartProps } from '@/types/dashboard.types';
 
-export const SimpleChart: React.FC<ChartProps> = ({
+const fmtVal = (v: number): string => {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1000) return `$${(v / 1000).toFixed(1)}k`;
+  if (v >= 1) return v % 1 === 0 ? String(v) : `$${v.toFixed(0)}`;
+  return String(v);
+};
+
+const MAX_BAR_WIDTH = 48;
+const MIN_BAR_WIDTH = 14;
+
+export const SimpleChart: React.FC<ChartProps & { barColor?: string | string[] }> = ({
   data,
   title,
   color,
   height = 200,
-  showGrid = true,
-  animated = false,
+  barColor,
 }) => {
   const { theme } = useTheme();
+  const { isPhone, isSmallTablet, captionSize } = useResponsive();
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+
+  const chartHeight = height - 64;
+  const barGap = isPhone ? 6 : 8;
+  const maxBars = data?.length ?? 0;
+
+  // Cap bar width so few-bar charts don't look bloated
+  const computedBarWidth = useMemo(() => {
+    if (maxBars === 0 || containerWidth === 0) return 20;
+    const available = containerWidth - 40 - barGap * (maxBars + 1);
+    const natural = Math.floor(available / maxBars);
+    return Math.min(Math.max(natural, MIN_BAR_WIDTH), MAX_BAR_WIDTH);
+  }, [maxBars, containerWidth, barGap]);
+
+  const maxVal = useMemo(() => Math.max(...(data ?? []).map(d => d.value), 1), [data]);
+  const ySteps = useMemo(() => {
+    return [maxVal, Math.round(maxVal * 2 / 3), Math.round(maxVal / 3), 0];
+  }, [maxVal]);
+
+  const onLayout = (e: LayoutChangeEvent) => setContainerWidth(e.nativeEvent.layout.width);
 
   const styles = StyleSheet.create({
-    container: {
+    card: {
       backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
+      borderRadius: theme.borderRadius.lg,
+      padding: isPhone ? 12 : 16,
       ...theme.shadows.sm,
-      marginBottom: theme.spacing.md,
+      marginBottom: isPhone ? 8 : 12,
     },
-
     title: {
-      ...theme.typography.label,
+      fontSize: isPhone ? 12 : isSmallTablet ? 13 : 14,
+      fontWeight: '600',
       color: theme.colors.onSurface,
-      marginBottom: theme.spacing.sm,
-      textAlign: 'center',
+      marginBottom: 10,
     },
-
-    chartContainer: {
+    chartWrap: {
       flexDirection: 'row',
-      flex: 1,
-      alignItems: 'flex-end',
+      height: chartHeight,
     },
-
-    yAxisContainer: {
+    yAxis: {
+      width: 40,
       justifyContent: 'space-between',
-      height: '100%',
-      paddingRight: theme.spacing.sm,
-      paddingBottom: 20, // Space for x-axis labels
+      alignItems: 'flex-end',
+      paddingRight: 6,
+      paddingBottom: 22,
     },
-
-    yAxisLabel: {
-      ...theme.typography.caption,
-      color: theme.colors.onSurfaceSecondary,
-      fontSize: 10,
+    yLabel: {
+      fontSize: captionSize - 1,
+      color: theme.colors.onSurfaceVariant,
     },
-
-    barsContainer: {
+    barsArea: {
+      flex: 1,
+      position: 'relative',
+    },
+    gridLine: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.colors.outline,
+      opacity: 0.4,
+    },
+    barsRow: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'flex-end',
-      justifyContent: 'space-between',
-      paddingBottom: 20, // Space for x-axis labels
+      justifyContent: 'center',
+      gap: barGap,
+      paddingBottom: 22,
+      paddingHorizontal: barGap,
     },
-
-    barContainer: {
-      flex: 1,
+    barCol: {
       alignItems: 'center',
-      marginHorizontal: 1,
+      width: computedBarWidth,
     },
-
-    barWrapper: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      width: '80%',
-    },
-
     bar: {
-      width: '100%',
-      borderRadius: 2,
-      minHeight: 2,
+      width: computedBarWidth,
+      borderTopLeftRadius: 5,
+      borderTopRightRadius: 5,
+      minHeight: 3,
     },
-
-    xAxisLabel: {
-      ...theme.typography.caption,
-      color: theme.colors.onSurfaceSecondary,
-      fontSize: 9,
+    barActive: {
+      opacity: 0.85,
+    },
+    xLabel: {
+      fontSize: Math.min(captionSize - 1, 10),
+      color: theme.colors.onSurfaceVariant,
       marginTop: 4,
       textAlign: 'center',
     },
-
-    summaryText: {
-      ...theme.typography.caption,
-      color: theme.colors.onSurfaceSecondary,
-      textAlign: 'center',
-      marginTop: theme.spacing.sm,
+    tooltip: {
+      position: 'absolute',
+      top: -6,
+      alignSelf: 'center',
+      backgroundColor: theme.colors.onSurface,
+      paddingHorizontal: 6,
+      paddingVertical: 3,
+      borderRadius: 4,
     },
-
-    noDataContainer: {
-      flex: 1,
+    tooltipText: {
+      fontSize: captionSize - 1,
+      color: theme.colors.surface,
+      fontWeight: '600',
+    },
+    empty: {
+      height: chartHeight,
       justifyContent: 'center',
       alignItems: 'center',
     },
-
-    noDataText: {
-      ...theme.typography.body2,
-      color: theme.colors.onSurfaceLight,
+    emptyText: {
+      fontSize: isPhone ? 11 : 13,
+      color: theme.colors.onSurfaceVariant,
     },
   });
 
   if (!data || data.length === 0) {
     return (
-      <View style={[styles.container, { height }]}>
+      <View style={styles.card}>
         <Text style={styles.title}>{title}</Text>
-        <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>No data available</Text>
+        <View style={styles.empty}>
+          <Text style={styles.emptyText}>No data available</Text>
         </View>
       </View>
     );
   }
 
-  const maxValue = Math.max(...data.map(d => d.value));
-  const minValue = Math.min(...data.map(d => d.value));
-  const range = maxValue - minValue || 1;
-
-  const getBarHeight = (value: number) => {
-    const percentage = (value - minValue) / range;
-    return Math.max(percentage * (height - 80), 10); // 80px for title and labels
-  };
-
   return (
-    <View style={[styles.container, { height }]}>
+    <View style={styles.card} onLayout={onLayout}>
       <Text style={styles.title}>{title}</Text>
-      
-      <View style={styles.chartContainer}>
-        {/* Y-axis labels */}
-        <View style={styles.yAxisContainer}>
-          <Text style={styles.yAxisLabel}>{maxValue.toLocaleString()}</Text>
-          <Text style={styles.yAxisLabel}>
-            {Math.round((maxValue + minValue) / 2).toLocaleString()}
-          </Text>
-          <Text style={styles.yAxisLabel}>{minValue.toLocaleString()}</Text>
-        </View>
-
-        {/* Chart bars */}
-        <View style={styles.barsContainer}>
-          {data.map((point, index) => (
-            <View key={index} style={styles.barContainer}>
-              <View style={styles.barWrapper}>
-                <View
-                  style={[
-                    styles.bar,
-                    {
-                      height: getBarHeight(point.value),
-                      backgroundColor: color,
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={styles.xAxisLabel} numberOfLines={1}>
-                {point.label || point.date}
-              </Text>
-            </View>
+      <View style={styles.chartWrap}>
+        {/* Y-axis */}
+        <View style={styles.yAxis}>
+          {ySteps.map((v, i) => (
+            <Text key={i} style={styles.yLabel}>{fmtVal(v)}</Text>
           ))}
         </View>
-      </View>
 
-      {/* Value display */}
-      <Text style={styles.summaryText}>
-        Latest: {data[data.length - 1]?.value.toLocaleString()}
-      </Text>
+        {/* Bars area with grid lines */}
+        <View style={styles.barsArea}>
+          {/* Grid lines */}
+          {[0, 1, 2, 3].map(i => (
+            <View key={i} style={[styles.gridLine, { top: `${(i / 3) * 100}%` }]} />
+          ))}
+
+          {/* Bars */}
+          <View style={styles.barsRow}>
+            {data.map((point, idx) => {
+              const barH = Math.max((point.value / maxVal) * (chartHeight - 26), 3);
+              const isActive = activeIdx === idx;
+              const resolvedColor = isActive
+                ? theme.colors.primary
+                : barColor
+                  ? (Array.isArray(barColor) ? (barColor[idx] ?? color) : barColor)
+                  : color;
+
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.barCol}
+                  onPress={() => setActiveIdx(isActive ? null : idx)}
+                  activeOpacity={0.7}
+                >
+                  {isActive && (
+                    <View style={styles.tooltip}>
+                      <Text style={styles.tooltipText}>{fmtVal(point.value)}</Text>
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      styles.bar,
+                      {
+                        height: barH,
+                        backgroundColor: resolvedColor,
+                        opacity: isActive ? 0.85 : 0.8,
+                      },
+                    ]}
+                  />
+                  <Text style={styles.xLabel} numberOfLines={1}>
+                    {point.label || point.date}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </View>
     </View>
   );
 };

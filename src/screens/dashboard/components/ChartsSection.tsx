@@ -1,166 +1,161 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { SimpleChart } from './SimpleChart';
-import { ChartDatasets } from '@/types/dashboard.types';
-import { MockAnalyticsService } from '@/services/analytics/MockAnalyticsService';
+import { ChartDataPoint } from '@/types/dashboard.types';
+import { reportsApiService } from '@/services/api/ReportsApiService';
+import { RevenueTrend, HourlyRevenue, TopItem, PaymentBreak } from '@/types/reports-api.types';
+import { UnifiedOrder } from '@/types/unified-order.types';
+import { useSyncContext } from '@/context/sync/SyncContext';
 
 interface ChartsSectionProps {
   restaurantId: string;
   loading?: boolean;
+  offlineOrders?: UnifiedOrder[];
+}
+
+type Period = 'today' | 'week' | 'month';
+
+const fmt = (d: Date) => d.toISOString().split('T')[0];
+const today = () => fmt(new Date());
+const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return fmt(d); };
+
+function buildOfflineData(orders: UnifiedOrder[], period: Period) {
+  const paid = orders.filter((o) => o.status === 'paid');
+  const grouped: Record<string, number> = {};
+  const hours: Record<number, number> = {};
+  const items: Record<string, { qty: number; rev: number }> = {};
+  for (const o of paid) {
+    const d = new Date(o.createdAt);
+    const key = period === 'today' ? d.getHours().toString() : fmt(d);
+    grouped[key] = (grouped[key] ?? 0) + o.totalAmount;
+    hours[d.getHours()] = (hours[d.getHours()] ?? 0) + o.totalAmount;
+    for (const i of o.items) {
+      if (!items[i.name]) items[i.name] = { qty: 0, rev: 0 };
+      items[i.name].qty += i.quantity;
+      items[i.name].rev += i.itemTotal;
+    }
+  }
+  const trends: RevenueTrend[] = Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, revenue]) => ({ date, revenue, orders: 0 }));
+  const hourly: HourlyRevenue[] = Array.from({ length: 24 }, (_, h) => ({
+    hour: h, orders: 0, revenue: hours[h] ?? 0,
+  }));
+  const topItems: TopItem[] = Object.entries(items)
+    .sort(([, a], [, b]) => b.qty - a.qty)
+    .slice(0, 5)
+    .map(([n, d]) => ({ itemId: n, itemName: n, categoryName: '', quantitySold: d.qty, totalRevenue: d.rev }));
+  return { trends, hourly, topItems };
 }
 
 export const ChartsSection: React.FC<ChartsSectionProps> = ({
-  restaurantId,
   loading = false,
+  offlineOrders = [],
 }) => {
   const { theme } = useTheme();
+  const { isPhone, isSmallTablet, cardPadding, captionSize } = useResponsive();
+  const { syncStatus } = useSyncContext();
+  const isOnline = syncStatus === 'syncing' || syncStatus === 'idle';
+  const chartHeight = isPhone ? 160 : isSmallTablet ? 200 : 240;
+
+  const [period, setPeriod] = useState<Period>('today');
+  const [chartLoading, setChartLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(false);
+  const [trends, setTrends] = useState<RevenueTrend[]>([]);
+  const [hourly, setHourly] = useState<HourlyRevenue[]>([]);
+  const [topItems, setTopItems] = useState<TopItem[]>([]);
+  const [payments, setPayments] = useState<PaymentBreak[]>([]);
+
+  // Use a ref so loadData doesn't re-create on every orders change (avoids infinite loop)
+  const offlineOrdersRef = useRef(offlineOrders);
+  useEffect(() => { offlineOrdersRef.current = offlineOrders; }, [offlineOrders]);
+
+  const loadData = useCallback(async () => {
+    setChartLoading(true);
+    setIsOffline(false);
+    const start = period === 'today' ? today() : period === 'week' ? daysAgo(7) : daysAgo(30);
+
+    // Skip API calls entirely when offline — go straight to local data
+    if (!isOnline) {
+      setIsOffline(true);
+      const { trends: t, hourly: h, topItems: i } = buildOfflineData(offlineOrdersRef.current, period);
+      setTrends(t); setHourly(h); setTopItems(i); setPayments([]);
+      setChartLoading(false);
+      return;
+    }
+
+    try {
+      if (period === 'today') {
+        const [hr, it, pay] = await Promise.all([
+          reportsApiService.getRevenueHourly(today()),
+          reportsApiService.getTopSellingItems(start, today(), 5),
+          reportsApiService.getPaymentBreakdown(start, today()),
+        ]);
+        const tr = hr.map((r) => ({ date: `${r.hour}h`, revenue: r.revenue, orders: r.orders }));
+        setTrends(tr); setHourly(hr); setTopItems(it); setPayments(pay);
+      } else {
+        const [tr, hr, it, pay] = await Promise.all([
+          reportsApiService.getRevenueTrends(start, today(), 'day'),
+          reportsApiService.getRevenueHourly(today()),
+          reportsApiService.getTopSellingItems(start, today(), 5),
+          reportsApiService.getPaymentBreakdown(start, today()),
+        ]);
+        setTrends(tr); setHourly(hr); setTopItems(it); setPayments(pay);
+      }
+    } catch {
+      setIsOffline(true);
+      const { trends: t, hourly: h, topItems: i } = buildOfflineData(offlineOrdersRef.current, period);
+      setTrends(t); setHourly(h); setTopItems(i); setPayments([]);
+    } finally {
+      setChartLoading(false);
+    }
+  }, [period, isOnline]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const trendData = useMemo((): ChartDataPoint[] =>
+    trends.map((t) => ({ date: t.date, value: t.revenue, label: period === 'today' ? t.date : t.date.slice(5) })),
+  [trends, period]);
+
+  const topData = useMemo((): ChartDataPoint[] =>
+    topItems.map((i) => ({ date: i.itemName, value: i.quantitySold, label: i.itemName.slice(0, 8) })),
+  [topItems]);
+
+  const payData = useMemo((): ChartDataPoint[] =>
+    payments.map((p) => ({ date: p.method, value: p.totalAmount, label: p.method })),
+  [payments]);
+
+  const maxHourly = useMemo(() => Math.max(...hourly.map((h) => h.revenue), 1), [hourly]);
 
   const styles = StyleSheet.create({
-    container: {
-      paddingHorizontal: theme.spacing.md,
-      marginBottom: theme.spacing.lg,
-    },
-
-    sectionTitle: {
-      ...theme.typography.h4,
-      color: theme.colors.onSurface,
-      marginBottom: theme.spacing.md,
-    },
-
-    periodSelector: {
-      flexDirection: 'row',
-      backgroundColor: theme.colors.surfaceLight,
-      borderRadius: theme.borderRadius.md,
-      padding: 4,
-      marginBottom: theme.spacing.md,
-    },
-
-    periodButton: {
-      flex: 1,
-      paddingVertical: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
-      borderRadius: theme.borderRadius.sm,
-      alignItems: 'center',
-    },
-
-    periodButtonActive: {
-      backgroundColor: theme.colors.tertiary,
-    },
-
-    periodButtonText: {
-      ...theme.typography.caption,
-      color: theme.colors.onSurfaceSecondary,
-      fontWeight: '500',
-    },
-
-    periodButtonTextActive: {
-      color: '#FFFFFF',
-    },
-
-    chartsGrid: {
-      flexDirection: 'row',
-    },
-
-    chartColumn: {
-      width: 300,
-      marginRight: theme.spacing.md,
-    },
-
-    hourlyChartContainer: {
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      ...theme.shadows.sm,
-      height: 180,
-    },
-
-    hourlyChartTitle: {
-      ...theme.typography.label,
-      color: theme.colors.onSurface,
-      marginBottom: theme.spacing.sm,
-      textAlign: 'center',
-    },
-
-    hourlyBars: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      height: 120,
-      paddingBottom: 20,
-    },
-
-    hourlyBarContainer: {
-      alignItems: 'center',
-      marginHorizontal: 2,
-      width: 20,
-    },
-
-    hourlyBarWrapper: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      width: '100%',
-    },
-
-    hourlyBar: {
-      width: '100%',
-      borderRadius: 1,
-      minHeight: 2,
-    },
-
-    hourlyLabel: {
-      ...theme.typography.caption,
-      color: theme.colors.onSurfaceSecondary,
-      fontSize: 8,
-      marginTop: 4,
-    },
-
-    // Loading states
-    loadingContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-
-    loadingChart: {
-      width: '48%',
-      height: 180,
-      backgroundColor: theme.colors.outlineLight,
-      borderRadius: theme.borderRadius.md,
-      opacity: 0.5,
-    },
+    container: { paddingHorizontal: cardPadding, marginBottom: theme.spacing.lg },
+    headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.md },
+    title: { ...theme.typography.h4, color: theme.colors.onSurface },
+    badge: { backgroundColor: theme.colors.warning, paddingHorizontal: 8, paddingVertical: 2, borderRadius: theme.borderRadius.sm },
+    badgeText: { fontSize: captionSize, color: theme.colors.onSurface, fontWeight: '600' },
+    pills: { flexDirection: 'row', backgroundColor: theme.colors.surfaceLight, borderRadius: theme.borderRadius.md, padding: 3, marginBottom: theme.spacing.md },
+    pill: { flex: 1, paddingVertical: 6, borderRadius: theme.borderRadius.sm, alignItems: 'center' },
+    pillActive: { backgroundColor: theme.colors.tertiary },
+    pillText: { fontSize: captionSize + 1, color: theme.colors.onSurfaceSecondary, fontWeight: '500' },
+    pillTextActive: { color: '#FFFFFF' },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
+    cell: { width: isPhone ? '100%' : '49%' },
+    hourlyCard: { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md, padding: theme.spacing.md, ...theme.shadows.sm, marginBottom: theme.spacing.sm },
+    hourlyTitle: { fontSize: captionSize + 1, color: theme.colors.onSurface, fontWeight: '600', marginBottom: theme.spacing.sm, textAlign: 'center' },
+    barsRow: { flexDirection: 'row', alignItems: 'flex-end', height: isPhone ? 80 : 100 },
+    bar: { flex: 1, marginHorizontal: 1, borderRadius: 2, minHeight: 2 },
+    skeleton: { height: chartHeight, backgroundColor: theme.colors.surfaceLight, borderRadius: theme.borderRadius.md, opacity: 0.5, marginBottom: theme.spacing.sm },
   });
 
-  const [chartData, setChartData] = useState<ChartDatasets | null>(null);
-  const [period, setPeriod] = useState<'today' | 'week' | 'month'>('today');
-  const [chartLoading, setChartLoading] = useState(true);
-
-  const analyticsService = MockAnalyticsService.getInstance();
-
-  /**
-   * Load chart data
-   */
-  useEffect(() => {
-    const loadChartData = async () => {
-      try {
-        setChartLoading(true);
-        const data = await analyticsService.getChartData(restaurantId, period);
-        setChartData(data);
-      } catch (error) {
-        console.error('Failed to load chart data:', error);
-      } finally {
-        setChartLoading(false);
-      }
-    };
-
-    loadChartData();
-  }, [restaurantId, period, analyticsService]);
-
-  if (loading || chartLoading || !chartData) {
+  if (loading || chartLoading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.sectionTitle}>Analytics Overview</Text>
-        <View style={styles.loadingContainer}>
-          <View style={styles.loadingChart} />
-          <View style={styles.loadingChart} />
+        <Text style={[styles.title, { marginBottom: theme.spacing.md }]}>Analytics Overview</Text>
+        <View style={styles.grid}>
+          <View style={[styles.cell, styles.skeleton]} />
+          <View style={[styles.cell, styles.skeleton]} />
         </View>
       </View>
     );
@@ -168,96 +163,57 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Analytics Overview</Text>
-      
-      {/* Period Selector */}
-      <View style={styles.periodSelector}>
-        {['today', 'week', 'month'].map((p) => (
-          <TouchableOpacity
-            key={p}
-            style={[
-              styles.periodButton,
-              period === p && styles.periodButtonActive,
-            ]}
-            onPress={() => setPeriod(p as 'today' | 'week' | 'month')}
-          >
-            <Text
-              style={[
-                styles.periodButtonText,
-                period === p && styles.periodButtonTextActive,
-              ]}
-            >
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Analytics Overview</Text>
+        {isOffline && <View style={styles.badge}><Text style={styles.badgeText}>Offline data</Text></View>}
+      </View>
+
+      <View style={styles.pills}>
+        {(['today', 'week', 'month'] as Period[]).map((p) => (
+          <TouchableOpacity key={p} style={[styles.pill, period === p && styles.pillActive]} onPress={() => setPeriod(p)}>
+            <Text style={[styles.pillText, period === p && styles.pillTextActive]}>
               {p.charAt(0).toUpperCase() + p.slice(1)}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Charts Grid */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.chartsGrid}>
-          <View style={styles.chartColumn}>
-            <SimpleChart
-              data={chartData.salesTrend}
-              title="Sales Trend"
-              color={theme.colors.success}
-              height={180}
-            />
-            
-            <SimpleChart
-              data={chartData.orderTrend}
-              title="Order Volume"
-              color={theme.colors.info}
-              height={180}
-            />
-          </View>
+      <View style={styles.grid}>
+        <View style={styles.cell}>
+          <SimpleChart data={trendData} title={period === 'today' ? 'Hourly Revenue' : 'Revenue Trend'} color={theme.colors.primary} height={chartHeight} />
+        </View>
 
-          <View style={styles.chartColumn}>
-            <SimpleChart
-              data={chartData.revenueTrend}
-              title="Revenue Trend"
-              color={theme.colors.info}
-              height={180}
-            />
-
-            {/* Hourly Performance Chart */}
-            <View style={styles.hourlyChartContainer}>
-              <Text style={styles.hourlyChartTitle}>Today's Hourly Performance</Text>
+        {period === 'today' && (
+          <View style={styles.cell}>
+            <View style={styles.hourlyCard}>
+              <Text style={styles.hourlyTitle}>Hourly Performance</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.hourlyBars}>
-                  {chartData.hourlyData.map((hour, index) => {
-                    const maxHourly = Math.max(...chartData.hourlyData.map(h => h.sales));
-                    const barHeight = (hour.sales / maxHourly) * 120;
-                    
-                    return (
-                      <View key={index} style={styles.hourlyBarContainer}>
-                        <View style={styles.hourlyBarWrapper}>
-                          <View
-                            style={[
-                              styles.hourlyBar,
-                              {
-                                height: Math.max(barHeight, 2),
-                                backgroundColor: hour.sales > maxHourly * 0.7
-                                  ? theme.colors.success
-                                  : hour.sales > maxHourly * 0.4
-                                  ? theme.colors.warning
-                                  : theme.colors.onSurfaceLight,
-                              },
-                            ]}
-                          />
-                        </View>
-                        <Text style={styles.hourlyLabel}>
-                          {hour.hour.toString().padStart(2, '0')}h
-                        </Text>
-                      </View>
-                    );
-                  })}
+                <View style={styles.barsRow}>
+                  {hourly.map((h) => (
+                    <View key={h.hour} style={[styles.bar, {
+                      height: Math.max((h.revenue / maxHourly) * (isPhone ? 70 : 90), 2),
+                      backgroundColor: h.revenue > maxHourly * 0.7 ? theme.colors.success
+                        : h.revenue > maxHourly * 0.4 ? theme.colors.warning : theme.colors.outlineLight,
+                    }]} />
+                  ))}
                 </View>
               </ScrollView>
             </View>
           </View>
-        </View>
-      </ScrollView>
+        )}
+
+        {topData.length > 0 && (
+          <View style={styles.cell}>
+            <SimpleChart data={topData} title="Top Items (qty)" color={theme.colors.tertiary} height={chartHeight} />
+          </View>
+        )}
+
+        {payData.length > 0 && (
+          <View style={styles.cell}>
+            <SimpleChart data={payData} title="Payment Methods" color={theme.colors.info} height={chartHeight} />
+          </View>
+        )}
+      </View>
     </View>
   );
 };

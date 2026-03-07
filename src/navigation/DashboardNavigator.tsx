@@ -4,7 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Text, StyleSheet, Platform, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -14,7 +15,7 @@ import { AppleSidebarCollapsible, AppleSidebarItem } from '@/components/apple/la
 import OrdersDashboard from '@/screens/orders/OrdersDashboard';
 import TablesDashboard from '@/screens/tables/TablesDashboard';
 import KitchenStaffDashboard from '@/screens/kitchen/KitchenStaffDashboard';
-import ReportsDashboard from '@/screens/reports/ReportsDashboard';
+import ReportsScreen from '@/screens/reports/ReportsScreen';
 import DashboardScreen from '@/screens/dashboard/DashboardScreen';
 
 // These imports are no longer needed since we're using state-based navigation
@@ -23,6 +24,7 @@ import DashboardScreen from '@/screens/dashboard/DashboardScreen';
 const DashboardWithSidebar: React.FC = () => {
   const { theme, isDark } = useTheme();
   const { isPhone, isSmallTablet, bodySize, chipRowHeight } = useResponsive();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('Overview');
 
   // Sidebar navigation items
@@ -91,7 +93,7 @@ const DashboardWithSidebar: React.FC = () => {
       case 'KitchenDashboard':
         return <KitchenStaffDashboard />;
       case 'ReportsDashboard':
-        return <ReportsDashboard />;
+        return <ReportsScreen />;
       default:
         return <DashboardScreen />;
     }
@@ -109,6 +111,7 @@ const DashboardWithSidebar: React.FC = () => {
     phoneContainer: {
       flex: 1,
       flexDirection: 'column',
+      paddingTop: insets.top,
       backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
     },
     chipRow: {

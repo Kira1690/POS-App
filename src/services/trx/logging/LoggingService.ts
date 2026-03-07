@@ -20,22 +20,24 @@ class ConsoleLogger implements ILogger {
     this.context = context;
   }
 
-  debug(message: string, context?: string): void {
-    const ctx = context || this.context;
-    console.log(`${this.prefix}[DEBUG][${ctx}] ${message}`);
+  debug(_message: string, _context?: string): void {
+    // DEBUG suppressed — too verbose for JS bridge
   }
 
   info(message: string, context?: string): void {
+    if (!__DEV__) return;
     const ctx = context || this.context;
     console.log(`${this.prefix}[INFO][${ctx}] ${message}`);
   }
 
   warn(message: string, context?: string): void {
+    if (!__DEV__) return;
     const ctx = context || this.context;
     console.warn(`${this.prefix}[WARN][${ctx}] ${message}`);
   }
 
   error(message: string, errorOrContext?: Error | string, context?: string): void {
+    if (!__DEV__) return;
     const ctx = context || this.context;
     if (errorOrContext instanceof Error) {
       console.error(`${this.prefix}[ERROR][${ctx}] ${message}`, errorOrContext.message);

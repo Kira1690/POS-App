@@ -20,10 +20,12 @@ export class CoreAuthService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
       // Check for dummy credentials first
+      const identifier = credentials.identifier || credentials.employee_id || credentials.email || '';
+      const isStaff = !!(credentials.identifier || credentials.employee_id);
       const dummyUser = findUserByCredentials(
-        credentials.identifier || credentials.email || '',
+        identifier,
         credentials.password,
-        !!credentials.identifier // true if staff login (has identifier)
+        isStaff,
       );
 
       if (dummyUser) {

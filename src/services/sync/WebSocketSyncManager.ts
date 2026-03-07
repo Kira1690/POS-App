@@ -23,6 +23,7 @@ export class WebSocketSyncManager {
   private connection: WebSocket | null = null;
   private restaurantId: string | null = null;
   private reconnectAttempts = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   connect(restaurantId: string): void {
     if (this.connection && this.restaurantId === restaurantId) return;
@@ -123,13 +124,19 @@ export class WebSocketSyncManager {
       if (__DEV__) console.error('[WSSyncManager] Max reconnect attempts reached');
       return;
     }
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectAttempts++;
-    setTimeout(() => {
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
       if (this.restaurantId) this.createConnection();
     }, RECONNECT_DELAY_MS);
   }
 
   disconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.connection) {
       this.connection.close();
       this.connection = null;

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -25,9 +25,12 @@ import ActivityLogsSheet from './components/ActivityLogsSheet';
 import { KPIMetrics, QuickActionData } from '@/types/dashboard.types';
 import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
 import { UnifiedOrder } from '@/types/unified-order.types';
+import { reportsApiService } from '@/services/api/ReportsApiService';
+import { DailySales } from '@/types/reports-api.types';
 import { useTableStats } from '@/hooks/context/useTableSelectors';
 import { useKitchenStats } from '@/context/unified-order/UnifiedOrderContext';
 import { useAuth } from '@/context/auth';
+import { useSyncContext } from '@/context/sync/SyncContext';
 
 const formatCurrency = (amount: number) =>
   `$${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
@@ -46,8 +49,34 @@ export const DashboardScreen: React.FC = () => {
   const tableStats = useTableStats();
   const kitchenStats = useKitchenStats();
 
-  // Mock restaurant ID for ChartsSection (still uses mock analytics)
-  const restaurantId = 'rest_001';
+  const restaurantId = authState.restaurant?.id ?? 'rest_001';
+  const { syncStatus } = useSyncContext();
+  const isOnline = syncStatus === 'syncing' || syncStatus === 'idle';
+
+  // Real API KPIs (today vs yesterday) — only fetch when online
+  const [apiToday, setApiToday] = useState<DailySales | null>(null);
+  const [apiYesterday, setApiYesterday] = useState<DailySales | null>(null);
+
+  useEffect(() => {
+    if (!isOnline) return; // Skip API calls when offline/dummy credentials
+    const fetchApiKpis = async () => {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const fmt = (d: Date) => d.toISOString().split('T')[0];
+      try {
+        const [t, y] = await Promise.all([
+          reportsApiService.getDailySales(fmt(today)),
+          reportsApiService.getDailySales(fmt(yesterday)),
+        ]);
+        setApiToday(t);
+        setApiYesterday(y);
+      } catch {
+        // Falls back to local order data in kpis useMemo
+      }
+    };
+    fetchApiKpis();
+  }, [isOnline]);
 
   // Refresh on screen focus
   useFocusEffect(
@@ -61,46 +90,92 @@ export const DashboardScreen: React.FC = () => {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
   }, []);
 
-  // Compute KPI metrics from real data
+  // Compute KPI metrics — prefer API data, fall back to local orders
   const kpis = useMemo((): KPIMetrics | null => {
-    if (isLoading && orders.length === 0) return null;
+    if (isLoading && orders.length === 0 && !apiToday) return null;
 
-    const todaysOrders = orders.filter(o =>
-      new Date(o.createdAt).getTime() >= todayStart
+    const pct = (curr: number, prev: number): number =>
+      prev > 0 ? ((curr - prev) / prev) * 100 : 0;
+    const dir = (v: number): 'up' | 'down' | 'neutral' =>
+      v > 0 ? 'up' : v < 0 ? 'down' : 'neutral';
+
+    if (apiToday) {
+      const salesChange = pct(apiToday.totalRevenue, apiYesterday?.totalRevenue ?? 0);
+      const ordersChange = pct(apiToday.totalOrders, apiYesterday?.totalOrders ?? 0);
+      const avgChange = pct(apiToday.avgOrderValue, apiYesterday?.avgOrderValue ?? 0);
+      return {
+        sales: {
+          value: formatCurrency(apiToday.totalRevenue),
+          change: Math.round(Math.abs(salesChange) * 10) / 10,
+          changeDirection: dir(salesChange),
+          period: 'vs yesterday',
+        },
+        orders: {
+          value: apiToday.totalOrders,
+          change: Math.round(Math.abs(ordersChange) * 10) / 10,
+          changeDirection: dir(ordersChange),
+          period: 'vs yesterday',
+        },
+        revenue: {
+          value: formatCurrency(apiToday.netRevenue ?? apiToday.totalRevenue),
+          change: Math.round(Math.abs(salesChange) * 10) / 10,
+          changeDirection: dir(salesChange),
+          period: 'vs yesterday',
+        },
+        averageOrderValue: {
+          value: formatCurrency(apiToday.avgOrderValue),
+          change: Math.round(Math.abs(avgChange) * 10) / 10,
+          changeDirection: dir(avgChange),
+          period: 'vs yesterday',
+        },
+      };
+    }
+
+    // Offline fallback from local orders
+    const todaysOrders = orders.filter(
+      (o) => new Date(o.createdAt).getTime() >= todayStart,
     );
-    const paidOrders = todaysOrders.filter(o => o.status === 'paid');
+    const paidOrders = todaysOrders.filter((o) => o.status === 'paid');
     const todaysSales = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-    const avgOrderValue = todaysOrders.length > 0
-      ? todaysOrders.reduce((sum, o) => sum + o.totalAmount, 0) / todaysOrders.length
-      : 0;
-
+    const avgOrderValue =
+      todaysOrders.length > 0
+        ? todaysOrders.reduce((sum, o) => sum + o.totalAmount, 0) / todaysOrders.length
+        : 0;
     return {
       sales: {
         value: formatCurrency(todaysSales),
         change: 0,
         changeDirection: 'neutral',
-        period: 'Today',
+        period: 'Today (local)',
       },
       orders: {
         value: todaysOrders.length,
         change: 0,
         changeDirection: 'neutral',
-        period: 'Today',
+        period: 'Today (local)',
       },
       revenue: {
         value: formatCurrency(todaysSales),
         change: 0,
         changeDirection: 'neutral',
-        period: 'Today',
+        period: 'Today (local)',
       },
       averageOrderValue: {
         value: formatCurrency(avgOrderValue),
         change: 0,
         changeDirection: 'neutral',
-        period: 'Today',
+        period: 'Today (local)',
       },
     };
-  }, [orders, todayStart, isLoading]);
+  }, [orders, todayStart, isLoading, apiToday, apiYesterday]);
+
+  // Staff on duty = unique server IDs across active orders
+  const staffOnDuty = useMemo(() => {
+    const serverIds = new Set(
+      activeOrders.filter((o) => o.servedBy).map((o) => o.servedBy!),
+    );
+    return serverIds.size;
+  }, [activeOrders]);
 
   // Compute quick action data from real sources
   const quickActions = useMemo((): QuickActionData => ({
@@ -115,22 +190,31 @@ export const DashboardScreen: React.FC = () => {
       alerts: kitchenStats.overdueCount,
     },
     staff: {
-      onDuty: 0,
-      total: 0,
+      onDuty: staffOnDuty,
+      total: staffOnDuty,
       breaks: 0,
     },
-  }), [tableStats, kitchenStats]);
+  }), [tableStats, kitchenStats, staffOnDuty]);
 
   // Compute progress values
-  const salesTarget = 5000;
   const todaysSales = useMemo(() => {
+    if (apiToday) return apiToday.totalRevenue;
     return orders
-      .filter(o => o.status === 'paid' && new Date(o.createdAt).getTime() >= todayStart)
+      .filter((o) => o.status === 'paid' && new Date(o.createdAt).getTime() >= todayStart)
       .reduce((sum, o) => sum + o.totalAmount, 0);
-  }, [orders, todayStart]);
+  }, [orders, todayStart, apiToday]);
+
+  // Dynamic sales target = 110% of yesterday, or local orders-based estimate
+  const salesTarget = useMemo(() => {
+    if (apiYesterday && apiYesterday.totalRevenue > 0) {
+      return apiYesterday.totalRevenue * 1.1;
+    }
+    return Math.max(todaysSales * 1.5, 1000);
+  }, [apiYesterday, todaysSales]);
 
   const salesProgress = useMemo(() =>
-    Math.min(todaysSales / salesTarget, 1), [todaysSales]);
+    Math.min(salesTarget > 0 ? todaysSales / salesTarget : 0, 1),
+  [todaysSales, salesTarget]);
 
   const completionRate = useMemo(() => {
     const todaysOrders = orders.filter(o =>
@@ -274,7 +358,11 @@ export const DashboardScreen: React.FC = () => {
       </AppleCard>
 
       <AppleCard layer="surface" size="large" style={{ marginBottom: sectionGap }}>
-        <ChartsSection restaurantId={restaurantId} loading={loading} />
+        <ChartsSection
+          restaurantId={restaurantId}
+          loading={loading}
+          offlineOrders={orders}
+        />
       </AppleCard>
 
       {renderQuickActions()}

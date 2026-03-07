@@ -3,7 +3,7 @@
  * Professional payment state management provider with comprehensive payment processing
  */
 
-import React, { useReducer, useCallback, useEffect, ReactNode } from 'react';
+import React, { useReducer, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import { PaymentContext, PaymentContextInterface } from './PaymentContext';
 import { paymentReducer, initialPaymentState } from './PaymentReducer';
 import { PaymentActions } from './PaymentActions';
@@ -433,54 +433,47 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     dispatch(PaymentActions.clearError());
   }, []);
 
-  // Context Value
-  const contextValue: PaymentContextInterface = {
-    // State
+  // Context Value — memoized to prevent cascading re-renders
+  const contextValue: PaymentContextInterface = useMemo(() => ({
     ...state,
     dispatch,
-    
-    // Payment Processing Methods
     processCardPayment,
     processCashPayment,
     processSplitPayment,
-    
-    // VP3350 Device Management
     connectVP3350Device,
     disconnectVP3350Device,
     processVP3350Payment,
     getVP3350DeviceStatus,
-    
-    // Receipt Management
     generateReceipt,
     printReceipt,
     emailReceipt,
     smsReceipt,
-    
-    // Payment History and Analytics
     getPaymentHistory,
     refundPayment,
     voidPayment,
-    
-    // UI Actions
     openPaymentModal,
     closePaymentModal,
     openReceiptPreview,
     closeReceiptPreview,
     openSplitPaymentModal,
     closeSplitPaymentModal,
-    
-    // Configuration Actions
     updateTaxRate,
     updateTipRates,
     updateReceiptSettings,
-    
-    // Error Management
     clearError,
-    
-    // State Reset
     resetPaymentState,
     resetProcessingStatus,
-  };
+  }), [
+    state,
+    processCardPayment, processCashPayment, processSplitPayment,
+    connectVP3350Device, disconnectVP3350Device, processVP3350Payment, getVP3350DeviceStatus,
+    generateReceipt, printReceipt, emailReceipt, smsReceipt,
+    getPaymentHistory, refundPayment, voidPayment,
+    openPaymentModal, closePaymentModal, openReceiptPreview, closeReceiptPreview,
+    openSplitPaymentModal, closeSplitPaymentModal,
+    updateTaxRate, updateTipRates, updateReceiptSettings,
+    clearError, resetPaymentState, resetProcessingStatus,
+  ]);
 
   return (
     <PaymentContext.Provider value={contextValue}>

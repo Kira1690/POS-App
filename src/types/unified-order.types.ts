@@ -399,10 +399,10 @@ export const calculateUnifiedOrderTotals = (
 };
 
 /**
- * Check if order can accept payment (status must be 'served')
+ * Check if order can accept payment (status must be 'ready' or 'served')
  */
 export const canAcceptPayment = (order: UnifiedOrder): boolean => {
-  return order.status === 'served' && order.paymentStatus !== 'paid';
+  return (order.status === 'ready' || order.status === 'served') && order.paymentStatus !== 'paid';
 };
 
 /**

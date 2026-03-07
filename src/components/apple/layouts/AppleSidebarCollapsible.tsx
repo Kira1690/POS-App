@@ -274,15 +274,13 @@ export const AppleSidebarCollapsible: React.FC<AppleSidebarCollapsibleProps> = (
           accessibilityRole="button"
           testID={`settings-nav-${item.id}`}
         >
-          {/* Icon Container - ALWAYS 40x40, NEVER changes */}
+          {/* Icon Container - ALWAYS 40x40, ALWAYS colored background */}
           {item.icon && (
             <View
               style={[
                 styles.iconContainer,
                 {
-                  backgroundColor: isCollapsed
-                    ? 'transparent'
-                    : (item.iconBackground || theme.colors.primary)
+                  backgroundColor: item.iconBackground || theme.colors.primary,
                 },
               ]}
             >

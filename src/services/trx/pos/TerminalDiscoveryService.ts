@@ -135,9 +135,6 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
   async addManualTerminal(ip: string, port: number): Promise<boolean> {
     this.logger.info('Adding manual terminal', 'addManualTerminal', { ip, port });
 
-    console.log('');
-    console.log('[TerminalDiscovery] MANUAL CONNECTION');
-    console.log(`[TerminalDiscovery] Target: ${ip}:${port}`);
 
     try {
       // Use testManualIP — retry-based validation (2 retries × 3 methods = 6 attempts)
@@ -185,17 +182,11 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
         };
         await this.terminalStorageService.saveSelectedTerminal(storedTerminal);
 
-        console.log('');
-        console.log('[TerminalDiscovery] MANUAL CONNECTION SUCCESS');
-        console.log(`[TerminalDiscovery] Terminal: ${ip}:${port}`);
-        console.log('[TerminalDiscovery] Saved to SQLite');
-        console.log('');
 
         this.logger.info('Manual terminal added, saved to SQLite, set as current', 'addManualTerminal', { ip, port });
         return true;
       }
 
-      console.log(`[TerminalDiscovery] Terminal unreachable at ${ip}:${port}`);
       this.logger.warn('Manual terminal unreachable', 'addManualTerminal', { ip, port });
       return false;
 
@@ -206,11 +197,13 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
   }
 
   async selectTerminal(ip: string, port: number): Promise<boolean> {
-    console.log('');
-    console.log('[TerminalDiscovery] SELECTING TERMINAL');
-    console.log(`[TerminalDiscovery] Target: ${ip}:${port}`);
-
     this.logger.info('Selecting terminal', 'selectTerminal', { ip, port });
+
+    // Already connected to this exact terminal — skip TCP re-validation
+    if (this.lastConnectedIP === ip && this.lastConnectedPort === port && this.currentTerminal?.isOnline) {
+      this.logger.info('Terminal already connected — skipping TCP test', 'selectTerminal', { ip, port });
+      return true;
+    }
 
     try {
       // Use testManualIP — retry-based validation (2 retries × 3 methods = 6 attempts)
@@ -247,14 +240,11 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
         };
         await this.terminalStorageService.saveSelectedTerminal(storedTerminal);
 
-        console.log('[TerminalDiscovery] TERMINAL CONNECTED SUCCESSFULLY');
-        console.log(`[TerminalDiscovery] Connected: ${ip}:${port}`);
 
         this.logger.info('Terminal selected and persisted to SQLite', 'selectTerminal', { ip, port });
         return true;
       } else {
-        console.log(`[TerminalDiscovery] Connection test FAILED for ${ip}:${port}`);
-        this.logger.warn('Terminal connection test failed', 'selectTerminal', { ip, port });
+          this.logger.warn('Terminal connection test failed', 'selectTerminal', { ip, port });
         return false;
       }
 

@@ -452,32 +452,8 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
             item.modifier_groups?.some(g => g.options && g.options.length > 0)
           );
 
-          console.log('[Menu] Loaded from storage:', {
-            categories: categoriesWithCorrectStats.length,
-            items: menuItemsWithModifiers.length,
-            modifierGroups: storedData.modifierGroups.length,
-            modifierGroupsWithOptions: modifierGroupsWithOptions.length,
-            combos: storedData.combos.length,
-            itemsWithModifierGroups: menuItemsWithModifiers.filter(i => i.modifier_groups?.length > 0).length,
-            itemsWithModifiersAndOptions: itemsWithModifiersAndOptions.length,
-          });
-
-          // Debug: Log each modifier group with its options
           if (__DEV__) {
-            storedData.modifierGroups.forEach(g => {
-              console.log(`[Menu] Modifier Group: "${g.name}" (${g.id}) - ${g.options?.length || 0} options`);
-              g.options?.forEach(opt => console.log(`  - Option: "${opt.name}" (+$${opt.price_adjustment})`));
-            });
-
-            // Log items with modifiers
-            menuItemsWithModifiers
-              .filter(item => item.modifier_groups?.length > 0)
-              .forEach(item => {
-                console.log(`[Menu] Item "${item.name}" has ${item.modifier_groups?.length || 0} modifier groups:`);
-                item.modifier_groups?.forEach(g => {
-                  console.log(`  - "${g.name}": ${g.options?.length || 0} options`);
-                });
-              });
+            console.log(`[Menu] Loaded: ${categoriesWithCorrectStats.length} cats, ${menuItemsWithModifiers.length} items, ${modifierGroupsWithOptions.length} mod groups`);
           }
 
           emitEvent('MENU_REFRESHED', {});

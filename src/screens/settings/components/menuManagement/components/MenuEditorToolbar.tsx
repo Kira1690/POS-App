@@ -189,7 +189,7 @@ export const MenuEditorToolbar: React.FC<MenuEditorToolbarProps> = ({
     },
     addButtonText: {
       fontSize: 13,
-      color: '#FFFFFF',
+      color: theme.colors.white,
       fontWeight: '600',
     },
   });

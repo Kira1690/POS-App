@@ -92,7 +92,7 @@ export const MenuEditorTabs: React.FC<MenuEditorTabsProps> = ({
       color: theme.colors.tertiary,
     },
     badgeTextActive: {
-      color: '#FFFFFF',
+      color: theme.colors.white,
     },
   });
 

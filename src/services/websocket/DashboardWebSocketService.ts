@@ -43,6 +43,8 @@ export class DashboardWebSocketService {
   private reconnectAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private mockDataTimer: ReturnType<typeof setInterval> | null = null;
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
   private isManuallyDisconnected = false;
 
   constructor(config: DashboardWebSocketConfig, callbacks: DashboardWebSocketCallbacks) {
@@ -91,7 +93,6 @@ export class DashboardWebSocketService {
 
   sendMessage(message: Partial<WebSocketMessage>): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.warn('WebSocket is not connected. Cannot send message:', message);
       return;
     }
 
@@ -109,40 +110,40 @@ export class DashboardWebSocketService {
 
   // Mock WebSocket implementation for development
   private simulateWebSocketConnection(): void {
+    // Clear any previous timers before creating new ones
+    this.clearTimers();
+
     // Simulate connection delay
-    setTimeout(() => {
+    this.connectTimer = setTimeout(() => {
       this.callbacks.onConnectionStatusChange?.('connected');
       this.reconnectAttempts = 0;
-      
+
       // Start heartbeat simulation
       this.startHeartbeat();
-      
+
       // Simulate receiving periodic updates
       this.startMockDataUpdates();
-      
+
     }, 1000);
   }
 
   private startHeartbeat(): void {
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     this.heartbeatTimer = setInterval(() => {
       if (this.isManuallyDisconnected) return;
-      
-      // In a real implementation, this would send a ping/heartbeat message
-      // For now, we'll just simulate the heartbeat
-      console.log('Dashboard WebSocket heartbeat');
-    }, 30000); // Every 30 seconds
+      // Heartbeat ping — silent (no console.log to avoid JS bridge flooding)
+    }, 30000);
   }
 
   private startMockDataUpdates(): void {
-    // Simulate periodic data updates based on user role
-    const updateInterval = setInterval(() => {
+    if (this.mockDataTimer) clearInterval(this.mockDataTimer);
+    this.mockDataTimer = setInterval(() => {
       if (this.isManuallyDisconnected) {
-        clearInterval(updateInterval);
+        this.clearTimers();
         return;
       }
-
       this.simulateDataUpdate();
-    }, 10000); // Every 10 seconds
+    }, 10000);
   }
 
   private simulateDataUpdate(): void {
@@ -292,10 +293,17 @@ export class DashboardWebSocketService {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    
+    if (this.connectTimer) {
+      clearTimeout(this.connectTimer);
+      this.connectTimer = null;
+    }
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
+    }
+    if (this.mockDataTimer) {
+      clearInterval(this.mockDataTimer);
+      this.mockDataTimer = null;
     }
   }
 

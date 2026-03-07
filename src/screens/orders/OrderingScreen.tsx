@@ -22,6 +22,7 @@ import { MenuItemExtended } from '@/types/menu-management-extended.types';
 import { MenuCategory } from '@/types/menu.types';
 import { useAuth } from '@/context/auth';
 import { menuApiClient } from '@/services/api/menu';
+import { authStorageService } from '@/services/storage';
 import { SelectedModifier } from '@/types/unified-order.types';
 import { getStationForCategory } from '@/types/order-extended.types';
 import { TableStatus } from '@/types/common.types';
@@ -163,28 +164,39 @@ export const OrderingScreen: React.FC = () => {
   const [categories, setCategories] = useState<MenuCategory[]>(MOCK_CATEGORIES);
   const [allItems, setAllItems] = useState<MenuItemExtended[]>(MOCK_MENU_ITEMS);
 
-  // Load real categories from API
+  // Load real categories from API (skip for dummy/offline credentials)
   useEffect(() => {
     if (!restaurantId) return;
-    menuApiClient.getCategories(restaurantId)
-      .then(cats => { if (cats && cats.length > 0) setCategories(cats); })
-      .catch(() => {});
+    let cancelled = false;
+    authStorageService.getSession().then(session => {
+      if (cancelled || session?.accessToken?.startsWith('dummy_')) return;
+      menuApiClient.getCategories(restaurantId)
+        .then(cats => { if (!cancelled && cats && cats.length > 0) setCategories(cats); })
+        .catch(() => {});
+    }).catch(() => {});
+    return () => { cancelled = true; };
   }, [restaurantId]);
 
-  // Load items when category selected
+  // Load items when category selected (skip for dummy/offline credentials)
   useEffect(() => {
     if (!restaurantId || !selectedCategoryId) return;
-    menuApiClient.getMenuByCategory(restaurantId, selectedCategoryId)
-      .then(items => {
-        const arr = Array.isArray(items) ? items : (items as any)?.items || [];
-        if (arr.length > 0) {
-          setAllItems(prev => {
-            const filtered = prev.filter(i => i.category_id !== selectedCategoryId);
-            return [...filtered, ...(arr as MenuItemExtended[])];
-          });
-        }
-      })
-      .catch(() => {});
+    let cancelled = false;
+    authStorageService.getSession().then(session => {
+      if (cancelled || session?.accessToken?.startsWith('dummy_')) return;
+      menuApiClient.getMenuByCategory(restaurantId, selectedCategoryId)
+        .then(items => {
+          if (cancelled) return;
+          const arr = Array.isArray(items) ? items : (items as any)?.items || [];
+          if (arr.length > 0) {
+            setAllItems(prev => {
+              const filtered = prev.filter(i => i.category_id !== selectedCategoryId);
+              return [...filtered, ...(arr as MenuItemExtended[])];
+            });
+          }
+        })
+        .catch(() => {});
+    }).catch(() => {});
+    return () => { cancelled = true; };
   }, [restaurantId, selectedCategoryId]);
 
   // Initialize order when screen mounts

@@ -88,7 +88,7 @@ export const initialKitchenState: KitchenState = {
   viewMode: 'kanban',
   sortBy: 'priority',
   autoRefresh: true,
-  refreshInterval: 5000, // 5 seconds for responsive kitchen display
+  refreshInterval: 30000, // 30 seconds — balances responsiveness with CPU/memory on 24/7 devices
 
   stats: {
     totalTickets: 0,
@@ -141,6 +141,41 @@ export type KitchenAction =
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_SELECTED_TICKET'; payload: string | null }
   | { type: 'MARK_TICKETS_OVERDUE' };
+
+// ============== CONSTANTS ==============
+
+/** Max completed tickets to keep in memory (older ones live in SQLite) */
+const MAX_COMPLETED_TICKETS_IN_MEMORY = 50;
+/** Max age (ms) for completed tickets in memory — 2 hours */
+const COMPLETED_TICKET_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * Prune old served/cancelled tickets from in-memory state.
+ * Active tickets are always kept. Completed tickets are limited by count and age.
+ */
+const pruneCompletedTickets = (tickets: KitchenTicket[]): KitchenTicket[] => {
+  const now = Date.now();
+  const active: KitchenTicket[] = [];
+  const completed: KitchenTicket[] = [];
+
+  for (const t of tickets) {
+    if (t.status === 'served' || t.status === 'cancelled') {
+      completed.push(t);
+    } else {
+      active.push(t);
+    }
+  }
+
+  // Keep only recent completed tickets, up to the limit
+  const recentCompleted = completed
+    .filter(t => {
+      const updatedAt = t.updatedAt ? new Date(t.updatedAt).getTime() : new Date(t.createdAt).getTime();
+      return now - updatedAt < COMPLETED_TICKET_MAX_AGE_MS;
+    })
+    .slice(0, MAX_COMPLETED_TICKETS_IN_MEMORY);
+
+  return [...active, ...recentCompleted];
+};
 
 // ============== HELPER FUNCTIONS ==============
 
@@ -238,7 +273,7 @@ export const kitchenReducer = (
 ): KitchenState => {
   switch (action.type) {
     case 'SET_TICKETS': {
-      const tickets = action.payload;
+      const tickets = pruneCompletedTickets(action.payload);
       return {
         ...state,
         tickets,

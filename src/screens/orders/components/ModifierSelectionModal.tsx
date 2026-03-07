@@ -245,17 +245,27 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
       textAlignVertical: 'top',
     },
     footer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: theme.spacing.md,
       borderTopWidth: 1,
       borderTopColor: theme.colors.outline,
       backgroundColor: theme.colors.surfaceLight,
+      paddingHorizontal: theme.spacing.md,
+      paddingTop: theme.spacing.sm,
+      paddingBottom: theme.spacing.sm,
+    },
+    footerTotalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing.sm,
+    },
+    footerBottomRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
     },
     quantitySection: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginRight: theme.spacing.lg,
+      marginRight: theme.spacing.md,
     },
     quantityLabel: {
       ...theme.typography.body2,
@@ -281,7 +291,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
       textAlign: 'center',
     },
     totalSection: {
-      flex: 1,
+      alignItems: 'flex-end',
     },
     totalLabel: {
       ...theme.typography.caption,
@@ -293,12 +303,13 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
       fontWeight: '700',
     },
     confirmButton: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: theme.colors.primary,
       paddingVertical: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.md,
       borderRadius: theme.borderRadius.md,
     },
     confirmButtonDisabled: {
@@ -558,55 +569,59 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
           </ScrollView>
 
           <View style={styles.footer}>
-            <View style={styles.quantitySection}>
-              <Text style={styles.quantityLabel}>Qty:</Text>
-              <View style={styles.quantityControls}>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => setQuantity((q) => Math.max(1, q - 1))}
-                  testID="btn-modifier-qty-decrease"
-                >
-                  <MaterialCommunityIcons
-                    name="minus"
-                    size={20}
-                    color={theme.colors.onSurfaceVariant}
-                  />
-                </TouchableOpacity>
-                <Text style={styles.quantityValue}>{quantity}</Text>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => setQuantity((q) => q + 1)}
-                  testID="btn-modifier-qty-increase"
-                >
-                  <MaterialCommunityIcons
-                    name="plus"
-                    size={20}
-                    color={theme.colors.primary}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.totalSection}>
+            {/* Row 1: Total */}
+            <View style={styles.footerTotalRow}>
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalValue}>{formatPrice(totalPrice)}</Text>
             </View>
 
-            <TouchableOpacity
-              style={[styles.confirmButton, !isValid && styles.confirmButtonDisabled]}
-              onPress={handleConfirm}
-              disabled={!isValid}
-              testID="btn-modifier-confirm"
-            >
-              <MaterialCommunityIcons
-                name={isEditing ? 'cart-check' : 'cart-plus'}
-                size={20}
-                color={theme.colors.onPrimary}
-              />
-              <Text style={styles.confirmButtonText}>
-                {isEditing ? 'Update Cart' : 'Add to Cart'}
-              </Text>
-            </TouchableOpacity>
+            {/* Row 2: Qty controls + Add to Cart */}
+            <View style={styles.footerBottomRow}>
+              <View style={styles.quantitySection}>
+                <Text style={styles.quantityLabel}>Qty:</Text>
+                <View style={styles.quantityControls}>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+                    testID="btn-modifier-qty-decrease"
+                  >
+                    <MaterialCommunityIcons
+                      name="minus"
+                      size={20}
+                      color={theme.colors.onSurfaceVariant}
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.quantityValue}>{quantity}</Text>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => setQuantity((q) => q + 1)}
+                    testID="btn-modifier-qty-increase"
+                  >
+                    <MaterialCommunityIcons
+                      name="plus"
+                      size={20}
+                      color={theme.colors.primary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.confirmButton, !isValid && styles.confirmButtonDisabled]}
+                onPress={handleConfirm}
+                disabled={!isValid}
+                testID="btn-modifier-confirm"
+              >
+                <MaterialCommunityIcons
+                  name={isEditing ? 'cart-check' : 'cart-plus'}
+                  size={20}
+                  color={theme.colors.onPrimary}
+                />
+                <Text style={styles.confirmButtonText}>
+                  {isEditing ? 'Update Cart' : 'Add to Cart'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>

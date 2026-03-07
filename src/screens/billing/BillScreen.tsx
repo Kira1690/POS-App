@@ -186,8 +186,11 @@ export const BillScreen: React.FC = () => {
       padding: theme.spacing.md,
     },
     sectionTitle: {
-      ...theme.typography.h4,
-      color: theme.colors.onSurface,
+      fontSize: 11,
+      fontWeight: '600',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+      color: theme.colors.onSurfaceVariant,
       marginBottom: theme.spacing.sm,
     },
     orderInfo: {
@@ -212,7 +215,9 @@ export const BillScreen: React.FC = () => {
     summaryRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingVertical: theme.spacing.xs,
+      paddingVertical: theme.spacing.sm,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.outline,
     },
     summaryLabel: {
       ...theme.typography.body1,
@@ -221,6 +226,7 @@ export const BillScreen: React.FC = () => {
     summaryValue: {
       ...theme.typography.body1,
       color: theme.colors.onSurface,
+      fontWeight: '600',
     },
     totalRow: {
       flexDirection: 'row',
@@ -251,7 +257,7 @@ export const BillScreen: React.FC = () => {
     tipButton: {
       flex: 1,
       minWidth: isPhone ? '28%' : undefined,
-      paddingVertical: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
       borderRadius: theme.borderRadius.sm,
       borderWidth: 1,
       borderColor: theme.colors.outline,
@@ -264,17 +270,21 @@ export const BillScreen: React.FC = () => {
     tipButtonText: {
       ...theme.typography.body2,
       color: theme.colors.onSurfaceVariant,
+      fontWeight: '500',
     },
     tipButtonTextActive: {
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontWeight: '700',
     },
     splitSection: {
       marginTop: theme.spacing.lg,
     },
     splitTitle: {
-      ...theme.typography.h4,
-      color: theme.colors.onSurface,
+      fontSize: 11,
+      fontWeight: '600',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+      color: theme.colors.onSurfaceVariant,
       marginBottom: theme.spacing.md,
     },
     splitOptions: {
@@ -284,15 +294,14 @@ export const BillScreen: React.FC = () => {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.surfaceLight,
-      paddingVertical: isPhone ? theme.spacing.sm : undefined,
-      paddingHorizontal: isPhone ? theme.spacing.md : undefined,
-      padding: theme.spacing.md,
+      paddingVertical: isPhone ? theme.spacing.xs : theme.spacing.sm,
+      paddingHorizontal: isPhone ? theme.spacing.sm : theme.spacing.md,
       borderRadius: theme.borderRadius.md,
       borderWidth: 1,
       borderColor: theme.colors.outline,
     },
     splitOptionIcon: {
-      marginRight: theme.spacing.md,
+      marginRight: theme.spacing.sm,
     },
     splitOptionContent: {
       flex: 1,
@@ -405,7 +414,7 @@ export const BillScreen: React.FC = () => {
     if (!canPay) {
       Alert.alert(
         'Cannot Process Payment',
-        `This order is currently "${order.status}". Payment can only be processed after the order has been served to the customer.`,
+        `This order is currently "${order.status}". Payment can only be processed when the order is ready or served.`,
         [{ text: 'OK' }]
       );
       return;
@@ -457,9 +466,10 @@ export const BillScreen: React.FC = () => {
   }
 
   const subtotal = order.items.reduce((sum, item) => sum + item.itemTotal, 0);
+  const discountAmount = order.discountAmount ?? 0;
   const tipAmount = subtotal * (tipPercentage / 100);
-  const taxAmount = subtotal * 0.1; // 10% tax
-  const total = subtotal + tipAmount + taxAmount;
+  const taxAmount = order.taxAmount ?? subtotal * 0.1;
+  const total = subtotal - discountAmount + tipAmount + taxAmount;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -503,7 +513,7 @@ export const BillScreen: React.FC = () => {
 
         {/* Summary */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Summary</Text>
+          <Text style={styles.sectionTitle}>Total</Text>
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
@@ -587,8 +597,8 @@ export const BillScreen: React.FC = () => {
             >
               <MaterialCommunityIcons
                 name="account-group"
-                size={32}
-                color={theme.colors.primary}
+                size={24}
+                color={theme.colors.outline}
                 style={styles.splitOptionIcon}
               />
               <View style={styles.splitOptionContent}>
@@ -611,8 +621,8 @@ export const BillScreen: React.FC = () => {
             >
               <MaterialCommunityIcons
                 name="format-list-checks"
-                size={32}
-                color={theme.colors.primary}
+                size={24}
+                color={theme.colors.outline}
                 style={styles.splitOptionIcon}
               />
               <View style={styles.splitOptionContent}>
@@ -635,8 +645,8 @@ export const BillScreen: React.FC = () => {
             >
               <MaterialCommunityIcons
                 name="credit-card-multiple"
-                size={32}
-                color={theme.colors.primary}
+                size={24}
+                color={theme.colors.outline}
                 style={styles.splitOptionIcon}
               />
               <View style={styles.splitOptionContent}>
@@ -659,8 +669,8 @@ export const BillScreen: React.FC = () => {
             >
               <MaterialCommunityIcons
                 name="call-merge"
-                size={32}
-                color={theme.colors.primary}
+                size={24}
+                color={theme.colors.outline}
                 style={styles.splitOptionIcon}
               />
               <View style={styles.splitOptionContent}>
@@ -683,8 +693,8 @@ export const BillScreen: React.FC = () => {
             >
               <MaterialCommunityIcons
                 name="transfer"
-                size={32}
-                color={theme.colors.primary}
+                size={24}
+                color={theme.colors.outline}
                 style={styles.splitOptionIcon}
               />
               <View style={styles.splitOptionContent}>
@@ -752,7 +762,7 @@ export const BillScreen: React.FC = () => {
               color: theme.colors.warning,
               flex: 1,
             }}>
-              Order status: {order?.status?.toUpperCase()}. Payment available after order is SERVED.
+              Order status: {order?.status?.toUpperCase()}. Payment available when order is READY or SERVED.
             </Text>
           </View>
         )}

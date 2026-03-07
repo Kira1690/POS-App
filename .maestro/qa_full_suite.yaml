@@ -108,3 +108,4 @@ tags:
 - runFlow: qa_28_activity_logs.yaml
 - runFlow: qa_29_print_receipt.yaml
 - runFlow: qa_30_update_order.yaml
+- runFlow: qa/qa_09_reports.yaml

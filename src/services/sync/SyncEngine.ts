@@ -20,6 +20,9 @@ class SyncEngine {
 
   async start(config: SyncConfig): Promise<void> {
     if (this.isRunning) return;
+    // Clear any stale timers before starting (defensive — prevents timer stacking)
+    if (this.pushTimer) { clearInterval(this.pushTimer); this.pushTimer = null; }
+    if (this.pullTimer) { clearInterval(this.pullTimer); this.pullTimer = null; }
     this.isRunning = true;
 
     const { restaurantId, pushIntervalMs, pullIntervalMs } = config;

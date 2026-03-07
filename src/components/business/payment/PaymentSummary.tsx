@@ -72,6 +72,7 @@ const getItemModifiers = (item: AnyOrderItem): string[] => {
 const getOrderTotals = (order: AnyOrder) => ({
   subtotal: (order as any).subtotal ?? 0,
   taxAmount: (order as UnifiedOrder).taxAmount ?? (order as Order).tax_amount ?? 0,
+  discountAmount: (order as UnifiedOrder).discountAmount ?? (order as any).discount_amount ?? 0,
   specialInstructions: (order as UnifiedOrder).specialInstructions ?? (order as Order).special_instructions,
 });
 
@@ -113,8 +114,9 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
   // Calculate totals (override when a per-guest split amount is provided)
   const subtotal = overrideTotal !== undefined ? overrideTotal : orderTotals.subtotal;
+  const discountAmount = overrideTotal !== undefined ? 0 : (orderTotals.discountAmount || 0);
   const tax = overrideTotal !== undefined ? 0 : (orderTotals.taxAmount || subtotal * taxRate);
-  const total = subtotal + tax + tipAmount;
+  const total = subtotal - discountAmount + tax + tipAmount;
 
   // Render order items
   const renderOrderItems = () => (
@@ -311,6 +313,17 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         </Text>
       </View>
       
+      {discountAmount > 0 && (
+        <View style={styles.totalRow}>
+          <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+            Discount
+          </Text>
+          <Text style={[styles.totalValue, { color: theme.colors.error }]}>
+            -{formatCurrency(discountAmount)}
+          </Text>
+        </View>
+      )}
+
       {tipAmount > 0 && (
         <View style={styles.totalRow}>
           <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>

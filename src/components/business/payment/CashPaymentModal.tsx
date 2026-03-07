@@ -14,7 +14,9 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -37,6 +39,7 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
 }) => {
   const { theme } = useTheme();
   const { isPhone, modalMaxWidth } = useResponsive();
+  const insets = useSafeAreaInsets();
   const [cashTendered, setCashTendered] = useState<string>('');
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
 
@@ -286,7 +289,7 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
 
   // Render action buttons
   const renderActionButtons = () => (
-    <View style={styles.actionButtons}>
+    <View style={[styles.actionButtons, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
       <TouchableOpacity
         style={[
           styles.actionButton,
@@ -337,17 +340,17 @@ export const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
       visible={visible}
       animationType="slide"
       transparent={!isPhone}
-      presentationStyle={isPhone ? 'pageSheet' : 'overFullScreen'}
+      {...(Platform.OS === 'ios' && isPhone ? { presentationStyle: 'pageSheet' } : {})}
       onRequestClose={onCancel}
     >
       {isPhone ? (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
           {renderHeader()}
-          <View style={[styles.content, { flex: 1 }]}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {renderAmountDisplay()}
             {renderQuickAmounts()}
             {renderNumberPad()}
-          </View>
+          </ScrollView>
           {renderActionButtons()}
         </SafeAreaView>
       ) : (

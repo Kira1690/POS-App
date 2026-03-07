@@ -3,7 +3,7 @@
  * Under 200 lines, focused on providing auth context
  */
 
-import React, { useReducer, useEffect, useCallback } from 'react';
+import React, { useReducer, useEffect, useCallback, useMemo } from 'react';
 import { AuthServiceClass } from '@/services/auth';
 import { IAuthService, IAuthContext, UpdateProfileRequest } from '@/interfaces';
 import { User, UserRole, Restaurant, LoginRequest } from '@/types';
@@ -37,25 +37,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     dispatch({ type: 'AUTH_INITIALIZE_START' });
 
     try {
-      // Debug: Check what's in storage
       const storedSession = await authStorageService.getSession();
-      console.log('[Auth Init] Stored session:', storedSession ? {
-        hasUser: !!storedSession.user,
-        hasRestaurant: !!storedSession.restaurant,
-        expiresAt: storedSession.expiresAt,
-        isExpired: new Date(storedSession.expiresAt) < new Date(),
-      } : 'No session found');
-
       const isAuthenticated = await authServiceToUse.isAuthenticated();
-      console.log('[Auth Init] isAuthenticated:', isAuthenticated);
 
       if (isAuthenticated) {
         // Get full session including restaurant from storage
         const session = await authStorageService.getSession();
 
         if (session) {
-          console.log('[Auth Init] Restoring session for user:', session.user?.email);
-
           // Bridge tokens to apiClient (both defaults header AND TokenManager/SecureStore)
           if (session.accessToken) {
             const expiresAt = session.expiresAt
@@ -77,7 +66,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
           });
         } else {
           // Session validation passed but data missing - fallback to separate fetches
-          console.log('[Auth Init] Session missing, falling back to profile fetch');
           const user = await authServiceToUse.getProfile();
           const restaurant = await authStorageService.getRestaurant();
           dispatch({
@@ -86,11 +74,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
           });
         }
       } else {
-        console.log('[Auth Init] Not authenticated, showing login');
+        // Not authenticated — showing login
         dispatch({ type: 'AUTH_INITIALIZE_FAILURE' });
       }
     } catch (error: any) {
-      console.error('[Auth Init] Failed:', error.message);
+      if (__DEV__) console.error('[Auth Init] Failed:', error.message);
       dispatch({ type: 'AUTH_INITIALIZE_FAILURE' });
     }
   }, [authServiceToUse]);
@@ -151,7 +139,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       const user = await authServiceToUse.getProfile();
       dispatch({ type: 'AUTH_UPDATE_USER', payload: user });
     } catch (error: any) {
-      console.error('Failed to refresh user data:', error.message);
+      if (__DEV__) console.error('Failed to refresh user data:', error.message);
       if (error.message.includes('401') || error.message.includes('Unauthorized')) {
         dispatch({ type: 'AUTH_SESSION_EXPIRED' });
       }
@@ -178,7 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         await initializeAuth();
       }
     } catch (error: any) {
-      console.error('Auth status check failed:', error.message);
+      if (__DEV__) console.error('Auth status check failed:', error.message);
     }
   }, [authServiceToUse, state.isAuthenticated, initializeAuth]);
 
@@ -224,7 +212,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     return () => clearInterval(interval);
   }, [state.isAuthenticated, checkAuthStatus]);
 
-  const contextValue: IAuthContext = {
+  const contextValue: IAuthContext = useMemo(() => ({
     state,
     login: actions.login,
     logout: actions.logout,
@@ -238,7 +226,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     hasAnyRole,
     canAccessResource,
     getSessionInfo,
-  };
+  }), [
+    state, actions.login, actions.logout, actions.clearError,
+    updateProfile, updatePassword, refreshUserData, switchRestaurant,
+    checkAuthStatus, hasRole, hasAnyRole, canAccessResource, getSessionInfo,
+  ]);
 
   return (
     <AuthContext.Provider value={contextValue}>

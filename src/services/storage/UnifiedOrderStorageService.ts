@@ -169,8 +169,9 @@ class UnifiedOrderStorageService {
 
   async saveOrder(order: UnifiedOrder): Promise<void> {
     const ts = now();
+    const db = await this.ensureDb();
 
-    await (await this.ensureDb()).runAsync(
+    await db.runAsync(
       `INSERT OR REPLACE INTO orders (id, order_number, restaurant_id, table_id, table_name,
         guest_count, customer_id, created_by, created_by_name, served_by, served_by_name,
         subtotal, tax_rate, tax_amount, discount_type, discount_value, discount_amount,
@@ -196,12 +197,11 @@ class UnifiedOrderStorageService {
     );
 
     // Save order items
-    if (order.items) {
-      // Remove existing items for this order then re-insert
-      await (await this.ensureDb()).runAsync('DELETE FROM order_items WHERE order_id = ?', order.id);
+    if (order.items && order.items.length > 0) {
+      await db.runAsync('DELETE FROM order_items WHERE order_id = ?', order.id);
 
       for (const item of order.items) {
-        await (await this.ensureDb()).runAsync(
+        await db.runAsync(
           `INSERT INTO order_items (id, order_id, menu_item_id, name, category, category_id,
             base_price, quantity, modifier_total, item_total, selected_modifiers,
             dietary_tags, allergens, has_allergen_warning, kitchen_station, item_status,
@@ -578,8 +578,19 @@ class UnifiedOrderStorageService {
   // ============== BULK OPERATIONS ==============
 
   async saveOrders(orders: UnifiedOrder[]): Promise<void> {
-    for (const order of orders) {
-      await this.saveOrder(order);
+    if (orders.length === 0) return;
+    // Process sequentially but each saveOrder already uses transactions for items
+    // For very large batches, wrapping outer loop in a transaction too
+    const db = await this.ensureDb();
+    await db.execAsync('BEGIN TRANSACTION');
+    try {
+      for (const order of orders) {
+        await this.saveOrder(order);
+      }
+      await db.execAsync('COMMIT');
+    } catch (err) {
+      await db.execAsync('ROLLBACK');
+      throw err;
     }
   }
 
@@ -853,6 +864,105 @@ class UnifiedOrderStorageService {
     });
     if (!updated) throw new Error('Failed to add items to order');
     return updated;
+  }
+
+  // ============== DEMO DATA SEED ==============
+
+  /**
+   * Seed 15 paid demo orders (last 7 days) so the Reports & Dashboard charts
+   * show data when logged in with an offline dummy account.
+   * Skips if paid orders already exist.
+   */
+  async seedDemoOrders(restaurantId: string): Promise<void> {
+    const db = await this.ensureDb();
+    const existing = await db.getFirstAsync<{ cnt: number }>(
+      `SELECT COUNT(*) as cnt FROM orders WHERE status = 'paid' AND restaurant_id = ?`,
+      restaurantId,
+    );
+    if ((existing?.cnt ?? 0) > 0) return; // already seeded
+
+    const ITEMS = [
+      { id: 'demo-latte', name: 'Latte', cat: 'Drinks', price: 5.00 },
+      { id: 'demo-cappuccino', name: 'Cappuccino', cat: 'Drinks', price: 4.75 },
+      { id: 'demo-burger', name: 'Beef Burger', cat: 'Mains', price: 12.99 },
+      { id: 'demo-salmon', name: 'Grilled Salmon', cat: 'Mains', price: 15.50 },
+      { id: 'demo-rolls', name: 'Spring Rolls', cat: 'Starters', price: 6.50 },
+      { id: 'demo-garlic', name: 'Garlic Bread', cat: 'Starters', price: 4.00 },
+      { id: 'demo-caesar', name: 'Caesar Salad', cat: 'Starters', price: 8.50 },
+    ];
+
+    const tables = ['T-1', 'T-2', 'T-3', 'B-1', 'B-2'];
+    const ts = Date.now();
+
+    for (let i = 0; i < 15; i++) {
+      const daysAgo = i % 7;
+      const hoursAgo = 8 + (i * 2) % 12; // spread across business hours
+      const createdAt = new Date(ts - daysAgo * 86400000 - hoursAgo * 3600000);
+      const orderNum = `ORD-DEMO-${String(i + 1).padStart(3, '0')}`;
+      const orderId = `demo-order-${i + 1}`;
+      const table = tables[i % tables.length];
+
+      // Pick 1-3 items per order
+      const itemCount = 1 + (i % 3);
+      const orderItems: UnifiedOrderItem[] = [];
+      let subtotal = 0;
+
+      for (let j = 0; j < itemCount; j++) {
+        const item = ITEMS[(i + j) % ITEMS.length];
+        const qty = 1 + (j % 2);
+        const itemTotal = item.price * qty;
+        subtotal += itemTotal;
+        orderItems.push({
+          id: `${orderId}-item-${j}`,
+          orderId,
+          menuItemId: item.id,
+          name: item.name,
+          category: item.cat,
+          basePrice: item.price,
+          quantity: qty,
+          modifierTotal: 0,
+          itemTotal,
+          selectedModifiers: [],
+          dietaryTags: [],
+          allergens: [],
+          hasAllergenWarning: false,
+          itemStatus: 'served',
+          addedAt: createdAt.toISOString(),
+        } as UnifiedOrderItem);
+      }
+
+      const taxAmount = parseFloat((subtotal * 0.1).toFixed(2));
+      const totalAmount = parseFloat((subtotal + taxAmount).toFixed(2));
+
+      await this.saveOrder({
+        id: orderId,
+        orderNumber: orderNum,
+        restaurantId,
+        tableId: `tbl-${table}`,
+        tableName: table,
+        guestCount: 1 + (i % 3),
+        createdBy: 'demo-manager',
+        createdByName: 'Alice Johnson',
+        subtotal,
+        taxRate: 0.1,
+        taxAmount,
+        discountAmount: 0,
+        tipAmount: 0,
+        totalAmount,
+        status: 'paid',
+        paymentStatus: 'paid',
+        paidAt: createdAt.toISOString(),
+        submittedAt: createdAt.toISOString(),
+        pendingSync: false,
+        createdAt: createdAt.toISOString(),
+        updatedAt: createdAt.toISOString(),
+        items: orderItems,
+      } as UnifiedOrder);
+    }
+
+    if (__DEV__) {
+      console.log(`[UnifiedOrderStorage] Seeded 15 demo paid orders for restaurant ${restaurantId}`);
+    }
   }
 }
 

@@ -317,33 +317,24 @@ export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }
   );
 
   // Context value
-  const contextValue: BillSplitContextValue = {
+  const contextValue: BillSplitContextValue = useMemo(() => ({
     state,
-    setOrder,
-    clearOrder,
-    setSplitType,
-    setGuestCount,
-    setTipAmount,
-    setTipPercentage,
-    calculateEqualSplits,
-    assignItemToGuest,
-    unassignItemFromGuest,
-    assignAllItemsToGuest,
-    clearGuestItems,
-    splitItemEqually,
-    calculateItemSplits,
-    addPaymentSplit,
-    updatePaymentSplit,
-    removePaymentSplit,
-    markGuestPaid,
-    unmarkGuestPaid,
-    selectGuest,
-    resetSplit,
-    isFullyPaid,
-    canProceedToPayment,
-    unpaidGuests,
-    paidGuests,
-  };
+    setOrder, clearOrder, setSplitType, setGuestCount,
+    setTipAmount, setTipPercentage,
+    calculateEqualSplits, assignItemToGuest, unassignItemFromGuest,
+    assignAllItemsToGuest, clearGuestItems, splitItemEqually, calculateItemSplits,
+    addPaymentSplit, updatePaymentSplit, removePaymentSplit,
+    markGuestPaid, unmarkGuestPaid, selectGuest, resetSplit,
+    isFullyPaid, canProceedToPayment, unpaidGuests, paidGuests,
+  }), [
+    state, isFullyPaid, canProceedToPayment, unpaidGuests, paidGuests,
+    setOrder, clearOrder, setSplitType, setGuestCount,
+    setTipAmount, setTipPercentage,
+    calculateEqualSplits, assignItemToGuest, unassignItemFromGuest,
+    assignAllItemsToGuest, clearGuestItems, splitItemEqually, calculateItemSplits,
+    addPaymentSplit, updatePaymentSplit, removePaymentSplit,
+    markGuestPaid, unmarkGuestPaid, selectGuest, resetSplit,
+  ]);
 
   return (
     <BillSplitContext.Provider value={contextValue}>

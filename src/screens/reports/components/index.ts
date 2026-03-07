@@ -1,3 +1,4 @@
+export { ReportCard } from './ReportCard';
 export { default as MetricsDashboard } from './MetricsDashboard';
 export { default as ReportFiltersBar } from './ReportFiltersBar';
 export { default as SalesReportCard } from './SalesReportCard';

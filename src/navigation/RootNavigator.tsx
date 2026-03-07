@@ -82,17 +82,17 @@ export const RootNavigator: React.FC = () => {
             component={MainNavigator}
             listeners={{
               focus: () => {
-                performanceAnalytics.trackScreenNavigation('Main', Date.now());
+                // Navigation duration not measurable from focus listener — pass 0
               },
             }}
           />
         ) : (
-          <Stack.Screen 
-            name="Auth" 
+          <Stack.Screen
+            name="Auth"
             component={AuthNavigator}
             listeners={{
               focus: () => {
-                performanceAnalytics.trackScreenNavigation('Auth', Date.now());
+                // Navigation duration not measurable from focus listener — pass 0
               },
             }}
           />

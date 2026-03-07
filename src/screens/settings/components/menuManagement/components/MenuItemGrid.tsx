@@ -92,7 +92,7 @@ export const MenuItemGrid: React.FC<MenuItemGridProps> = ({
     addButtonText: {
       fontSize: 14,
       fontWeight: '600',
-      color: '#FFFFFF',
+      color: theme.colors.white,
     },
     loadingContainer: {
       flex: 1,

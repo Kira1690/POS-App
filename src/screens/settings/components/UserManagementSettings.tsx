@@ -12,6 +12,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { UserProfile, UserPermissions } from '@/types/settings.types';
 import { apiClient } from '@/services/api/apiClient';
+import { authStorageService } from '@/services/storage';
 import { useAuth } from '@/context/auth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -93,6 +94,15 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
 
     (async () => {
       try {
+        // Skip API for dummy/offline credentials
+        const session = await authStorageService.getSession();
+        if (session?.accessToken?.startsWith('dummy_')) {
+          setError('User management unavailable in offline mode.');
+          setLoading(false);
+          clearTimeout(timeoutId);
+          return;
+        }
+
         const response = await apiClient.get<{ users: Array<Record<string, unknown>>; total: number }>(
           '/api/users?limit=50',
           { signal: controller.signal },

@@ -10,6 +10,7 @@ import React, {
   useCallback,
   useEffect,
   useState,
+  useMemo,
   ReactNode,
 } from 'react';
 import { kitchenStorageService } from '@/services/storage';
@@ -94,15 +95,10 @@ export const KitchenConfigProvider: React.FC<KitchenConfigProviderProps> = ({ ch
     init();
   }, [refreshStations]);
 
-  const contextValue: KitchenConfigContextValue = {
-    stations,
-    isLoading,
-    refreshStations,
-    addStation,
-    updateStation,
-    deleteStation,
-    toggleStation,
-  };
+  const contextValue: KitchenConfigContextValue = useMemo(() => ({
+    stations, isLoading, refreshStations,
+    addStation, updateStation, deleteStation, toggleStation,
+  }), [stations, isLoading, refreshStations, addStation, updateStation, deleteStation, toggleStation]);
 
   return (
     <KitchenConfigContext.Provider value={contextValue}>

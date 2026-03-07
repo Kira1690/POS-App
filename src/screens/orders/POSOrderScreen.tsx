@@ -79,9 +79,12 @@ const POSOrderScreen: React.FC = () => {
     removeItem: removeFromCart,
     clear: clearCart,
     subtotal: cartTotal,
+    discountAmount: cartDiscountAmount,
     itemCount: cartItemCount,
     orderNumber: cartOrderNumber,
     selectedTable,
+    setDiscount: setCartDiscount,
+    setItemDiscount: setCartItemDiscount,
   } = useUnifiedCart();
 
   // Derive currentOrder from state (unified context doesn't have a separate "currentOrder" during cart mode)
@@ -563,10 +566,12 @@ const POSOrderScreen: React.FC = () => {
     // Use tax rate from payment context (single source of truth)
     const taxRate = contextTaxRate || 0.0825; // Default 8.25% if not configured
 
-    // Calculate bill data
+    // Calculate bill data — use discount from submitted order or cart
     const subtotal = cartTotal;
-    const taxAmount = subtotal * taxRate;
-    const total = subtotal + taxAmount;
+    const discountAmount = editingOrder?.discountAmount ?? currentOrder?.discountAmount ?? cartDiscountAmount;
+    const taxableAmount = Math.max(0, subtotal - discountAmount);
+    const taxAmount = taxableAmount * taxRate;
+    const total = taxableAmount + taxAmount;
 
     // Transform cart items to BillItem format (using correct ExtendedOrderItem properties)
     const billItems = (cart || []).map(item => {
@@ -586,7 +591,8 @@ const POSOrderScreen: React.FC = () => {
         id: item.id,
         name: item.name,
         quantity: item.quantity,
-        price: item.basePrice + item.modifierTotal, // Total unit price including modifiers
+        // Use effective unit price: itemTotal already reflects any item-level discount
+        price: item.quantity > 0 ? item.itemTotal / item.quantity : (item.basePrice + item.modifierTotal),
         notes: item.specialInstructions,
         category: item.category,
         hasModifiers, // Pass to BillPanel for edit button visibility
@@ -676,8 +682,8 @@ const POSOrderScreen: React.FC = () => {
     };
 
     const handleDiscount = () => {
-      if (!currentOrder && !editingOrder) {
-        showToast({ type: 'warning', title: 'No Order', message: 'Create an order first' });
+      if (!currentOrder && !editingOrder && cart.length === 0) {
+        showToast({ type: 'warning', title: 'No Order', message: 'Add items first to apply a discount' });
         return;
       }
       setShowDiscountModal(true);
@@ -716,6 +722,7 @@ const POSOrderScreen: React.FC = () => {
         tableCapacity={selectedTable?.capacity || 0}
         items={billItems}
         subtotal={subtotal}
+        discountAmount={discountAmount}
         taxRate={taxRate}
         taxAmount={taxAmount}
         total={total}
@@ -848,25 +855,35 @@ const POSOrderScreen: React.FC = () => {
         } : undefined}
         onApply={async (discount: DiscountData) => {
           const orderId = editingOrder?.id || currentOrder?.id;
-          if (!orderId) return;
           if (discountingItem) {
-            await applyItemDiscount(orderId, discountingItem.id, discount.type, discount.value);
+            if (orderId) {
+              await applyItemDiscount(orderId, discountingItem.id, discount.type, discount.value);
+            } else {
+              // Cart-only item — update itemTotal in cart state directly
+              setCartItemDiscount(discountingItem.id, discount.type, discount.value);
+            }
             setDiscountingItem(null);
-          } else {
+          } else if (orderId) {
             await applyOrderDiscount(orderId, discount.type, discount.value);
+            setShowDiscountModal(false);
+          } else {
+            // Cart-only order (not yet submitted) — apply to cart state
+            setCartDiscount(discount.type, discount.value);
             setShowDiscountModal(false);
           }
         }}
         onRemove={() => {
           const orderId = editingOrder?.id || currentOrder?.id;
-          if (orderId) {
-            if (discountingItem) {
-              applyItemDiscount(orderId, discountingItem.id, 'percentage', 0);
-              setDiscountingItem(null);
-            } else {
-              applyOrderDiscount(orderId, 'percentage', 0);
-              setShowDiscountModal(false);
-            }
+          if (discountingItem) {
+            if (orderId) applyItemDiscount(orderId, discountingItem.id, 'percentage', 0);
+            else setCartItemDiscount(discountingItem.id, 'percentage', 0);
+            setDiscountingItem(null);
+          } else if (orderId) {
+            applyOrderDiscount(orderId, 'percentage', 0);
+            setShowDiscountModal(false);
+          } else {
+            setCartDiscount('percentage', 0);
+            setShowDiscountModal(false);
           }
         }}
         onCancel={() => {

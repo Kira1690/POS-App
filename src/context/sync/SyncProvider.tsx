@@ -11,7 +11,7 @@
  *   error interceptor is never triggered by sync calls.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '@/context/auth';
 import { syncEngine } from '@/services/sync/SyncEngine';
 import { syncQueueService, authStorageService } from '@/services/storage';
@@ -69,18 +69,22 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     let stopped = false;
 
     const startSync = async () => {
-      const [reachable, isDummy] = await Promise.all([
-        isBackendReachable(),
-        isUsingDummyCredentials(),
-      ]);
+      // Check dummy FIRST — skip the 3s health fetch entirely
+      const isDummy = await isUsingDummyCredentials();
+      if (isDummy) {
+        setSyncStatus('offline');
+        if (__DEV__) console.log('[SyncProvider] Dummy credentials — staying offline silently');
+        return;
+      }
+
+      const reachable = await isBackendReachable();
 
       if (stopped) return;
 
       if (!reachable) {
         setSyncStatus('offline');
 
-        // Only notify real users — dummy credentials are expected to be offline
-        if (!isDummy && !offlineToastShownRef.current) {
+        if (!offlineToastShownRef.current) {
           offlineToastShownRef.current = true;
           showToast({
             type: 'info',
@@ -90,7 +94,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         }
 
         if (__DEV__) {
-          console.log(`[SyncProvider] Offline — isDummy=${isDummy}, toast shown=${offlineToastShownRef.current}`);
+          console.log(`[SyncProvider] Offline — toast shown=${offlineToastShownRef.current}`);
         }
         return;
       }
@@ -127,10 +131,11 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     if (!isAuthenticated) return;
 
     const checkHealth = async () => {
-      const [reachable, isDummy] = await Promise.all([
-        isBackendReachable(),
-        isUsingDummyCredentials(),
-      ]);
+      // Check dummy first to avoid unnecessary network request
+      const isDummy = await isUsingDummyCredentials();
+      if (isDummy) return;
+
+      const reachable = await isBackendReachable();
 
       if (!reachable) {
         if (isOnlineRef.current) {
@@ -138,7 +143,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
           isOnlineRef.current = false;
           await syncEngine.stop().catch(() => {});
           setSyncStatus('offline');
-          if (!isDummy && !offlineToastShownRef.current) {
+          if (!offlineToastShownRef.current) {
             offlineToastShownRef.current = true;
             showToast({
               type: 'info',
@@ -189,14 +194,18 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   const triggerSync = useCallback(async () => {
     if (syncStatus === 'syncing') return;
 
-    const [reachable, isDummy] = await Promise.all([
-      isBackendReachable(),
-      isUsingDummyCredentials(),
-    ]);
+    // Dummy credentials — no sync possible, skip health fetch
+    const isDummy = await isUsingDummyCredentials();
+    if (isDummy) {
+      setSyncStatus('offline');
+      return;
+    }
+
+    const reachable = await isBackendReachable();
 
     if (!reachable) {
       setSyncStatus('offline');
-      if (!isDummy && !offlineToastShownRef.current) {
+      if (!offlineToastShownRef.current) {
         offlineToastShownRef.current = true;
         showToast({
           type: 'info',
@@ -228,8 +237,12 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     }
   }, [syncStatus, restaurantId]);
 
+  const contextValue = useMemo(() => ({
+    syncStatus, pendingCount, lastSyncTime, triggerSync,
+  }), [syncStatus, pendingCount, lastSyncTime, triggerSync]);
+
   return (
-    <SyncContext.Provider value={{ syncStatus, pendingCount, lastSyncTime, triggerSync }}>
+    <SyncContext.Provider value={contextValue}>
       {children}
     </SyncContext.Provider>
   );

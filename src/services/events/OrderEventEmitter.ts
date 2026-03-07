@@ -59,14 +59,10 @@ class OrderEventEmitter {
       callbacks.forEach(cb => {
         try {
           cb(orderId, data);
-        } catch (error) {
-          console.error(`[OrderEventEmitter] Error in callback for ${event}:`, error);
+        } catch {
+          // Silent — callback errors shouldn't crash emitter
         }
       });
-    }
-
-    if (__DEV__) {
-      console.log(`[OrderEventEmitter] Emitted ${event} for order ${orderId}:`, data);
     }
   }
 

@@ -251,37 +251,20 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   // Handle payment processing - Restaurant workflow
   // Payment only available for served orders in unified system
   const handleProcessPayment = useCallback(async (order: UnifiedOrder) => {
-    // Check if order can accept payment (must be served status)
-    if (order.status !== 'served') {
+    // Check if order can accept payment (must be ready or served)
+    if (order.status !== 'ready' && order.status !== 'served') {
       showToast({
         type: 'warning',
         title: 'Not Ready for Payment',
-        message: 'Order must be served before payment can be processed',
+        message: 'Order must be ready or served before payment can be processed',
       });
       return;
     }
 
-    try {
-      // Navigate to payment processing screen with full order object
-      navigation?.navigate('PaymentProcessing', {
-        orderId: order.id,
-        order: order,
-        orderTotal: order.totalAmount,
-        tableNumber: order.tableName || 'N/A'
-      });
-
-      showToast({
-        type: 'info',
-        title: 'Payment Processing',
-        message: `Processing payment for Order ${order.orderNumber}`,
-      });
-    } catch (error) {
-      showToast({
-        type: 'error',
-        title: 'Payment Error',
-        message: 'Failed to process payment. Please try again.',
-      });
-    }
+    // Navigate to Bill screen (detailed view with split/discount/combine options)
+    navigation?.navigate('Bill', {
+      orderId: order.id,
+    });
   }, [navigation]);
 
   // Get order counts for each status

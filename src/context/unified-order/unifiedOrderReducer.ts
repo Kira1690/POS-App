@@ -128,6 +128,7 @@ export type UnifiedOrderAction =
   | { type: 'SET_CART_ORDER_NUMBER'; payload: string | null }
   | { type: 'SET_CART_TAX_RATE'; payload: number }
   | { type: 'SET_CART_DISCOUNT'; payload: { type: 'percentage' | 'fixed'; value: number } }
+  | { type: 'SET_CART_ITEM_DISCOUNT'; payload: { itemId: string; discountType: 'percentage' | 'fixed'; discountValue: number } }
 
   // Order Operations
   | { type: 'SET_ORDERS'; payload: UnifiedOrder[] }
@@ -197,6 +198,9 @@ function calculateCartTotals(
   };
 }
 
+/** Max history orders to keep in memory (older ones live in SQLite) */
+const MAX_HISTORY_ORDERS_IN_MEMORY = 30;
+
 /**
  * Update order status with timestamp tracking
  */
@@ -255,7 +259,7 @@ function categorizeOrder(
 
   return {
     activeOrders: allOrders.filter(isActiveOrder),
-    historyOrders: allOrders.filter((o) => !isActiveOrder(o)),
+    historyOrders: allOrders.filter((o) => !isActiveOrder(o)).slice(0, MAX_HISTORY_ORDERS_IN_MEMORY),
   };
 }
 
@@ -410,15 +414,46 @@ export function unifiedOrderReducer(
       };
     }
 
+    case 'SET_CART_ITEM_DISCOUNT': {
+      const { itemId, discountType, discountValue } = action.payload;
+      const newCart = state.cart.map((item) => {
+        if (item.id !== itemId) return item;
+        const baseItemTotal = (item.basePrice + item.modifierTotal) * item.quantity;
+        const discountAmount =
+          discountType === 'percentage'
+            ? parseFloat((baseItemTotal * (discountValue / 100)).toFixed(2))
+            : parseFloat(Math.min(discountValue, baseItemTotal).toFixed(2));
+        return {
+          ...item,
+          discountType,
+          discountValue,
+          discountAmount,
+          itemTotal: parseFloat((baseItemTotal - discountAmount).toFixed(2)),
+        };
+      });
+      const totals = calculateCartTotals(newCart, state.cartTaxRate, state.cartDiscountAmount);
+      return {
+        ...state,
+        cart: newCart,
+        cartSubtotal: totals.subtotal,
+        cartTaxAmount: totals.taxAmount,
+        cartTotal: totals.total,
+      };
+    }
+
     // ============== ORDER OPERATIONS ==============
 
     case 'SET_ORDERS': {
-      const orders = action.payload;
+      const allOrders = action.payload;
+      const activeOrders = allOrders.filter(isActiveOrder);
+      // Cap history in memory — older orders live in SQLite
+      const historyOrders = allOrders.filter((o) => !isActiveOrder(o)).slice(0, MAX_HISTORY_ORDERS_IN_MEMORY);
+      const orders = [...activeOrders, ...historyOrders];
       return {
         ...state,
         orders,
-        activeOrders: orders.filter(isActiveOrder),
-        historyOrders: orders.filter((o) => !isActiveOrder(o)),
+        activeOrders,
+        historyOrders,
       };
     }
 
@@ -436,17 +471,18 @@ export function unifiedOrderReducer(
 
     case 'ADD_ORDER': {
       const newOrder = action.payload;
-      const newOrders = [newOrder, ...state.orders];
+      const newActiveOrders = isActiveOrder(newOrder)
+        ? [newOrder, ...state.activeOrders]
+        : state.activeOrders;
+      const newHistoryOrders = !isActiveOrder(newOrder)
+        ? [newOrder, ...state.historyOrders].slice(0, MAX_HISTORY_ORDERS_IN_MEMORY)
+        : state.historyOrders;
 
       return {
         ...state,
-        orders: newOrders,
-        activeOrders: isActiveOrder(newOrder)
-          ? [newOrder, ...state.activeOrders]
-          : state.activeOrders,
-        historyOrders: !isActiveOrder(newOrder)
-          ? [newOrder, ...state.historyOrders]
-          : state.historyOrders,
+        orders: [...newActiveOrders, ...newHistoryOrders],
+        activeOrders: newActiveOrders,
+        historyOrders: newHistoryOrders,
       };
     }
 
@@ -482,15 +518,11 @@ export function unifiedOrderReducer(
       const order = state.orders.find((o) => o.id === orderId);
 
       if (!order) {
-        console.warn(`[UnifiedOrderReducer] Order ${orderId} not found`);
         return state;
       }
 
       // Validate status transition (except for payment which bypasses this)
       if (status !== 'paid' && !isValidStatusTransition(order.status, status)) {
-        console.warn(
-          `[UnifiedOrderReducer] Invalid status transition: ${order.status} -> ${status}`
-        );
         return state;
       }
 

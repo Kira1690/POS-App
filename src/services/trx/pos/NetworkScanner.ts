@@ -31,8 +31,6 @@ export class NetworkScanner {
       }
 
       const subnet = `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}`;
-      console.log('📍 Device IP:', ipAddress);
-      console.log('📍 Subnet:', subnet + '.0/24');
 
       this.logger.info('Current network detected', 'getCurrentNetwork', {
         deviceIP: ipAddress,
@@ -145,8 +143,6 @@ export class NetworkScanner {
   }
 
   async scanForTerminals(port: number = this.defaultPort): Promise<TerminalDevice[]> {
-    console.log('🔎 TERMINAL SCAN: Starting network scan for POS terminals');
-    console.log('📡 Scanning port:', port);
 
     this.logger.info('Starting network scan for POS terminals', 'scanForTerminals', { port });
 
@@ -253,9 +249,6 @@ export class NetworkScanner {
    * for maximum reliability (matches reference TerminalManager approach).
    */
   async testManualIP(ip: string, port: number = this.defaultPort): Promise<TerminalDevice | null> {
-    console.log('');
-    console.log('[NetworkScanner] MANUAL IP TEST (with retries)');
-    console.log(`[NetworkScanner] Testing: ${ip}:${port}`);
 
     if (!this.isValidIPAddress(ip)) {
       console.log('[NetworkScanner] Invalid IP address format');
@@ -269,14 +262,12 @@ export class NetworkScanner {
       this.logger.info('Manual IP test successful', 'testManualIP', {
         ip, port, responseTime: result.responseTimeMs,
       });
-      console.log(`[NetworkScanner] SUCCESS — ${ip}:${port} responded in ${result.responseTimeMs}ms`);
       return { ip, port, isOnline: true, responseTime: result.responseTimeMs };
     }
 
     this.logger.warn('Manual IP test failed', 'testManualIP', {
       ip, port, error: result.error,
     });
-    console.log(`[NetworkScanner] FAILED — ${result.error}`);
     return null;
   }
 

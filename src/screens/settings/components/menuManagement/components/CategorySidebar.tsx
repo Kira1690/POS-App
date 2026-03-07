@@ -82,7 +82,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
     addButtonText: {
       fontSize: 14,
       fontWeight: '600',
-      color: '#FFFFFF',
+      color: theme.colors.white,
     },
     listContainer: {
       flex: 1,
