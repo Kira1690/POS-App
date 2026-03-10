@@ -145,7 +145,6 @@ export const AddTableModalEnhanced: React.FC<AddTableModalEnhancedProps> = ({
   const handleAddNewArea = () => {
     if (newAreaName.trim()) {
       // In real implementation, this would call an API
-      console.log('Adding new area:', newAreaName);
       setNewAreaName('');
       setShowAddArea(false);
       setShowAreaDropdown(false);

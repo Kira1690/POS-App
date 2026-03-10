@@ -49,6 +49,7 @@ export type TablesStackParamList = {
       last_cleaned?: string;
       notes?: string;
     };
+    editOrderId?: string;  // NEW: if set, editing an existing order
   };
 };
 

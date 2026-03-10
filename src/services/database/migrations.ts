@@ -81,7 +81,9 @@ export async function migrateFromAsyncStorage(db: SQLiteDatabase): Promise<void>
       console.log('[Migration] AsyncStorage → SQLite migration complete.');
     }
   } catch (error) {
-    console.error('[Migration] Migration failed:', error);
+    if (__DEV__) {
+      console.error('[Migration] Migration failed:', error);
+    }
     // Don't set the flag - will retry on next launch
     throw error;
   }

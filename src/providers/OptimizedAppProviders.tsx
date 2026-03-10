@@ -22,6 +22,7 @@ import { UnifiedOrderProvider } from '@/context/unified-order';
 import { BillSplitProvider } from '@/context/billing/BillSplitContext';
 import { PaymentProvider } from '@/context/payment/PaymentProvider';
 import { KitchenConfigProvider } from '@/context/kitchen';
+import { PrinterProvider } from '@/context/printer/PrinterContext';
 import {
   tableStorageService,
   kitchenStorageService,
@@ -93,9 +94,7 @@ const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children
         if (__DEV__) {
           console.log('[OptimizedAppProviders] Storage services initialized (seeding complete)');
         }
-      } catch (error) {
-        console.error('[OptimizedAppProviders] Storage initialization failed:', error);
-      }
+      } catch { /* silent — storage errors shown via app state */ }
     };
 
     initializeStorageServices();
@@ -122,7 +121,9 @@ const TransactionProviders = memo<{ children: React.ReactNode }>(({ children }) 
   return (
     <PaymentProvider>
       <KitchenConfigProvider>
-        {children}
+        <PrinterProvider>
+          {children}
+        </PrinterProvider>
       </KitchenConfigProvider>
     </PaymentProvider>
   );

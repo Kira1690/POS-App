@@ -354,12 +354,8 @@ export const createTableActions = (
           unsubscribe = tableWebSocketService.subscribe((update) => {
             dispatch({ type: 'REALTIME_UPDATE', payload: update });
           });
-        } else {
-          console.warn('WebSocket service not available, skipping real-time updates');
         }
-      } catch (error: unknown) {
-        console.error('Failed to connect to real-time updates:', (error as Error).message);
-      }
+      } catch { /* silent */ }
     }).catch(() => {});
   };
 

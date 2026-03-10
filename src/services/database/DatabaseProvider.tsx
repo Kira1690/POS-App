@@ -45,7 +45,9 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown database error';
-      console.error('[DatabaseProvider] Failed to initialize:', message);
+      if (__DEV__) {
+        console.error('[DatabaseProvider] Failed to initialize:', message);
+      }
       setIsReady(false);
 
       // In dev mode, NativeDatabase errors after Fast Refresh are unrecoverable

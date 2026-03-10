@@ -149,7 +149,6 @@ export const useMenu = (): UseMenuReturn => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load menu data';
       setError(errorMessage);
-      console.error('[useMenu] Error loading menu data:', err);
     } finally {
       setIsLoading(false);
     }
@@ -170,8 +169,7 @@ export const useMenu = (): UseMenuReturn => {
       
       const result = await menuService.searchMenuItems(searchRequest);
       return result.items;
-    } catch (err) {
-      console.error('Error searching menu items:', err);
+    } catch {
       return [];
     }
   }, [authState.restaurant?.id]);

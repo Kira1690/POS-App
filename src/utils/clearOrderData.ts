@@ -29,33 +29,23 @@ import { databaseService } from '@/services/database/DatabaseService';
  */
 export const clearAllOrderAndTicketData = async (): Promise<void> => {
   try {
-    console.log('[ClearOrderData] Starting to clear order and ticket data...');
-
     // STEP 1: Clear unified order storage (SINGLE source of truth)
     await unifiedOrderStorageService.clearAll();
-    console.log('[ClearOrderData] Unified order storage cleared');
 
     // STEP 2: Clear payment storage
     await paymentStorageService.clearAll();
-    console.log('[ClearOrderData] Payment storage cleared');
 
     // STEP 3: Reset all table statuses to AVAILABLE
     await tableStorageService.resetAllTableStatuses();
-    console.log('[ClearOrderData] All table statuses reset to AVAILABLE');
 
     // STEP 4: Reset table API client cache
     tableApiClient.resetCache();
-    console.log('[ClearOrderData] Table API client cache reset');
 
     // STEP 5: Emit SYSTEM_RESET event to notify all contexts
     orderEventEmitter.emit('SYSTEM_RESET', '', {});
-    console.log('[ClearOrderData] SYSTEM_RESET event emitted');
-
-    console.log('[ClearOrderData] All order data cleared successfully');
 
     return;
   } catch (error) {
-    console.error('[ClearOrderData] Error clearing data:', error);
     throw error;
   }
 };
@@ -80,11 +70,11 @@ export const verifyRemainingData = async (): Promise<void> => {
       'SELECT COUNT(*) as cnt FROM orders'
     );
 
-    console.log('[ClearOrderData] Menu Categories:', menuCategories?.cnt ? 'EXISTS' : 'EMPTY');
-    console.log('[ClearOrderData] Menu Items:', menuItems?.cnt ? 'EXISTS' : 'EMPTY');
-    console.log('[ClearOrderData] Tables:', tables?.cnt ? 'EXISTS' : 'EMPTY');
-    console.log('[ClearOrderData] Orders:', orders?.cnt ? '(should be 0)' : 'CLEARED');
-  } catch (error) {
-    console.error('[ClearOrderData] Error verifying data:', error);
-  }
+    if (__DEV__) {
+      console.log('[ClearOrderData] Menu Categories:', menuCategories?.cnt ? 'EXISTS' : 'EMPTY');
+      console.log('[ClearOrderData] Menu Items:', menuItems?.cnt ? 'EXISTS' : 'EMPTY');
+      console.log('[ClearOrderData] Tables:', tables?.cnt ? 'EXISTS' : 'EMPTY');
+      console.log('[ClearOrderData] Orders:', orders?.cnt ? '(should be 0)' : 'CLEARED');
+    }
+  } catch { /* silent */ }
 };

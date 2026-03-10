@@ -166,7 +166,6 @@ export class DummyAuthService implements IAuthService {
     }
 
     // In real implementation, this would update the password
-    console.log('Password would be changed to:', newPassword);
   }
 
   async getUserRestaurants(): Promise<Restaurant[]> {
@@ -288,7 +287,6 @@ export class DummyAuthService implements IAuthService {
     }
 
     // Mock password update
-    console.log('Password would be updated in real implementation');
   }
 
   async getSessions(): Promise<SessionInfo[]> {
@@ -322,7 +320,6 @@ export class DummyAuthService implements IAuthService {
       throw new Error('User not authenticated');
     }
 
-    console.log('Session would be revoked:', sessionId);
   }
 
   async revokeOtherSessions(): Promise<void> {
@@ -333,7 +330,6 @@ export class DummyAuthService implements IAuthService {
       throw new Error('User not authenticated');
     }
 
-    console.log('Other sessions would be revoked');
   }
 
   async revokeAllSessions(): Promise<void> {
@@ -345,7 +341,6 @@ export class DummyAuthService implements IAuthService {
     }
 
     this.currentUser = null;
-    console.log('All sessions would be revoked');
   }
 
   // Helper method to get current user for development/testing

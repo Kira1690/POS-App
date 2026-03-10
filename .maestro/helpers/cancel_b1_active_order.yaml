@@ -32,6 +32,7 @@ appId: com.ajinkya123.POSReactNativeApp
       - tapOn:
           id: "input-cancel-reason"
       - inputText: "QA test cleanup"
+      - hideKeyboard
       - waitForAnimationToEnd
       - tapOn:
           id: "btn-confirm-cancel-order"

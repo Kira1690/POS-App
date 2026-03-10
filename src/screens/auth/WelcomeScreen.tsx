@@ -46,17 +46,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = () => {
 
   const handleDeviceSetup = () => {
     // navigation.navigate('DeviceSetup');
-    console.log('Navigate to Device Setup');
   };
 
   const handleSettings = () => {
     // navigation.navigate('Settings');
-    console.log('Navigate to Settings');
   };
 
   const handleHelp = () => {
     // navigation.navigate('Help');
-    console.log('Navigate to Help');
   };
 
   // Get container styles

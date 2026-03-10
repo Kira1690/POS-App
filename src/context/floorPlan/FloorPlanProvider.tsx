@@ -330,9 +330,7 @@ export const FloorPlanProvider: React.FC<FloorPlanProviderProps> = ({
         });
 
         dispatch({ type: 'LOAD_FROM_STORAGE', payload: { floors, tablePositions } });
-      } catch (err) {
-        console.warn('[FloorPlanProvider] Failed to load from storage:', err);
-      }
+      } catch { /* silent */ }
     };
 
     loadFromStorage();
@@ -376,13 +374,11 @@ export const FloorPlanProvider: React.FC<FloorPlanProviderProps> = ({
     (floorId: string): boolean => {
       // Prevent deleting the last floor
       if (state.floors.length <= 1) {
-        console.warn('Cannot delete the last floor');
         return false;
       }
       // Prevent deleting default floor
       const floorToDelete = state.floors.find(f => f.id === floorId);
       if (floorToDelete?.is_default) {
-        console.warn('Cannot delete the default floor');
         return false;
       }
       dispatch({ type: 'DELETE_FLOOR', payload: floorId });

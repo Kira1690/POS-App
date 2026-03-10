@@ -1,0 +1,256 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 36: Split Table — New Order on Occupied Table"
+tags:
+  - qa
+  - orders
+  - split-table
+  - edit
+---
+
+# ─────────────────────────────────────────────────────
+#  QA 36 — Split Table: create second party order on same table
+#
+#  The "New Order (Split Table)" button in ExistingOrderModal lets
+#  staff seat a second group at a table that already has an active
+#  order, without cancelling the existing order.
+#
+#  This test exercises the ExistingOrderModal via POSOrderScreen's
+#  "+ New Order" flow: selecting an occupied table shows the modal.
+#
+#  Flow:
+#    1. Create B-1 CONFIRMED order (Party 1: Fish Fry)
+#    2. "+ New Order" → select B-1 (occupied) → ExistingOrderModal appears
+#    3. Assert modal shows 3 buttons: Update Order, Shift Table, New Order (Split Table)
+#    4. Tap "New Order (Split Table)" (btn-existing-split-table)
+#    5. POSOrderScreen opens for a NEW blank order on B-1
+#    6. Add "Coffee" for Party 2 → Send to Kitchen
+#    7. Order Management: B-1 now has 2 active orders
+#    8. Kitchen Display: shows BOTH Fish Fry AND Coffee tickets for B-1
+#
+#  testIDs:
+#    btn-existing-update-order   — Update Order in ExistingOrderModal
+#    btn-existing-shift-table    — Shift Table in ExistingOrderModal
+#    btn-existing-split-table    — New Order (Split Table) in ExistingOrderModal
+#    btn-existing-cancel-new     — Cancel & New Order in ExistingOrderModal
+#    btn-existing-order-close    — Close X in ExistingOrderModal
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Create Party 1 B-1 CONFIRMED order ─────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# Create Party 1 order (Fish Fry)
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle ExistingOrderModal if B-1 is still occupied (e.g. SERVED order not cancellable)
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-cancel-new"
+    commands:
+      - tapOn:
+          id: "btn-existing-cancel-new"
+      - waitForAnimationToEnd
+
+# Handle GuestCountModal if B-1 is free (normal case after cancel)
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Regular"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send Party 1 to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_36_step1_party1_b1_confirmed"
+
+# ── STEP 1: "+ New Order" → Select occupied B-1 → ExistingOrderModal ──────────
+# Re-tap the tab to fully re-focus Order Management before opening table modal
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 15000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# ExistingOrderModal should appear (B-1 is OCCUPIED)
+- extendedWaitUntil:
+    visible:
+      id: "btn-existing-split-table"
+    timeout: 8000
+
+# Assert all 4 action buttons visible
+- assertVisible:
+    id: "btn-existing-update-order"
+- assertVisible:
+    id: "btn-existing-shift-table"
+- assertVisible:
+    id: "btn-existing-split-table"
+- assertVisible:
+    id: "btn-existing-cancel-new"
+
+- takeScreenshot: "qa_36_step2_existing_order_modal"
+
+# ── STEP 2: Tap "New Order (Split Table)" ────────────────────────────────────
+- tapOn:
+    id: "btn-existing-split-table"
+- waitForAnimationToEnd
+
+# GuestCountModal appears for split table — confirm it
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+# POSOrderScreen should open for a NEW order on B-1
+# section-already-ordered should NOT be visible (this is a fresh order)
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 10000
+
+# Verify we're on a fresh POSOrderScreen (no already-ordered section)
+- assertNotVisible:
+    id: "section-already-ordered"
+
+- takeScreenshot: "qa_36_step3_new_order_for_party2"
+
+# ── STEP 3: Add Coffee for Party 2 ────────────────────────────────────────────
+- tapOn:
+    text: "Coffee"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Small"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send Party 2 to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_36_step4_party2_coffee_sent"
+
+# ── STEP 4: Verify both orders exist for B-1 in Order Management ──────────────
+# Filter to Confirmed to see both orders
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+
+# Both orders for B-1 visible — use testID (order-card-b-1 appears twice with index 0 and 1)
+- assertVisible:
+    id: "order-card-b-1"
+
+- takeScreenshot: "qa_36_step5_two_b1_orders"
+
+# ── STEP 5: Verify Kitchen shows both items ───────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+
+# Both Fish Fry (Party 1) and Coffee (Party 2) should be in kitchen
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      text: "Coffee"
+    timeout: 10000
+
+- takeScreenshot: "qa_36_PASS_both_parties_in_kitchen"

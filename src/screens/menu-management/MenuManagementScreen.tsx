@@ -66,7 +66,6 @@ export const MenuManagementScreen: React.FC = () => {
       setStats(statsData);
     } catch (err) {
       setError('Failed to load menu data');
-      console.error('Menu data loading error:', err);
     } finally {
       setLoading(false);
       if (isRefresh) setRefreshing(false);

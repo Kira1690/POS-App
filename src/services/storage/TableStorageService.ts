@@ -413,7 +413,6 @@ class TableStorageService {
         }));
         await this.saveAreas(areas);
         data.areas = areas;
-        console.log(`[TableStorageService] Seeded ${areas.length} missing areas`);
       }
       if (__DEV__) {
         console.log(`[TableStorageService] Loaded ${data.tables.length} tables, ${data.areas.length} areas`);
@@ -448,7 +447,6 @@ class TableStorageService {
   }
 
   private async seedMockData(restaurantId: string): Promise<TableStorageData> {
-    console.log('[TableStorageService] Seeding mock data for first launch...');
 
     const tables: Table[] = MOCK_TABLES.map((mockTable): Table => ({
       id: mockTable.id,
@@ -483,7 +481,6 @@ class TableStorageService {
     };
 
     await this.saveTableData(data);
-    console.log(`[TableStorageService] Seeded ${tables.length} tables and ${areas.length} areas`);
 
     return data;
   }

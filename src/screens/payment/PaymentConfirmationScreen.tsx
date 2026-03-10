@@ -19,8 +19,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { useReceiptManagement } from '@/context/payment';
 import { useUnifiedOrder } from '@/context/unified-order';
 import { paymentStorageService } from '@/services/storage/PaymentStorageService';
-import { epsonPrinterService } from '@/services/printer/EpsonPrinterService';
-import { printerStorageService } from '@/services/storage/PrinterStorageService';
+import { usePrinter } from '@/context/printer/PrinterContext';
 import { Order } from '@/types/order.types';
 import { ProfessionalPayment, ReceiptType } from '@/types/payment.types';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
@@ -59,6 +58,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
     receiptSettings,
   } = useReceiptManagement();
   const { processPayment } = useUnifiedOrder();
+  const { printReceipt: contextPrintReceipt } = usePrinter();
 
   const { payment, order, orderId, splitPayment } = route.params;
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
@@ -108,7 +108,6 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             await printReceipt(receipt.id);
           }
         } catch (error) {
-          console.error('Receipt generation failed:', error);
         } finally {
           setIsGeneratingReceipt(false);
         }
@@ -120,38 +119,8 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
 
   // Handle receipt actions
   const handlePrintReceipt = async () => {
-    // Try Epson network printer first
-    try {
-      const config = await printerStorageService.getConfig();
-      if (config.receipt_printer.enabled && config.receipt_printer.ip_address) {
-        const printOrder = order as unknown as import('@/types/unified-order.types').UnifiedOrder;
-        await epsonPrinterService.printReceipt(
-          config.receipt_printer.ip_address,
-          config.receipt_printer.port ?? 9100,
-          printOrder,
-          config.receipt_printer.paper_size ?? '80mm'
-        );
-        showToast({ type: 'success', title: 'Printing', message: 'Sent to receipt printer' });
-        return;
-      }
-    } catch {
-      // Fall through to legacy receipt print
-    }
-
-    if (!receiptId) {
-      showToast({
-        type: 'info',
-        title: 'Printer Not Configured',
-        message: 'Go to Settings > Printer Management to configure your printer',
-      });
-      return;
-    }
-
-    try {
-      await printReceipt(receiptId);
-    } catch (error) {
-      console.error('Print receipt failed:', error);
-    }
+    const printOrder = order as unknown as import('@/types/unified-order.types').UnifiedOrder;
+    await contextPrintReceipt(printOrder);
   };
 
   const handleEmailReceipt = async () => {
@@ -169,9 +138,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
     
     try {
       await emailReceipt(receiptId, email);
-    } catch (error) {
-      console.error('Email receipt failed:', error);
-    }
+    } catch { /* silent */ }
   };
 
   const handleSmsReceipt = async () => {
@@ -189,9 +156,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
     
     try {
       await smsReceipt(receiptId, phone);
-    } catch (error) {
-      console.error('SMS receipt failed:', error);
-    }
+    } catch { /* silent */ }
   };
 
   // Handle navigation back to main flow

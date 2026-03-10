@@ -99,6 +99,9 @@ export interface UnifiedOrderContextValue {
   // Order Management
   getOrderById: (orderId: string) => UnifiedOrder | undefined;
   getActiveOrderForTable: (tableId: string) => UnifiedOrder | undefined;
+  getActiveOrdersForTable: (tableId: string) => UnifiedOrder[];
+  setGuestCount: (guestCount: number) => void;
+  setSplitOrderConfig: (guestCount: number) => void;
   cancelOrder: (orderId: string, reason: string) => Promise<void>;
   mergeOrders: (targetOrderId: string, sourceOrderId: string) => Promise<void>;
 
@@ -107,6 +110,12 @@ export interface UnifiedOrderContextValue {
   applyItemDiscount: (orderId: string, itemId: string, type: 'percentage' | 'fixed', value: number) => Promise<void>;
   transferItems: (sourceOrderId: string, targetOrderId: string, itemIds: string[]) => Promise<void>;
   addItemsToOrder: (orderId: string, cartItems: UnifiedOrderItem[]) => Promise<void>;
+  removeItemFromOrder: (orderId: string, itemId: string) => Promise<void>;
+  updateOrderItem: (
+    orderId: string,
+    itemId: string,
+    updates: { quantity?: number; selectedModifiers?: SelectedModifier[]; specialInstructions?: string }
+  ) => Promise<void>;
 
   // Filters
   setSearchQuery: (query: string) => void;
@@ -180,7 +189,6 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           console.log('[UnifiedOrderContext] Initialized with', orders.length, 'orders');
         }
       } catch (error) {
-        console.error('[UnifiedOrderContext] Initialization error:', error);
         dispatch({ type: 'SET_ERROR', payload: String(error) });
       }
     };
@@ -300,20 +308,27 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     // Validation 2: Check storage DIRECTLY for active orders on this table
     // This ensures we use the same data source as the table sync
     try {
-      const allOrders = await unifiedOrderStorageService.getAllOrders();
-      const existingActiveOrder = allOrders.find(
-        (o) => isActiveOrder(o) && o.tableId === currentState.selectedTable!.id
+      const activeOrdersOnTable = await unifiedOrderStorageService.getActiveOrdersForTable(
+        currentState.selectedTable!.id
       );
-      if (existingActiveOrder) {
+      if (activeOrdersOnTable.length > 0 && !currentState.isSplitOrder) {
         return {
           success: false,
-          error: `Table already has an active order: ${existingActiveOrder.orderNumber}. Please complete or cancel it first.`,
+          error: `Table already has an active order: ${activeOrdersOnTable[0].orderNumber}. Please complete or cancel it first.`,
         };
       }
-    } catch (error) {
-      console.warn('[UnifiedOrderContext] Failed to check for existing orders:', error);
-      // Continue anyway - we'll catch duplicates in storage
-    }
+      const guestCount = currentState.pendingGuestCount ?? 1;
+      if (activeOrdersOnTable.length > 0) {
+        const occupiedGuests = activeOrdersOnTable.reduce((sum, o) => sum + (o.guestCount || 1), 0);
+        const capacity = currentState.selectedTable!.capacity;
+        if (occupiedGuests + guestCount > capacity) {
+          return {
+            success: false,
+            error: `Not enough seats. ${capacity - occupiedGuests} of ${capacity} remaining.`,
+          };
+        }
+      }
+    } catch { /* Continue anyway - we'll catch duplicates in storage */ }
 
     dispatch({ type: 'SET_SUBMITTING', payload: true });
 
@@ -336,7 +351,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         restaurantId: currentState.selectedTable.restaurant_id,
         tableId: currentState.selectedTable.id,
         tableName: currentState.selectedTable.table_number,
-        guestCount: 1,
+        guestCount: currentState.pendingGuestCount ?? 1,
         createdBy: 'current_user',
         createdByName: 'Current User',
         items,
@@ -460,6 +475,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
   const updateOrderStatus = useCallback(
     async (orderId: string, status: UnifiedOrderStatus) => {
       try {
+        const order = stateRef.current.orders.find((o) => o.id === orderId);
+
         dispatch({
           type: 'UPDATE_ORDER_STATUS',
           payload: { orderId, status },
@@ -473,6 +490,18 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           ...(status === 'ready' && { readyAt: new Date().toISOString() }),
           ...(status === 'served' && { servedAt: new Date().toISOString() }),
         });
+
+        // Log ready / served transitions
+        if (order && (status === 'ready' || status === 'served')) {
+          activityLogService.logEvent({
+            timestamp: new Date().toISOString(),
+            eventType: status,
+            orderId,
+            orderNumber: order.orderNumber,
+            tableName: order.tableName,
+            description: `Order ${order.orderNumber} marked as ${status}`,
+          }).catch(() => { /* silent */ });
+        }
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: String(error) });
       }
@@ -483,12 +512,32 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
   const updateItemStatus = useCallback(
     async (orderId: string, itemId: string, status: UnifiedItemStatus) => {
       try {
+        const prevOrder = stateRef.current.orders.find((o) => o.id === orderId);
+        const prevOrderStatus = prevOrder?.status;
+
         // Update item status in storage + auto-recalculate order status
         const updatedOrder = await unifiedOrderStorageService.updateItemStatus(
           orderId, itemId, status
         );
         if (updatedOrder) {
           dispatch({ type: 'UPDATE_ORDER', payload: updatedOrder });
+
+          // Log when order transitions to ready or served via item status changes
+          const newOrderStatus = updatedOrder.status;
+          if (
+            prevOrder &&
+            newOrderStatus !== prevOrderStatus &&
+            (newOrderStatus === 'ready' || newOrderStatus === 'served')
+          ) {
+            activityLogService.logEvent({
+              timestamp: new Date().toISOString(),
+              eventType: newOrderStatus,
+              orderId,
+              orderNumber: updatedOrder.orderNumber,
+              tableName: updatedOrder.tableName,
+              description: `Order ${updatedOrder.orderNumber} marked as ${newOrderStatus}`,
+            }).catch(() => { /* silent */ });
+          }
         }
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: String(error) });
@@ -582,6 +631,21 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     },
     [state.activeOrders]
   );
+
+  const getActiveOrdersForTable = useCallback(
+    (tableId: string): UnifiedOrder[] => {
+      return state.activeOrders.filter((o) => o.tableId === tableId);
+    },
+    [state.activeOrders]
+  );
+
+  const setGuestCount = useCallback((guestCount: number) => {
+    dispatch({ type: 'SET_PENDING_GUEST_COUNT', payload: guestCount });
+  }, []);
+
+  const setSplitOrderConfig = useCallback((guestCount: number) => {
+    dispatch({ type: 'SET_SPLIT_ORDER_CONFIG', payload: { guestCount } });
+  }, []);
 
   const cancelOrder = useCallback(
     async (orderId: string, reason: string) => {
@@ -845,6 +909,52 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     []
   );
 
+  const removeItemFromOrder = useCallback(
+    async (orderId: string, itemId: string) => {
+      try {
+        const updated = await unifiedOrderStorageService.removeItemFromOrder(orderId, itemId);
+        dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        activityLogService.logEvent({
+          timestamp: new Date().toISOString(),
+          eventType: 'item_removed',
+          orderId,
+          orderNumber: updated.orderNumber,
+          tableName: updated.tableName,
+          description: `Item removed from order ${updated.orderNumber}`,
+        }).catch(() => { /* silent */ });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+        throw error;
+      }
+    },
+    []
+  );
+
+  const updateOrderItem = useCallback(
+    async (
+      orderId: string,
+      itemId: string,
+      updates: { quantity?: number; selectedModifiers?: SelectedModifier[]; specialInstructions?: string }
+    ) => {
+      try {
+        const updated = await unifiedOrderStorageService.updateOrderItem(orderId, itemId, updates);
+        dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        activityLogService.logEvent({
+          timestamp: new Date().toISOString(),
+          eventType: 'item_modified',
+          orderId,
+          orderNumber: updated.orderNumber,
+          tableName: updated.tableName,
+          description: `Item modified on order ${updated.orderNumber}`,
+        }).catch(() => { /* silent */ });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+        throw error;
+      }
+    },
+    []
+  );
+
   // ============== UTILITY ==============
 
   const canProcessPaymentFn = useCallback((order: UnifiedOrder): boolean => {
@@ -860,8 +970,10 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     submitToKitchen, loadOrders, refreshOrders,
     updateOrderStatus, updateItemStatus,
     processPayment,
-    getOrderById, getActiveOrderForTable, cancelOrder, mergeOrders,
+    getOrderById, getActiveOrderForTable, getActiveOrdersForTable, setGuestCount, setSplitOrderConfig,
+    cancelOrder, mergeOrders,
     applyOrderDiscount, applyItemDiscount, transferItems, addItemsToOrder,
+    removeItemFromOrder, updateOrderItem,
     setSearchQuery, setStatusFilter, setPaymentStatusFilter, clearFilters,
     setError, clearError, setSelectedOrderId,
     resetAllState,
@@ -882,8 +994,10 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     addToCart, updateCartItemQuantity, removeFromCart, clearCart, setCartDiscount, setCartItemDiscount,
     setSelectedTable, submitToKitchen, loadOrders, refreshOrders,
     updateOrderStatus, updateItemStatus, processPayment,
-    getOrderById, getActiveOrderForTable, cancelOrder, mergeOrders,
+    getOrderById, getActiveOrderForTable, getActiveOrdersForTable, setGuestCount, setSplitOrderConfig,
+    cancelOrder, mergeOrders,
     applyOrderDiscount, applyItemDiscount, transferItems, addItemsToOrder,
+    removeItemFromOrder, updateOrderItem,
     setSearchQuery, setStatusFilter, setPaymentStatusFilter, clearFilters,
     setError, clearError, setSelectedOrderId, resetAllState, canProcessPaymentFn,
   ]);

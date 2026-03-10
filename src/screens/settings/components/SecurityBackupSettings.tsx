@@ -62,7 +62,6 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
   };
 
   const handleClearOrderData = () => {
-    console.log('[SecurityBackupSettings] Clear button pressed!');
     Alert.alert(
       '⚠️ Clear All Order Data',
       'This will permanently delete:\n\n• All orders (active & history)\n• All kitchen tickets\n• All payment records\n• All receipts\n\nThis will KEEP:\n✅ Menu items\n✅ Tables & areas\n✅ Settings\n✅ User data\n\nAre you absolutely sure?',
@@ -72,10 +71,8 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
           text: 'Clear All Orders',
           style: 'destructive',
           onPress: async () => {
-            console.log('[SecurityBackupSettings] User confirmed - starting clear...');
             try {
               await clearAllOrderAndTicketData();
-              console.log('[SecurityBackupSettings] Clear completed successfully!');
               Alert.alert(
                 '✅ Success',
                 'All order data has been cleared!\n\n• Orders cleared\n• Tables reset to AVAILABLE\n• Menu and settings preserved\n\nNo restart required.',
@@ -84,7 +81,6 @@ export default function SecurityBackupSettings({ onChangesDetected }: SecurityBa
               // Optionally verify what's left
               await verifyRemainingData();
             } catch (error) {
-              console.error('[SecurityBackupSettings] Clear failed:', error);
               Alert.alert(
                 '❌ Error',
                 `Failed to clear order data: ${error instanceof Error ? error.message : 'Unknown error'}`,

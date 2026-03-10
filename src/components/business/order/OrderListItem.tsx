@@ -12,6 +12,7 @@ import { useTheme } from '@/hooks/useTheme';
 import OrderStatusBadge from './OrderStatusBadge';
 import { formatCurrency } from '@/utils/currency';
 import { formatTimeAgo, formatTime } from '@/utils/date';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   AnyOrder,
   getOrderNumber,
@@ -20,6 +21,7 @@ import {
   getOrderTotals,
   getSpecialInstructions,
   getOrderTimestamps,
+  getGuestCount,
 } from '@/utils/orderFormatHelpers';
 
 interface OrderListItemProps {
@@ -33,6 +35,8 @@ interface OrderListItemProps {
   style?: any;
   /** Reduce padding 25% on phones */
   compact?: boolean;
+  /** Number of active orders sharing this table (shows split badge when > 1) */
+  splitCount?: number;
 }
 
 const OrderListItem: React.FC<OrderListItemProps> = ({
@@ -45,8 +49,11 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
   showActions = true,
   style,
   compact = false,
+  splitCount = 0,
 }) => {
   const { theme, isDark } = useTheme();
+  const { isPhone, isSmallTablet } = useResponsive();
+  const isCompact = compact || isPhone || isSmallTablet;
 
   // Defensive: ensure theme is valid
   if (!theme || !theme.colors) {
@@ -73,6 +80,8 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
   const specialInstructions = getSpecialInstructions(order);
   const timestamps = getOrderTimestamps(order);
   const itemCount = order.items?.length ?? 0;
+  const guestCount = getGuestCount(order);
+  const isSplit = splitCount > 1;
   const paymentStatus = (order as any).paymentStatus ?? (order as any).payment_status;
 
   const handlePress = () => {
@@ -123,20 +132,20 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
       backgroundColor: statusColors.bg,
     },
     statusText: {
-      fontSize: 11,
+      fontSize: isCompact ? 10 : 11,
       fontWeight: '700',
       textTransform: 'uppercase',
       letterSpacing: 0.5,
       color: statusColors.text,
     },
     elapsedTime: {
-      fontSize: 11,
+      fontSize: isCompact ? 10 : 11,
       fontWeight: '600',
       color: statusColors.text,
     },
     // Content area
     content: {
-      padding: compact ? theme.spacing.sm : theme.spacing.md,
+      padding: isCompact ? theme.spacing.sm : theme.spacing.md,
     },
     // Header row with order info and badge
     headerRow: {
@@ -149,13 +158,13 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
       flex: 1,
     },
     orderNumber: {
-      fontSize: 18,
+      fontSize: isCompact ? 15 : 18,
       fontWeight: '700',
       color: theme.colors.onSurface,
       marginBottom: 2,
     },
     tableInfo: {
-      fontSize: 13,
+      fontSize: isCompact ? 12 : 13,
       fontWeight: '500',
       color: theme.colors.onSurfaceVariant,
     },
@@ -197,12 +206,12 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
       marginRight: theme.spacing.md,
     },
     detailText: {
-      fontSize: 13,
+      fontSize: isCompact ? 12 : 13,
       color: theme.colors.onSurfaceVariant,
       marginLeft: 4,
     },
     totalAmount: {
-      fontSize: 18,
+      fontSize: isCompact ? 15 : 18,
       fontWeight: '700',
       color: theme.colors.primary,
     },
@@ -215,7 +224,7 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
       borderTopColor: theme.colors.outline,
     },
     instructionsText: {
-      fontSize: 13,
+      fontSize: isCompact ? 12 : 13,
       flex: 1,
       fontStyle: 'italic',
       color: theme.colors.onSurfaceVariant,
@@ -250,9 +259,24 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     actionText: {
-      fontSize: 13,
+      fontSize: isCompact ? 12 : 13,
       fontWeight: '600',
       marginLeft: theme.spacing.xs,
+    },
+    // Split badge
+    splitBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.sm,
+      backgroundColor: theme.colors.successContainer,
+      gap: 3,
+    },
+    splitBadgeText: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: theme.colors.onSuccessContainer,
     },
     // Timing row for active orders
     timingRow: {
@@ -262,7 +286,7 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
       marginTop: theme.spacing.xs,
     },
     timingText: {
-      fontSize: 12,
+      fontSize: isCompact ? 11 : 12,
       fontWeight: '600',
       marginLeft: theme.spacing.xs,
       color: theme.colors.warning,
@@ -291,11 +315,19 @@ const OrderListItem: React.FC<OrderListItemProps> = ({
           <View style={styles.orderInfo}>
             <Text style={styles.orderNumber}>{orderNumber}</Text>
             {tableId && (
-              <Text style={styles.tableInfo}>Table {tableId}</Text>
+              <Text style={styles.tableInfo}>
+                Table {tableId} · +{guestCount} guest{guestCount !== 1 ? 's' : ''}
+              </Text>
             )}
           </View>
 
           <View style={styles.badgeContainer}>
+            {isSplit && (
+              <View style={styles.splitBadge}>
+                <MaterialIcons name="call-split" size={10} color={theme.colors.onSuccessContainer} />
+                <Text style={styles.splitBadgeText}>Split {splitCount}x</Text>
+              </View>
+            )}
             {paymentStatus === PaymentStatus.COMPLETED && (
               <View style={styles.paidBadge}>
                 <MaterialIcons name="check-circle" size={10} color={theme.colors.status?.paid?.text} />

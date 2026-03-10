@@ -310,13 +310,9 @@ export class TerminalDiscoveryService implements TerminalConnectionManager {
         if (response.success) {
           const result = this.responseParser.parseSaleResponse(response.data || '');
 
-          console.log('PAYMENT RESPONSE:');
-          console.log('   Status:', result.status === '00' ? 'APPROVED' : 'DECLINED');
-          console.log('   Response:', result.responseText);
-          console.log('   Approval Code:', result.approvalCode);
-          console.log('   Card Brand:', result.accountBrand);
-          console.log('   Last 4:', result.lastFour);
-          console.log('   Response Time:', `${response.responseTime}ms`);
+          if (__DEV__) {
+            console.log(`[TRX] Payment ${result.status === '00' ? 'APPROVED' : 'DECLINED'}: ${result.accountBrand} *${result.lastFour}`);
+          }
 
           this.logger.info('Payment completed', 'processPayment', {
             transactionId,

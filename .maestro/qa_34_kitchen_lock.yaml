@@ -1,0 +1,377 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 34: Kitchen Lock — Block / Allow Editing Ready Orders"
+tags:
+  - qa
+  - orders
+  - edit
+  - kitchen
+---
+
+# ─────────────────────────────────────────────────────
+#  QA 34 — Kitchen lock: toggle in Settings → Kitchen Management
+#
+#  Scenario A (lock ON):
+#    Ready order + lock OFF (default) → stage removal → Update Order
+#    → toast "Order Locked" → screen stays open → order unchanged
+#
+#  Scenario B (lock OFF):
+#    Enable "Allow editing ready orders" toggle → same Ready order
+#    → Update Order → succeeds → navigates back → order updated
+#
+#  Flow:
+#    1. Create B-1 order → advance to READY
+#    2. Settings → Kitchen Management → assert toggle OFF
+#    3. Add More Items → remove Dal Makhani → Update Order
+#    4. Assert screen stays in edit mode (lock fired)
+#    5. Settings → Kitchen Management → toggle ON
+#    6. Update Order again → succeeds → back on OrderDetails
+#    7. Verify Dal Makhani gone from order
+#    8. CLEANUP: Toggle lock back OFF
+#
+#  testIDs:
+#    toggle-allow-edit-when-ready  — Switch in Kitchen Management
+#    btn-remove-existing-dal-makhani — trash on Dal Makhani
+#    btn-cart-send-to-kitchen      — Update Order button
+#    section-already-ordered       — already ordered section header
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Create B-1 CONFIRMED order, advance to READY ──────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle ExistingOrderModal if B-1 is still occupied (e.g. SERVED order not cancellable)
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-cancel-new"
+    commands:
+      - tapOn:
+          id: "btn-existing-cancel-new"
+      - waitForAnimationToEnd
+
+# Handle GuestCountModal if B-1 is free (normal case after cancel)
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Add Fish Fry + Dal Makhani
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Mild"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Dal Makhani"
+    timeout: 8000
+- tapOn:
+    text: "Dal Makhani"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+# Advance to READY via Kitchen
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-kitchen-action-start"
+    timeout: 15000
+# Start → Ready (2 taps per ticket)
+- tapOn:
+    id: "btn-kitchen-action-start"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-kitchen-action-ready"
+    timeout: 8000
+- tapOn:
+    id: "btn-kitchen-action-ready"
+    index: 0
+- waitForAnimationToEnd
+
+# Back to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+- takeScreenshot: "qa_34_step1_b1_ready"
+
+# ── Scenario A: Lock ON — ensure toggle is OFF (idempotent reset) ────────────
+# Navigate to Kitchen Management and turn toggle OFF if currently ON
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        text: "Kitchen Management"
+    commands:
+      - tapOn:
+          text: "Kitchen Management"
+      - waitForAnimationToEnd
+      # If toggle is currently ON (checked), tap to turn OFF
+      - runFlow:
+          when:
+            visible:
+              id: "toggle-allow-edit-when-ready"
+              checked: true
+          commands:
+            - tapOn:
+                id: "toggle-allow-edit-when-ready"
+            - waitForAnimationToEnd
+
+# Back to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Open the READY order in edit mode
+- extendedWaitUntil:
+    visible:
+      id: "btn-order-view"
+    timeout: 10000
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 10000
+- tapOn:
+    id: "btn-add-items-to-order"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "section-already-ordered"
+    timeout: 10000
+
+- takeScreenshot: "qa_34_step2_edit_mode_ready_order"
+
+# Remove Dal Makhani (stage a change)
+- tapOn:
+    id: "btn-remove-existing-dal-makhani"
+- waitForAnimationToEnd
+
+# Tap Update Order — SHOULD be blocked by lock (edit mode uses btn-add-to-order)
+- tapOn:
+    id: "btn-add-to-order"
+- waitForAnimationToEnd
+
+# Screen should STAY in edit mode (toast fired, lock blocked)
+- assertVisible:
+    id: "section-already-ordered"
+
+- takeScreenshot: "qa_34_step3_lock_blocked_edit_mode_still_open"
+
+# ── Scenario B: Enable lock OFF → edit proceeds ───────────────────────────────
+# Navigate to Kitchen Management to enable "Allow editing ready orders"
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+
+# Go to Settings (bottom tab — 4th item)
+# Use the Settings tab directly
+- extendedWaitUntil:
+    visible:
+      text: "Kitchen Management"
+    timeout: 5000
+    optional: true
+
+# Re-enter from bottom nav
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Kitchen Management"
+    timeout: 8000
+- tapOn:
+    text: "Kitchen Management"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "toggle-allow-edit-when-ready"
+    timeout: 8000
+
+- takeScreenshot: "qa_34_step4_kitchen_management_toggle"
+
+# Enable Allow editing ready orders
+- tapOn:
+    id: "toggle-allow-edit-when-ready"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_34_step5_toggle_enabled"
+
+# ── Back to order and try Update Order again ──────────────────────────────────
+- tapOn:
+    text: "Order Management"
+    optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+
+# The edit state is preserved if screen is still on stack — try Update Order
+- runFlow:
+    when:
+      visible:
+        id: "section-already-ordered"
+    commands:
+      - tapOn:
+          id: "btn-add-to-order"
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+# If we need to re-enter edit mode (screen popped)
+- runFlow:
+    when:
+      visible:
+        id: "btn-order-view"
+    commands:
+      - tapOn:
+          id: "btn-order-view"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "btn-add-items-to-order"
+          timeout: 10000
+      - tapOn:
+          id: "btn-add-items-to-order"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "section-already-ordered"
+          timeout: 10000
+      - tapOn:
+          id: "btn-remove-existing-dal-makhani"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "btn-add-to-order"
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+# Should have navigated back — OrderDetails visible
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 15000
+
+- assertNotVisible:
+    text: "Dal Makhani"
+
+- takeScreenshot: "qa_34_step6_lock_off_edit_succeeded"
+
+# ── CLEANUP: Turn lock back OFF ───────────────────────────────────────────────
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Kitchen Management"
+    timeout: 8000
+- tapOn:
+    text: "Kitchen Management"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "toggle-allow-edit-when-ready"
+    timeout: 8000
+# Only turn OFF if currently ON (idempotent cleanup)
+- runFlow:
+    when:
+      visible:
+        id: "toggle-allow-edit-when-ready"
+        checked: true
+    commands:
+      - tapOn:
+          id: "toggle-allow-edit-when-ready"
+      - waitForAnimationToEnd
+
+- takeScreenshot: "qa_34_PASS_lock_restored_to_default"

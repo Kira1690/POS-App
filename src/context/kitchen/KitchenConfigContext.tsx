@@ -13,6 +13,7 @@ import React, {
   useMemo,
   ReactNode,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { kitchenStorageService } from '@/services/storage';
 import { StationConfig } from '@/types/kitchen-ticket.types';
 import { KitchenStation } from '@/types/order-extended.types';
@@ -27,6 +28,8 @@ export interface KitchenConfigContextValue {
   updateStation: (station: string, updates: Partial<StationConfig>) => Promise<void>;
   deleteStation: (station: string) => Promise<void>;
   toggleStation: (station: string, isActive: boolean) => Promise<void>;
+  allowEditWhenReady: boolean;
+  setAllowEditWhenReady: (value: boolean) => Promise<void>;
 }
 
 // ============== CONTEXT ==============
@@ -42,6 +45,7 @@ interface KitchenConfigProviderProps {
 export const KitchenConfigProvider: React.FC<KitchenConfigProviderProps> = ({ children }) => {
   const [stations, setStations] = useState<StationConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [allowEditWhenReady, setAllowEditWhenReadyState] = useState(false);
 
   const refreshStations = useCallback(async () => {
     try {
@@ -49,9 +53,7 @@ export const KitchenConfigProvider: React.FC<KitchenConfigProviderProps> = ({ ch
       setStations(
         [...configs].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
       );
-    } catch (error) {
-      console.error('[KitchenConfigContext] Failed to load stations:', error);
-    }
+    } catch { /* silent */ }
   }, []);
 
   const addStation = useCallback(
@@ -86,10 +88,17 @@ export const KitchenConfigProvider: React.FC<KitchenConfigProviderProps> = ({ ch
     [refreshStations]
   );
 
+  const setAllowEditWhenReady = useCallback(async (value: boolean) => {
+    setAllowEditWhenReadyState(value);
+    await AsyncStorage.setItem('kitchen_allow_edit_when_ready', value ? 'true' : 'false');
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
       await refreshStations();
+      const saved = await AsyncStorage.getItem('kitchen_allow_edit_when_ready');
+      if (saved !== null) setAllowEditWhenReadyState(saved === 'true');
       setIsLoading(false);
     };
     init();
@@ -98,7 +107,8 @@ export const KitchenConfigProvider: React.FC<KitchenConfigProviderProps> = ({ ch
   const contextValue: KitchenConfigContextValue = useMemo(() => ({
     stations, isLoading, refreshStations,
     addStation, updateStation, deleteStation, toggleStation,
-  }), [stations, isLoading, refreshStations, addStation, updateStation, deleteStation, toggleStation]);
+    allowEditWhenReady, setAllowEditWhenReady,
+  }), [stations, isLoading, refreshStations, addStation, updateStation, deleteStation, toggleStation, allowEditWhenReady, setAllowEditWhenReady]);
 
   return (
     <KitchenConfigContext.Provider value={contextValue}>

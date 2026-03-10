@@ -382,16 +382,12 @@ export class OrderService implements IOrderService {
   subscribeToOrderUpdates(callback: (order: Order) => void): () => void {
     // WebSocket implementation would go here
     // For now, return a cleanup function
-    console.log('Subscribing to order updates');
-    
     // Mock implementation - in real app would use WebSocket
     const interval = setInterval(async () => {
       try {
         const orders = await this.getCurrentOrders();
         orders.forEach(callback);
-      } catch (error) {
-        console.error('Failed to fetch order updates:', error);
-      }
+      } catch { /* silent */ }
     }, 30000); // Check every 30 seconds
     
     return () => clearInterval(interval);
@@ -534,9 +530,7 @@ class MockOrderService extends OrderService {
       if (__DEV__) {
         console.log(`[OrderService] Loaded ${ordersMap.size} orders from unified storage`);
       }
-    } catch (error) {
-      console.error('[OrderService] Error loading orders from storage:', error);
-    }
+    } catch { /* silent */ }
 
     // 3. Convert Map to array and sort (no accumulation - fresh array each call!)
     const sortedOrders = Array.from(ordersMap.values()).sort((a, b) =>
@@ -728,7 +722,6 @@ class MockOrderService extends OrderService {
   }
   
   async getCurrentOrders(): Promise<Order[]> {
-    console.log('Mock: Getting current orders');
     return this.mockOrders.filter(order => 
       order.status !== OrderStatus.SERVED && order.status !== OrderStatus.CANCELLED
     );
@@ -747,7 +740,6 @@ class MockOrderService extends OrderService {
       updated_at: new Date().toISOString(),
     };
     
-    console.log('Mock: Updated order status', this.mockOrders[orderIndex]);
     return this.mockOrders[orderIndex];
   }
   
@@ -764,7 +756,6 @@ class MockOrderService extends OrderService {
       updated_at: new Date().toISOString(),
     };
     
-    console.log('Mock: Cancelled order', this.mockOrders[orderIndex]);
     return this.mockOrders[orderIndex];
   }
 }

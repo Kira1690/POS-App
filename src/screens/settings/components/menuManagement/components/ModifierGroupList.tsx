@@ -199,8 +199,9 @@ export const ModifierGroupList: React.FC<ModifierGroupListProps> = ({
       borderColor: theme.colors.outline,
     },
     filterButtonActive: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.primaryContainer,
       borderColor: theme.colors.primary,
+      borderWidth: 1.5,
     },
     filterButtonText: {
       fontSize: 12,
@@ -208,7 +209,8 @@ export const ModifierGroupList: React.FC<ModifierGroupListProps> = ({
       color: theme.colors.onSurfaceSecondary,
     },
     filterButtonTextActive: {
-      color: theme.colors.onPrimary,
+      color: theme.colors.primary,
+      fontWeight: '600',
     },
     listContent: {
       padding: theme.spacing.md,

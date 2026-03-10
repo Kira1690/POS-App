@@ -17,6 +17,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { Icon } from '@/components/common';
 import { UnifiedOrder } from '@/types/unified-order.types';
 import { Table } from '@/types/table.types';
@@ -30,6 +31,10 @@ interface ExistingOrderModalProps {
   onShiftTable: () => void;
   onCancelAndNew: () => void;
   onClose: () => void;
+  onSplitTable?: () => void;
+  splitAvailable?: boolean;
+  remainingSeats?: number;
+  activeOrderCount?: number;
 }
 
 export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
@@ -40,8 +45,14 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
   onShiftTable,
   onCancelAndNew,
   onClose,
+  onSplitTable,
+  splitAvailable = true,
+  remainingSeats = 0,
+  activeOrderCount = 1,
 }) => {
   const { theme } = useTheme();
+  const { modalMaxWidth, contentPadding, isPhone, isSmallTablet } = useResponsive();
+  const compact = isPhone || isSmallTablet;
 
   if (!table || !existingOrder) return null;
 
@@ -51,11 +62,11 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
       backgroundColor: 'rgba(0,0,0,0.55)',
       justifyContent: 'center',
       alignItems: 'center',
-      paddingHorizontal: 24,
+      paddingHorizontal: contentPadding,
     },
     card: {
       width: '100%',
-      maxWidth: 420,
+      maxWidth: modalMaxWidth,
       backgroundColor: theme.colors.surface,
       borderRadius: 16,
       overflow: 'hidden',
@@ -65,15 +76,15 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
       backgroundColor: theme.colors.warning + '22',
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.warning + '44',
-      paddingHorizontal: 20,
-      paddingVertical: 14,
+      paddingHorizontal: compact ? 14 : 20,
+      paddingVertical: compact ? 10 : 14,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: compact ? 8 : 10,
     },
     headerText: {
       flex: 1,
-      fontSize: 16,
+      fontSize: compact ? 14 : 16,
       fontWeight: '700',
       color: theme.colors.onSurface,
     },
@@ -81,9 +92,9 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
       padding: 4,
     },
     body: {
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 8,
+      paddingHorizontal: compact ? 14 : 20,
+      paddingTop: compact ? 12 : 16,
+      paddingBottom: compact ? 6 : 8,
     },
     orderRow: {
       flexDirection: 'row',
@@ -91,11 +102,11 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
       marginBottom: 6,
     },
     orderLabel: {
-      fontSize: 13,
+      fontSize: compact ? 12 : 13,
       color: theme.colors.onSurfaceVariant,
     },
     orderValue: {
-      fontSize: 13,
+      fontSize: compact ? 12 : 13,
       fontWeight: '600',
       color: theme.colors.onSurface,
     },
@@ -105,28 +116,28 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
       marginVertical: 14,
     },
     question: {
-      fontSize: 14,
+      fontSize: compact ? 13 : 14,
       color: theme.colors.onSurface,
-      marginBottom: 14,
+      marginBottom: compact ? 10 : 14,
       fontWeight: '500',
     },
     actions: {
-      paddingHorizontal: 16,
-      paddingBottom: 16,
-      gap: 10,
+      paddingHorizontal: compact ? 12 : 16,
+      paddingBottom: compact ? 12 : 16,
+      gap: compact ? 8 : 10,
     },
     btn: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 13,
-      paddingHorizontal: 16,
+      paddingVertical: compact ? 10 : 13,
+      paddingHorizontal: compact ? 12 : 16,
       borderRadius: 10,
-      gap: 12,
+      gap: compact ? 10 : 12,
       borderWidth: 1,
     },
     btnPrimary: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.tertiaryContainer,
+      borderColor: theme.colors.tertiary,
     },
     btnSecondary: {
       backgroundColor: theme.colors.surface,
@@ -140,15 +151,15 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
       flex: 1,
     },
     btnTitle: {
-      fontSize: 14,
+      fontSize: compact ? 13 : 14,
       fontWeight: '600',
     },
     btnSubtitle: {
-      fontSize: 11,
+      fontSize: compact ? 10 : 11,
       marginTop: 1,
     },
     btnTitlePrimary: {
-      color: '#fff',
+      color: theme.colors.tertiary,
     },
     btnTitleSecondary: {
       color: theme.colors.onSurface,
@@ -157,13 +168,26 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
       color: theme.colors.error,
     },
     btnSubPrimary: {
-      color: 'rgba(255,255,255,0.75)',
+      color: theme.colors.tertiary + 'aa',
     },
     btnSubSecondary: {
       color: theme.colors.onSurfaceVariant,
     },
     btnSubDanger: {
       color: theme.colors.error + 'bb',
+    },
+    btnSplit: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.success,
+    },
+    btnTitleSplit: {
+      color: theme.colors.onSurface,
+    },
+    btnSubSplit: {
+      color: theme.colors.onSurfaceVariant,
+    },
+    btnDisabled: {
+      opacity: 0.5,
     },
   });
 
@@ -183,7 +207,7 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
           <View style={styles.header}>
             <Icon name="alert-circle" size={20} color={theme.colors.warning} />
             <Text style={styles.headerText}>
-              Table {table.table_number} Has an Active Order
+              Table {table.table_number} Has {activeOrderCount > 1 ? `${activeOrderCount} Active Orders` : 'an Active Order'}
             </Text>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose} testID="btn-existing-order-close">
               <Icon name="close" size={20} color={theme.colors.onSurfaceVariant} />
@@ -224,12 +248,12 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
               testID="btn-existing-update-order"
               activeOpacity={0.8}
             >
-              <Icon name="pencil-plus" size={20} color="#fff" />
+              <Icon name="pencil-plus" size={20} color={theme.colors.tertiary} />
               <View style={styles.btnLabel}>
                 <Text style={[styles.btnTitle, styles.btnTitlePrimary]}>Update Order</Text>
                 <Text style={[styles.btnSubtitle, styles.btnSubPrimary]}>Add or modify items on this table</Text>
               </View>
-              <Icon name="chevron-right" size={18} color="rgba(255,255,255,0.7)" />
+              <Icon name="chevron-right" size={18} color={theme.colors.tertiary + '88'} />
             </TouchableOpacity>
 
             {/* Shift Table */}
@@ -246,6 +270,28 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
               </View>
               <Icon name="chevron-right" size={18} color={theme.colors.onSurfaceVariant} />
             </TouchableOpacity>
+
+            {/* New Order (Split Table) */}
+            {onSplitTable && (
+              <TouchableOpacity
+                style={[styles.btn, styles.btnSplit, !splitAvailable && styles.btnDisabled]}
+                onPress={splitAvailable ? onSplitTable : undefined}
+                disabled={!splitAvailable}
+                testID="btn-existing-split-table"
+                activeOpacity={0.8}
+              >
+                <Icon name="account-multiple-plus" size={20} color={splitAvailable ? theme.colors.success : theme.colors.onSurfaceVariant} />
+                <View style={styles.btnLabel}>
+                  <Text style={[styles.btnTitle, styles.btnTitleSplit]}>New Order (Split Table)</Text>
+                  <Text style={[styles.btnSubtitle, styles.btnSubSplit]}>
+                    {splitAvailable
+                      ? `Add a separate party (${remainingSeats} seat${remainingSeats !== 1 ? 's' : ''} remaining)`
+                      : 'Table at full capacity'}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={18} color={splitAvailable ? theme.colors.success : theme.colors.onSurfaceVariant} />
+              </TouchableOpacity>
+            )}
 
             {/* Cancel & New Order */}
             <TouchableOpacity

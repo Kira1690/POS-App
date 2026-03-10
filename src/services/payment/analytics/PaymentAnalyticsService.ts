@@ -49,7 +49,6 @@ class PaymentAnalyticsService implements IPaymentAnalyticsService {
       // Store event (in real implementation, save to database)
       this.events.push(event);
       
-      console.log('Payment event tracked:', event.type, event.paymentId);
     } catch (error) {
       throw this.createAnalyticsError('EVENT_TRACKING_FAILED', 'Failed to track payment event', error);
     }

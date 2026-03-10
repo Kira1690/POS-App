@@ -15,6 +15,7 @@ import { tableReducer, initialTableState } from './TableReducer';
 import { createTableActions } from './TableActions';
 import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
 import { tableStorageService } from '@/services/storage';
+import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
 
 interface TableProviderProps {
   children: React.ReactNode;
@@ -132,25 +133,40 @@ export const TableProvider: React.FC<TableProviderProps> = ({
       }
     });
 
-    const unsubscribePaid = orderEventEmitter.subscribe('ORDER_PAID', (_orderId, data) => {
+    const unsubscribePaid = orderEventEmitter.subscribe('ORDER_PAID', async (_orderId, data) => {
       const tableId = data?.tableId as string;
       if (tableId) {
-        updateTableStatus(tableId, { status: TableStatus.AVAILABLE })
-          .then(() => {
+        try {
+          const remaining = await unifiedOrderStorageService.getActiveOrdersForTable(tableId);
+          const otherActive = remaining.filter(o => o.id !== _orderId);
+          if (otherActive.length === 0) {
+            await updateTableStatus(tableId, { status: TableStatus.AVAILABLE });
             tableStorageService.updateTableStatus(tableId, TableStatus.AVAILABLE);
-          })
-          .catch(() => { /* silent */ });
+          }
+        } catch {
+          // Fallback: set available if we can't check
+          updateTableStatus(tableId, { status: TableStatus.AVAILABLE })
+            .then(() => tableStorageService.updateTableStatus(tableId, TableStatus.AVAILABLE))
+            .catch(() => {});
+        }
       }
     });
 
-    const unsubscribeCancelled = orderEventEmitter.subscribe('ORDER_CANCELLED', (_orderId, data) => {
+    const unsubscribeCancelled = orderEventEmitter.subscribe('ORDER_CANCELLED', async (_orderId, data) => {
       const tableId = data?.tableId as string;
       if (tableId) {
-        updateTableStatus(tableId, { status: TableStatus.AVAILABLE })
-          .then(() => {
+        try {
+          const remaining = await unifiedOrderStorageService.getActiveOrdersForTable(tableId);
+          const otherActive = remaining.filter(o => o.id !== _orderId);
+          if (otherActive.length === 0) {
+            await updateTableStatus(tableId, { status: TableStatus.AVAILABLE });
             tableStorageService.updateTableStatus(tableId, TableStatus.AVAILABLE);
-          })
-          .catch(() => { /* silent */ });
+          }
+        } catch {
+          updateTableStatus(tableId, { status: TableStatus.AVAILABLE })
+            .then(() => tableStorageService.updateTableStatus(tableId, TableStatus.AVAILABLE))
+            .catch(() => {});
+        }
       }
     });
 

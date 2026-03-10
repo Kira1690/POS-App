@@ -99,17 +99,9 @@ export class MMLMessageBuilder {
       messageHex: messageHex.substring(0, 150) + (messageHex.length > 150 ? '...' : '')
     });
 
-    console.log('🔨 ============================================');
-    console.log('🔨 MML MESSAGE CONSTRUCTED');
-    console.log('🔨 ============================================');
-    console.log('📝 Transaction ID:', request.transactionId);
-    console.log('📝 Amount:', request.amount.toFixed(2));
-    console.log('📝 Tax:', request.tax?.toFixed(2) || 'N/A');
-    console.log('📝 Message Content:', messageContent);
-    console.log('📝 Message Length:', fullMessage.length, 'bytes');
-    console.log('📝 Printable:', this.bytesToPrintable(fullMessage));
-    console.log('📝 Hex Dump:', messageHex);
-    console.log('🔨 ============================================');
+    if (__DEV__) {
+      console.log(`[TRX] Message built: SALE ${request.amount.toFixed(2)}`);
+    }
 
     return fullMessage;
   }
@@ -240,16 +232,6 @@ export class MMLMessageBuilder {
     if (providedLRC !== calculatedLRC) {
       errors.push(`LRC mismatch: expected ${calculatedLRC}, got ${providedLRC}`);
     }
-
-    console.log('✅ ============================================');
-    console.log('✅ MESSAGE VALIDATION');
-    console.log('✅ ============================================');
-    console.log('🔍 STX:', message[0] === 0x02 ? 'OK (0x02)' : `FAIL (0x${message[0].toString(16)})`);
-    console.log('🔍 ETX:', message[message.length - 2] === 0x03 ? 'OK (0x03)' : `FAIL (0x${message[message.length - 2].toString(16)})`);
-    console.log('🔍 LRC:', providedLRC === calculatedLRC ? `OK (0x${providedLRC.toString(16)})` : `FAIL (expected 0x${calculatedLRC.toString(16)}, got 0x${providedLRC.toString(16)})`);
-    console.log('🔍 Message Length:', message.length);
-    console.log('🔍 Validation:', errors.length === 0 ? 'PASSED ✓' : `FAILED: ${errors.join(', ')}`);
-    console.log('✅ ============================================');
 
     return { isValid: errors.length === 0, errors };
   }

@@ -473,6 +473,25 @@ class UnifiedOrderStorageService {
     return null; // Sync not available, use async
   }
 
+  async getActiveOrdersForTable(tableId: string): Promise<UnifiedOrder[]> {
+    const activeStatuses = getActiveStatuses();
+    const placeholders = activeStatuses.map(() => '?').join(', ');
+
+    const rows = await (await this.ensureDb()).getAllAsync<OrderRow>(
+      `SELECT * FROM orders WHERE table_id = ? AND status IN (${placeholders}) ORDER BY created_at DESC`,
+      tableId, ...activeStatuses
+    );
+    if (rows.length === 0) return [];
+
+    const orderIds = rows.map(r => r.id);
+    const idPlaceholders = orderIds.map(() => '?').join(', ');
+    const items = await (await this.ensureDb()).getAllAsync<OrderItemRow>(
+      `SELECT * FROM order_items WHERE order_id IN (${idPlaceholders})`,
+      ...orderIds
+    );
+    return rows.map(r => this.orderFromRow(r, items));
+  }
+
   // ============== CART OPERATIONS ==============
 
   async saveCart(tableId: string, cart: UnifiedCartState): Promise<void> {
@@ -863,6 +882,66 @@ class UnifiedOrderStorageService {
       totalAmount,
     });
     if (!updated) throw new Error('Failed to add items to order');
+    return updated;
+  }
+
+  // ============== REMOVE/UPDATE ITEM IN ORDER ==============
+
+  async removeItemFromOrder(orderId: string, itemId: string): Promise<UnifiedOrder> {
+    const order = await this.getOrder(orderId);
+    if (!order) throw new Error('Order not found');
+    const remaining = order.items.filter(i => i.id !== itemId);
+    const subtotal = remaining.reduce((s, i) => s + i.basePrice * i.quantity + i.modifierTotal, 0);
+    const taxAmount = parseFloat((subtotal * (order.taxRate || 0.1)).toFixed(2));
+    const updated = await this.updateOrder(orderId, {
+      items: remaining,
+      subtotal,
+      taxAmount,
+      totalAmount: parseFloat((subtotal + taxAmount).toFixed(2)),
+    });
+    if (!updated) throw new Error('Failed to remove item from order');
+    return updated;
+  }
+
+  async updateOrderItem(
+    orderId: string,
+    itemId: string,
+    updates: {
+      quantity?: number;
+      selectedModifiers?: UnifiedOrderItem['selectedModifiers'];
+      specialInstructions?: string;
+    }
+  ): Promise<UnifiedOrder> {
+    const order = await this.getOrder(orderId);
+    if (!order) throw new Error('Order not found');
+    const ts = now();
+    const items = order.items.map(item => {
+      if (item.id !== itemId) return item;
+      const mods = updates.selectedModifiers ?? item.selectedModifiers ?? [];
+      const modifierTotal = mods.reduce(
+        (s, g) => s + g.options.reduce((gs, o) => gs + (o.totalPrice ?? 0), 0),
+        0
+      );
+      const qty = updates.quantity ?? item.quantity;
+      return {
+        ...item,
+        quantity: qty,
+        selectedModifiers: mods,
+        modifierTotal,
+        itemTotal: (item.basePrice + modifierTotal) * qty,
+        specialInstructions: updates.specialInstructions ?? item.specialInstructions,
+        modifiedAt: ts,
+      };
+    });
+    const subtotal = items.reduce((s, i) => s + i.basePrice * i.quantity + i.modifierTotal, 0);
+    const taxAmount = parseFloat((subtotal * (order.taxRate || 0.1)).toFixed(2));
+    const updated = await this.updateOrder(orderId, {
+      items,
+      subtotal,
+      taxAmount,
+      totalAmount: parseFloat((subtotal + taxAmount).toFixed(2)),
+    });
+    if (!updated) throw new Error('Failed to update order item');
     return updated;
   }
 

@@ -28,6 +28,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { UnifiedItemStatus } from '@/types/unified-order.types';
 import { showToast } from '@/utils/toast';
+import { usePrinter } from '@/context/printer/PrinterContext';
+import type { KitchenStation } from '@/types/order-extended.types';
 
 interface KitchenDisplayScreenProps {
   navigation?: any;
@@ -35,11 +37,12 @@ interface KitchenDisplayScreenProps {
 
 const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation }) => {
   const { theme, isDark } = useTheme();
-  const { kitchenColumns, isPhone, isPortrait } = useResponsive();
+  const { kitchenColumns, isPhone, isPortrait, statValueSize, captionSize } = useResponsive();
   const stationViews = useKitchenStationViews();
   const kitchenStats = useKitchenStats();
   const { updateItemStatus, refreshOrders, isLoading } = useUnifiedOrder();
-  const { stations } = useKitchenConfig();
+  const { stations, allowEditWhenReady } = useKitchenConfig();
+  const { printStationKOT } = usePrinter();
 
   const [refreshing, setRefreshing] = useState(false);
   const [selectedStation, setSelectedStation] = useState<string>('all');
@@ -93,12 +96,12 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
       ...theme.typography.h2,
       fontWeight: '700',
       marginBottom: theme.spacing.xs / 2,
-      fontSize: 28,
+      fontSize: statValueSize,
     },
     statLabel: {
       ...theme.typography.caption,
       fontWeight: '600',
-      fontSize: 11,
+      fontSize: captionSize,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
     },
@@ -473,6 +476,7 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
     const statusColor = getStatusColor(view.stationStatus);
     const cardStyles = getCardStatusStyles(view.stationStatus);
     const nextAction = getNextAction(view.stationStatus);
+    const isLocked = view.order.status === 'ready' && !allowEditWhenReady;
 
     return (
       <View style={[styles.ticketCard, cardStyles]}>
@@ -528,8 +532,8 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
           </View>
         </View>
 
-        {nextAction && (
-          <View style={styles.ticketActions}>
+        <View style={styles.ticketActions}>
+          {nextAction && (
             <TouchableOpacity
               style={[styles.ticketActionButton, { backgroundColor: theme.colors.primary }]}
               onPress={() => handleStationAction(view, nextAction.targetStatus)}
@@ -545,8 +549,63 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
                 {nextAction.text}
               </Text>
             </TouchableOpacity>
-          </View>
-        )}
+          )}
+          <TouchableOpacity
+            style={[styles.ticketActionButton, { backgroundColor: theme.colors.secondaryContainer, flex: nextAction ? 0.5 : 1 }]}
+            onPress={() => printStationKOT(view.order, view.station as KitchenStation).catch(() => {})}
+            testID="btn-reprint-kot"
+            accessibilityLabel="Reprint KOT"
+          >
+            <MaterialCommunityIcons
+              name="printer"
+              size={18}
+              color={theme.colors.onSecondaryContainer}
+            />
+            {!nextAction && (
+              <Text style={[styles.ticketActionText, { color: theme.colors.onSecondaryContainer }]}>
+                Reprint
+              </Text>
+            )}
+          </TouchableOpacity>
+          {/* Update Order button */}
+          <TouchableOpacity
+            style={[
+              styles.ticketActionButton,
+              {
+                backgroundColor: isLocked ? theme.colors.surfaceVariant : theme.colors.tertiaryContainer,
+                flex: 0.6,
+              },
+            ]}
+            onPress={() => {
+              if (isLocked) {
+                showToast({ type: 'warning', title: 'Order Locked', message: 'Enable editing in Kitchen Settings.' });
+                return;
+              }
+              if (navigation) {
+                (navigation as any).navigate('POSOrder', {
+                  editOrderId: view.order.id,
+                  table: {
+                    id: view.order.tableId,
+                    table_number: view.order.tableName,
+                    capacity: 4,
+                    status: 'occupied',
+                    restaurant_id: view.order.restaurantId || 'rest_001',
+                    created_at: view.order.createdAt,
+                    updated_at: view.order.updatedAt,
+                  },
+                });
+              }
+            }}
+            disabled={isLocked}
+            testID={`btn-update-order-${view.order.tableName?.toLowerCase().replace(/\s+/g, '-') ?? view.order.id}`}
+          >
+            <MaterialCommunityIcons
+              name="pencil-plus"
+              size={16}
+              color={isLocked ? theme.colors.onSurfaceVariant : theme.colors.tertiary}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };

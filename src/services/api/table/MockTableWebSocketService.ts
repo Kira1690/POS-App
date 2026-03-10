@@ -102,9 +102,7 @@ export class MockTableWebSocketService implements ITableWebSocketService {
     this.callbacks.forEach(callback => {
       try {
         callback(update);
-      } catch (error) {
-        console.error('[MockTableWS] Callback error:', error);
-      }
+      } catch { /* silent */ }
     });
   }
 

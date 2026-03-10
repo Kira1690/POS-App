@@ -493,13 +493,30 @@ export const BillSplitScreen: React.FC = () => {
   const handleProcessPayments = useCallback(() => {
     if (!order) return;
 
+    if (payments.length === 0) {
+      Alert.alert('No Payments', 'Please add at least one payment method before processing.');
+      return;
+    }
+
+    const totalAllocated = payments.reduce((sum, p) => sum + p.amount, 0);
+    const remaining = Math.round((totalAmount - totalAllocated) * 100) / 100;
+    if (Math.abs(remaining) > 0.01) {
+      Alert.alert(
+        'Amount Mismatch',
+        remaining > 0
+          ? `$${remaining.toFixed(2)} is still unallocated. Please allocate the full bill amount.`
+          : `Payments exceed the bill by $${Math.abs(remaining).toFixed(2)}. Please adjust.`
+      );
+      return;
+    }
+
     // Navigate to payment processing with split payments
     navigation.navigate('PaymentProcessing', {
       orderId,
       order,
       splitPayments: payments,
     });
-  }, [navigation, orderId, order, payments]);
+  }, [navigation, orderId, order, payments, totalAmount]);
 
   if (!order) {
     return (
@@ -626,7 +643,11 @@ export const BillSplitScreen: React.FC = () => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.payAllButton} onPress={handlePayAll} testID="btn-pay-all">
+        <TouchableOpacity
+          style={styles.payAllButton}
+          onPress={activeTab === 'by_payment_method' ? handleProcessPayments : handlePayAll}
+          testID="btn-pay-all"
+        >
           <MaterialCommunityIcons
             name="cash-multiple"
             size={24}

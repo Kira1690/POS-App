@@ -95,8 +95,7 @@ export class MockTableManagementService implements ITableManagementService {
       if (__DEV__) {
         console.log(`[MockTableManagementService] Loaded ${this.cachedTables.length} tables from storage`);
       }
-    } catch (error) {
-      console.error('[MockTableManagementService] Failed to load from storage:', error);
+    } catch {
       // Fallback to mock data
       this.cachedTables = [...MOCK_TABLES];
       this.initialized = true;

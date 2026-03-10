@@ -122,9 +122,7 @@ export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }
         if (__DEV__) {
           console.log('[BillSplitContext] Auto-saved split for order:', state.order!.id);
         }
-      } catch (error) {
-        console.error('[BillSplitContext] Failed to auto-save split:', error);
-      }
+      } catch { /* silent */ }
     }, 500); // 500ms debounce
 
     return () => {
@@ -159,8 +157,7 @@ export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }
       } else {
         dispatch({ type: 'SET_ORDER', payload: { order, items } });
       }
-    } catch (error) {
-      console.error('[BillSplitContext] Error loading existing split:', error);
+    } catch {
       dispatch({ type: 'SET_ORDER', payload: { order, items } });
     }
 
@@ -175,9 +172,7 @@ export const BillSplitProvider: React.FC<BillSplitProviderProps> = ({ children }
         if (__DEV__) {
           console.log('[BillSplitContext] Deleted split for order:', state.order.id);
         }
-      } catch (error) {
-        console.error('[BillSplitContext] Failed to delete split:', error);
-      }
+      } catch { /* silent */ }
     }
     dispatch({ type: 'CLEAR_ORDER' });
   }, [state.order?.id]);

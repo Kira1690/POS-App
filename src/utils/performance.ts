@@ -62,11 +62,9 @@ class PerformanceMonitor {
 
     // Log performance issues
     if (renderTime > this.config.renderTimeThreshold) {
-      console.warn(`🐌 Slow render detected: ${componentName}`, {
-        renderTime: `${renderTime.toFixed(2)}ms`,
-        threshold: `${this.config.renderTimeThreshold}ms`,
-        severity: renderTime > this.config.renderTimeThreshold * 2 ? 'HIGH' : 'MEDIUM'
-      });
+      if (__DEV__) {
+        console.warn(`[Perf] Slow render: ${componentName} ${renderTime.toFixed(2)}ms`);
+      }
 
       // Send to analytics if enabled
       if (this.config.enableAnalytics) {
@@ -172,8 +170,8 @@ export function withPerformanceTracking<T extends (...args: any[]) => any>(
     const endTime = performance.now();
     
     const duration = endTime - startTime;
-    if (duration > 10) { // Log functions taking > 10ms
-      console.log(`⏱️ Function timing: ${name} took ${duration.toFixed(2)}ms`);
+    if (__DEV__ && duration > 10) {
+      console.log(`[Perf] ${name} took ${duration.toFixed(2)}ms`);
     }
     
     return result;
@@ -258,7 +256,9 @@ export class MemoryTracker {
       if (usage && usage > 150 * 1024 * 1024) { // 150MB warning threshold
         const key = `memory_${Math.floor(usage / (1024 * 1024))}MB`;
         if (!this.thresholdWarnings.has(key)) {
-          console.warn(`🧠 Memory usage: ${Math.round(usage / (1024 * 1024))}MB`);
+          if (__DEV__) {
+            console.warn(`[Perf] Memory: ${Math.round(usage / (1024 * 1024))}MB`);
+          }
           this.thresholdWarnings.add(key);
         }
       }

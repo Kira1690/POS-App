@@ -1,0 +1,200 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 32: Order Edit — Modify Modifiers on Existing Item"
+tags:
+  - qa
+  - orders
+  - edit
+---
+
+# ─────────────────────────────────────────────────────
+#  QA 32 — Edit modifiers on an already-sent item
+#
+#  Flow:
+#    1. Create B-1 CONFIRMED order (Fish Fry with Mild spice)
+#    2. Orders → View → Add More Items
+#    3. Tap pencil icon on Fish Fry (btn-edit-existing-fish-fry)
+#    4. ModifierSelectionModal opens pre-filled (Mild selected)
+#    5. Change to "Hot" spice → Add to Cart (btn-modifier-confirm)
+#    6. Fish Fry still in ALREADY ORDERED (not removed)
+#    7. Tap "Update Order" → navigates back
+#    8. OrderDetails shows Fish Fry (modifier updated, count unchanged)
+#
+#  testIDs:
+#    section-already-ordered       — already ordered header
+#    btn-edit-existing-fish-fry    — pencil on Fish Fry row
+#    btn-modifier-confirm          — "Add to Cart" / "Update Cart" in modifier modal
+#    btn-cart-send-to-kitchen      — "Update Order" button
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Create B-1 CONFIRMED order (Fish Fry only) ────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle ExistingOrderModal if B-1 is still occupied (e.g. SERVED order not cancellable)
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-cancel-new"
+    commands:
+      - tapOn:
+          id: "btn-existing-cancel-new"
+      - waitForAnimationToEnd
+
+# Handle GuestCountModal if B-1 is free (normal case after cancel)
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Add Fish Fry with Mild spice / Grilled (initial modifiers)
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Mild"
+          optional: true
+      - tapOn:
+          text: "Grilled"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_32_step1_b1_confirmed"
+
+# ── STEP 1: Open edit mode ────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 10000
+- tapOn:
+    id: "btn-add-items-to-order"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "section-already-ordered"
+    timeout: 10000
+
+- takeScreenshot: "qa_32_step2_edit_mode_open"
+
+# ── STEP 2: Tap pencil on Fish Fry ───────────────────────────────────────────
+- tapOn:
+    id: "btn-edit-existing-fish-fry"
+- waitForAnimationToEnd
+
+# ModifierSelectionModal should appear
+- extendedWaitUntil:
+    visible:
+      id: "btn-modifier-confirm"
+    timeout: 8000
+
+- takeScreenshot: "qa_32_step3_modifier_modal_open_prefilled"
+
+# Change from Mild → Hot
+- tapOn:
+    text: "Hot"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_32_step4_hot_spice_selected"
+
+# Confirm modifier change
+- tapOn:
+    id: "btn-modifier-confirm"
+- waitForAnimationToEnd
+
+# Fish Fry still in ALREADY ORDERED (not removed)
+- assertVisible:
+    id: "section-already-ordered"
+- assertVisible:
+    text: "Fish Fry × 1"
+
+- takeScreenshot: "qa_32_step5_modifier_saved_item_still_present"
+
+# ── STEP 3: Update Order (edit mode uses btn-add-to-order) ───────────────────
+- tapOn:
+    id: "btn-add-to-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Wait for navigation back to OrderDetailsScreen
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 15000
+
+# Fish Fry still present in order (1 item, count unchanged)
+- assertVisible:
+    text: "Fish Fry"
+
+- takeScreenshot: "qa_32_PASS_modifier_updated_order_intact"

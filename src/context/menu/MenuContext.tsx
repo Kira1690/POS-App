@@ -462,7 +462,6 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       }
 
       // No storage data — re-initialize which triggers mock data seeding
-      console.log('[MenuContext] No stored menu data — re-initializing to trigger seed');
       await menuStorageService.initialize(restaurantId);
       const seededData = await menuStorageService.getMenuData(restaurantId);
       if (seededData && seededData.menuItems.length > 0) {
@@ -489,7 +488,6 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
             combos: seededData.combos,
           },
         });
-        console.log(`[MenuContext] Seeded ${categories.length} categories, ${menuItems.length} items`);
       } else {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
@@ -1085,7 +1083,6 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
         }
       }
     } catch (error) {
-      console.error('[MenuContext] Failed to reload extended menu data:', error);
       dispatch({
         type: 'SET_ERROR',
         payload: error instanceof Error ? error.message : 'Failed to reload menu data',

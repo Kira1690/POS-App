@@ -151,9 +151,7 @@ class ServiceContainer {
       if (registration.instance && typeof registration.instance.dispose === 'function') {
         try {
           registration.instance.dispose();
-        } catch (error) {
-          console.warn('Error disposing service instance:', error);
-        }
+        } catch { /* silent */ }
       }
     });
 

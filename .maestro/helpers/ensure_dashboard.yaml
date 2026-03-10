@@ -8,6 +8,11 @@ name: "Helper: Ensure on Order Management (Dev Build)"
 
 - launchApp
 - waitForAnimationToEnd
+# Wait for app to fully initialize (cold start can take 10-15s on emulator)
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 30000
 
 # Dismiss any full-screen LogBox (dev warnings)
 - tapOn:

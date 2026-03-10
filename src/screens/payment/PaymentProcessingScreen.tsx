@@ -197,9 +197,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         orderId,
         splitPayment,
       });
-    } catch (error) {
-      console.error('Card payment failed:', error);
-    }
+    } catch { /* error displayed via processingStatus */ }
   }, [order, orderId, totals.total, tipAmount, tipPercentage, processCardPayment, navigation]);
 
   // Handle cash payment
@@ -228,9 +226,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         orderId,
         splitPayment,
       });
-    } catch (error) {
-      console.error('Cash payment failed:', error);
-    }
+    } catch { /* error displayed via processingStatus */ }
   }, [order, orderId, totals.total, tipAmount, tipPercentage, processCashPayment, navigation]);
 
   // Execute full split payment after all card TRX steps are done (or immediately when no cards)
@@ -253,9 +249,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         orderId,
         splitPayment,
       });
-    } catch (err) {
-      console.error('Split payment failed:', err);
-    }
+    } catch { /* error displayed via processingStatus */ }
   }, [order, orderId, totals.total, tipAmount, tipPercentage, processSplitPayment, navigation, splitPayment]);
 
   // Handle split payment — if card entries are present, route them through TRX first

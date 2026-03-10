@@ -133,8 +133,7 @@ export class TokenManager {
       }
       
       return false;
-    } catch (error) {
-      console.error('Token refresh failed:', error);
+    } catch {
       await this.clearTokens();
       return false;
     }
@@ -182,9 +181,7 @@ export class TokenManager {
     this.tokens = null;
     try {
       await SecureStore.deleteItemAsync(APP_CONFIG.STORAGE_KEYS.AUTH_TOKENS);
-    } catch (error) {
-      console.error('Failed to clear tokens:', error);
-    }
+    } catch { /* silent */ }
   }
 
   /**
@@ -199,13 +196,11 @@ export class TokenManager {
         
         // Validate loaded tokens structure
         if (!this.isValidTokenStructure(this.tokens)) {
-          console.warn('Invalid token structure found, clearing tokens');
           this.tokens = null;
           await this.clearTokens();
         }
       }
-    } catch (error) {
-      console.error('Failed to load tokens:', error);
+    } catch {
       this.tokens = null;
     }
   }
@@ -221,8 +216,7 @@ export class TokenManager {
         JSON.stringify(tokens)
       );
     } catch (error) {
-      console.error('Failed to save tokens:', error);
-      throw error; // Re-throw to indicate save failure
+      throw error;
     }
   }
 

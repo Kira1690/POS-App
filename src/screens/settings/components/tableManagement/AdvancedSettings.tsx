@@ -121,12 +121,10 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ onChangesDetected }
   });
 
   const handleSave = () => {
-    console.log('Saving advanced settings...');
     onChangesDetected?.(false);
   };
 
   const handleCancel = () => {
-    console.log('Cancelling changes...');
     onChangesDetected?.(false);
   };
 

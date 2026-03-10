@@ -122,8 +122,6 @@ export function registerServices(): void {
     ServiceLifetime.SINGLETON
   );
 
-  console.log('✅ Service registration complete');
-  console.log(`📦 Registered ${serviceContainer.getRegisteredServices().length} services`);
 }
 
 /**
@@ -172,17 +170,14 @@ export function validateServiceRegistration(): { success: boolean; errors: strin
  * Initialize the service system
  */
 export function initializeServices(): void {
-  console.log('🚀 Initializing service system...');
-  
   registerServices();
-  
+
   const validation = validateServiceRegistration();
-  
+
   if (!validation.success) {
-    console.error('❌ Service registration validation failed:');
-    validation.errors.forEach(error => console.error(`  - ${error}`));
+    if (__DEV__) {
+      console.error('[ServiceRegistry] Validation failed:', validation.errors.join(', '));
+    }
     throw new Error('Service system initialization failed');
   }
-  
-  console.log('✅ Service system initialized successfully');
 }

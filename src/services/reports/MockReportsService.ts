@@ -319,9 +319,6 @@ export class MockReportsService implements ReportsService {
     
     const filename = `${type}_report_${Date.now()}.${export_config.format}`;
     
-    if (export_config.email) {
-      console.log(`Mock: Sending ${filename} to ${export_config.email}`);
-    }
     
     return filename;
   }

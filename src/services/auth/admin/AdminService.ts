@@ -23,7 +23,6 @@ export class AdminService implements IAdminService {
       
       return response;
     } catch (error: any) {
-      console.error('Admin registration failed:', error.message);
       throw new Error(error.message || 'Admin registration failed');
     }
   }
@@ -32,7 +31,6 @@ export class AdminService implements IAdminService {
     try {
       return await adminAuthApiClient.listUsers(params);
     } catch (error: any) {
-      console.error('List users failed:', error.message);
       throw new Error(error.message || 'Failed to list users');
     }
   }
@@ -41,7 +39,6 @@ export class AdminService implements IAdminService {
     try {
       return await adminAuthApiClient.getMyRegisteredUsers(params);
     } catch (error: any) {
-      console.error('Get registered users failed:', error.message);
       throw new Error(error.message || 'Failed to get registered users');
     }
   }
@@ -50,7 +47,6 @@ export class AdminService implements IAdminService {
     try {
       return await adminAuthApiClient.getAdminRegisteredUsers(adminId, params);
     } catch (error: any) {
-      console.error('Get admin registered users failed:', error.message);
       throw new Error(error.message || 'Failed to get admin registered users');
     }
   }
@@ -68,7 +64,6 @@ export class AdminService implements IAdminService {
       
       return user;
     } catch (error: any) {
-      console.error('Update user by admin failed:', error.message);
       throw new Error(error.message || 'Failed to update user');
     }
   }
@@ -76,15 +71,7 @@ export class AdminService implements IAdminService {
   async deleteUserByAdmin(userId: string, hardDelete: boolean = false): Promise<void> {
     try {
       await adminAuthApiClient.deleteUserByAdmin(userId, hardDelete);
-      
-      if (__DEV__) {
-        console.log('User deleted by admin:', {
-          userId,
-          hardDelete,
-        });
-      }
     } catch (error: any) {
-      console.error('Delete user by admin failed:', error.message);
       throw new Error(error.message || 'Failed to delete user');
     }
   }
@@ -93,7 +80,6 @@ export class AdminService implements IAdminService {
     try {
       return await adminAuthApiClient.getUserSessions(userId);
     } catch (error: any) {
-      console.error('Get user sessions failed:', error.message);
       throw new Error(error.message || 'Failed to get user sessions');
     }
   }
@@ -106,25 +92,14 @@ export class AdminService implements IAdminService {
         console.log('User sessions revoked by admin:', { userId });
       }
     } catch (error: any) {
-      console.error('Revoke user sessions failed:', error.message);
       throw new Error(error.message || 'Failed to revoke user sessions');
     }
   }
 
   async toggleUserStatus(userId: string, isActive: boolean): Promise<User> {
     try {
-      const user = await adminAuthApiClient.toggleUserStatus(userId, isActive);
-      
-      if (__DEV__) {
-        console.log('User status toggled by admin:', {
-          userId,
-          isActive,
-        });
-      }
-      
-      return user;
+      return await adminAuthApiClient.toggleUserStatus(userId, isActive);
     } catch (error: any) {
-      console.error('Toggle user status failed:', error.message);
       throw new Error(error.message || 'Failed to toggle user status');
     }
   }
@@ -133,7 +108,6 @@ export class AdminService implements IAdminService {
     try {
       return await adminAuthApiClient.getUserById(userId);
     } catch (error: any) {
-      console.error('Get user by ID failed:', error.message);
       throw new Error(error.message || 'Failed to get user');
     }
   }
@@ -141,16 +115,7 @@ export class AdminService implements IAdminService {
   async assignUserToRestaurant(userId: string, restaurantId: string, role?: string): Promise<void> {
     try {
       await adminAuthApiClient.assignUserToRestaurant(userId, restaurantId, role);
-      
-      if (__DEV__) {
-        console.log('User assigned to restaurant by admin:', {
-          userId,
-          restaurantId,
-          role,
-        });
-      }
     } catch (error: any) {
-      console.error('Assign user to restaurant failed:', error.message);
       throw new Error(error.message || 'Failed to assign user to restaurant');
     }
   }
@@ -158,15 +123,7 @@ export class AdminService implements IAdminService {
   async removeUserFromRestaurant(userId: string, restaurantId: string): Promise<void> {
     try {
       await adminAuthApiClient.removeUserFromRestaurant(userId, restaurantId);
-      
-      if (__DEV__) {
-        console.log('User removed from restaurant by admin:', {
-          userId,
-          restaurantId,
-        });
-      }
     } catch (error: any) {
-      console.error('Remove user from restaurant failed:', error.message);
       throw new Error(error.message || 'Failed to remove user from restaurant');
     }
   }

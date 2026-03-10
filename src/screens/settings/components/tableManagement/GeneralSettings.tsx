@@ -92,13 +92,11 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ onChangesDetected }) 
 
   const handleSave = () => {
     // TODO: Implement save logic
-    console.log('Saving general settings...');
     onChangesDetected?.(false);
   };
 
   const handleCancel = () => {
     // TODO: Reset to original values
-    console.log('Cancelling changes...');
     onChangesDetected?.(false);
   };
 

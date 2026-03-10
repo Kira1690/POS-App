@@ -36,6 +36,7 @@ interface OrderCartPanelProps {
   currentOrder: UnifiedOrder | null;
   table: Table;
   taxRate?: number; // Tax rate from context/settings (single source of truth)
+  onPrintKOT?: () => void;
 }
 
 // Default tax rate fallback (only used if not provided via props)
@@ -48,6 +49,7 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
   currentOrder,
   table,
   taxRate = DEFAULT_TAX_RATE,
+  onPrintKOT,
 }) => {
   const theme = useTheme();
   const { updateQuantity: updateCartItemQuantity, removeItem: removeFromCart, clear: clearCart } = useUnifiedCart();
@@ -319,7 +321,6 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
         disabled={cartItemCount === 0}
         onPress={() => {
           // TODO: Implement place order
-          console.log('Place Order pressed');
         }}
       >
         Place Order
@@ -340,8 +341,7 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
         icon="print"
         disabled={cartItemCount === 0}
         onPress={() => {
-          // TODO: Implement print KOT
-          console.log('Print KOT pressed');
+          if (onPrintKOT) onPrintKOT();
         }}
       >
         Print KOT
@@ -363,7 +363,6 @@ export const OrderCartPanel: React.FC<OrderCartPanelProps> = ({
         disabled={cartItemCount === 0}
         onPress={() => {
           // TODO: Implement payment processing
-          console.log('Process Payment pressed');
         }}
       >
         Process Payment

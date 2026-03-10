@@ -1,0 +1,173 @@
+appId: com.ajinkya123.POSReactNativeApp
+---
+# Helper: Create a B-1 order in READY state.
+# Uses Fish Fry + Dal Makhani as test items (always seeded in dev build).
+#
+# Returns: Order Management with B-1 order in READY/UNPAID state.
+
+# ── 1. Clear stale kitchen tickets ───────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: clear_all_kitchen_tickets.yaml
+
+# ── 2. Cancel any existing B-1 orders ────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# ── 3. Create new B-1 order ───────────────────────────────────────────────────
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle ExistingOrderModal if B-1 is still occupied (e.g. SERVED order not cancellable)
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-cancel-new"
+    commands:
+      - tapOn:
+          id: "btn-existing-cancel-new"
+      - waitForAnimationToEnd
+
+# Handle GuestCountModal if B-1 is free (normal case after cancel)
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Add Fish Fry
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Mild"
+          optional: true
+      - tapOn:
+          text: "Grilled"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Add Dal Makhani
+- extendedWaitUntil:
+    visible:
+      text: "Dal Makhani"
+    timeout: 8000
+- tapOn:
+    text: "Dal Makhani"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send to kitchen (CONFIRMED)
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+# ── 4. Kitchen: CONFIRMED → PREPARING → READY ────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-kitchen-action-start"
+    timeout: 15000
+
+# Start all tickets
+- tapOn:
+    id: "btn-kitchen-action-start"
+    index: 0
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-start"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-start"
+          index: 0
+      - waitForAnimationToEnd
+
+# Mark Ready all tickets
+- extendedWaitUntil:
+    visible:
+      id: "btn-kitchen-action-ready"
+    timeout: 8000
+- tapOn:
+    id: "btn-kitchen-action-ready"
+    index: 0
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-kitchen-action-ready"
+    commands:
+      - tapOn:
+          id: "btn-kitchen-action-ready"
+          index: 0
+      - waitForAnimationToEnd
+
+# Return to Order Management — B-1 is now READY
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000

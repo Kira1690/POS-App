@@ -39,6 +39,9 @@ import { typography } from '@/design-system/theme/typography';
 import { showToast } from '@/utils/toast';
 import { formatPrice } from '@/utils/currency';
 import { usePayment } from '@/context/payment/PaymentContext';
+import { usePrinter } from '@/context/printer/PrinterContext';
+import { useKitchenConfig } from '@/context/kitchen/KitchenConfigContext';
+import { UnifiedOrderItem } from '@/types/unified-order.types';
 
 const POSOrderScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -68,6 +71,8 @@ const POSOrderScreen: React.FC = () => {
     getActiveOrderForTable,
     getOrderById,
     addItemsToOrder,
+    removeItemFromOrder,
+    updateOrderItem,
     applyOrderDiscount,
     applyItemDiscount,
     state: orderState,
@@ -92,6 +97,8 @@ const POSOrderScreen: React.FC = () => {
 
   // Get tax rate from payment context (single source of truth)
   const { taxRate: contextTaxRate } = usePayment();
+  const { printKOT: printerPrintKOT } = usePrinter();
+  const { allowEditWhenReady } = useKitchenConfig();
 
   const { state: tableState, selectTable, refreshTables } = useTable();
 
@@ -122,12 +129,31 @@ const POSOrderScreen: React.FC = () => {
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [discountingItem, setDiscountingItem] = useState<{ id: string; name: string; price: number } | null>(null);
 
+  // Edit mode: local copy of existing order items (mutable — supports remove/modify before save)
+  const [localExistingItems, setLocalExistingItems] = useState<UnifiedOrderItem[]>([]);
+  // Track which items were removed
+  const [removedItemIds, setRemovedItemIds] = useState<string[]>([]);
+  // Track which items were modified
+  const [modifiedItemIds, setModifiedItemIds] = useState<string[]>([]);
+  // For editing existing item modifiers inline
+  const [editingExistingItem, setEditingExistingItem] = useState<{ orderId: string; item: UnifiedOrderItem } | null>(null);
+
   // Edit mode: the existing order being updated
   const editingOrder = useMemo(
     () => (editOrderId ? getOrderById(editOrderId) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [editOrderId, orderState.orders]
   );
+
+  // Initialize localExistingItems when editingOrder loads/changes
+  useEffect(() => {
+    if (editingOrder) {
+      setLocalExistingItems(editingOrder.items);
+      setRemovedItemIds([]);
+      setModifiedItemIds([]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingOrder?.id]);
 
   // Prevent the table-init effect from re-firing after CLEAR_CURRENT_ORDER resets selectedTable
   const tableInitializedRef = useRef(false);
@@ -141,19 +167,22 @@ const POSOrderScreen: React.FC = () => {
     }
   }, [showTableSelector, refreshTables]);
 
-  // Initialize order when table is provided via navigation
-  // Note: Uses handleTableSelect to check for existing orders
-  // tableInitializedRef prevents re-triggering after CLEAR_CURRENT_ORDER resets selectedTable to null
+  // Initialize order when table is provided via navigation.
   // Table is always pre-validated before navigation (ExistingOrderModal handles conflicts).
-  // Simply select the table when arriving at this screen.
+  // If there's a stale cart from a previous table (user pressed back without submitting),
+  // clear it before setting the new table.
   useEffect(() => {
-    if (routeTable && !selectedTable && !tableInitializedRef.current) {
+    if (routeTable && !tableInitializedRef.current) {
       tableInitializedRef.current = true;
+      // Clear stale cart if it belongs to a different table
+      if (selectedTable && selectedTable.id !== routeTable.id) {
+        clearCart();
+      }
       selectTable(routeTable);
       setSelectedTable(routeTable);
       setShowTableSelector(false);
     }
-  }, [routeTable, selectedTable, selectTable, setSelectedTable]);
+  }, [routeTable, selectedTable, selectTable, setSelectedTable, clearCart]);
 
   // Filter menu items based on category and search
   const filteredMenuItems = useMemo(() => {
@@ -239,8 +268,36 @@ const POSOrderScreen: React.FC = () => {
   const handleModifierConfirm = useCallback(
     (item: MenuItemExtended, modifiers: SelectedModifier[], quantity: number, notes?: string) => {
       try {
-        if (editingCartItemId) {
-          // EDITING: Remove old item and add updated one
+        if (editingExistingItem) {
+          // Editing an existing order item's modifiers locally
+          const mods = modifiers;
+          const modifierTotal = mods.reduce(
+            (s, g) => s + g.options.reduce((gs, o) => gs + (o.totalPrice ?? 0), 0),
+            0
+          );
+          setLocalExistingItems(prev => prev.map(i => {
+            if (i.id !== editingExistingItem.item.id) return i;
+            return {
+              ...i,
+              quantity,
+              selectedModifiers: mods,
+              modifierTotal,
+              itemTotal: (i.basePrice + modifierTotal) * quantity,
+              specialInstructions: notes,
+              modifiedAt: new Date().toISOString(),
+            };
+          }));
+          setModifiedItemIds(prev =>
+            prev.includes(editingExistingItem.item.id) ? prev : [...prev, editingExistingItem.item.id]
+          );
+          setEditingExistingItem(null);
+          showToast({
+            type: 'success',
+            title: 'Item Updated',
+            message: `${item.name} customizations updated`,
+          });
+        } else if (editingCartItemId) {
+          // EDITING: Remove old cart item and add updated one
           removeFromCart(editingCartItemId);
           addToCart(item, modifiers, quantity, notes);
           showToast({
@@ -267,7 +324,7 @@ const POSOrderScreen: React.FC = () => {
         setError(`Failed to ${editingCartItemId ? 'update' : 'add'} item: ${error}`);
       }
     },
-    [addToCart, removeFromCart, editingCartItemId, setError]
+    [addToCart, removeFromCart, editingCartItemId, editingExistingItem, setError]
   );
 
   // Handle modifier cancel
@@ -276,6 +333,7 @@ const POSOrderScreen: React.FC = () => {
     setSelectedItem(null);
     setEditingCartItemId(null);
     setEditingModifiers([]);
+    setEditingExistingItem(null);
   }, []);
 
   // Handle editing cart item modifiers
@@ -320,6 +378,28 @@ const POSOrderScreen: React.FC = () => {
       message: `Editing add-ons for ${cartItem.name}`,
     });
   }, [cart, menuItems]);
+
+  // Handle removing an already-ordered item in edit mode
+  const handleRemoveExistingItem = useCallback((itemId: string) => {
+    setLocalExistingItems(prev => prev.filter(i => i.id !== itemId));
+    setRemovedItemIds(prev => [...prev, itemId]);
+  }, []);
+
+  // Handle editing an already-ordered item's modifiers in edit mode
+  const handleEditExistingItem = useCallback((billItem: { id: string; name: string; hasModifiers?: boolean }) => {
+    if (!editingOrder) return;
+    const orderItem = editingOrder.items.find(i => i.id === billItem.id);
+    if (!orderItem) return;
+    const menuItem = menuItems.find(m => m.id === orderItem.menuItemId);
+    if (!menuItem) {
+      showToast({ type: 'warning', title: 'No Add-ons', message: 'Cannot edit modifiers for this item' });
+      return;
+    }
+    setEditingExistingItem({ orderId: editingOrder.id, item: orderItem });
+    setEditingModifiers(orderItem.selectedModifiers || []);
+    setSelectedItem(menuItem);
+    setIsModifierModalVisible(true);
+  }, [editingOrder, menuItems]);
 
   // Handle combo selection
   const handleComboSelect = useCallback((combo: ComboDeal) => {
@@ -374,7 +454,6 @@ const POSOrderScreen: React.FC = () => {
         message: `${combo.name}${totalQuantity > 1 ? ` x${totalQuantity}` : ''} added to order`,
       });
     } catch (error) {
-      console.error('Failed to add combo:', error);
       setError(`Failed to add combo: ${error}`);
     }
   }, [menuItems, addToCart, setError]);
@@ -618,14 +697,74 @@ const POSOrderScreen: React.FC = () => {
     };
 
     const handlePrint = () => {
-      showToast({
-        type: 'info',
-        title: 'Print KOT',
-        message: 'Printing Kitchen Order Ticket',
-      });
+      const orderToPrint = editingOrder || currentOrder;
+      if (orderToPrint) {
+        printerPrintKOT(orderToPrint).catch(() => {});
+      } else {
+        showToast({
+          type: 'warning',
+          title: 'No Order',
+          message: 'Submit order to kitchen before printing KOT',
+        });
+      }
     };
 
     const handleSendToKitchen = async () => {
+      // Edit mode: process removals, modifications, and new items
+      if (editOrderId) {
+        // Kitchen lock check
+        if (editingOrder?.status === 'ready' && !allowEditWhenReady) {
+          showToast({
+            type: 'warning',
+            title: 'Order Locked',
+            message: 'Order is ready. Enable "Allow editing ready orders" in Kitchen Settings.',
+          });
+          return;
+        }
+
+        try {
+          // Process removals
+          for (const itemId of removedItemIds) {
+            await removeItemFromOrder(editOrderId, itemId);
+          }
+          // Process modifier changes
+          for (const itemId of modifiedItemIds) {
+            const item = localExistingItems.find(i => i.id === itemId);
+            if (item) {
+              await updateOrderItem(editOrderId, itemId, {
+                quantity: item.quantity,
+                selectedModifiers: item.selectedModifiers,
+                specialInstructions: item.specialInstructions,
+              });
+            }
+          }
+          // Add new cart items
+          if (cart.length > 0) {
+            await addItemsToOrder(editOrderId, cart);
+          }
+          // Auto-print KOT
+          const updatedOrder = getOrderById(editOrderId);
+          if (updatedOrder) {
+            printerPrintKOT(updatedOrder).catch(() => {
+              if (__DEV__) console.log('[POSOrder] Auto-print KOT failed (non-blocking)');
+            });
+          }
+          showToast({
+            type: 'success',
+            title: 'Order Updated',
+            message: 'Changes saved successfully',
+          });
+          navigation.goBack();
+        } catch (error) {
+          showToast({
+            type: 'error',
+            title: 'Update Error',
+            message: 'Failed to update order. Please try again.',
+          });
+        }
+        return;
+      }
+
       if (cart.length === 0) {
         showToast({
           type: 'warning',
@@ -635,31 +774,21 @@ const POSOrderScreen: React.FC = () => {
         return;
       }
 
-      // Edit mode: add new items to an existing order
-      if (editOrderId) {
-        try {
-          await addItemsToOrder(editOrderId, cart);
-          showToast({
-            type: 'success',
-            title: 'Order Updated',
-            message: 'New items sent to kitchen',
-          });
-          navigation.goBack();
-        } catch (error) {
-          showToast({
-            type: 'error',
-            title: 'Update Error',
-            message: 'Failed to add items to order. Please try again.',
-          });
-        }
-        return;
-      }
-
       try {
         // Submit order to kitchen system (KOT) using Unified context
         const result = await submitToKitchen();
 
         if (result.success) {
+          // Auto-print KOT (fire-and-forget)
+          if (result.orderId) {
+            const created = getOrderById(result.orderId);
+            if (created) {
+              printerPrintKOT(created).catch(() => {
+                if (__DEV__) console.log('[POSOrder] Auto-print KOT failed (non-blocking)');
+              });
+            }
+          }
+
           showToast({
             type: 'success',
             title: 'Order Sent to Kitchen',
@@ -671,8 +800,7 @@ const POSOrderScreen: React.FC = () => {
         } else {
           throw new Error(result.error || 'Unknown error');
         }
-      } catch (error) {
-        console.error('Failed to send order to kitchen:', error);
+      } catch {
         showToast({
           type: 'error',
           title: 'Kitchen Error',
@@ -705,13 +833,18 @@ const POSOrderScreen: React.FC = () => {
       (navigation as any).navigate('BillSplit', { orderId });
     };
 
-    // Build read-only "Already Ordered" items for edit mode
-    const alreadyOrderedItems = editingOrder
-      ? editingOrder.items.map(i => ({
+    // Build "Already Ordered" items for edit mode (from local mutable state)
+    const alreadyOrderedItems = editOrderId
+      ? localExistingItems.map(i => ({
           id: i.id,
           name: i.name,
           quantity: i.quantity,
-          price: i.unitPrice,
+          price: i.basePrice,
+          hasModifiers: !!(i.selectedModifiers && i.selectedModifiers.length > 0),
+          modifiers: i.selectedModifiers?.map(m => ({
+            groupName: m.groupName,
+            options: m.options?.map(o => o.optionName) || [],
+          })).filter(m => m.options.length > 0) || [],
         }))
       : undefined;
 
@@ -740,8 +873,13 @@ const POSOrderScreen: React.FC = () => {
         panelWidth={isPhone || isPortrait ? screenWidth : billPanelWidth}
         isPortrait={isPortrait}
         alreadyOrderedItems={alreadyOrderedItems}
-        sendToKitchenLabel={editOrderId ? 'Add to Order' : 'Send to Kitchen'}
+        sendToKitchenLabel={editOrderId ? 'Update Order' : 'Send to Kitchen'}
         sendToKitchenTestID={editOrderId ? 'btn-add-to-order' : 'btn-cart-send-to-kitchen'}
+        onRemoveExistingItem={editOrderId ? handleRemoveExistingItem : undefined}
+        onEditExistingItem={editOrderId ? handleEditExistingItem : undefined}
+        sendToKitchenDisabled={editOrderId
+          ? (removedItemIds.length === 0 && modifiedItemIds.length === 0 && cart.length === 0)
+          : undefined}
       />
     );
   };

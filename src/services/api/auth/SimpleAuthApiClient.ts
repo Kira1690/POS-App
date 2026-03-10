@@ -106,9 +106,7 @@ export class SimpleAuthApiClient extends SimpleApiClient implements ITokenProvid
   async logout(): Promise<void> {
     try {
       await this.post(API_ENDPOINTS.AUTH.LOGOUT);
-    } catch (error) {
-      console.warn('Logout request failed:', error);
-    } finally {
+    } catch { /* session cleared via token removal */ } finally {
       await this.clearTokens();
     }
   }

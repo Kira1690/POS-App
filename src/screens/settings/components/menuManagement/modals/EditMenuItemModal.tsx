@@ -220,14 +220,14 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       borderRadius: theme.borderRadius.md,
     },
     tabActive: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.primaryContainer,
     },
     tabText: {
       fontSize: 13,
       color: theme.colors.onSurfaceSecondary,
     },
     tabTextActive: {
-      color: theme.colors.tertiary,
+      color: theme.colors.primary,
       fontWeight: '600',
     },
     content: {
@@ -289,8 +289,8 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       gap: theme.spacing.xs,
     },
     categoryOptionSelected: {
-      borderColor: theme.colors.tertiary,
-      backgroundColor: theme.colors.tertiaryContainer,
+      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.primaryContainer,
     },
     categoryDot: {
       width: 8,
@@ -345,7 +345,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       padding: 2,
     },
     switchOn: {
-      backgroundColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.success,
     },
     switchOff: {
       backgroundColor: theme.colors.outline,
@@ -379,8 +379,8 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       gap: theme.spacing.xs,
     },
     tagOptionSelected: {
-      backgroundColor: theme.colors.tertiaryContainer,
-      borderColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.primaryContainer,
+      borderColor: theme.colors.primary,
     },
     tagText: {
       fontSize: 12,
@@ -402,7 +402,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       gap: theme.spacing.xs,
     },
     stationChipSelected: {
-      borderColor: theme.colors.tertiary,
+      borderColor: theme.colors.primary,
     },
     stationChipText: {
       fontSize: 13,
@@ -446,7 +446,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     saveButton: {
-      backgroundColor: theme.colors.tertiary,
+      backgroundColor: theme.colors.primary,
     },
     buttonDisabled: {
       opacity: 0.6,
@@ -528,7 +528,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
               <View
                 style={[
                   styles.categoryDot,
-                  { backgroundColor: category.color || theme.colors.tertiary },
+                  { backgroundColor: category.color || theme.colors.primary },
                 ]}
               />
               <Text style={styles.categoryName}>{category.name}</Text>
@@ -570,11 +570,11 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
                 <Icon
                   name="auto-fix"
                   size={16}
-                  color={isAutoSelected ? theme.colors.tertiary : theme.colors.onSurfaceSecondary}
+                  color={isAutoSelected ? theme.colors.primary : theme.colors.onSurfaceSecondary}
                   accessibilityLabel=""
                 />
                 <View>
-                  <Text style={[styles.stationChipText, { color: isAutoSelected ? theme.colors.tertiary : theme.colors.onSurface }]}>
+                  <Text style={[styles.stationChipText, { color: isAutoSelected ? theme.colors.primary : theme.colors.onSurface }]}>
                     Auto
                   </Text>
                   <Text style={styles.stationSubtitle}>{autoStation?.name ?? 'Hot Kitchen'}</Text>
@@ -749,7 +749,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
                   size={16}
                   color={
                     (formData.dietary_tags || []).includes(tag)
-                      ? theme.colors.tertiary
+                      ? theme.colors.primary
                       : theme.colors.onSurfaceSecondary
                   }
                   accessibilityLabel=""
@@ -834,7 +834,7 @@ export const EditMenuItemModal: React.FC<EditMenuItemModalProps> = ({
                 <Icon
                   name={tab.icon}
                   size={18}
-                  color={activeTab === tab.id ? theme.colors.tertiary : theme.colors.onSurfaceSecondary}
+                  color={activeTab === tab.id ? theme.colors.primary : theme.colors.onSurfaceSecondary}
                   accessibilityLabel=""
                 />
                 <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>

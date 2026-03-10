@@ -220,7 +220,6 @@ export class MockAdvancedFeaturesService implements AdvancedFeaturesService {
 
   async clockInStaff(staffId: string): Promise<void> {
     await this.simulateDelay();
-    console.log(`Clocking in staff: ${staffId}`);
   }
 
   async sendStaffBreak(staffId: string): Promise<void> {
@@ -234,7 +233,6 @@ export class MockAdvancedFeaturesService implements AdvancedFeaturesService {
 
   async sendStaffAlert(message: string): Promise<void> {
     await this.simulateDelay();
-    console.log(`Sending staff alert: ${message}`);
   }
 
   async priceOverride(itemId: string, newPrice: number, managerPin: string): Promise<void> {
@@ -242,7 +240,6 @@ export class MockAdvancedFeaturesService implements AdvancedFeaturesService {
     if (managerPin !== '1234') {
       throw new Error('Invalid manager PIN');
     }
-    console.log(`Price override for item ${itemId}: $${newPrice}`);
   }
 
   async applyDiscount(orderId: string, discountPercent: number, managerPin: string): Promise<void> {
@@ -250,7 +247,6 @@ export class MockAdvancedFeaturesService implements AdvancedFeaturesService {
     if (managerPin !== '1234') {
       throw new Error('Invalid manager PIN');
     }
-    console.log(`Applying ${discountPercent}% discount to order ${orderId}`);
   }
 
   async voidTransaction(transactionId: string, reason: string, managerPin: string): Promise<void> {
@@ -258,7 +254,6 @@ export class MockAdvancedFeaturesService implements AdvancedFeaturesService {
     if (managerPin !== '1234') {
       throw new Error('Invalid manager PIN');
     }
-    console.log(`Voiding transaction ${transactionId}: ${reason}`);
   }
 
   async compItem(itemId: string, reason: string, managerPin: string): Promise<void> {
@@ -266,7 +261,6 @@ export class MockAdvancedFeaturesService implements AdvancedFeaturesService {
     if (managerPin !== '1234') {
       throw new Error('Invalid manager PIN');
     }
-    console.log(`Comping item ${itemId}: ${reason}`);
   }
 
   async forceOpenCashDrawer(managerPin: string): Promise<void> {
@@ -274,32 +268,26 @@ export class MockAdvancedFeaturesService implements AdvancedFeaturesService {
     if (managerPin !== '1234') {
       throw new Error('Invalid manager PIN');
     }
-    console.log('Force opening cash drawer');
   }
 
   async backupNow(): Promise<void> {
     await this.simulateDelay(2000);
-    console.log('System backup completed');
   }
 
   async syncData(): Promise<void> {
     await this.simulateDelay(1500);
-    console.log('Data synchronization completed');
   }
 
   async closeBusinessDay(): Promise<void> {
     await this.simulateDelay(3000);
-    console.log('Business day closed');
   }
 
   async generateDailyReport(): Promise<void> {
     await this.simulateDelay(2000);
-    console.log('Daily report generated');
   }
 
   async cashCountReconciliation(): Promise<void> {
     await this.simulateDelay(1000);
-    console.log('Cash count and reconciliation completed');
   }
 
   async createHappyHourSchedule(schedule: Omit<HappyHourSchedule, 'id' | 'created_at'>): Promise<void> {
@@ -337,7 +325,6 @@ export class MockAdvancedFeaturesService implements AdvancedFeaturesService {
     if (managerPin !== '1234') {
       throw new Error('Invalid manager PIN');
     }
-    console.log('Pricing override activated');
   }
 
   async acknowledgeAlert(alertId: string): Promise<void> {

@@ -7,6 +7,18 @@
   <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+  <!-- Bluetooth Classic (Android 11 and below) -->
+  <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
+  <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
+  <!-- Bluetooth Classic + BLE (Android 12+) -->
+  <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+  <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>
+  <!-- Location required for BLE scan on Android 11 and below -->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+  <!-- BLE hardware (optional — works even without dedicated BLE hardware) -->
+  <uses-feature android:name="android.hardware.bluetooth_le" android:required="false"/>
+  <!-- USB OTG host (optional) -->
+  <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>

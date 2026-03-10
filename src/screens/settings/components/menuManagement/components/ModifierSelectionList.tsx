@@ -144,7 +144,7 @@ export const ModifierSelectionList: React.FC<ModifierSelectionListProps> = ({
     },
     groupCardSelected: {
       borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.surface,
     },
     groupHeader: {
       flexDirection: 'row',
@@ -161,7 +161,7 @@ export const ModifierSelectionList: React.FC<ModifierSelectionListProps> = ({
       marginRight: theme.spacing.sm,
     },
     checkboxSelected: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.primaryContainer,
       borderColor: theme.colors.primary,
     },
     groupInfo: {

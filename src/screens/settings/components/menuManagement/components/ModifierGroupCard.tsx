@@ -55,9 +55,9 @@ export const ModifierGroupCard: React.FC<ModifierGroupCardProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      backgroundColor: isSelected ? theme.colors.primaryLight : theme.colors.surface,
+      backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.md,
-      borderWidth: 1,
+      borderWidth: isSelected ? 1.5 : 1,
       borderColor: isSelected ? theme.colors.primary : theme.colors.outline,
       padding: theme.spacing.md,
       marginBottom: theme.spacing.sm,
@@ -98,7 +98,9 @@ export const ModifierGroupCard: React.FC<ModifierGroupCardProps> = ({
       backgroundColor: theme.colors.surfaceLight,
     },
     badgeRequired: {
-      backgroundColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.primaryContainer,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
     },
     badgeText: {
       fontSize: 11,
@@ -106,7 +108,7 @@ export const ModifierGroupCard: React.FC<ModifierGroupCardProps> = ({
       color: theme.colors.onSurfaceSecondary,
     },
     badgeTextRequired: {
-      color: theme.colors.primary,
+      color: theme.colors.onPrimaryContainer,
     },
     description: {
       fontSize: 13,
@@ -155,7 +157,7 @@ export const ModifierGroupCard: React.FC<ModifierGroupCardProps> = ({
     },
     optionChipDefault: {
       borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryLight,
+      borderWidth: 1.5,
     },
     optionName: {
       fontSize: 12,

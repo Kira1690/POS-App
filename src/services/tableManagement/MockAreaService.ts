@@ -79,8 +79,7 @@ export class MockAreaService implements IAreaService {
       if (__DEV__) {
         console.log(`[MockAreaService] Loaded ${this.cachedAreas.length} areas from storage`);
       }
-    } catch (error) {
-      console.error('[MockAreaService] Failed to load from storage:', error);
+    } catch {
       // Fallback to mock data
       this.cachedAreas = [...MOCK_AREAS];
       this.initialized = true;

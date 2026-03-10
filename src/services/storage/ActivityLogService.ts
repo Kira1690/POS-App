@@ -15,13 +15,21 @@ export type ActivityEventType =
   | 'paid'
   | 'cancelled'
   | 'items_transferred'
-  | 'discount_applied';
+  | 'discount_applied'
+  | 'item_removed'
+  | 'item_modified'
+  | 'print_receipt_ok'
+  | 'print_receipt_fail'
+  | 'print_kot_ok'
+  | 'print_kot_fail'
+  | 'printer_test_ok'
+  | 'printer_test_fail';
 
 export interface ActivityEvent {
   id: string;
   timestamp: string;
   eventType: ActivityEventType;
-  orderId: string;
+  orderId?: string;
   orderNumber?: string;
   tableName?: string;
   description: string;
@@ -72,7 +80,7 @@ class ActivityLogService {
       id,
       event.timestamp,
       event.eventType,
-      event.orderId,
+      event.orderId ?? null,
       event.orderNumber ?? null,
       event.tableName ?? null,
       event.description,

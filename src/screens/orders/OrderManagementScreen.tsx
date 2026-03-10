@@ -25,10 +25,13 @@ import { Table } from '@/types/table.types';
 import { OrderStatus, PaymentStatus, TableStatus } from '@/types/common.types';
 import { OrderListItem, OrderStatusBadge } from '@/components/business/order';
 import { TableSelectionModal } from '@/components/modals';
+import type { TableSplitInfo } from '@/components/modals/TableSelectionModal';
 import { ExistingOrderModal } from '@/components/modals/ExistingOrderModal';
+import { GuestCountModal } from '@/components/modals/GuestCountModal';
 import { UnifiedOrder as UOrder } from '@/types/unified-order.types';
 import { showToast } from '@/utils/toast';
 import { useAuth } from '@/context/auth';
+import { usePrinter } from '@/context/printer/PrinterContext';
 
 // APPLE COMPONENT SYSTEM (Advanced Search & Filter Components)
 import {
@@ -76,10 +79,11 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   } = useUnifiedOrderManagement();
 
   // Get payment filter and active orders from context state
-  const { state: orderState, activeOrders } = useUnifiedOrder();
+  const { state: orderState, activeOrders, setGuestCount, setSplitOrderConfig } = useUnifiedOrder();
   const paymentFilter = orderState.paymentStatusFilter;
 
   const { state: tableState, selectTable, refreshTables } = useTable();
+  const { printKOT } = usePrinter();
 
   // Compute table occupancy: local active orders take precedence (always up to date),
   // otherwise trust the server status (don't downgrade OCCUPIED → AVAILABLE just because
@@ -93,7 +97,23 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     );
   }, [tableState.tables, activeOrders]);
 
+  // Compute per-table split info: order count + occupied seats
+  const tableSplitInfoMap = useMemo(() => {
+    const info: Record<string, TableSplitInfo> = {};
+    for (const o of activeOrders) {
+      if (o.tableId) {
+        if (!info[o.tableId]) {
+          info[o.tableId] = { orderCount: 0, occupiedSeats: 0 };
+        }
+        info[o.tableId].orderCount += 1;
+        info[o.tableId].occupiedSeats += o.guestCount || 1;
+      }
+    }
+    return info;
+  }, [activeOrders]);
+
   const [refreshing, setRefreshing] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
   const [showTableModal, setShowTableModal] = useState(false);
   // Order being shifted to another table (null when not in shift flow)
   const [orderToShift, setOrderToShift] = useState<UOrder | null>(null);
@@ -101,7 +121,16 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     visible: boolean;
     table: Table | null;
     order: UOrder | null;
-  }>({ visible: false, table: null, order: null });
+    activeOrderCount: number;
+    remainingSeats: number;
+    splitAvailable: boolean;
+  }>({ visible: false, table: null, order: null, activeOrderCount: 0, remainingSeats: 0, splitAvailable: false });
+  const [guestCountModal, setGuestCountModal] = useState<{
+    visible: boolean;
+    table: Table | null;
+    maxGuests: number;
+    occupiedSeats: number;
+  }>({ visible: false, table: null, maxGuests: 0, occupiedSeats: 0 });
 
   // Load orders and tables on component mount and when screen is focused
   // Using useFocusEffect ensures data is refreshed after payment completion
@@ -169,17 +198,25 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
 
     const occupied = activeOrders.find(o => o.tableId === table.id);
     if (occupied) {
+      const allActiveOnTable = activeOrders.filter(o => o.tableId === table.id);
+      const occupiedGuests = allActiveOnTable.reduce((sum, o) => sum + (o.guestCount || 1), 0);
+      const remaining = table.capacity - occupiedGuests;
       setShowTableModal(false);
-      setExistingOrderModal({ visible: true, table, order: occupied });
+      setExistingOrderModal({
+        visible: true, table, order: occupied,
+        activeOrderCount: allActiveOnTable.length,
+        remainingSeats: Math.max(0, remaining),
+        splitAvailable: remaining > 0,
+      });
       return;
     }
-    selectTable(table);
+    // Available table — ask guest count before starting
     setShowTableModal(false);
-    navigation?.navigate('POSOrder', { table });
+    setGuestCountModal({ visible: true, table, maxGuests: table.capacity, occupiedSeats: 0 });
   }, [orderToShift, activeOrders, selectTable, navigation, cancelOrder]);
 
   const closeExistingOrderModal = useCallback(() => {
-    setExistingOrderModal({ visible: false, table: null, order: null });
+    setExistingOrderModal({ visible: false, table: null, order: null, activeOrderCount: 0, remainingSeats: 0, splitAvailable: false });
   }, []);
 
   // Option 1: Update Order — open POS to add/edit items on same table
@@ -212,6 +249,30 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
       showToast({ type: 'error', title: 'Error', message: 'Could not cancel the existing order.' });
     }
   }, [existingOrderModal, cancelOrder, selectTable, navigation, closeExistingOrderModal]);
+
+  // Option 4: Split Table — open GuestCountModal to pick guest count for new order
+  const handleSplitTable = useCallback(() => {
+    const { table, remainingSeats } = existingOrderModal;
+    if (!table) return;
+    const occupiedSeats = table.capacity - remainingSeats;
+    closeExistingOrderModal();
+    setGuestCountModal({ visible: true, table, maxGuests: remainingSeats, occupiedSeats });
+  }, [existingOrderModal, closeExistingOrderModal]);
+
+  const handleGuestCountConfirm = useCallback((guestCount: number) => {
+    const { table, occupiedSeats } = guestCountModal;
+    setGuestCountModal({ visible: false, table: null, maxGuests: 0, occupiedSeats: 0 });
+    if (!table) return;
+    if (occupiedSeats > 0) {
+      // Split order — allow multiple orders on same table
+      setSplitOrderConfig(guestCount);
+    } else {
+      // First order on table — just set guest count
+      setGuestCount(guestCount);
+    }
+    selectTable(table);
+    navigation?.navigate('POSOrder', { table });
+  }, [guestCountModal, selectTable, navigation, setGuestCount, setSplitOrderConfig]);
 
   // Handle order item press
   const handleOrderPress = useCallback((order: UnifiedOrder) => {
@@ -290,6 +351,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     total_amount: order.totalAmount,
     created_at: order.createdAt,
     updated_at: order.updatedAt,
+    guestCount: order.guestCount ?? 1,
     items: order.items.map(item => ({
       id: item.id,
       name: item.name,
@@ -300,36 +362,26 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     special_instructions: order.specialInstructions,
   });
 
-  // Search bar component
+  // Search bar component — only rendered when searchActive
   const renderSearchBar = () => (
-    <AppleCard layer="surfaceVariant" size="medium" style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 12 }}>
-      <MaterialIcons
-        name="search"
-        size={20}
-        color={theme.colors.onSurfaceVariant}
-      />
+    <AppleCard layer="surfaceVariant" size="medium" style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, marginBottom: 12 }}>
+      <MaterialIcons name="search" size={20} color={theme.colors.primary} />
       <TextInput
-        style={{
-          flex: 1,
-          marginLeft: 8,
-          fontSize: 16,
-          color: theme.colors.onSurface
-        }}
-        placeholder="Search orders by number, table, or instructions..."
+        autoFocus
+        style={{ flex: 1, marginLeft: 8, fontSize: 15, color: theme.colors.onSurface }}
+        placeholder="Order #, table, or instructions..."
         placeholderTextColor={theme.colors.onSurfaceVariant}
         value={searchQuery}
         onChangeText={setSearchQuery}
         testID="input-order-search"
       />
-      {searchQuery.length > 0 && (
-        <AppleInteractive onPress={() => setSearchQuery('')} feedbackType="opacity" testID="btn-clear-search">
-          <MaterialIcons
-            name="clear"
-            size={20}
-            color={theme.colors.onSurfaceVariant}
-          />
-        </AppleInteractive>
-      )}
+      <AppleInteractive
+        onPress={() => { setSearchQuery(''); setSearchActive(false); }}
+        feedbackType="opacity"
+        testID="btn-close-search"
+      >
+        <MaterialIcons name="close" size={20} color={theme.colors.onSurfaceVariant} />
+      </AppleInteractive>
     </AppleCard>
   );
 
@@ -504,22 +556,20 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   // Render order item
   const renderOrderItem = ({ item }: { item: UnifiedOrder }) => {
     const orderFormatted = toOrderFormat(item);
+    const tableSplitCount = item.tableId ? (tableSplitInfoMap[item.tableId]?.orderCount || 0) : 0;
     return (
       <OrderListItem
         order={orderFormatted}
         onPress={() => handleOrderPress(item)}
         onViewDetails={() => handleOrderPress(item)}
         onPrintKOT={() => {
-          showToast({
-            type: 'info',
-            title: 'Print KOT',
-            message: `Printing KOT for ${item.orderNumber}`,
-          });
+          printKOT(item).catch(() => {});
         }}
         onUpdateStatus={() => handleStatusUpdate(item)}
         onProcessPayment={() => handleProcessPayment(item)}
         showActions={true}
         compact={isPhone}
+        splitCount={tableSplitCount}
       />
     );
   };
@@ -561,7 +611,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
               title="Clear Search"
               variant="secondary"
               size="medium"
-              onPress={() => setSearchQuery('')}
+              onPress={() => { setSearchQuery(''); setSearchActive(false); }}
               testID="btn-clear-search-empty"
             />
           )}
@@ -581,7 +631,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
 
   // APPLE HEADER ACTIONS (using universal components)
   const headerActions = (
-    <View style={{ flexDirection: 'row', gap: isPhone ? 8 : 12 }}>
+    <View style={{ flexDirection: 'row', gap: isPhone ? 8 : 12, alignItems: 'center' }}>
       {!isPhone && (
         <AppleStatusPill
           status={isLoading ? "warning" : "success"}
@@ -589,6 +639,23 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
           size="small"
         />
       )}
+      {/* Search icon — collapses/expands search bar */}
+      <AppleInteractive
+        onPress={() => setSearchActive(v => !v)}
+        feedbackType="opacity"
+        testID="btn-toggle-search"
+        style={{
+          padding: 8,
+          borderRadius: 8,
+          backgroundColor: searchActive ? theme.colors.primaryContainer : theme.colors.surfaceLight,
+        }}
+      >
+        <MaterialIcons
+          name={searchActive ? 'search-off' : 'search'}
+          size={20}
+          color={searchActive ? theme.colors.primary : theme.colors.onSurfaceVariant}
+        />
+      </AppleInteractive>
       <AppleButton
         title={isPhone ? 'New' : '+ New Order'}
         variant="primary"
@@ -634,7 +701,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
           }
           ListHeaderComponent={
             <>
-              {renderSearchBar()}
+              {searchActive && renderSearchBar()}
               {renderFilters()}
             </>
           }
@@ -655,9 +722,10 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
         allowOccupied
         title="Select Table"
         subtitle="Choose a table to start a new order"
+        tableSplitInfo={tableSplitInfoMap}
       />
 
-      {/* In-app dialog for occupied table — 3-option choice */}
+      {/* In-app dialog for occupied table — 4-option choice */}
       <ExistingOrderModal
         visible={existingOrderModal.visible}
         table={existingOrderModal.table}
@@ -666,6 +734,20 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
         onShiftTable={handleShiftTable}
         onCancelAndNew={handleCancelAndNew}
         onClose={closeExistingOrderModal}
+        onSplitTable={handleSplitTable}
+        splitAvailable={existingOrderModal.splitAvailable}
+        remainingSeats={existingOrderModal.remainingSeats}
+        activeOrderCount={existingOrderModal.activeOrderCount}
+      />
+
+      {/* Guest count picker for split table */}
+      <GuestCountModal
+        visible={guestCountModal.visible}
+        table={guestCountModal.table}
+        maxGuests={guestCountModal.maxGuests}
+        occupiedSeats={guestCountModal.occupiedSeats}
+        onConfirm={handleGuestCountConfirm}
+        onClose={() => setGuestCountModal({ visible: false, table: null, maxGuests: 0, occupiedSeats: 0 })}
       />
     </SafeAreaView>
   );

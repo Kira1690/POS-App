@@ -465,7 +465,6 @@ export class MockInventoryService implements InventoryService {
 
   async acknowledgeAlert(alert_id: string): Promise<void> {
     await this.delay(200);
-    console.log(`Mock: Alert ${alert_id} acknowledged`);
   }
 
   async getInventoryAnalytics(): Promise<InventoryAnalytics> {

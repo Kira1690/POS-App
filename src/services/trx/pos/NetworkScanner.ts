@@ -251,7 +251,6 @@ export class NetworkScanner {
   async testManualIP(ip: string, port: number = this.defaultPort): Promise<TerminalDevice | null> {
 
     if (!this.isValidIPAddress(ip)) {
-      console.log('[NetworkScanner] Invalid IP address format');
       return null;
     }
 

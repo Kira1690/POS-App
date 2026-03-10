@@ -94,7 +94,6 @@ const RoleDashboard: React.FC<RoleDashboardProps> = () => {
         };
 
       default:
-        console.warn(`Unknown user role: ${user.role}`);
         return {
           type: 'manager', // Default fallback
           statusBarStyle: 'dark-content' as const,

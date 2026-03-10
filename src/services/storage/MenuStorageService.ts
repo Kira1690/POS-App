@@ -692,7 +692,9 @@ class MenuStorageService {
       await this.assignModifiersToMenuItem(a.menuItemId, a.modifierGroupIds);
     }
 
-    console.log(`[MenuStorageService] Seeded ${categories.length} categories, ${menuItems.length} items, ${modifierGroups.length} modifier groups`);
+    if (__DEV__) {
+      console.log(`[MenuStorageService] Seeded ${categories.length} categories, ${menuItems.length} items, ${modifierGroups.length} modifier groups`);
+    }
   }
 
   // ============== UTILITIES ==============

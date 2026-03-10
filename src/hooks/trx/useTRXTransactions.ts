@@ -62,8 +62,7 @@ export const useTRXTransactions = (): UseTRXTransactionsReturn => {
       } else {
         Alert.alert('Error', result.error || 'Failed to load transactions');
       }
-    } catch (error) {
-      console.error('Failed to search transactions:', error);
+    } catch {
       Alert.alert('Error', 'Failed to load transactions');
     } finally {
       setLoading(false);

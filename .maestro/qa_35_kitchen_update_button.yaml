@@ -1,0 +1,218 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 35: Kitchen Display — Update Order Button per Ticket"
+tags:
+  - qa
+  - orders
+  - edit
+  - kitchen
+---
+
+# ─────────────────────────────────────────────────────
+#  QA 35 — Kitchen Display Update button → opens edit mode
+#
+#  Flow:
+#    1. Create B-1 CONFIRMED order (Fish Fry + Dal Makhani)
+#    2. Kitchen Operations tab
+#    3. Assert "btn-update-order-b-1" visible on ticket card
+#    4. Tap Update button → POSOrderScreen opens in edit mode
+#    5. Assert section-already-ordered visible (B-1 items loaded)
+#    6. Add "Coffee" → Update Order
+#    7. Navigate back → Kitchen ticket now shows Coffee
+#
+#  testIDs:
+#    btn-update-order-b-1     — Update button on B-1 ticket card
+#    section-already-ordered  — already ordered section in edit mode
+#    btn-cart-send-to-kitchen — Update Order button
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Create B-1 CONFIRMED order ────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle ExistingOrderModal if B-1 is still occupied (e.g. SERVED order not cancellable)
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-cancel-new"
+    commands:
+      - tapOn:
+          id: "btn-existing-cancel-new"
+      - waitForAnimationToEnd
+
+# Handle GuestCountModal if B-1 is free (normal case after cancel)
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Add Fish Fry + Dal Makhani
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Mild"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Dal Makhani"
+    timeout: 8000
+- tapOn:
+    text: "Dal Makhani"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_35_step1_b1_confirmed"
+
+# ── STEP 1: Open Kitchen Display — assert Update button visible ───────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-update-order-b-1"
+    timeout: 12000
+
+- takeScreenshot: "qa_35_step2_kitchen_update_btn_visible"
+
+# ── STEP 2: Tap Update button for B-1 ────────────────────────────────────────
+- tapOn:
+    id: "btn-update-order-b-1"
+- waitForAnimationToEnd
+
+# POSOrderScreen should open in edit mode
+- extendedWaitUntil:
+    visible:
+      id: "section-already-ordered"
+    timeout: 10000
+
+# Both items should be in ALREADY ORDERED section
+- assertVisible:
+    text: "Fish Fry × 1"
+- assertVisible:
+    text: "Dal Makhani × 1"
+
+- takeScreenshot: "qa_35_step3_edit_mode_from_kitchen"
+
+# ── STEP 3: Add Coffee from menu ───────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      text: "Coffee"
+    timeout: 8000
+- tapOn:
+    text: "Coffee"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Medium"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+- assertVisible:
+    text: "Coffee"
+
+- takeScreenshot: "qa_35_step4_coffee_in_new_items"
+
+# ── STEP 4: Update Order (edit mode uses btn-add-to-order) ───────────────────
+- tapOn:
+    id: "btn-add-to-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Should navigate back (to Order Management or Kitchen)
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_35_step5_back_after_update"
+
+# ── STEP 5: Verify Kitchen Display shows new Coffee ticket ─────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Coffee"
+    timeout: 10000
+
+- takeScreenshot: "qa_35_PASS_coffee_in_kitchen_from_update_button"

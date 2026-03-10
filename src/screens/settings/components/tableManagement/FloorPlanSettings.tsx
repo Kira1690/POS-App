@@ -409,9 +409,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
         capacity: newTable.capacity,
         section: newTable.section,
         section_id: isNaN(serverSectionId) ? undefined : serverSectionId,
-      }).catch(err => {
-        console.warn('[FloorPlanSettings] Server sync for new table failed (will retry on next sync):', err?.message);
-      });
+      }).catch(() => { /* will retry on next sync */ });
 
       // Refresh context to reflect changes
       await refreshTables();
@@ -431,9 +429,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
       setActiveTool('select');
       onChangesDetected?.(true);
 
-      console.log('[FloorPlanSettings] Table created locally and sync triggered:', newTable.table_number);
     } catch (error) {
-      console.error('[FloorPlanSettings] Failed to create table:', error);
       Alert.alert('Error', 'Failed to create table. Please try again.');
     }
   }, [state.activeFloorId, areas, authState.restaurant?.id, refreshTables, addTable, setActiveTool, onChangesDetected]);

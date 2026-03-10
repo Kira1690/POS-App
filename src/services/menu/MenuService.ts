@@ -19,37 +19,22 @@ export class MenuService implements IMenuService {
       
       return categories;
     } catch (error: any) {
-      console.error('[MenuService] Failed to get categories:', error.message);
       throw new Error(error.message || 'Failed to get menu categories');
     }
   }
 
   async getMenuByCategory(restaurantId: string, categoryId: string): Promise<MenuItem[]> {
     try {
-      const items = await menuApiClient.getMenuByCategory(restaurantId, categoryId);
-      
-      if (__DEV__) {
-        console.log(`[MenuService] Retrieved ${items.length} items for category ${categoryId}`);
-      }
-      
-      return items;
+      return await menuApiClient.getMenuByCategory(restaurantId, categoryId);
     } catch (error: any) {
-      console.error('[MenuService] Failed to get menu by category:', error.message);
       throw new Error(error.message || 'Failed to get menu items');
     }
   }
 
   async searchMenuItems(request: MenuItemSearchRequest): Promise<MenuItemsResponse> {
     try {
-      const result = await menuApiClient.searchMenuItems(request);
-      
-      if (__DEV__) {
-        console.log(`[MenuService] Found ${result.items.length} items for query "${request.query}"`);
-      }
-      
-      return result;
+      return await menuApiClient.searchMenuItems(request);
     } catch (error: any) {
-      console.error('[MenuService] Failed to search menu items:', error.message);
       throw new Error(error.message || 'Failed to search menu items');
     }
   }
@@ -61,7 +46,6 @@ export class MenuService implements IMenuService {
 
   async getMenuItems(restaurantId: string): Promise<MenuItem[]> {
     try {
-      // Get all menu items by fetching all categories and their items
       const categories = await this.getCategories(restaurantId);
       const allItems: MenuItem[] = [];
 
@@ -72,7 +56,6 @@ export class MenuService implements IMenuService {
 
       return allItems;
     } catch (error: any) {
-      console.error('[MenuService] Failed to get all menu items:', error.message);
       throw new Error(error.message || 'Failed to get menu items');
     }
   }
@@ -81,22 +64,14 @@ export class MenuService implements IMenuService {
     try {
       return await menuApiClient.getMenuItem(itemId);
     } catch (error: any) {
-      console.error('[MenuService] Failed to get menu item:', error.message);
       throw new Error(error.message || 'Failed to get menu item');
     }
   }
 
   async getPopularItems(restaurantId: string, limit: number = 10): Promise<MenuItem[]> {
     try {
-      const items = await menuApiClient.getPopularItems(restaurantId, limit);
-      
-      if (__DEV__) {
-        console.log(`[MenuService] Retrieved ${items.length} popular items`);
-      }
-      
-      return items;
+      return await menuApiClient.getPopularItems(restaurantId, limit);
     } catch (error: any) {
-      console.error('[MenuService] Failed to get popular items:', error.message);
       throw new Error(error.message || 'Failed to get popular items');
     }
   }

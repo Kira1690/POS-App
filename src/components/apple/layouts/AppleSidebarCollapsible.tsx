@@ -399,6 +399,7 @@ export const AppleSidebarCollapsible: React.FC<AppleSidebarCollapsibleProps> = (
               onChangeText={handleSearchChange}
               value={searchQuery}
               accessibilityLabel="Search settings"
+              testID="settings-sidebar-search"
             />
           </Animated.View>
         )}

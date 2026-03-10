@@ -53,9 +53,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
             console.log('[PaymentProvider] Loaded payment config from storage:', config);
           }
         }
-      } catch (error) {
-        console.error('[PaymentProvider] Failed to load payment config:', error);
-      }
+      } catch { /* silent */ }
     };
 
     loadPaymentConfig();
@@ -405,9 +403,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       if (__DEV__) {
         console.log('[PaymentProvider] Tax rate saved to storage:', rate);
       }
-    } catch (error) {
-      console.error('[PaymentProvider] Failed to save tax rate:', error);
-    }
+    } catch { /* silent */ }
   }, []);
 
   const updateTipRates = useCallback((rates: number[]) => {

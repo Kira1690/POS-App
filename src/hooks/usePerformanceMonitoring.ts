@@ -55,9 +55,6 @@ export const usePerformanceMonitoring = (
     if (trackReRenders) {
       renderCount.current += 1;
       
-      if (renderCount.current > 1 && renderCount.current % 10 === 0) {
-        console.log(`🔄 Component re-render count: ${componentName} = ${renderCount.current}`);
-      }
     }
   });
 
@@ -68,12 +65,8 @@ export const usePerformanceMonitoring = (
   const endTracking = useCallback(() => {
     const metrics = performanceMonitor.endRenderTracking(componentName);
     
-    if (metrics && metrics.renderTime > logThreshold) {
-      console.warn(`⚠️ Slow component: ${componentName}`, {
-        renderTime: `${metrics.renderTime.toFixed(2)}ms`,
-        renderCount: renderCount.current,
-        memoryUsage: memoryTracker.current?.getFormattedUsage() || 'Unknown'
-      });
+    if (metrics && metrics.renderTime > logThreshold && __DEV__) {
+      console.warn(`[Perf] Slow: ${componentName} ${metrics.renderTime.toFixed(2)}ms`);
     }
 
     return metrics;

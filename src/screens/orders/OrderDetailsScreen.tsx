@@ -20,6 +20,8 @@ import {
 import { spacing } from '@/design-system/theme/spacing';
 import { borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
+import { usePrinter } from '@/context/printer/PrinterContext';
+import type { UnifiedOrder } from '@/types/unified-order.types';
 
 interface OrderDetailsScreenProps {
   navigation?: any;
@@ -64,10 +66,17 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
     });
   }, [order, navigation]);
 
+  const { printKOT, printReceipt } = usePrinter();
+
   const handlePrint = useCallback((type: 'KOT' | 'Receipt') => {
-    // Print functionality would be implemented here
-    console.log(`Printing ${type} for order ${order?.orderNumber}`);
-  }, [order]);
+    if (!order) return;
+    const unifiedOrder = order as unknown as UnifiedOrder;
+    if (type === 'KOT') {
+      printKOT(unifiedOrder).catch(() => {});
+    } else {
+      printReceipt(unifiedOrder).catch(() => {});
+    }
+  }, [order, printKOT, printReceipt]);
 
   // Error state for missing order
   if (!order) {

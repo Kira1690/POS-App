@@ -30,7 +30,13 @@
     "plugins": [
       "expo-secure-store",
       "expo-font",
-      "expo-sqlite"
-    ]
+      "expo-sqlite",
+      ["react-native-ble-plx", { "isBackgroundEnabled": false, "modes": [] }]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "48324ebe-a110-42ef-9ffe-33cf0bc586fe"
+      }
+    }
   }
 }

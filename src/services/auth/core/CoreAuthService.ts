@@ -70,11 +70,9 @@ export class CoreAuthService {
         // Persist session to AsyncStorage for auto-login
         await authStorageService.saveSession(loginResponse);
 
-        console.log('[DUMMY AUTH] Login successful:', {
-          userId: userData.id,
-          role: userData.role,
-          restaurant: restaurantData.name,
-        });
+        if (__DEV__) {
+          console.log('[Auth] Dummy login:', userData.role);
+        }
 
         return loginResponse;
       }
@@ -168,12 +166,10 @@ export class CoreAuthService {
         }
 
         // Re-throw auth errors (401, 403) as-is
-        console.error('Login failed:', apiError.message);
         throw new Error(apiError.message || 'Login failed');
       }
     } catch (error: any) {
       if (error.message) throw error;
-      console.error('Login failed:', error.message);
       throw new Error(error.message || 'Login failed');
     }
   }
@@ -186,16 +182,12 @@ export class CoreAuthService {
       // Then call API logout (may fail if no backend, but that's ok)
       try {
         await authApiClient.logout();
-      } catch (apiError) {
-        // Ignore API errors during logout - session is already cleared locally
-        console.log('[Auth] API logout skipped (local storage cleared)');
-      }
+      } catch { /* session already cleared locally */ }
 
       if (__DEV__) {
         console.log('Logout successful');
       }
     } catch (error: any) {
-      console.error('Logout failed:', error.message);
       throw new Error(error.message || 'Logout failed');
     }
   }
@@ -203,17 +195,8 @@ export class CoreAuthService {
   async register(userData: RegisterUserRequest): Promise<any> {
     try {
       const response = await authApiClient.register(userData);
-      
-      if (__DEV__) {
-        console.log('Registration successful:', {
-          userId: response.user.id,
-          email: response.user.email,
-        });
-      }
-      
       return response;
     } catch (error: any) {
-      console.error('Registration failed:', error.message);
       throw new Error(error.message || 'Registration failed');
     }
   }
@@ -229,7 +212,6 @@ export class CoreAuthService {
       return await authApiClient.refreshTokenManually(refreshToken);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Token refresh failed';
-      console.error('Token refresh failed:', message);
       throw new Error(message);
     }
   }
@@ -317,12 +299,7 @@ export class CoreAuthService {
   async forgotPassword(email: string): Promise<void> {
     try {
       await authApiClient.forgotPassword(email);
-      
-      if (__DEV__) {
-        console.log('Password reset email sent to:', email);
-      }
     } catch (error: any) {
-      console.error('Forgot password failed:', error.message);
       throw new Error(error.message || 'Failed to send password reset email');
     }
   }
@@ -330,12 +307,7 @@ export class CoreAuthService {
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
       await authApiClient.resetPassword(token, newPassword);
-      
-      if (__DEV__) {
-        console.log('Password reset successful');
-      }
     } catch (error: any) {
-      console.error('Password reset failed:', error.message);
       throw new Error(error.message || 'Password reset failed');
     }
   }
@@ -343,12 +315,7 @@ export class CoreAuthService {
   async verifyEmail(token: string): Promise<void> {
     try {
       await authApiClient.verifyEmail(token);
-      
-      if (__DEV__) {
-        console.log('Email verification successful');
-      }
     } catch (error: any) {
-      console.error('Email verification failed:', error.message);
       throw new Error(error.message || 'Email verification failed');
     }
   }
@@ -356,12 +323,7 @@ export class CoreAuthService {
   async resendEmailVerification(email: string): Promise<void> {
     try {
       await authApiClient.resendEmailVerification(email);
-      
-      if (__DEV__) {
-        console.log('Verification email resent to:', email);
-      }
     } catch (error: any) {
-      console.error('Resend verification failed:', error.message);
       throw new Error(error.message || 'Failed to resend verification email');
     }
   }

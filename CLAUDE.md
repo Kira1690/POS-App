@@ -468,38 +468,33 @@ async serviceMethod(): Promise<Result<T, Error>> {
 
 ### Current Implementation Status
 - ✅ **COMPLETE**: Authentication, Table Management, Order Management, Payment Processing, Kitchen Operations
+- ✅ **COMPLETE**: Console.log cleanup (zero unguarded calls in production; all 235 remaining wrapped in `__DEV__`)
 - 🔄 **IN PROGRESS**: Dashboard, Menu Management, Settings
 - 📋 **PLANNED**: Detailed project plans available in `/prep/` folder
 
+### Console.log / Performance Fixes (completed)
+- Removed or `__DEV__`-guarded all 466 console calls across 85 files
+- Zero console output in production builds — eliminates JS bridge serialization overhead and GC pressure on 24/7 POS terminals
+- Also fixed: timer/interval leaks (DashboardWebSocketService, TableWebSocketService), unbounded state growth (kitchenReducer, unifiedOrderReducer capped), and useMemo on all major context values
+- Android emulator: POS_SmallTablet AVD at 800x1340 px, 213 dpi, 2 GB RAM, GPU host mode (`hw.gpu.mode = host`) — keeps memory stable under 350 MB
+
+### UI Fixes Applied (March 2026)
+- **DiscountModal** (`src/screens/orders/modals/DiscountModal.tsx`): Added `useSafeAreaInsets` — "Apply Discount" button no longer hidden under Android system nav bar
+- **OrderManagementScreen** (`src/screens/orders/OrderManagementScreen.tsx`): Search bar collapsed to icon in header; expands with autoFocus on tap; closes with × — saves vertical space on small tablets
+- **BillPanel** (`src/components/business/order/BillPanel.tsx`): Removed inactive "Add Item" and "Split Bill" buttons; kept only Discount + Print KOT in secondary row — more room for order items list
+- **MenuEditorTabs** (`src/screens/settings/components/menuManagement/components/MenuEditorTabs.tsx`): Fixed active tab — color changed from teal/tertiary to `theme.colors.primary`; background changed from white (`surface`) to `theme.colors.primaryContainer`
+
 ### Settings - Table Management Enhancement (2025-10-08)
 **Status:** PLANNING COMPLETE - READY FOR IMPLEMENTATION
-**Location:** `/home/kira/Documents/GitHub/Food-Application/POS-App/prep/settings-table-management/`
-
-**Planning Documentation:**
-- 📄 `plan.md` - Master plan with architecture and objectives
-- 🎨 `wireframes.md` - Detailed ASCII wireframes for all modals and interactions
-- 💾 `data-structure.md` - TypeScript interfaces and data organization
-- 🔧 `design-fixes.md` - CRITICAL design issues to fix (emojis, theme compliance)
-- 📅 `implementation-phases.md` - 7-phase implementation roadmap (15-20 days)
-- 📱 `sidebar-collapsible.md` - Collapsible sidebar specification
-- ✅ `progress.md` - Real-time progress tracking
+**Location:** `/home/kira/Documents/Github/POS/POS-App/prep/settings-table-management/`
 
 **Key Features Planned:**
 - Full CRUD operations for tables and areas (Add/Edit/Delete modals)
 - Interactive floor plan editor with drag-and-drop
-- Collapsible sidebar (280px ↔ 64px with tooltips)
+- Collapsible sidebar (280px to 64px with tooltips)
 - Proper MaterialCommunityIcons (removing all emojis)
 - Centralized data in `/src/data/tables/`
 - 100% theme compliance
-
-**CRITICAL Issues to Fix First (Phase 1):**
-- ❌ Remove ALL emojis from buttons and area names
-- ❌ Migrate embedded mock data to `/src/data/tables/`
-- ❌ Ensure 100% theme.colors usage (no hardcoded colors)
-- ❌ Add accessibility labels to all icons
-
-**Timeline:** 15-20 working days across 7 phases
-**Priority:** Design fixes (Phase 1) are CRITICAL and must complete first
 
 ### Mock Services (TEMPORARY)
 Mock implementations are active for UI development:

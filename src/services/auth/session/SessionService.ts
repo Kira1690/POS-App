@@ -12,7 +12,6 @@ export class SessionService {
     try {
       return await authApiClient.getSessions();
     } catch (error: any) {
-      console.error('Get sessions failed:', error.message);
       throw new Error(error.message || 'Failed to get sessions');
     }
   }
@@ -21,7 +20,6 @@ export class SessionService {
     try {
       return await authApiClient.getSessionInfo(sessionId);
     } catch (error: any) {
-      console.error('Get session info failed:', error.message);
       throw new Error(error.message || 'Failed to get session info');
     }
   }
@@ -29,12 +27,7 @@ export class SessionService {
   async revokeSession(sessionId: string): Promise<void> {
     try {
       await authApiClient.revokeSession(sessionId);
-      
-      if (__DEV__) {
-        console.log('Session revoked:', sessionId);
-      }
     } catch (error: any) {
-      console.error('Revoke session failed:', error.message);
       throw new Error(error.message || 'Failed to revoke session');
     }
   }
@@ -42,12 +35,7 @@ export class SessionService {
   async revokeOtherSessions(): Promise<void> {
     try {
       await authApiClient.revokeOtherSessions();
-      
-      if (__DEV__) {
-        console.log('Other sessions revoked');
-      }
     } catch (error: any) {
-      console.error('Revoke other sessions failed:', error.message);
       throw new Error(error.message || 'Failed to revoke other sessions');
     }
   }
@@ -55,12 +43,7 @@ export class SessionService {
   async revokeAllSessions(): Promise<void> {
     try {
       await authApiClient.revokeAllSessions();
-      
-      if (__DEV__) {
-        console.log('All sessions revoked');
-      }
     } catch (error: any) {
-      console.error('Revoke all sessions failed:', error.message);
       throw new Error(error.message || 'Failed to revoke all sessions');
     }
   }

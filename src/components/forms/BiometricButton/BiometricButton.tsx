@@ -136,8 +136,7 @@ export const BiometricButton: React.FC<BiometricButtonProps> = ({
         setIsAvailable(false);
         setBiometricType('none');
       }
-    } catch (error) {
-      console.error('Error checking biometric availability:', error);
+    } catch {
       setIsAvailable(false);
       setBiometricType('none');
     }

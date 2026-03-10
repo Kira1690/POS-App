@@ -42,9 +42,7 @@ export const saveSidebarState = async (isCollapsed: boolean): Promise<void> => {
       `INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES ('sidebar_collapsed', ?, ?)`,
       JSON.stringify(isCollapsed), now()
     );
-  } catch (error) {
-    console.error('Failed to save sidebar state:', error);
-  }
+  } catch { /* silent */ }
 };
 
 /**
@@ -62,8 +60,7 @@ export const loadSidebarState = async (): Promise<boolean | null> => {
       return JSON.parse(row.value);
     }
     return null;
-  } catch (error) {
-    console.error('Failed to load sidebar state:', error);
+  } catch {
     return null;
   }
 };
@@ -77,9 +74,7 @@ export const clearSidebarState = async (): Promise<void> => {
     if (!databaseService.isInitialized()) return;
     const db = databaseService.getDatabase();
     await db.runAsync(`DELETE FROM sync_metadata WHERE key = 'sidebar_collapsed'`);
-  } catch (error) {
-    console.error('Failed to clear sidebar state:', error);
-  }
+  } catch { /* silent */ }
 };
 
 /**

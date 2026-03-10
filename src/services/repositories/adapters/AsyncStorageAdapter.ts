@@ -35,8 +35,7 @@ export class AsyncStorageAdapter implements IDataAdapter {
         return null;
       }
       return JSON.parse(jsonValue) as T;
-    } catch (error) {
-      console.error(`[AsyncStorageAdapter] Error getting key ${key}:`, error);
+    } catch {
       return null;
     }
   }
@@ -47,7 +46,6 @@ export class AsyncStorageAdapter implements IDataAdapter {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(fullKey, jsonValue);
     } catch (error) {
-      console.error(`[AsyncStorageAdapter] Error setting key ${key}:`, error);
       throw error;
     }
   }
@@ -57,7 +55,6 @@ export class AsyncStorageAdapter implements IDataAdapter {
       const fullKey = this.getFullKey(key);
       await AsyncStorage.removeItem(fullKey);
     } catch (error) {
-      console.error(`[AsyncStorageAdapter] Error removing key ${key}:`, error);
       throw error;
     }
   }
@@ -68,8 +65,7 @@ export class AsyncStorageAdapter implements IDataAdapter {
       const searchPrefix = prefix ? this.getFullKey(prefix) : this.prefix;
       const filteredKeys = allKeys.filter((key) => key.startsWith(searchPrefix));
       return filteredKeys.map((key) => this.stripPrefix(key));
-    } catch (error) {
-      console.error('[AsyncStorageAdapter] Error getting all keys:', error);
+    } catch {
       return [];
     }
   }
@@ -88,8 +84,7 @@ export class AsyncStorageAdapter implements IDataAdapter {
       });
 
       return map;
-    } catch (error) {
-      console.error('[AsyncStorageAdapter] Error in multiGet:', error);
+    } catch {
       return new Map();
     }
   }
@@ -102,7 +97,6 @@ export class AsyncStorageAdapter implements IDataAdapter {
       });
       await AsyncStorage.multiSet(keyValuePairs);
     } catch (error) {
-      console.error('[AsyncStorageAdapter] Error in multiSet:', error);
       throw error;
     }
   }
@@ -112,7 +106,6 @@ export class AsyncStorageAdapter implements IDataAdapter {
       const fullKeys = keys.map((key) => this.getFullKey(key));
       await AsyncStorage.multiRemove(fullKeys);
     } catch (error) {
-      console.error('[AsyncStorageAdapter] Error in multiRemove:', error);
       throw error;
     }
   }
@@ -124,7 +117,6 @@ export class AsyncStorageAdapter implements IDataAdapter {
         await this.multiRemove(keys);
       }
     } catch (error) {
-      console.error('[AsyncStorageAdapter] Error clearing storage:', error);
       throw error;
     }
   }
@@ -148,8 +140,7 @@ export class AsyncStorageAdapter implements IDataAdapter {
         keyCount: keys.length,
         estimatedSize: totalSize,
       };
-    } catch (error) {
-      console.error('[AsyncStorageAdapter] Error getting stats:', error);
+    } catch {
       return { keyCount: 0, estimatedSize: 0 };
     }
   }

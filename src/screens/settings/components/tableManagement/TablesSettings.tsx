@@ -138,7 +138,6 @@ const TablesSettings: React.FC<TablesSettingsProps> = ({ onChangesDetected }) =>
 
   const handleSaveReservation = (reservationData: ReservationData) => {
     // In a real app, this would save to backend
-    console.log('Saving reservation:', reservationData);
     Alert.alert('Success', 'Reservation saved successfully!');
     if (onChangesDetected) {
       onChangesDetected(true);
@@ -147,7 +146,6 @@ const TablesSettings: React.FC<TablesSettingsProps> = ({ onChangesDetected }) =>
 
   const handleAddArea = (areaData: AreaData) => {
     // In a real app, this would save to backend
-    console.log('Adding area:', areaData);
     Alert.alert('Success', `Area "${areaData.name}" added successfully!`);
     if (onChangesDetected) {
       onChangesDetected(true);
@@ -156,7 +154,6 @@ const TablesSettings: React.FC<TablesSettingsProps> = ({ onChangesDetected }) =>
 
   const handleEditArea = (areaId: string, updates: AreaUpdates) => {
     // In a real app, this would update in backend
-    console.log('Editing area:', areaId, updates);
     Alert.alert('Success', 'Area updated successfully!');
     if (onChangesDetected) {
       onChangesDetected(true);
@@ -165,7 +162,6 @@ const TablesSettings: React.FC<TablesSettingsProps> = ({ onChangesDetected }) =>
 
   const handleDeleteArea = (areaId: string) => {
     // In a real app, this would delete from backend
-    console.log('Deleting area:', areaId);
     Alert.alert('Success', 'Area deleted successfully!');
     if (onChangesDetected) {
       onChangesDetected(true);
@@ -174,14 +170,12 @@ const TablesSettings: React.FC<TablesSettingsProps> = ({ onChangesDetected }) =>
 
   const handleAddTableToArea = (areaId: string) => {
     // Pre-fill area when adding table
-    console.log('Adding table to area:', areaId);
     setIsEditAreaModalVisible(false);
     setIsAddModalVisible(true);
   };
 
   const handleBulkAction = (areaId: string, action: BulkAction) => {
     // In a real app, this would update all tables in area
-    console.log('Bulk action:', action, 'for area:', areaId);
 
     let message = '';
     switch (action) {

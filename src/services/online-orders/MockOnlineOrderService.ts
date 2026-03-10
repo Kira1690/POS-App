@@ -272,7 +272,6 @@ export class MockOnlineOrderService implements OnlineOrderService {
     const orderIndex = this.orders.findIndex(o => o.id === orderId);
     if (orderIndex !== -1 && this.orders[orderIndex].status === 'new') {
       this.orders[orderIndex].status = 'cancelled';
-      console.log(`Order ${orderId} rejected. Reason: ${reason || 'No reason provided'}`);
     }
   }
 
@@ -337,7 +336,6 @@ export class MockOnlineOrderService implements OnlineOrderService {
 
   async syncMenuItems(platforms?: DeliveryPlatform[]): Promise<void> {
     await this.simulateDelay();
-    console.log('Syncing menu items with platforms:', platforms || 'all');
   }
 
   async bulkAcceptOrders(orderIds: string[]): Promise<void> {

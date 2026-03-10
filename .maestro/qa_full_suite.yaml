@@ -60,6 +60,13 @@ tags:
 #    QA 28 — Activity Logs: open sheet, use filters (Today / 1h / Week)
 #    QA 29 — Print Receipt: tap print button on PaymentConfirmation (UI only)
 #    QA 30 — Update Existing Order: Add More Items → edit mode → Latte added
+#    QA 31 — Order Edit: Remove existing item, verify total recalculated
+#    QA 32 — Order Edit: Edit modifiers on existing item (pre-filled modal)
+#    QA 33 — Order Edit: Add new + remove existing in single Update session
+#    QA 34 — Kitchen Lock: Ready order blocked / allowed by toggle in Settings
+#    QA 35 — Kitchen Display: Update button per ticket → edit mode
+#    QA 36 — Split Table: second party order on occupied table (ExistingOrderModal)
+#    QA 37 — Activity Logs: item_removed + item_modified events captured
 #
 #  Notes:
 #    - QA 07-12, 15-18 are self-contained: each creates/manages its own test data
@@ -108,4 +115,11 @@ tags:
 - runFlow: qa_28_activity_logs.yaml
 - runFlow: qa_29_print_receipt.yaml
 - runFlow: qa_30_update_order.yaml
+- runFlow: qa_31_edit_remove_item.yaml
+- runFlow: qa_32_edit_modifier.yaml
+- runFlow: qa_33_edit_add_and_remove.yaml
+- runFlow: qa_34_kitchen_lock.yaml
+- runFlow: qa_35_kitchen_update_button.yaml
+- runFlow: qa_36_split_table_new_order.yaml
+- runFlow: qa_37_edit_activity_logs.yaml
 - runFlow: qa/qa_09_reports.yaml

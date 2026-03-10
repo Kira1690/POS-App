@@ -35,8 +35,8 @@ export const useTRXSettings = (): UseTRXSettingsReturn => {
       if (result.success && result.data) {
         setSettings(result.data);
       }
-    } catch (error) {
-      console.error('Failed to load TRX settings:', error);
+    } catch {
+      /* silent */
     } finally {
       setLoading(false);
     }

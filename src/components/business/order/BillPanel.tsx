@@ -63,6 +63,9 @@ interface BillPanelProps {
   alreadyOrderedItems?: BillItem[];
   sendToKitchenLabel?: string; // Override button label in edit mode
   sendToKitchenTestID?: string; // Override testID in edit mode
+  onRemoveExistingItem?: (itemId: string) => void;   // undefined = read-only
+  onEditExistingItem?: (item: BillItem) => void;
+  sendToKitchenDisabled?: boolean;  // explicit override for disabled state
 }
 
 
@@ -92,6 +95,9 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
   alreadyOrderedItems,
   sendToKitchenLabel = 'Send to Kitchen',
   sendToKitchenTestID = 'btn-cart-send-to-kitchen',
+  onRemoveExistingItem,
+  onEditExistingItem,
+  sendToKitchenDisabled,
 }) => {
   const { theme } = useTheme();
 
@@ -296,56 +302,31 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
   );
 
   // Render action buttons - Restaurant workflow focused
-  // In portrait mode, hide secondary buttons (Add Item, Discount, Split Bill, Print KOT)
-  // to give more space for the cart items list
+  // In portrait mode, hide secondary buttons to give more space for the cart items list
   const renderActionButtons = () => (
     <View style={[styles.actionButtons, isPortrait && { padding: spacing.xs, paddingHorizontal: spacing.sm, paddingBottom: spacing.xl }]}>
       {!isPortrait && (
-        <>
-          <View style={styles.secondaryActions}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
-              onPress={onAddItem}
-            >
-              <MaterialIcons name="add" size={18} color={theme.colors.onSurfaceVariant} />
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-                Add Item
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.secondaryActions}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
+            onPress={onDiscount}
+          >
+            <MaterialIcons name="local-offer" size={18} color={theme.colors.onSurfaceVariant} />
+            <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
+              Discount
+            </Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
-              onPress={onDiscount}
-            >
-              <MaterialIcons name="local-offer" size={18} color={theme.colors.onSurfaceVariant} />
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-                Discount
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.secondaryActions}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
-              onPress={onSplit}
-            >
-              <MaterialIcons name="call-split" size={18} color={theme.colors.onSurfaceVariant} />
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-                Split Bill
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
-              onPress={onPrint}
-            >
-              <MaterialIcons name="print" size={18} color={theme.colors.onSurfaceVariant} />
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-                Print KOT
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
+            onPress={onPrint}
+          >
+            <MaterialIcons name="print" size={18} color={theme.colors.onSurfaceVariant} />
+            <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
+              Print KOT
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Primary Kitchen Action - Restaurant Workflow */}
@@ -355,10 +336,10 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
           styles.primaryButton,
           styles.kitchenButton,
           { backgroundColor: theme.colors.primary, paddingVertical: isPortrait ? spacing.sm : spacing.lg, minHeight: isPortrait ? 44 : 52 },
-          isProcessing && { opacity: 0.7 }
+          (isProcessing || (sendToKitchenDisabled !== undefined ? sendToKitchenDisabled : items.length === 0)) && { opacity: 0.45 }
         ]}
         onPress={onSendToKitchen}
-        disabled={isProcessing || items.length === 0}
+        disabled={sendToKitchenDisabled !== undefined ? sendToKitchenDisabled : (isProcessing || items.length === 0)}
         testID={sendToKitchenTestID}
       >
         <MaterialIcons
@@ -388,13 +369,33 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
               Already Ordered
             </Text>
             {alreadyOrderedItems.map((item) => (
-              <View key={item.id} style={styles.alreadyOrderedItem}>
+              <View key={item.id} style={[styles.alreadyOrderedItem, onRemoveExistingItem && { paddingVertical: spacing.xs }]}>
                 <Text style={[styles.alreadyOrderedItemName, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
                   {item.name} × {item.quantity}
                 </Text>
-                <Text style={[styles.alreadyOrderedItemPrice, { color: theme.colors.onSurfaceVariant }]}>
-                  {formatCurrency(item.price * item.quantity)}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
+                  <Text style={[styles.alreadyOrderedItemPrice, { color: theme.colors.onSurfaceVariant }]}>
+                    {formatCurrency(item.price * item.quantity)}
+                  </Text>
+                  {onEditExistingItem && item.hasModifiers && (
+                    <TouchableOpacity
+                      onPress={() => onEditExistingItem(item)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      testID={`btn-edit-existing-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      <MaterialIcons name="edit" size={16} color={theme.colors.tertiary} />
+                    </TouchableOpacity>
+                  )}
+                  {onRemoveExistingItem && (
+                    <TouchableOpacity
+                      onPress={() => onRemoveExistingItem(item.id)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      testID={`btn-remove-existing-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      <MaterialIcons name="close" size={16} color={theme.colors.error} />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             ))}
           </View>

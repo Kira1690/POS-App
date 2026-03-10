@@ -19,6 +19,7 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -61,6 +62,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
   onCancel,
 }) => {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>(
     currentDiscount?.type || 'percentage'
   );
@@ -270,6 +272,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
     footer: {
       flexDirection: 'row',
       padding: theme.spacing.md,
+      paddingBottom: theme.spacing.md + insets.bottom,
       borderTopWidth: 1,
       borderTopColor: theme.colors.outline,
       gap: theme.spacing.sm,
@@ -310,7 +313,7 @@ export const DiscountModal: React.FC<DiscountModalProps> = ({
       color: theme.colors.onPrimary,
       marginLeft: theme.spacing.xs,
     },
-  }), [theme]);
+  }), [theme, insets.bottom]);
 
   useEffect(() => {
     if (visible && currentDiscount) {

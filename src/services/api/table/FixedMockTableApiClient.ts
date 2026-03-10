@@ -47,8 +47,7 @@ export class FixedMockTableApiClient {
           console.log(`[TableApiClient] Loaded ${this.cachedTables.length} tables from storage`);
         }
       }
-    } catch (error) {
-      console.error('[TableApiClient] Failed to initialize:', error);
+    } catch {
       this.cachedTables = [];
       this.initialized = true;
     }

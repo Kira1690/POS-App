@@ -64,7 +64,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleSave = useCallback(() => {
     // TODO: Save settings to backend/state
-    console.log('Saving settings...');
     onSave();
     onClose();
   }, [onSave, onClose]);

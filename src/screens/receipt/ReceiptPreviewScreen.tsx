@@ -25,6 +25,7 @@ import { OrdersStackParamList } from '@/navigation/types';
 import { Receipt, ReceiptType, ProfessionalPayment } from '@/types/payment.types';
 import { Order } from '@/types/order.types';
 import { receiptService } from '@/services/receipt';
+import { usePrinter } from '@/context/printer/PrinterContext';
 import { ReceiptTemplate } from './components/ReceiptTemplate';
 import { ReceiptActions } from './components/ReceiptActions';
 
@@ -36,6 +37,7 @@ export const ReceiptPreviewScreen: React.FC = () => {
   const navigation = useNavigation<ReceiptPreviewNavigationProp>();
   const route = useRoute<ReceiptPreviewRouteProp>();
   const { orderId, payment, order } = route.params || {};
+  const { printReceipt: contextPrintReceipt } = usePrinter();
 
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,17 +161,16 @@ export const ReceiptPreviewScreen: React.FC = () => {
         type: ReceiptType.CUSTOMER,
       });
       setReceipt(generatedReceipt);
-    } catch (error) {
-      console.error('Failed to generate receipt:', error);
-    } finally {
+    } catch { /* silent */ } finally {
       setIsLoading(false);
     }
   }, [order, payment]);
 
   const handlePrint = useCallback(async () => {
-    if (!receipt) return;
-    await receiptService.printReceipt(receipt.id);
-  }, [receipt]);
+    if (!order) return;
+    const unifiedOrder = order as unknown as import('@/types/unified-order.types').UnifiedOrder;
+    await contextPrintReceipt(unifiedOrder);
+  }, [order, contextPrintReceipt]);
 
   const handleEmail = useCallback(
     async (email: string) => {
@@ -189,7 +190,6 @@ export const ReceiptPreviewScreen: React.FC = () => {
 
   const handleShare = useCallback(() => {
     // Implement share functionality
-    console.log('Share receipt');
   }, []);
 
   const handleDone = useCallback(() => {

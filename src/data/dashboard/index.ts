@@ -274,8 +274,7 @@ export const validateDashboardData = (data: unknown, type: string): boolean => {
       default:
         return false;
     }
-  } catch (error) {
-    console.error(`Dashboard data validation failed for type ${type}:`, error);
+  } catch {
     return false;
   }
 };

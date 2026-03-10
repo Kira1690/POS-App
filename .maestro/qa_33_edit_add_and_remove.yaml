@@ -1,0 +1,235 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 33: Order Edit — Add New + Remove Existing in One Session"
+tags:
+  - qa
+  - orders
+  - edit
+---
+
+# ─────────────────────────────────────────────────────
+#  QA 33 — Combined: remove 1 existing + add 1 new in same Update session
+#
+#  Flow:
+#    1. Create B-1 CONFIRMED order (Fish Fry + Dal Makhani)
+#    2. Add More Items → remove Dal Makhani + add Coffee
+#    3. Assert: Dal Makhani gone, Coffee in NEW ITEMS
+#    4. "Update Order" → back on OrderDetails
+#    5. OrderDetails: Fish Fry + Coffee (Dal Makhani gone)
+#    6. Kitchen Display: Coffee appears in new ticket
+#
+#  testIDs:
+#    btn-remove-existing-dal-makhani  — trash on Dal Makhani
+#    btn-cart-send-to-kitchen         — Update Order
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Create B-1 CONFIRMED order (Fish Fry + Dal Makhani) ───────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle ExistingOrderModal if B-1 is still occupied (e.g. SERVED order not cancellable)
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-cancel-new"
+    commands:
+      - tapOn:
+          id: "btn-existing-cancel-new"
+      - waitForAnimationToEnd
+
+# Handle GuestCountModal if B-1 is free (normal case after cancel)
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Add Fish Fry
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Mild"
+          optional: true
+      - tapOn:
+          text: "Grilled"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Add Dal Makhani
+- extendedWaitUntil:
+    visible:
+      text: "Dal Makhani"
+    timeout: 8000
+- tapOn:
+    text: "Dal Makhani"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_33_step1_b1_confirmed_2_items"
+
+# ── STEP 1: Open edit mode ────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 10000
+- tapOn:
+    id: "btn-add-items-to-order"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "section-already-ordered"
+    timeout: 10000
+
+- takeScreenshot: "qa_33_step2_edit_mode_2_existing_items"
+
+# ── STEP 2: Remove Dal Makhani ────────────────────────────────────────────────
+- tapOn:
+    id: "btn-remove-existing-dal-makhani"
+- waitForAnimationToEnd
+
+- assertNotVisible:
+    text: "Dal Makhani × 1"
+- assertVisible:
+    text: "Fish Fry × 1"
+
+- takeScreenshot: "qa_33_step3_dal_makhani_removed"
+
+# ── STEP 3: Add Coffee from menu ─────────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      text: "Coffee"
+    timeout: 8000
+- tapOn:
+    text: "Coffee"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Small"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Coffee should appear in NEW ITEMS section
+- assertVisible:
+    text: "Coffee"
+
+- takeScreenshot: "qa_33_step4_coffee_in_new_items"
+
+# ── STEP 4: Update Order (edit mode uses btn-add-to-order) ───────────────────
+- tapOn:
+    id: "btn-add-to-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Wait for navigation back to OrderDetails
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_33_step5_back_on_order_details"
+
+# ── STEP 5: Verify — Dal Makhani gone, Coffee present ─────────────────────────
+- assertNotVisible:
+    text: "Dal Makhani"
+- assertVisible:
+    text: "Fish Fry"
+- assertVisible:
+    text: "Coffee"
+
+- takeScreenshot: "qa_33_step6_order_details_fish_fry_coffee"
+
+# ── STEP 6: Verify Kitchen has new Coffee ticket ──────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Coffee"
+    timeout: 10000
+
+- takeScreenshot: "qa_33_PASS_coffee_in_kitchen_no_dal_makhani"

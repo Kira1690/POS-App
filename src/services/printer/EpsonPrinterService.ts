@@ -1,10 +1,13 @@
 /**
- * EpsonPrinterService - TCP + ESC/POS printing for Epson TM-T88VI network printers.
- * Requires react-native-tcp-socket (same dependency used by TRX terminal).
+ * EpsonPrinterService - ESC/POS byte generation + delivery via PrinterTransportManager.
+ * Transport (LAN / BT / BLE / USB) is determined by the PrinterAddress connectionType.
  */
 
-import nativeTcpSocket, { isTcpSocketAvailable } from '@/services/trx/pos/NativeTcpSocket';
+import { printerTransportManager } from './PrinterTransportManager';
+import type { PrinterAddress } from './PrinterTransportManager';
 import type { UnifiedOrder } from '@/types/unified-order.types';
+import type { KitchenStation } from '@/types/order-extended.types';
+import { KITCHEN_STATION_LABELS } from '@/types/order-extended.types';
 
 // ESC/POS byte sequences
 const ESC = 0x1b;
@@ -19,8 +22,6 @@ const LF: number[]         = [0x0a];
 const LARGE_ON: number[]   = [ESC, 0x21, 0x30];
 const LARGE_OFF: number[]  = [ESC, 0x21, 0x00];
 
-const TIMEOUT_MS = 3000;
-
 const textToBytes = (text: string): number[] =>
   Array.from(text).map(c => c.charCodeAt(0) & 0xff);
 
@@ -31,56 +32,24 @@ const priceLine = (label: string, price: string, width = 40): number[] => {
   const gap = width - label.length - price.length;
   return line(label + ' '.repeat(Math.max(1, gap)) + price);
 };
-
 const formatCurrency = (amount: number): string => `$${amount.toFixed(2)}`;
 
 class EpsonPrinterService {
-  private async sendBytes(ip: string, port: number, bytes: number[]): Promise<void> {
-    if (!isTcpSocketAvailable()) {
-      throw new Error('TCP socket unavailable — requires custom dev build');
-    }
-
-    const buffer = Buffer.from(bytes);
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        reject(new Error('Printer connection timeout'));
-      }, TIMEOUT_MS);
-
-      const client = nativeTcpSocket.createConnection(
-        { host: ip, port, timeout: TIMEOUT_MS },
-        () => {
-          client!.write(buffer, undefined, (_err?: Error) => {
-            clearTimeout(timer);
-            client!.destroy();
-            resolve();
-          });
-        }
-      );
-
-      if (!client) {
-        clearTimeout(timer);
-        reject(new Error('Failed to create TCP connection to printer'));
-        return;
-      }
-
-      client.on('error', (err: unknown) => {
-        clearTimeout(timer);
-        reject(err instanceof Error ? err : new Error(String(err)));
-      });
-    });
+  /** Get cached connection status for a given address. */
+  getLastStatus(address: PrinterAddress) {
+    return printerTransportManager.getLastStatus(address);
   }
 
-  async testConnection(ip: string, port: number): Promise<boolean> {
-    try {
-      // Send ESC/POS init — if the TCP connection succeeds, the printer is reachable
-      await this.sendBytes(ip, port, INIT);
-      return true;
-    } catch {
-      return false;
-    }
+  /** @deprecated Use getLastStatus(address) — kept for backward compat with usePrinterSettings */
+  getLastStatusByIp(ip: string) {
+    return printerTransportManager.getLastStatus({ connectionType: 'lan', ip });
   }
 
-  async printTestPage(ip: string, port: number): Promise<void> {
+  async testConnection(address: PrinterAddress): Promise<boolean> {
+    return printerTransportManager.testConnection(address);
+  }
+
+  async printTestPage(address: PrinterAddress): Promise<void> {
     const bytes: number[] = [
       ...INIT,
       ...CENTER,
@@ -91,7 +60,7 @@ class EpsonPrinterService {
       ...BOLD_OFF,
       ...line(''),
       ...LEFT,
-      ...line('Epson TM-T88VI'),
+      ...line('Epson Printer'),
       ...line(new Date().toLocaleString()),
       ...line(''),
       ...line('Printer connection OK'),
@@ -99,10 +68,10 @@ class EpsonPrinterService {
       ...LF, ...LF, ...LF,
       ...CUT,
     ];
-    await this.sendBytes(ip, port, bytes);
+    await printerTransportManager.sendBytesWithRetry(address, bytes);
   }
 
-  async printReceipt(ip: string, port: number, order: UnifiedOrder, paperSize: '58mm' | '80mm' = '80mm'): Promise<void> {
+  async printReceipt(address: PrinterAddress, order: UnifiedOrder, paperSize: '58mm' | '80mm' = '80mm'): Promise<void> {
     const colWidth = paperSize === '58mm' ? 32 : 40;
     const separator = '='.repeat(colWidth);
     const divider = '-'.repeat(colWidth);
@@ -135,7 +104,8 @@ class EpsonPrinterService {
       if (item.selectedModifiers) {
         for (const grp of item.selectedModifiers) {
           for (const opt of grp.options ?? []) {
-            bytes.push(...line(`  + ${opt.optionName}`));
+            const optPrice = opt.priceAdjustment > 0 ? `  +${formatCurrency(opt.priceAdjustment)}` : '';
+            bytes.push(...line(`  + ${opt.optionName}${optPrice}`));
           }
         }
       }
@@ -167,16 +137,30 @@ class EpsonPrinterService {
       ...CUT,
     );
 
-    await this.sendBytes(ip, port, bytes);
+    await printerTransportManager.sendBytesWithRetry(address, bytes);
   }
 
-  async printKitchenTicket(ip: string, port: number, order: UnifiedOrder): Promise<void> {
+  async printKitchenTicket(
+    address: PrinterAddress,
+    order: UnifiedOrder,
+    station?: KitchenStation,
+  ): Promise<void> {
+    const stationLabel = station
+      ? KITCHEN_STATION_LABELS[station] || station.toUpperCase()
+      : 'KITCHEN ORDER';
+
+    const items = station
+      ? order.items.filter(item => item.kitchenStation === station)
+      : order.items;
+
+    if (items.length === 0) return;
+
     const bytes: number[] = [
       ...INIT,
       ...CENTER,
       ...BOLD_ON,
       ...LARGE_ON,
-      ...line('KITCHEN ORDER'),
+      ...line(stationLabel),
       ...LARGE_OFF,
       ...BOLD_OFF,
       ...line(`Table: ${order.tableName}`),
@@ -186,7 +170,7 @@ class EpsonPrinterService {
       ...LEFT,
     ];
 
-    for (const item of order.items) {
+    for (const item of items) {
       bytes.push(
         ...BOLD_ON,
         ...line(`${item.quantity}x ${item.name}`),
@@ -210,7 +194,7 @@ class EpsonPrinterService {
       ...CUT,
     );
 
-    await this.sendBytes(ip, port, bytes);
+    await printerTransportManager.sendBytesWithRetry(address, bytes);
   }
 }
 

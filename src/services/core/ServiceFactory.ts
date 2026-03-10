@@ -93,7 +93,7 @@ export class ServiceFactory {
       },
       restoreAll: () => {
         // In a real implementation, we'd restore original services
-        console.log('Mock services would be restored here');
+        // no-op: mock restoration not implemented
       },
     };
   }

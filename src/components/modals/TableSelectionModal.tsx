@@ -42,6 +42,12 @@ const isStatusMatch = (status: TableStatus | string, target: TableStatus | strin
   return String(status).toLowerCase() === String(target).toLowerCase();
 };
 
+/** Per-table split info passed from the caller (computed from active orders) */
+export interface TableSplitInfo {
+  orderCount: number;
+  occupiedSeats: number;
+}
+
 interface TableSelectionModalProps {
   visible: boolean;
   onClose: () => void;
@@ -52,6 +58,8 @@ interface TableSelectionModalProps {
   subtitle?: string;
   /** Allow selecting occupied tables (caller handles existing-order logic) */
   allowOccupied?: boolean;
+  /** Split info keyed by table ID — shows order count & seat usage on occupied tables */
+  tableSplitInfo?: Record<string, TableSplitInfo>;
 }
 
 interface AreaWithTables {
@@ -69,6 +77,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
   title = 'Select Table',
   subtitle = 'Choose a table to start a new order',
   allowOccupied = false,
+  tableSplitInfo = {},
 }) => {
   const { theme } = useTheme();
   const { isPhone, isSmallTablet, tableGridColumns, captionSize } = useResponsive();
@@ -228,6 +237,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
     const isOccupied = isStatusMatch(table.status, TableStatus.OCCUPIED);
     const isReserved = isStatusMatch(table.status, TableStatus.RESERVED);
     const statusColor = getStatusColor(String(table.status));
+    const splitInfo = tableSplitInfo[table.id];
 
     // Background tint makes status immediately obvious regardless of allowOccupied
     const bgColor = isAvailable
@@ -235,7 +245,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
       : isOccupied
         ? theme.colors.error + '18'
         : isReserved
-          ? (theme.colors.warning ?? '#FF9800') + '18'
+          ? (theme.colors.warning ?? theme.colors.outline) + '18'
           : theme.colors.surface;
 
     const borderColor = isAvailable
@@ -243,7 +253,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
       : isOccupied
         ? theme.colors.error
         : isReserved
-          ? (theme.colors.warning ?? '#FF9800')
+          ? (theme.colors.warning ?? theme.colors.outline)
           : theme.colors.outline;
 
     // Non-selectable states (e.g. cleaning) get reduced opacity
@@ -263,13 +273,25 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
         <Text style={[styles.tableNumber, { color: theme.colors.onSurface }]}>
           {table.table_number}
         </Text>
-        {isOccupied && (
+        {isOccupied && splitInfo && (
+          <View style={styles.splitInfoContainer}>
+            <Text style={[styles.splitInfoText, { color: theme.colors.error }]}>
+              {splitInfo.orderCount > 1
+                ? `Split ${splitInfo.orderCount}x`
+                : 'Occupied'}
+            </Text>
+            <Text style={[styles.splitSeatsText, { color: theme.colors.onSurfaceVariant }]}>
+              {splitInfo.occupiedSeats}/{table.capacity} seats
+            </Text>
+          </View>
+        )}
+        {isOccupied && !splitInfo && (
           <Text style={[styles.locationText, { color: theme.colors.error, fontWeight: '600' }]}>
             Occupied
           </Text>
         )}
         {isReserved && (
-          <Text style={[styles.locationText, { color: theme.colors.warning ?? '#FF9800', fontWeight: '600' }]}>
+          <Text style={[styles.locationText, { color: theme.colors.warning ?? theme.colors.outline, fontWeight: '600' }]}>
             Reserved
           </Text>
         )}
@@ -397,6 +419,18 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
     locationText: {
       fontSize: 10,
       marginTop: 4,
+    },
+    splitInfoContainer: {
+      alignItems: 'center',
+      marginTop: 2,
+    },
+    splitInfoText: {
+      fontSize: 10,
+      fontWeight: '700',
+    },
+    splitSeatsText: {
+      fontSize: 9,
+      marginTop: 1,
     },
     statsContainer: {
       flexDirection: 'row',

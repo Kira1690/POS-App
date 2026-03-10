@@ -89,7 +89,7 @@ const StaffManagementDashboard: React.FC<StaffManagementDashboardProps> = () => 
       `${action} task ${taskId}?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Confirm', onPress: () => console.log(`${action} task ${taskId}`) }
+        { text: 'Confirm', onPress: () => {} }
       ]
     );
   }, []);

@@ -58,8 +58,7 @@ export const AssignModifiersModal: React.FC<AssignModifiersModalProps> = ({
       } else {
         setSelectedGroupIds([]);
       }
-    } catch (error) {
-      console.error('Error loading modifier groups:', error);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -91,8 +90,7 @@ export const AssignModifiersModal: React.FC<AssignModifiersModalProps> = ({
     try {
       await onSave(menuItem.id, selectedGroupIds);
       onClose();
-    } catch (error) {
-      console.error('Error saving modifier assignments:', error);
+    } catch {
     } finally {
       setIsSaving(false);
     }

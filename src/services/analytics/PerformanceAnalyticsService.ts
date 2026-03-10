@@ -58,7 +58,6 @@ class PerformanceAnalyticsService {
   private initializePerformanceObserver(): void {
     // In React Native, we'll manually track performance
     // In a web environment, you could use PerformanceObserver
-    console.log('🚀 Performance Analytics Service initialized');
   }
 
   /**
@@ -400,9 +399,7 @@ class PerformanceAnalyticsService {
 
       // Simulate API call
       // await analyticsAPI.sendEvents(eventsToSend);
-    } catch (error) {
-      console.error('Failed to send analytics events:', error);
-      
+    } catch {
       // Re-add events to buffer for retry
       this.events.unshift(...eventsToSend);
     }

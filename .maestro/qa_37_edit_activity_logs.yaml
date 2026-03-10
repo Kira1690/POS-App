@@ -1,0 +1,249 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 37: Order Edit — Activity Log Events (item_removed, item_modified)"
+tags:
+  - qa
+  - orders
+  - edit
+  - logs
+---
+
+# ─────────────────────────────────────────────────────
+#  QA 37 — Activity Logs capture edit operations
+#
+#  Verifies that:
+#    - Removing an existing item logs "Item Removed" event
+#    - Editing modifiers logs "Item Modified" event
+#  Both events should appear in Settings → System Logs
+#  under the "Orders" category filter.
+#
+#  Flow:
+#    1. Create B-1 CONFIRMED order (Fish Fry + Dal Makhani)
+#    2. Add More Items → remove Dal Makhani
+#    3. Add More Items again → edit Fish Fry modifier
+#    4. Update Order
+#    5. Settings → System Logs → "Orders" filter
+#    6. Assert "Item Removed" event visible
+#    7. Assert "Item Modified" event visible
+#
+#  testIDs:
+#    btn-remove-existing-dal-makhani   — trash on Dal Makhani
+#    btn-edit-existing-fish-fry      — pencil on Fish Fry
+#    btn-modifier-confirm               — confirm in modifier modal
+#    btn-cart-send-to-kitchen           — Update Order
+#    tab-logs-filter-orders             — Orders category filter chip
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Create B-1 CONFIRMED order ────────────────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+- tapOn:
+    id: "tab-nav-orders"
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle ExistingOrderModal if B-1 is still occupied (e.g. SERVED order not cancellable)
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-cancel-new"
+    commands:
+      - tapOn:
+          id: "btn-existing-cancel-new"
+      - waitForAnimationToEnd
+
+# Handle GuestCountModal if B-1 is free (normal case after cancel)
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+# Add Fish Fry + Dal Makhani
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Mild"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Dal Makhani"
+    timeout: 8000
+- tapOn:
+    text: "Dal Makhani"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_37_step1_b1_confirmed"
+
+# ── STEP 1: Remove Dal Makhani + Modify Fish Fry in one session ───────────
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 10000
+- tapOn:
+    id: "btn-add-items-to-order"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "section-already-ordered"
+    timeout: 10000
+
+# Remove Dal Makhani (logs item_removed)
+- tapOn:
+    id: "btn-remove-existing-dal-makhani"
+- waitForAnimationToEnd
+
+# Edit Fish Fry modifier (logs item_modified)
+- tapOn:
+    id: "btn-edit-existing-fish-fry"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-modifier-confirm"
+    timeout: 8000
+- tapOn:
+    text: "Hot"
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-modifier-confirm"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_37_step2_both_edits_staged"
+
+# Update Order → both events fired (edit mode uses btn-add-to-order)
+- tapOn:
+    id: "btn-add-to-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Wait for OrderDetails
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_37_step3_order_updated"
+
+# ── STEP 2: Settings → System Logs → Orders filter ───────────────────────────
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd
+# Use search to filter sidebar to System Logs (avoids scroll issues)
+- tapOn:
+    id: "settings-sidebar-search"
+- inputText: "System"
+- hideKeyboard
+- waitForAnimationToEnd
+# First tap defocuses the search input; second tap fires onPress
+- tapOn:
+    id: "settings-nav-system_logs"
+- waitForAnimationToEnd
+- tapOn:
+    id: "settings-nav-system_logs"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Category"
+    timeout: 20000
+
+- takeScreenshot: "qa_37_step4_system_logs_open"
+
+# Filter to Orders category
+- tapOn:
+    text: "Orders"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_37_step5_orders_filter"
+
+# ── STEP 3: Scroll log list down and assert both event types visible ──────────
+# Swipe up within the content panel (x:640 = center of right panel) to reveal log entries
+- swipe:
+    start: "640, 600"
+    end: "640, 200"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_37_step6_after_scroll"
+
+- assertVisible:
+    text: "Item Removed"
+- assertVisible:
+    text: "Item Modified"
+
+- takeScreenshot: "qa_37_PASS_item_removed_and_modified_in_logs"

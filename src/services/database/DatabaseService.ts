@@ -8,7 +8,7 @@
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 
 const DB_NAME = 'pos_app.db';
-const CURRENT_SCHEMA_VERSION = 6;
+const CURRENT_SCHEMA_VERSION = 8;
 
 class DatabaseService {
   private db: SQLiteDatabase | null = null;
@@ -78,7 +78,9 @@ class DatabaseService {
     } catch (error) {
       this.db = null;
       this.initPromise = null;
-      console.error('[DatabaseService] Initialization failed:', error);
+      if (__DEV__) {
+        console.error('[DatabaseService] Initialization failed:', error);
+      }
       throw error;
     }
   }
@@ -133,6 +135,18 @@ class DatabaseService {
       // v6: add activity_logs + printer_settings tables
       await this.runV6Migration();
       if (__DEV__) console.log('[DatabaseService] Running v5 → v6 migration (activity_logs + printer_settings)');
+    }
+
+    if (currentVersion < 7) {
+      // v7: add station_printers table for per-station printer assignment
+      await this.runV7Migration();
+      if (__DEV__) console.log('[DatabaseService] Running v6 → v7 migration (station_printers)');
+    }
+
+    if (currentVersion < 8) {
+      // v8: add multi-transport columns to printer_settings + station_printers
+      await this.runV8Migration();
+      if (__DEV__) console.log('[DatabaseService] Running v7 → v8 migration (multi-transport printer fields)');
     }
 
     if (currentVersion < CURRENT_SCHEMA_VERSION) {
@@ -274,6 +288,72 @@ class DatabaseService {
         AND NOT EXISTS (SELECT 1 FROM table_areas WHERE id = tables.section)
         AND EXISTS (SELECT 1 FROM table_areas WHERE name = tables.section)
     `);
+  }
+
+  private async runV7Migration(): Promise<void> {
+    if (!this.db) return;
+
+    await this.db.execAsync(`
+      CREATE TABLE IF NOT EXISTS station_printers (
+        id TEXT PRIMARY KEY,
+        station TEXT NOT NULL,
+        printer_name TEXT NOT NULL,
+        ip_address TEXT NOT NULL,
+        port INTEGER DEFAULT 9100,
+        enabled INTEGER DEFAULT 1,
+        updated_at TEXT NOT NULL,
+        UNIQUE(station)
+      );
+    `);
+  }
+
+  private async runV8Migration(): Promise<void> {
+    if (!this.db) return;
+
+    // printer_settings: add multi-transport columns for receipt + kitchen
+    const psColumns = await this.db.getAllAsync<{ name: string }>('PRAGMA table_info(printer_settings)');
+    const psColNames = new Set(psColumns.map(c => c.name));
+
+    const psNewCols: [string, string][] = [
+      ['receipt_connection_type', "TEXT DEFAULT 'lan'"],
+      ['receipt_mac_address', 'TEXT'],
+      ['receipt_device_name', 'TEXT'],
+      ['receipt_ble_device_id', 'TEXT'],
+      ['receipt_usb_vendor_id', 'INTEGER'],
+      ['receipt_usb_product_id', 'INTEGER'],
+      ['receipt_usb_device_name', 'TEXT'],
+      ['kitchen_connection_type', "TEXT DEFAULT 'lan'"],
+      ['kitchen_mac_address', 'TEXT'],
+      ['kitchen_device_name', 'TEXT'],
+      ['kitchen_ble_device_id', 'TEXT'],
+      ['kitchen_usb_vendor_id', 'INTEGER'],
+      ['kitchen_usb_product_id', 'INTEGER'],
+      ['kitchen_usb_device_name', 'TEXT'],
+    ];
+    for (const [col, def] of psNewCols) {
+      if (!psColNames.has(col)) {
+        await this.db.execAsync(`ALTER TABLE printer_settings ADD COLUMN ${col} ${def}`);
+      }
+    }
+
+    // station_printers: add multi-transport columns
+    const spColumns = await this.db.getAllAsync<{ name: string }>('PRAGMA table_info(station_printers)');
+    const spColNames = new Set(spColumns.map(c => c.name));
+
+    const spNewCols: [string, string][] = [
+      ['connection_type', "TEXT DEFAULT 'lan'"],
+      ['mac_address', 'TEXT'],
+      ['device_name', 'TEXT'],
+      ['ble_device_id', 'TEXT'],
+      ['usb_vendor_id', 'INTEGER'],
+      ['usb_product_id', 'INTEGER'],
+      ['usb_device_name', 'TEXT'],
+    ];
+    for (const [col, def] of spNewCols) {
+      if (!spColNames.has(col)) {
+        await this.db.execAsync(`ALTER TABLE station_printers ADD COLUMN ${col} ${def}`);
+      }
+    }
   }
 
   /**

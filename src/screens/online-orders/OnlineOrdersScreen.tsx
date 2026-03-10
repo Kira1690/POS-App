@@ -72,27 +72,21 @@ export default function OnlineOrdersScreen() {
     try {
       const ordersData = await orderService.getOrders(filters);
       setOrders(ordersData);
-    } catch (error) {
-      console.error('Failed to load orders:', error);
-    }
+    } catch { /* silent */ }
   };
 
   const loadStats = async () => {
     try {
       const statsData = await orderService.getOrderStats();
       setStats(statsData);
-    } catch (error) {
-      console.error('Failed to load stats:', error);
-    }
+    } catch { /* silent */ }
   };
 
   const loadPlatformStatuses = async () => {
     try {
       const statusData = await orderService.getPlatformStatuses();
       setPlatformStatuses(statusData);
-    } catch (error) {
-      console.error('Failed to load platform statuses:', error);
-    }
+    } catch { /* silent */ }
   };
 
   const handleRefresh = async () => {

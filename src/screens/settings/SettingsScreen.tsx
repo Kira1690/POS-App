@@ -193,7 +193,7 @@ export default function SettingsScreen() {
   };
 
   const handleBackToDashboard = () => {
-    console.log('Navigate back to dashboard');
+    // TODO: navigation.navigate('Dashboard')
   };
 
   // CONTENT RENDERING
@@ -383,7 +383,7 @@ export default function SettingsScreen() {
       backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background,
       paddingHorizontal: 6,
       paddingTop: 4,
-      paddingBottom: 4,
+      paddingBottom: 0,
       gap: 8,
     },
     phoneLayout: {
@@ -392,7 +392,10 @@ export default function SettingsScreen() {
     contentArea: {
       flex: 1,
       backgroundColor: theme.colors.surface,
-      borderRadius: 12,
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
       overflow: 'hidden',
     },
     // Phone list styles
@@ -461,7 +464,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.root}>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         {/* Breadcrumb — tablet only */}
         {!usePhoneLayout && (
           <View style={styles.breadcrumb}>

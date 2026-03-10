@@ -585,7 +585,7 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({
                 <Text style={styles.positionText}>
                   X: {table.positionX ?? 0}, Y: {table.positionY ?? 0}
                 </Text>
-                <TouchableOpacity style={styles.actionButton} onPress={() => console.log('Adjust position')}>
+                <TouchableOpacity style={styles.actionButton} onPress={() => { /* TODO: Adjust position */ }}>
                   <Icon
                     name="cursor-move"
                     size={18}

@@ -91,13 +91,9 @@ export class ProfessionalErrorBoundary extends Component<ErrorBoundaryProps, Err
     this.setState({ errorDetails });
 
     // Log to performance monitor
-    console.error(`🚨 ${level.toUpperCase()} Error Boundary Caught:`, {
-      error: error.message,
-      context: context || 'Unknown',
-      componentStack: errorInfo.componentStack,
-      errorId: this.state.errorId,
-      retryCount: this.state.retryCount,
-    });
+    if (__DEV__) {
+      console.error(`[ErrorBoundary] ${level.toUpperCase()} caught:`, error.message, context || 'Unknown');
+    }
 
     // Call custom error handler
     if (onError) {
@@ -147,7 +143,6 @@ export class ProfessionalErrorBoundary extends Component<ErrorBoundaryProps, Err
       return;
     }
 
-    console.log(`🔄 Retrying... Attempt ${this.state.retryCount + 1}/${maxRetries}`);
 
     this.setState(prevState => ({
       hasError: false,
@@ -169,7 +164,6 @@ export class ProfessionalErrorBoundary extends Component<ErrorBoundaryProps, Err
       window.location.reload();
     } else {
       // React Native - could trigger app restart
-      console.log('🔄 App reload requested');
     }
   };
 
@@ -339,7 +333,6 @@ const ProfessionalErrorScreen: React.FC<ProfessionalErrorScreenProps> = ({
             mode="text" 
             onPress={() => {
               // In a real app, navigate to help/support
-              console.log('Navigate to help/support');
             }}
             icon="help-circle"
             style={styles.actionButton}

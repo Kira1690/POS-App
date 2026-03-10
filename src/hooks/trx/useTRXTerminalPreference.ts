@@ -36,8 +36,8 @@ export const useTRXTerminalPreference = (): UseTRXTerminalPreferenceReturn => {
       if (result.success && result.data) {
         setPreferredTerminalState(result.data);
       }
-    } catch (error) {
-      console.error('Failed to load preferred terminal:', error);
+    } catch {
+      /* silent */
     } finally {
       setLoading(false);
     }

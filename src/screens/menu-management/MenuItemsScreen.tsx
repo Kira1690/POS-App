@@ -75,7 +75,6 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
       setCategories(categoriesData);
     } catch (err) {
       setError('Failed to load menu items');
-      console.error('Menu items loading error:', err);
     } finally {
       setLoading(false);
       if (isRefresh) setRefreshing(false);

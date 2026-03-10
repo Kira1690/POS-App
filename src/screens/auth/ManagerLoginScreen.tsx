@@ -52,7 +52,6 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
       success('Welcome back, Manager!');
       setTimeout(() => {
         // navigation.navigate('ManagerDashboard');
-        console.log('Navigate to Manager Dashboard');
       }, 1000);
     },
     onError: (errorMessage) => {
@@ -99,7 +98,6 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
         success('Multi-factor authentication successful!');
         setTimeout(() => {
           // navigation.navigate('ManagerDashboard');
-          console.log('Navigate to Manager Dashboard');
         }, 1000);
       } else {
         setOTPError('Invalid verification code. Please try again.');
@@ -123,7 +121,6 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
         success('Biometric authentication successful!');
         setTimeout(() => {
           // navigation.navigate('ManagerDashboard');
-          console.log('Navigate to Manager Dashboard');
         }, 1000);
       } else {
         error(result.error || 'Biometric authentication failed');
@@ -146,7 +143,6 @@ export const ManagerLoginScreen: React.FC<ManagerLoginScreenProps> = () => {
   // Handle forgot password
   const handleForgotPassword = () => {
     // navigation.navigate('ForgotPassword');
-    console.log('Navigate to Forgot Password');
   };
 
   // Handle resend MFA code

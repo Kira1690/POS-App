@@ -62,6 +62,10 @@ export interface UnifiedOrderState {
   // Modal State
   selectedOrderId: string | null;
 
+  // Split Order
+  pendingGuestCount: number;
+  isSplitOrder: boolean;
+
   // Sync State
   lastSynced: string | null;
   pendingSyncCount: number;
@@ -103,6 +107,10 @@ export const initialUnifiedOrderState: UnifiedOrderState = {
 
   // Modal State
   selectedOrderId: null,
+
+  // Split Order
+  pendingGuestCount: 1,
+  isSplitOrder: false,
 
   // Sync State
   lastSynced: null,
@@ -164,6 +172,10 @@ export type UnifiedOrderAction =
   // Current Order
   | { type: 'SET_CURRENT_ORDER'; payload: UnifiedOrder | null }
   | { type: 'CLEAR_CURRENT_ORDER' }
+
+  // Guest Count / Split Order
+  | { type: 'SET_PENDING_GUEST_COUNT'; payload: number }
+  | { type: 'SET_SPLIT_ORDER_CONFIG'; payload: { guestCount: number } }
 
   // Sync State
   | { type: 'SET_LAST_SYNCED'; payload: string | null }
@@ -595,13 +607,11 @@ export function unifiedOrderReducer(
       const order = state.orders.find((o) => o.id === orderId);
 
       if (!order) {
-        console.warn(`[UnifiedOrderReducer] Order ${orderId} not found for payment`);
         return state;
       }
 
       // Payment can only happen after order is served
       if (order.status !== 'served') {
-        console.warn(`[UnifiedOrderReducer] Cannot process payment for order with status: ${order.status}`);
         return state;
       }
 
@@ -718,6 +728,23 @@ export function unifiedOrderReducer(
         cartTotal: 0,
         cartItemCount: 0,
         cartDiscountAmount: 0,
+        pendingGuestCount: 1,
+        isSplitOrder: false,
+      };
+
+    // ============== GUEST COUNT / SPLIT ORDER ==============
+
+    case 'SET_PENDING_GUEST_COUNT':
+      return {
+        ...state,
+        pendingGuestCount: action.payload,
+      };
+
+    case 'SET_SPLIT_ORDER_CONFIG':
+      return {
+        ...state,
+        pendingGuestCount: action.payload.guestCount,
+        isSplitOrder: true,
       };
 
     // ============== SYNC STATE ==============

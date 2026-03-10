@@ -111,7 +111,6 @@ export class AuthService implements IAuthService {
 
   async getUserRestaurants(): Promise<Restaurant[]> {
     // This will be implemented when restaurant service is created
-    console.warn('getUserRestaurants not yet implemented - restaurant service needed');
     return [];
   }
 

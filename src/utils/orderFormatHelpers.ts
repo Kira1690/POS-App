@@ -175,6 +175,15 @@ export const getOrderTimestamps = (order: AnyOrder) => {
 };
 
 /**
+ * Get guest count from either format
+ */
+export const getGuestCount = (order: AnyOrder): number => {
+  if ('guestCount' in order && typeof order.guestCount === 'number') return order.guestCount;
+  if ('guest_count' in order && typeof (order as any).guest_count === 'number') return (order as any).guest_count;
+  return 1;
+};
+
+/**
  * Check if order is in an active state (not paid/cancelled)
  */
 export const isActiveOrderAny = (order: AnyOrder): boolean => {

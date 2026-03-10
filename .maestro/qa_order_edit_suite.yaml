@@ -1,0 +1,50 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Order Edit Suite — Full Order Editing + Split Table Tests"
+tags:
+  - qa
+  - edit-suite
+---
+
+# ─────────────────────────────────────────────────────
+#  Order Edit Test Suite
+#
+#  Covers all order editing and split table functionality
+#  introduced in the Order Editing feature implementation.
+#
+#  Prerequisite: Menu data must be seeded (run qa_01–04 or
+#  qa_data_setup.yaml first).
+#
+#  Test inventory:
+#    QA 31 — Remove existing item from sent order
+#    QA 32 — Edit modifiers on existing item
+#    QA 33 — Add new item + remove existing in one session
+#    QA 34 — Kitchen lock: block edit on Ready / allow after toggle
+#    QA 35 — Kitchen Display Update button → opens edit mode
+#    QA 36 — Split Table: second party order on same occupied table
+#    QA 37 — Activity Logs capture item_removed + item_modified
+#
+#  Prerequisites:
+#    bun expo start --clear
+#    Custom dev build installed (not Expo Go)
+#    Menu seeded with Fish Fry, Dal Makhani, Coffee (always available in dev build)
+#
+#  Run individually:
+#    maestro test .maestro/qa_31_edit_remove_item.yaml
+#    maestro test .maestro/qa_32_edit_modifier.yaml
+#    maestro test .maestro/qa_33_edit_add_and_remove.yaml
+#    maestro test .maestro/qa_34_kitchen_lock.yaml
+#    maestro test .maestro/qa_35_kitchen_update_button.yaml
+#    maestro test .maestro/qa_36_split_table_new_order.yaml
+#    maestro test .maestro/qa_37_edit_activity_logs.yaml
+#
+#  Run full suite:
+#    maestro test .maestro/qa_order_edit_suite.yaml
+# ─────────────────────────────────────────────────────
+
+- runFlow: qa_31_edit_remove_item.yaml
+- runFlow: qa_32_edit_modifier.yaml
+- runFlow: qa_33_edit_add_and_remove.yaml
+- runFlow: qa_34_kitchen_lock.yaml
+- runFlow: qa_35_kitchen_update_button.yaml
+- runFlow: qa_36_split_table_new_order.yaml
+- runFlow: qa_37_edit_activity_logs.yaml

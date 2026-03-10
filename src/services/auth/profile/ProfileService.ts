@@ -28,7 +28,6 @@ export class ProfileService {
       // Fall back to API call
       return await authApiClient.getProfile();
     } catch (error: any) {
-      console.error('Get profile failed:', error.message);
       throw new Error(error.message || 'Failed to get profile');
     }
   }
@@ -51,13 +50,8 @@ export class ProfileService {
         response = await authApiClient.updateProfile(userData);
       }
 
-      if (__DEV__) {
-        console.log('Profile updated successfully:', response.id);
-      }
-
       return response;
     } catch (error: any) {
-      console.error('Profile update failed:', error.message);
       throw new Error(error.message || 'Profile update failed');
     }
   }
@@ -65,12 +59,7 @@ export class ProfileService {
   async updatePassword(passwordData: UpdatePasswordRequest): Promise<void> {
     try {
       await authApiClient.updatePassword(passwordData);
-      
-      if (__DEV__) {
-        console.log('Password updated successfully');
-      }
     } catch (error: any) {
-      console.error('Password update failed:', error.message);
       throw new Error(error.message || 'Password update failed');
     }
   }
@@ -104,7 +93,6 @@ export class ProfileService {
         console.log(`Account ${type} deleted successfully`);
       }
     } catch (error: any) {
-      console.error('Account deletion failed:', error.message);
       throw new Error(error.message || 'Account deletion failed');
     }
   }

@@ -91,8 +91,7 @@ export class KitchenTicketRouter {
         ticketIds,
         totalEstimatedTime,
       };
-    } catch (error) {
-      console.error('[KitchenTicketRouter] Error routing order:', error);
+    } catch {
       return {
         success: false,
         tickets: [],

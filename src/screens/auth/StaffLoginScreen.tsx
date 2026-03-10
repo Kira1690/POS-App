@@ -46,7 +46,6 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
       success('Welcome back! Logging you in...');
       setTimeout(() => {
         // navigation.navigate('Dashboard');
-        console.log('Navigate to Dashboard');
       }, 1000);
     },
     onError: (errorMessage) => {
@@ -83,7 +82,6 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
         success('Biometric authentication successful!');
         setTimeout(() => {
           // navigation.navigate('Dashboard');
-          console.log('Navigate to Dashboard');
         }, 1000);
       } else {
         error(result.error || 'Biometric authentication failed');
@@ -101,7 +99,6 @@ export const StaffLoginScreen: React.FC<StaffLoginScreenProps> = () => {
   // Handle forgot password
   const handleForgotPassword = () => {
     // navigation.navigate('ForgotPassword');
-    console.log('Navigate to Forgot Password');
   };
 
   // Get container styles

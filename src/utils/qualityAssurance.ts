@@ -147,7 +147,7 @@ export class ProfessionalQualityAssurance {
     gates: QualityGate[];
     recommendations: string[];
   }> {
-    console.log('🔍 Running Professional Quality Assessment...');
+    if (__DEV__) console.log('[QA] Running quality assessment...');
 
     // Measure actual metrics
     await this.measurePerformanceMetrics();
@@ -164,7 +164,7 @@ export class ProfessionalQualityAssurance {
     // Generate recommendations
     const recommendations = this.generateRecommendations();
 
-    console.log(`📊 Quality Assessment Complete: ${score}% (${passed ? 'PASSED' : 'FAILED'})`);
+    if (__DEV__) console.log(`[QA] Quality assessment: ${score}% (${passed ? 'PASSED' : 'FAILED'})`);
 
     return {
       passed,
@@ -477,7 +477,7 @@ export class DeploymentReadinessChecker {
     checklist: { [key: string]: boolean };
     blockers: string[];
   }> {
-    console.log('🚀 Checking Deployment Readiness...');
+    if (__DEV__) console.log('[QA] Checking deployment readiness...');
 
     // Performance checks
     this.checklist['Performance optimizations applied'] = true;

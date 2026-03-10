@@ -24,7 +24,7 @@ import { EditStationModal } from './EditStationModal';
 
 const KitchenManagementScreen: React.FC = () => {
   const { theme } = useTheme();
-  const { stations, isLoading, refreshStations, toggleStation, deleteStation } = useKitchenConfig();
+  const { stations, isLoading, refreshStations, toggleStation, deleteStation, allowEditWhenReady, setAllowEditWhenReady } = useKitchenConfig();
 
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editingStation, setEditingStation] = useState<StationConfig | null>(null);
@@ -182,6 +182,30 @@ const KitchenManagementScreen: React.FC = () => {
       paddingTop: theme.spacing.md,
       paddingBottom: theme.spacing.xs,
     },
+    settingsCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.md,
+      marginHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+    },
+    settingsRow: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: theme.spacing.md,
+    },
+    settingsTitle: {
+      fontSize: 15,
+      fontWeight: '600' as const,
+      color: theme.colors.onSurface,
+    },
+    settingsSubtitle: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceSecondary,
+      marginTop: 2,
+    },
   });
 
   const renderStation = useCallback(
@@ -286,6 +310,25 @@ const KitchenManagementScreen: React.FC = () => {
         maxToRenderPerBatch={10}
         windowSize={10}
       />
+
+      {/* Kitchen Lock Setting */}
+      <View style={styles.settingsCard}>
+        <View style={styles.settingsRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.settingsTitle}>Allow editing ready orders</Text>
+            <Text style={styles.settingsSubtitle}>
+              When off, orders marked Ready cannot be modified
+            </Text>
+          </View>
+          <Switch
+            value={allowEditWhenReady}
+            onValueChange={(val) => setAllowEditWhenReady(val).catch(() => {})}
+            testID="toggle-allow-edit-when-ready"
+            trackColor={{ false: theme.colors.outline, true: theme.colors.primary }}
+            thumbColor={allowEditWhenReady ? theme.colors.onPrimary : theme.colors.onSurfaceSecondary}
+          />
+        </View>
+      </View>
 
       {/* Modals */}
       <AddStationModal
