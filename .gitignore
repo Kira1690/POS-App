@@ -72,5 +72,5 @@ prep/
 planning/
 screenshots/
 
-# Maestro test screenshots output
-.maestro/
+# Maestro screenshot output only
+.maestro/screenshots/
