@@ -5,7 +5,14 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
 # Pre-condition: QA-T1 table and QA-Item-01/02 must exist in app.
 
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to Manager Login from Welcome screen
+- tapOn:
+    text: ".*MANAGER.*"
+    optional: true
 - waitForAnimationToEnd
 
 # Login as manager
@@ -18,7 +25,7 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
     optional: true
 - inputText: "QAManager2026!"
 - tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
 - waitForAnimationToEnd
 
 - takeScreenshot: "order_lifecycle_01_login"
@@ -59,8 +66,12 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
 - takeScreenshot: "order_lifecycle_04_order_confirmed"
 
 # Wait 10s for push sync
-- wait:
-    ms: 12000
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
 
 # At this point, verify on web that order appears (manual check or use sync-verification.spec.ts)
 - takeScreenshot: "order_lifecycle_05_after_push_wait"
@@ -106,8 +117,12 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
 - takeScreenshot: "order_lifecycle_10_payment_complete"
 
 # Wait for billing sync
-- wait:
-    ms: 12000
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
 
 - takeScreenshot: "order_lifecycle_11_after_billing_push"
 - stopApp

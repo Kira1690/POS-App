@@ -11,7 +11,14 @@ name: "SY-09/SY-10 — App→Web Order Push Sync"
 # Usage: maestro test POS-App/.maestro/qa/sync/06_app_to_web_order.yaml
 
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to Manager Login from Welcome screen
+- tapOn:
+    text: ".*MANAGER.*"
+    optional: true
 - waitForAnimationToEnd
 
 # Login
@@ -24,7 +31,7 @@ name: "SY-09/SY-10 — App→Web Order Push Sync"
     optional: true
 - inputText: "QAProdMgr2026!"
 - tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
 - waitForAnimationToEnd
 - takeScreenshot: "sync_order_00_login"
 

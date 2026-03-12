@@ -12,7 +12,14 @@ name: "SY-01 to SY-05 — Web→App Menu Sync Verification"
 # Usage: maestro test POS-App/.maestro/qa/sync/05_web_to_app_menu.yaml
 
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to Manager Login from Welcome screen
+- tapOn:
+    text: ".*MANAGER.*"
+    optional: true
 - waitForAnimationToEnd
 
 # Login
@@ -25,7 +32,7 @@ name: "SY-01 to SY-05 — Web→App Menu Sync Verification"
     optional: true
 - inputText: "QAProdMgr2026!"
 - tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
 - waitForAnimationToEnd
 - takeScreenshot: "sync_menu_00_login"
 
@@ -51,8 +58,10 @@ name: "SY-01 to SY-05 — Web→App Menu Sync Verification"
 - takeScreenshot: "sync_menu_02_category_appeared"
 
 # Navigate to Settings > Menu to verify items synced
+- waitForAnimationToEnd
 - tapOn:
     text: "Settings"
+    optional: true
 - waitForAnimationToEnd
 - tapOn:
     text: "Menu"

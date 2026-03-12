@@ -11,7 +11,14 @@ name: "SY-15 — Mobile Token Refresh (60s TTL)"
 # Usage: maestro test POS-App/.maestro/qa/sync/08_token_refresh_mobile.yaml
 
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to Manager Login from Welcome screen
+- tapOn:
+    text: ".*MANAGER.*"
+    optional: true
 - waitForAnimationToEnd
 
 # Login fresh — token starts at T=0
@@ -24,7 +31,7 @@ name: "SY-15 — Mobile Token Refresh (60s TTL)"
     optional: true
 - inputText: "QAProdMgr2026!"
 - tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
 - waitForAnimationToEnd
 - takeScreenshot: "token_00_login"
 

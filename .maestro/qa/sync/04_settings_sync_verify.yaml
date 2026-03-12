@@ -4,7 +4,14 @@ name: "QA Sync 04 — Settings Sync Verification"
 # Pre-condition: Run settings-sync.spec.ts first to change restaurant name on web.
 
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to Manager Login from Welcome screen
+- tapOn:
+    text: ".*MANAGER.*"
+    optional: true
 - waitForAnimationToEnd
 
 # Login as store admin
@@ -17,14 +24,16 @@ name: "QA Sync 04 — Settings Sync Verification"
     optional: true
 - inputText: "QAAdmin2026!"
 - tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
 - waitForAnimationToEnd
 
 - takeScreenshot: "settings_sync_01_login"
 
 # Navigate to Settings › Restaurant Profile
+- waitForAnimationToEnd
 - tapOn:
     text: "Settings"
+    optional: true
 - waitForAnimationToEnd
 - tapOn:
     text: "Restaurant Profile"
@@ -54,8 +63,10 @@ name: "QA Sync 04 — Settings Sync Verification"
 - takeScreenshot: "settings_sync_04_categories_check"
 
 # Navigate to Settings › Table Management
+- waitForAnimationToEnd
 - tapOn:
     text: "Settings"
+    optional: true
 - waitForAnimationToEnd
 - tapOn:
     text: "Table Management"

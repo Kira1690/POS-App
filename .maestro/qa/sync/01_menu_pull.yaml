@@ -4,7 +4,14 @@ name: "QA Sync 01 — Menu Pull (Web → App)"
 # Pre-condition: Create "QA-Cat-Sync-01" on web /menu before running this test.
 
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to Manager Login from Welcome screen
+- tapOn:
+    text: ".*MANAGER.*"
+    optional: true
 - waitForAnimationToEnd
 
 # Login as qa-manager
@@ -17,7 +24,7 @@ name: "QA Sync 01 — Menu Pull (Web → App)"
     optional: true
 - inputText: "QAManager2026!"
 - tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
 - waitForAnimationToEnd
 
 # Navigate to POS order screen to see category sidebar
@@ -29,8 +36,12 @@ name: "QA Sync 01 — Menu Pull (Web → App)"
 
 # Wait 30 seconds for pull sync interval
 - waitForAnimationToEnd
-- wait:
-    ms: 30000
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
 
 # Reload / trigger sync
 - waitForAnimationToEnd

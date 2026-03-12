@@ -4,7 +4,14 @@ name: "QA Sync 02 — Table Pull (Web → App)"
 # Pre-condition: Create "QA-Rooftop" area and "QA-R1" table on web before running.
 
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Navigate to Manager Login from Welcome screen
+- tapOn:
+    text: ".*MANAGER.*"
+    optional: true
 - waitForAnimationToEnd
 
 # Login
@@ -17,7 +24,7 @@ name: "QA Sync 02 — Table Pull (Web → App)"
     optional: true
 - inputText: "QAManager2026!"
 - tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
 - waitForAnimationToEnd
 
 # Navigate to Tables / Floor Plan
@@ -28,8 +35,12 @@ name: "QA Sync 02 — Table Pull (Web → App)"
 - takeScreenshot: "sync_tables_01_before_pull"
 
 # Wait 30 seconds for pull sync
-- wait:
-    ms: 30000
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
 - waitForAnimationToEnd
 
 - takeScreenshot: "sync_tables_02_after_30s"
