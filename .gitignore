@@ -63,3 +63,14 @@ report.xml
 # Root-level screenshot folders (copies already in prep/)
 /visual-tour/
 /android/v2_*.png
+
+# Planning & sprint documents — local only
+*.xlsx
+*.xls
+*.ods
+prep/
+planning/
+screenshots/
+
+# Maestro test screenshots output
+.maestro/
