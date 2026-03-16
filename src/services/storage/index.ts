@@ -33,6 +33,9 @@ export { unifiedOrderStorageService } from './UnifiedOrderStorageService';
 // Kitchen Storage - Ticket management
 export { kitchenStorageService } from './KitchenStorageService';
 
+// Customer Storage
+export { customerStorageService } from './CustomerStorageService';
+
 // Payment & Sync Services
 export { paymentStorageService } from './PaymentStorageService';
 export {

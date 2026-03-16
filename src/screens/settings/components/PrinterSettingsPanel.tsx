@@ -310,6 +310,16 @@ export default function PrinterSettingsPanel({ onChangesDetected }: PrinterSetti
       </View>
 
       {/* STATION PRINTERS */}
+      {activeStations.length === 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Station Printers</Text>
+          </View>
+          <Text style={styles.infoText}>
+            No active kitchen stations configured. Go to Kitchen Management to add stations, then return here to assign dedicated printers.
+          </Text>
+        </View>
+      )}
       {activeStations.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>

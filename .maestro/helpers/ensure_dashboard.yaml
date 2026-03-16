@@ -8,11 +8,6 @@ name: "Helper: Ensure on Order Management (Dev Build)"
 
 - launchApp
 - waitForAnimationToEnd
-# Wait for app to fully initialize (cold start can take 10-15s on emulator)
-- extendedWaitUntil:
-    visible:
-      id: "tab-nav-orders"
-    timeout: 30000
 
 # Dismiss any full-screen LogBox (dev warnings)
 - tapOn:
@@ -20,19 +15,20 @@ name: "Helper: Ensure on Order Management (Dev Build)"
     optional: true
 - waitForAnimationToEnd
 
-# Dismiss "Open debugger to view warnings" dev banner (covers tab bar in dev build).
-# This native-level banner is NOT in Maestro's accessibility tree so we cannot check
-# visibility — instead always tap the ✕ position (96%, 96%). Safe: if no banner,
-# the tap lands on an empty area above the tab bar (no side-effect).
+# Dismiss "Open debugger to view warnings" dev banner
 - tapOn:
     point: "96%, 96%"
 - waitForAnimationToEnd
 
-# Login if on welcome / auth screen
-- tapOn:
-    id: "btn-welcome-manager-login"
-    optional: true
-- waitForAnimationToEnd
+# Login if on welcome / auth screen (handle before waiting for dashboard)
+- runFlow:
+    when:
+      visible:
+        id: "btn-welcome-manager-login"
+    commands:
+      - tapOn:
+          id: "btn-welcome-manager-login"
+      - waitForAnimationToEnd
 
 - runFlow:
     when:
@@ -42,21 +38,24 @@ name: "Helper: Ensure on Order Management (Dev Build)"
       - tapOn:
           id: "email-input"
       - eraseText: 60
-      - inputText: "testadmin@foodcorner.com"
+      - inputText: "manager@foodcorner.com"
       - hideKeyboard
       - waitForAnimationToEnd
       - tapOn:
           id: "password-input"
       - eraseText: 30
-      - inputText: "TestAdmin123!"
+      - inputText: "manager123"
       - hideKeyboard
       - waitForAnimationToEnd
       - tapOn:
           id: "btn-manager-sign-in"
-      - extendedWaitUntil:
-          visible:
-            id: "tab-nav-orders"
-          timeout: 15000
+      - waitForAnimationToEnd
+
+# Wait for app to fully initialize / login to complete
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 30000
 
 # Dismiss "Existing Order Found" alert
 - runFlow:

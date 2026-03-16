@@ -25,6 +25,7 @@ import {
 } from '@/interfaces/context/menu.interface';
 import { menuEventEmitter } from '@/services/menu/MenuEventEmitter';
 import { MockMenuManagementService } from '@/services/menu/MockMenuManagementService';
+import { menuApiClient } from '@/services/api/menu';
 import { menuStorageService } from '@/services/storage';
 import { MenuItem, MenuCategory } from '@/types/menu.types';
 import {
@@ -817,6 +818,14 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
         } as MenuItemExtended;
 
         dispatch({ type: 'UPDATE_ITEM', payload: { id, data: updatedData } });
+
+        // Sync to backend
+        try {
+          await menuApiClient.updateMenuItem(id, data as Record<string, unknown>);
+        } catch (err) {
+          if (__DEV__) console.error('[MenuContext] updateMenuItem backend sync failed:', err);
+          // Non-blocking: local state already updated
+        }
 
         // Determine event type
         let eventType: MenuEventType = 'ITEM_UPDATED';

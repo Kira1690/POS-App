@@ -116,6 +116,7 @@ export interface UnifiedOrderContextValue {
     itemId: string,
     updates: { quantity?: number; selectedModifiers?: SelectedModifier[]; specialInstructions?: string }
   ) => Promise<void>;
+  transferOrderToTable: (orderId: string, newTableId: string, newTableName: string) => Promise<void>;
 
   // Filters
   setSearchQuery: (query: string) => void;
@@ -151,6 +152,45 @@ export interface UnifiedOrderContextValue {
 // ============== CONTEXT ==============
 
 const UnifiedOrderContext = createContext<UnifiedOrderContextValue | undefined>(undefined);
+
+// ============== SYNC HELPER ==============
+
+/**
+ * Builds a snake_case payload from a UnifiedOrder for the sync queue.
+ * Sent to the backend via POST /api/orders/sync/push.
+ */
+function buildOrderSyncPayload(order: UnifiedOrder): Record<string, unknown> {
+  return {
+    restaurant_id: order.restaurantId || '1',
+    order_number: order.orderNumber,
+    table_id: order.tableId,
+    table_name: order.tableName,
+    status: order.status,
+    subtotal: order.subtotal,
+    tax_amount: order.taxAmount,
+    discount_amount: order.discountAmount,
+    total_amount: order.totalAmount,
+    guest_count: order.guestCount,
+    special_instructions: order.specialInstructions,
+    payment_method: order.paymentMethod,
+    transaction_id: order.paymentId,
+    paid_at: order.paidAt,
+    cancellation_reason: order.cancellationReason,
+    cancelled_at: order.cancelledAt,
+    order_items: order.items.map((i) => ({
+      id: i.id,
+      menu_item_id: i.menuItemId,
+      name: i.name,
+      quantity: i.quantity,
+      base_price: i.basePrice,
+      modifier_total: i.modifierTotal,
+      item_total: i.itemTotal,
+      item_status: i.itemStatus,
+      kitchen_station: i.kitchenStation,
+      special_instructions: i.specialInstructions,
+    })),
+  };
+}
 
 // ============== PROVIDER ==============
 
@@ -483,13 +523,19 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         });
 
         // Update storage
-        await unifiedOrderStorageService.updateOrder(orderId, {
+        const updatedOrder = await unifiedOrderStorageService.updateOrder(orderId, {
           status,
           updatedAt: new Date().toISOString(),
           ...(status === 'preparing' && { preparingAt: new Date().toISOString() }),
           ...(status === 'ready' && { readyAt: new Date().toISOString() }),
           ...(status === 'served' && { servedAt: new Date().toISOString() }),
         });
+
+        // Sync to backend (deduped — only latest status update queued)
+        if (updatedOrder) {
+          syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updatedOrder))
+            .catch(() => { /* silent — next sync cycle will retry */ });
+        }
 
         // Log ready / served transitions
         if (order && (status === 'ready' || status === 'served')) {
@@ -521,6 +567,10 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         );
         if (updatedOrder) {
           dispatch({ type: 'UPDATE_ORDER', payload: updatedOrder });
+
+          // Sync to backend (deduped)
+          syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updatedOrder))
+            .catch(() => { /* silent */ });
 
           // Log when order transitions to ready or served via item status changes
           const newOrderStatus = updatedOrder.status;
@@ -577,7 +627,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
 
         // Update storage
         const now = new Date().toISOString();
-        await unifiedOrderStorageService.updateOrder(orderId, {
+        const paidOrder = await unifiedOrderStorageService.updateOrder(orderId, {
           status: 'paid',
           paymentStatus: 'paid',
           paymentMethod: method,
@@ -585,6 +635,12 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           paidAt: now,
           updatedAt: now,
         });
+
+        // Sync paid order to backend (highest priority)
+        if (paidOrder) {
+          syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(paidOrder))
+            .catch(() => { /* silent */ });
+        }
 
         // Log payment
         activityLogService.logEvent({
@@ -658,11 +714,17 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           payload: { orderId, status: 'cancelled' },
         });
 
-        await unifiedOrderStorageService.updateOrder(orderId, {
+        const cancelledOrder = await unifiedOrderStorageService.updateOrder(orderId, {
           status: 'cancelled',
           cancellationReason: reason,
           cancelledAt: new Date().toISOString(),
         });
+
+        // Sync cancellation to backend
+        if (cancelledOrder) {
+          syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(cancelledOrder))
+            .catch(() => { /* silent */ });
+        }
 
         // Log cancellation
         activityLogService.logEvent({
@@ -694,6 +756,19 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           type: 'UPDATE_ORDER_STATUS',
           payload: { orderId: sourceOrderId, status: 'cancelled' },
         });
+
+        // Sync merged (target) order to backend
+        syncQueueService.enqueueUpdate('order', targetOrderId, buildOrderSyncPayload(merged))
+          .catch(() => { /* silent */ });
+
+        // Sync source order cancellation (fetch from storage to get cancelled state)
+        unifiedOrderStorageService.getOrder(sourceOrderId).then((cancelledSource) => {
+          if (cancelledSource) {
+            syncQueueService.enqueueUpdate('order', sourceOrderId, buildOrderSyncPayload(cancelledSource))
+              .catch(() => { /* silent */ });
+          }
+        }).catch(() => { /* silent */ });
+
         orderEventEmitter.emit('ORDER_CANCELLED', sourceOrderId, { reason: 'merged', tableId: '' });
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: String(error) });
@@ -821,6 +896,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       try {
         const updated = await unifiedOrderStorageService.applyOrderDiscount(orderId, type, value);
         dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updated))
+          .catch(() => { /* silent */ });
         activityLogService.logEvent({
           timestamp: new Date().toISOString(),
           eventType: 'discount_applied',
@@ -843,6 +920,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       try {
         const updated = await unifiedOrderStorageService.applyItemDiscount(orderId, itemId, type, value);
         dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updated))
+          .catch(() => { /* silent */ });
         const item = updated.items.find(i => i.id === itemId);
         activityLogService.logEvent({
           timestamp: new Date().toISOString(),
@@ -869,6 +948,11 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         );
         dispatch({ type: 'UPDATE_ORDER', payload: source });
         dispatch({ type: 'UPDATE_ORDER', payload: target });
+        // Sync both affected orders to backend
+        syncQueueService.enqueueUpdate('order', sourceOrderId, buildOrderSyncPayload(source))
+          .catch(() => { /* silent */ });
+        syncQueueService.enqueueUpdate('order', targetOrderId, buildOrderSyncPayload(target))
+          .catch(() => { /* silent */ });
         activityLogService.logEvent({
           timestamp: new Date().toISOString(),
           eventType: 'items_transferred',
@@ -892,6 +976,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         const updated = await unifiedOrderStorageService.addItemsToOrder(orderId, cartItems);
         dispatch({ type: 'UPDATE_ORDER', payload: updated });
         dispatch({ type: 'CLEAR_CART' });
+        syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updated))
+          .catch(() => { /* silent */ });
         activityLogService.logEvent({
           timestamp: new Date().toISOString(),
           eventType: 'sent_to_kitchen',
@@ -914,6 +1000,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       try {
         const updated = await unifiedOrderStorageService.removeItemFromOrder(orderId, itemId);
         dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updated))
+          .catch(() => { /* silent */ });
         activityLogService.logEvent({
           timestamp: new Date().toISOString(),
           eventType: 'item_removed',
@@ -939,6 +1027,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       try {
         const updated = await unifiedOrderStorageService.updateOrderItem(orderId, itemId, updates);
         dispatch({ type: 'UPDATE_ORDER', payload: updated });
+        syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updated))
+          .catch(() => { /* silent */ });
         activityLogService.logEvent({
           timestamp: new Date().toISOString(),
           eventType: 'item_modified',
@@ -947,6 +1037,34 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           tableName: updated.tableName,
           description: `Item modified on order ${updated.orderNumber}`,
         }).catch(() => { /* silent */ });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: String(error) });
+        throw error;
+      }
+    },
+    []
+  );
+
+  const transferOrderToTable = useCallback(
+    async (orderId: string, newTableId: string, newTableName: string) => {
+      try {
+        const updated = await unifiedOrderStorageService.updateOrder(orderId, {
+          tableId: newTableId,
+          tableName: newTableName,
+        });
+        if (updated) {
+          dispatch({ type: 'UPDATE_ORDER', payload: updated });
+          syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updated))
+            .catch(() => { /* silent */ });
+          activityLogService.logEvent({
+            timestamp: new Date().toISOString(),
+            eventType: 'items_transferred',
+            orderId,
+            orderNumber: updated.orderNumber,
+            tableName: updated.tableName,
+            description: `Order #${updated.orderNumber} transferred to ${updated.tableName}`,
+          }).catch(() => {});
+        }
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: String(error) });
         throw error;
@@ -973,7 +1091,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     getOrderById, getActiveOrderForTable, getActiveOrdersForTable, setGuestCount, setSplitOrderConfig,
     cancelOrder, mergeOrders,
     applyOrderDiscount, applyItemDiscount, transferItems, addItemsToOrder,
-    removeItemFromOrder, updateOrderItem,
+    removeItemFromOrder, updateOrderItem, transferOrderToTable,
     setSearchQuery, setStatusFilter, setPaymentStatusFilter, clearFilters,
     setError, clearError, setSelectedOrderId,
     resetAllState,
@@ -997,7 +1115,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     getOrderById, getActiveOrderForTable, getActiveOrdersForTable, setGuestCount, setSplitOrderConfig,
     cancelOrder, mergeOrders,
     applyOrderDiscount, applyItemDiscount, transferItems, addItemsToOrder,
-    removeItemFromOrder, updateOrderItem,
+    removeItemFromOrder, updateOrderItem, transferOrderToTable,
     setSearchQuery, setStatusFilter, setPaymentStatusFilter, clearFilters,
     setError, clearError, setSelectedOrderId, resetAllState, canProcessPaymentFn,
   ]);

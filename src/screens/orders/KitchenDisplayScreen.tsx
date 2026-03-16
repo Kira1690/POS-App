@@ -513,7 +513,7 @@ const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({ navigation 
               </View>
               {item.selectedModifiers && item.selectedModifiers.length > 0 && (
                 <Text style={styles.ticketItemModifiers} numberOfLines={1}>
-                  {item.selectedModifiers.map((m) => m.optionName).join(', ')}
+                  {item.selectedModifiers.flatMap(m => m.options.map(o => o.optionName)).join(', ')}
                 </Text>
               )}
             </View>

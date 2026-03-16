@@ -72,7 +72,7 @@ class SyncEngine {
 
     try {
       await this.pullAll(restaurantId);
-      pulled = 3; // menu + tables + orders
+      pulled = 4; // menu + tables + orders + customers
     } catch (err) {
       errors.push(err instanceof Error ? err.message : 'Pull failed');
     }
@@ -94,6 +94,7 @@ class SyncEngine {
       this.pullService.pullMenu(restaurantId),
       this.pullService.pullTablesAndAreas(restaurantId),
       this.pullService.pullOrders(restaurantId),
+      this.pullService.pullCustomers(restaurantId),
     ]);
   }
 

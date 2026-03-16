@@ -27,6 +27,7 @@ import { showToast } from '@/utils/toast';
 import { formatPrice } from '@/utils/currency';
 import { ExistingOrderModal } from '@/components/modals/ExistingOrderModal';
 import { OrderPickerModal } from '@/components/modals/OrderPickerModal';
+import { TableSelectionModal } from '@/components/modals';
 
 // APPLE COMPONENT SYSTEM (Universal Reusable Components)
 import {
@@ -55,13 +56,15 @@ const TableManagementScreen: React.FC = () => {
     clearError
   } = useTable();
 
-  const { getActiveOrdersForTable, cancelOrder } = useUnifiedOrder();
+  const { getActiveOrdersForTable, cancelOrder, transferOrderToTable } = useUnifiedOrder();
 
   const [sidebarVisible, setSidebarVisible] = useState(isTablet);
   const [existingOrderModalVisible, setExistingOrderModalVisible] = useState(false);
   const [orderPickerVisible, setOrderPickerVisible] = useState(false);
   const [selectedTableForModal, setSelectedTableForModal] = useState<Table | null>(null);
   const [tableActiveOrders, setTableActiveOrders] = useState<UnifiedOrder[]>([]);
+  const [shiftOrderId, setShiftOrderId] = useState<string | null>(null);
+  const [tableShiftModalVisible, setTableShiftModalVisible] = useState(false);
   const hasInitialized = useRef(false);
 
   // Load tables and connect to updates when screen mounts
@@ -151,9 +154,23 @@ const TableManagementScreen: React.FC = () => {
   }, [selectedTableForModal, tableActiveOrders, navigation]);
 
   const handleShiftTable = useCallback(() => {
+    if (tableActiveOrders.length === 0) return;
     setExistingOrderModalVisible(false);
-    showToast({ type: 'info', title: 'Shift Table', message: 'Table shift not yet implemented.' });
-  }, []);
+    setShiftOrderId(tableActiveOrders[0].id);
+    setTableShiftModalVisible(true);
+  }, [tableActiveOrders]);
+
+  const handleShiftTableSelect = useCallback(async (table: Table) => {
+    if (!shiftOrderId) return;
+    setTableShiftModalVisible(false);
+    try {
+      await transferOrderToTable(shiftOrderId, table.id, table.table_number);
+      showToast({ type: 'success', title: 'Table Shifted', message: `Order moved to ${table.table_number}.` });
+    } catch {
+      showToast({ type: 'error', title: 'Error', message: 'Could not shift the order.' });
+    }
+    setShiftOrderId(null);
+  }, [shiftOrderId, transferOrderToTable]);
 
   const handleCancelAndNew = useCallback(async () => {
     setExistingOrderModalVisible(false);
@@ -355,6 +372,16 @@ const TableManagementScreen: React.FC = () => {
         orders={tableActiveOrders}
         onSelect={handleOrderPickerSelect}
         onClose={handleCloseOrderPicker}
+      />
+
+      {/* Table Shift Modal — pick destination table */}
+      <TableSelectionModal
+        visible={tableShiftModalVisible}
+        tables={tableState.tables}
+        onTableSelect={handleShiftTableSelect}
+        onClose={() => { setTableShiftModalVisible(false); setShiftOrderId(null); }}
+        title="Select New Table"
+        subtitle="Choose a table to move this order to"
       />
     </SafeAreaView>
   );

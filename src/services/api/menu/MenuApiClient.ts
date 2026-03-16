@@ -85,4 +85,12 @@ export class MenuApiClient extends SimpleApiClient {
     
     return response.data.data;
   }
+
+  async updateMenuItem(itemId: string, data: Record<string, unknown>): Promise<MenuItem> {
+    const response = await this.put<MenuItem>(`/api/menu/items/${itemId}`, data);
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || 'Failed to update menu item');
+    }
+    return response.data.data;
+  }
 }

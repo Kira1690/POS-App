@@ -9,6 +9,7 @@ import {
   tableStorageService,
   syncQueueService,
 } from '@/services/storage';
+import { customerStorageService } from '@/services/storage/CustomerStorageService';
 import { menuEventEmitter } from '@/services/menu/MenuEventEmitter';
 import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
 import { PullRequestBody, PullResponseData } from './types';
@@ -155,6 +156,26 @@ export class PullSyncService {
     } catch (error) {
       if (__DEV__) {
         console.error('[PullSyncService] pullTablesAndAreas failed:', error);
+      }
+    }
+  }
+
+  async pullCustomers(restaurantId: string): Promise<void> {
+    try {
+      const response = await apiClient.get<any>(
+        `/api/customers?restaurant_id=${restaurantId}`,
+        { silent: true } as any
+      );
+      const data = response.data?.data ?? response.data;
+      const customers: unknown[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.customers)
+        ? data.customers
+        : [];
+      await customerStorageService.upsertAll(customers);
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[PullSyncService] pullCustomers failed:', error);
       }
     }
   }

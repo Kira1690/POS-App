@@ -79,7 +79,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   } = useUnifiedOrderManagement();
 
   // Get payment filter and active orders from context state
-  const { state: orderState, activeOrders, setGuestCount, setSplitOrderConfig } = useUnifiedOrder();
+  const { state: orderState, activeOrders, setGuestCount, setSplitOrderConfig, transferOrderToTable } = useUnifiedOrder();
   const paymentFilter = orderState.paymentStatusFilter;
 
   const { state: tableState, selectTable, refreshTables } = useTable();
@@ -186,9 +186,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
       setOrderToShift(null);
       setShowTableModal(false);
       try {
-        await cancelOrder(orderToShift.id, `Shifted to ${table.table_number}`);
-        selectTable(table);
-        navigation?.navigate('POSOrder', { table });
+        await transferOrderToTable(orderToShift.id, table.id, table.table_number);
         showToast({ type: 'success', title: 'Table Shifted', message: `Order moved to ${table.table_number}.` });
       } catch {
         showToast({ type: 'error', title: 'Error', message: 'Could not shift the order.' });
@@ -213,7 +211,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     // Available table — ask guest count before starting
     setShowTableModal(false);
     setGuestCountModal({ visible: true, table, maxGuests: table.capacity, occupiedSeats: 0 });
-  }, [orderToShift, activeOrders, selectTable, navigation, cancelOrder]);
+  }, [orderToShift, activeOrders, selectTable, navigation, transferOrderToTable]);
 
   const closeExistingOrderModal = useCallback(() => {
     setExistingOrderModal({ visible: false, table: null, order: null, activeOrderCount: 0, remainingSeats: 0, splitAvailable: false });

@@ -22,7 +22,7 @@ tags:
 #    4. Tap "Add More Items" (btn-add-items-to-order)
 #    5. POSOrderScreen opens in edit mode
 #    6. Assert section-already-ordered visible
-#    7. Add "Latte" to cart
+#    7. Add "Coffee" to cart
 #    8. Tap "Add to Order" (btn-add-to-order)
 #    9. Assert success toast "Order Updated"
 #   10. Back on OrderDetails — Latte appears in item list
@@ -59,7 +59,7 @@ tags:
       id: "btn-new-order"
     timeout: 8000
 
-# Create new B-1 order with 1 item (Beef Burger)
+# Create new B-1 order with 1 item (Chicken Curry)
 - tapOn:
     id: "btn-new-order"
 - extendedWaitUntil:
@@ -80,13 +80,23 @@ tags:
           text: "Cancel Old Order"
       - waitForAnimationToEnd
 
-# Add Beef Burger
+# Handle GuestCountModal
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+# Add Chicken Curry
 - extendedWaitUntil:
     visible:
-      text: "Beef Burger"
+      text: "Chicken Curry"
     timeout: 8000
 - tapOn:
-    text: "Beef Burger"
+    text: "Chicken Curry"
 - waitForAnimationToEnd
 
 # Handle modifier modal if shown
@@ -150,13 +160,13 @@ tags:
 
 - takeScreenshot: "qa_30_step3_edit_mode_open"
 
-# ── STEP 3: Add "Latte" from menu ─────────────────────────────────────────────
+# ── STEP 3: Add "Coffee" from menu ─────────────────────────────────────────────
 - extendedWaitUntil:
     visible:
-      text: "Latte"
+      text: "Coffee"
     timeout: 8000
 - tapOn:
-    text: "Latte"
+    text: "Coffee"
 - waitForAnimationToEnd
 
 # Handle modifier modal if shown
@@ -214,7 +224,7 @@ tags:
 # Assert Latte now appears in the updated order items list
 - extendedWaitUntil:
     visible:
-      text: "Latte"
+      text: "Coffee"
     timeout: 8000
 
 - takeScreenshot: "qa_30_step6_latte_in_order"
@@ -226,7 +236,7 @@ tags:
 
 - extendedWaitUntil:
     visible:
-      text: "Latte"
+      text: "Coffee"
     timeout: 10000
 
 - takeScreenshot: "qa_30_PASS_latte_in_kitchen"

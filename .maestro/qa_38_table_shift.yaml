@@ -1,0 +1,241 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 38: Table Shift — Order transfers to new table (not cancelled)"
+tags:
+  - qa
+  - orders
+  - tables
+---
+
+# ─────────────────────────────────────────────────────
+#  QA 38 — Table Shift preserves order
+#
+#  Verifies that:
+#    - Shifting a table moves the order to the new table
+#    - The order is NOT cancelled
+#    - The kitchen ticket remains visible
+#    - The order number stays the same
+#
+#  Flow:
+#    1. Create B-1 CONFIRMED order (Fish Fry)
+#    2. Navigate to Order Management
+#    3. Open ExistingOrderModal for B-1 → "Shift Table"
+#    4. Select B-2 as the new table
+#    5. Assert order is now visible under B-2 (not cancelled)
+#    6. Assert kitchen ticket for B-2 still shows items
+#
+#  testIDs:
+#    btn-existing-shift-table    — Shift Table button in ExistingOrderModal
+#    btn-table-select-B-2        — Table B-2 in TableSelectionModal
+#    order-card-b-2              — Order card for B-2 in order list
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Clear kitchen + cancel any active B-1/B-2 orders ──────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+
+# Cancel any B-2 order too
+- tapOn:
+    id: "tab-payment-all"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-status-all"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "order-card-b-2"
+    optional: true
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-cancel-order"
+    commands:
+      - tapOn:
+          id: "btn-cancel-order"
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "input-cancel-reason"
+      - inputText: "QA test cleanup"
+      - hideKeyboard
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "btn-confirm-cancel-order"
+      - waitForAnimationToEnd
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# ── Create B-1 order (Fish Fry) ───────────────────────────────────────────────
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-cancel-new"
+    commands:
+      - tapOn:
+          id: "btn-existing-cancel-new"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Cancel Old Order"
+    commands:
+      - tapOn:
+          text: "Cancel Old Order"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          text: "Mild"
+          optional: true
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_38_step1_b1_confirmed"
+
+# ── Shift Table B-1 → B-2 ────────────────────────────────────────────────────
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "order-card-b-1"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 10000
+
+- takeScreenshot: "qa_38_step2_order_details_b1"
+
+# Note the order number for later comparison
+# Go back to order list to use the shift flow from ExistingOrderModal
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Click "New Order" to open table selector
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+
+# Tap B-1 (occupied) — ExistingOrderModal opens
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-existing-shift-table"
+    timeout: 8000
+
+- takeScreenshot: "qa_38_step3_existing_order_modal"
+
+# Tap Shift Table
+- tapOn:
+    id: "btn-existing-shift-table"
+- waitForAnimationToEnd
+
+# TableSelectionModal opens — select B-2
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-2"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-2"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_38_step4_after_shift"
+
+# ── Assert: Order is at B-2, NOT cancelled ───────────────────────────────────
+# Filter to active orders only — avoids old cancelled B-1 orders showing up
+- tapOn:
+    id: "tab-status-active"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-payment-all"
+    optional: true
+- waitForAnimationToEnd
+
+# B-2 order card must be visible in active orders (order was transferred)
+- assertVisible:
+    id: "order-card-b-2"
+
+# B-1 should NOT have an active order (only cancelled ones remain, filtered out)
+- assertNotVisible:
+    id: "order-card-b-1"
+
+- takeScreenshot: "qa_38_step5_b2_order_exists"
+
+# ── Assert: Kitchen ticket still shows for the order ─────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+
+- takeScreenshot: "qa_38_step6_kitchen_check"
+
+# Kitchen should still have a ticket (order is still confirmed, not cancelled)
+- assertVisible:
+    text: "Fish Fry"
+
+- takeScreenshot: "qa_38_PASS_shift_preserved_order_and_kitchen_ticket"

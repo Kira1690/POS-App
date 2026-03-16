@@ -28,6 +28,7 @@ import { useBillSplit } from '@/context/billing';
 import { paymentStorageService } from '@/services/storage/PaymentStorageService';
 import { showToast } from '@/utils/toast';
 import { SplitType, GuestSplit, BillItem, BillSplit, PaymentMethodSplit } from '@/types/billing.types';
+import { billingApiClient } from '@/services/billing/BillingApiClient';
 import {
   equalSplitCalculator,
   itemSplitCalculator,
@@ -490,7 +491,7 @@ export const BillSplitScreen: React.FC = () => {
     setPayments(newPayments);
   }, []);
 
-  const handleProcessPayments = useCallback(() => {
+  const handleProcessPayments = useCallback(async () => {
     if (!order) return;
 
     if (payments.length === 0) {
@@ -508,6 +509,19 @@ export const BillSplitScreen: React.FC = () => {
           : `Payments exceed the bill by $${Math.abs(remaining).toFixed(2)}. Please adjust.`
       );
       return;
+    }
+
+    // Call backend split API before navigating
+    try {
+      const transaction = await billingApiClient.getTransactionByOrderId(orderId);
+      if (transaction?.id) {
+        await billingApiClient.splitBill(String(transaction.id), {
+          split_type: 'by_payment',
+          guests: payments.map(p => ({ name: p.method, amount: p.amount })),
+        });
+      }
+    } catch {
+      // Non-blocking — navigate even if backend call fails (offline resilience)
     }
 
     // Navigate to payment processing with split payments

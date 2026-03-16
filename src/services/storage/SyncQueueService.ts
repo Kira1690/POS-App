@@ -168,6 +168,24 @@ class SyncQueueService {
     };
   }
 
+  /**
+   * Enqueue an 'update' operation, replacing any existing pending update for the
+   * same entity. This prevents the queue from accumulating many redundant updates
+   * (e.g. rapid kitchen item-status taps) — only the latest state reaches the backend.
+   */
+  async enqueueUpdate(
+    entityType: SyncEntityType,
+    entityId: string,
+    data: Record<string, unknown>
+  ): Promise<void> {
+    await this.db.runAsync(
+      `DELETE FROM sync_queue
+       WHERE entity_type = ? AND entity_id = ? AND operation = 'update' AND status = 'pending'`,
+      entityType, entityId
+    );
+    await this.enqueue(entityType, entityId, 'update', data);
+  }
+
   async getNextItems(limit: number = 10, entityType?: string): Promise<SyncQueueItem[]> {
     const ts = now();
     if (entityType) {
