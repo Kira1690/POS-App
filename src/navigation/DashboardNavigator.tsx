@@ -3,12 +3,13 @@
  * Provides navigation between Orders, Tables, Kitchen, Reports dashboards
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, ScrollView, TouchableOpacity, Text, StyleSheet, Platform, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useAuthStatus } from '@/hooks/auth/useAuthStatus';
 import { AppleSidebarCollapsible, AppleSidebarItem } from '@/components/apple/layouts/AppleSidebarCollapsible';
 
 // Import the new dashboard screens
@@ -25,19 +26,19 @@ const DashboardWithSidebar: React.FC = () => {
   const { theme, isDark } = useTheme();
   const { isPhone, isSmallTablet, bodySize, chipRowHeight } = useResponsive();
   const insets = useSafeAreaInsets();
+  const { isKitchenStaff, isManagementLevel, canAccessKitchen } = useAuthStatus();
   const [activeTab, setActiveTab] = useState('Overview');
 
-  // Sidebar navigation items
-  const sidebarItems: AppleSidebarItem[] = [
+  // Sidebar navigation items — filtered by role
+  const allSidebarItems: (AppleSidebarItem & { visible: boolean })[] = [
     {
       id: 'overview',
       label: 'Overview',
       icon: <MaterialIcons name="dashboard" size={20} color={theme.colors.white} />,
       iconBackground: theme.colors.info,
       selected: activeTab === 'Overview',
-      onPress: () => {
-        setActiveTab('Overview');
-      }
+      onPress: () => { setActiveTab('Overview'); },
+      visible: true, // all roles
     },
     {
       id: 'orders',
@@ -45,9 +46,8 @@ const DashboardWithSidebar: React.FC = () => {
       icon: <MaterialIcons name="receipt" size={20} color={theme.colors.white} />,
       iconBackground: theme.colors.error,
       selected: activeTab === 'OrdersDashboard',
-      onPress: () => {
-        setActiveTab('OrdersDashboard');
-      }
+      onPress: () => { setActiveTab('OrdersDashboard'); },
+      visible: isManagementLevel, // manager + admin + superadmin (waiters use Orders tab)
     },
     {
       id: 'tables',
@@ -55,9 +55,8 @@ const DashboardWithSidebar: React.FC = () => {
       icon: <MaterialIcons name="table-restaurant" size={20} color={theme.colors.white} />,
       iconBackground: theme.colors.success,
       selected: activeTab === 'TablesDashboard',
-      onPress: () => {
-        setActiveTab('TablesDashboard');
-      }
+      onPress: () => { setActiveTab('TablesDashboard'); },
+      visible: !isKitchenStaff, // everyone except kitchen staff
     },
     {
       id: 'kitchen',
@@ -65,9 +64,8 @@ const DashboardWithSidebar: React.FC = () => {
       icon: <MaterialIcons name="restaurant" size={20} color={theme.colors.white} />,
       iconBackground: theme.colors.warning,
       selected: activeTab === 'KitchenDashboard',
-      onPress: () => {
-        setActiveTab('KitchenDashboard');
-      }
+      onPress: () => { setActiveTab('KitchenDashboard'); },
+      visible: canAccessKitchen, // kitchen_staff + manager + admin + superadmin
     },
     {
       id: 'reports',
@@ -75,11 +73,16 @@ const DashboardWithSidebar: React.FC = () => {
       icon: <MaterialIcons name="analytics" size={20} color={theme.colors.white} />,
       iconBackground: theme.colors.purple,
       selected: activeTab === 'ReportsDashboard',
-      onPress: () => {
-        setActiveTab('ReportsDashboard');
-      }
-    }
+      onPress: () => { setActiveTab('ReportsDashboard'); },
+      visible: isManagementLevel, // manager + admin + superadmin
+    },
   ];
+
+  const sidebarItems: AppleSidebarItem[] = useMemo(
+    () => allSidebarItems.filter(item => item.visible).map(({ visible, ...item }) => item),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeTab, isManagementLevel, isKitchenStaff, canAccessKitchen, theme]
+  );
 
   // Render the current screen based on active tab
   const renderCurrentScreen = () => {

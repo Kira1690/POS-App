@@ -14,7 +14,8 @@ export type SyncEntityType =
   | 'kitchen_ticket'
   | 'payment'
   | 'receipt'
-  | 'table_status';
+  | 'table_status'
+  | 'customer';
 
 export type SyncOperationType = 'create' | 'update' | 'delete';
 
@@ -89,6 +90,7 @@ const PRIORITY_MAP: Record<SyncEntityType, number> = {
   order_item: 4,
   receipt: 5,
   table_status: 6,
+  customer: 7,
 };
 
 class SyncQueueService {

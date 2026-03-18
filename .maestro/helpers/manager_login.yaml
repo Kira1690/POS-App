@@ -1,51 +1,32 @@
-appId: host.exp.exponent
-name: "Helper: Manager Login"
+appId: com.ajinkya123.POSReactNativeApp
+name: "Helper: Manager Login (QA Online Account)"
 ---
 
-# Opens the app and logs in as Manager (dummy auth - works offline)
-# Credentials: manager@foodcorner.com / manager123
+# Opens the app and logs in as QA Manager (online account with real API data)
+# Credentials: qa-manager@blueplate2026.io / QAManager2026!
 
-- openLink: "exp://10.0.2.2:8081"
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
 
-- extendedWaitUntil:
-    visible: "Welcome to FoodPOS"
-    timeout: 60000
-
-# Dismiss the Expo developer menu if it appears on fresh launch.
-# The dev menu is a bottom sheet that intercepts ALL touches even to elements above it.
-- optional:
-    - extendedWaitUntil:
-        visible: "developer menu"
-        timeout: 3000
-    - tapOn:
-        text: "Continue"
-
-- wait: 1500
-
-# Navigate to Manager Login screen
+# Navigate to Manager Login from Welcome screen
 - tapOn:
-    text: ".*Manager Login.*"
+    id: "btn-welcome-manager-login"
+- waitForAnimationToEnd
 
-# Wait for the Manager Login form to be ready (Email Address is unique to this screen)
-- extendedWaitUntil:
-    visible: "Email Address"
-    timeout: 15000
-
+# Login as manager using testIDs
 - tapOn:
     id: "email-input"
-
-- inputText: "testadmin@foodcorner.com"
-
+- inputText: "qa-manager@blueplate2026.io"
 - tapOn:
     id: "password-input"
-
-- inputText: "TestAdmin123!"
-
+- inputText: "QAManager2026!"
 - hideKeyboard
-
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
 - tapOn:
-    text: ".*Sign In.*"
-
-- extendedWaitUntil:
-    visible: "Dashboard"
-    timeout: 30000
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd

@@ -9,6 +9,7 @@ import { WebSocketSyncManager } from './WebSocketSyncManager';
 import { processOrderSync } from '@/services/sync/processors/OrderSyncProcessor';
 import { processKitchenSync } from '@/services/sync/processors/KitchenSyncProcessor';
 import { processPaymentSync } from '@/services/sync/processors/PaymentSyncProcessor';
+import { processCustomerSync } from '@/services/sync/processors/CustomerSyncProcessor';
 import { SyncConfig, SyncResult } from './types';
 
 class SyncEngine {
@@ -99,14 +100,15 @@ class SyncEngine {
   }
 
   async pushPending(restaurantId: string): Promise<number> {
-    const [orderResult, kitchenResult, paymentResult] = await Promise.allSettled([
+    const [orderResult, kitchenResult, paymentResult, customerResult] = await Promise.allSettled([
       syncQueueService.processBatch(processOrderSync, 10, 'order'),
       syncQueueService.processBatch(processKitchenSync, 10, 'kitchen_ticket'),
       syncQueueService.processBatch(processPaymentSync, 10, 'payment'),
+      syncQueueService.processBatch(processCustomerSync, 10, 'customer'),
     ]);
 
     let total = 0;
-    for (const r of [orderResult, kitchenResult, paymentResult]) {
+    for (const r of [orderResult, kitchenResult, paymentResult, customerResult]) {
       if (r.status === 'fulfilled') total += r.value.succeeded;
     }
 

@@ -8,6 +8,9 @@ import {
   tableStorageService,
   kitchenStorageService,
 } from '@/services/storage';
+import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
+import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
+import { mapServerOrderToUnified, mapServerTicketToKitchenTicket } from './mappers';
 
 const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:5005';
 const MAX_RECONNECT = 5;
@@ -84,6 +87,9 @@ export class WebSocketSyncManager {
       case 'tables':
         this.handleTableUpdate(msg);
         break;
+      case 'orders':
+        this.handleOrderUpdate(msg);
+        break;
       case 'kitchen':
         this.handleKitchenUpdate(msg);
         break;
@@ -114,9 +120,70 @@ export class WebSocketSyncManager {
     // Data written to SQLite; UI picks up changes on next poll cycle
   }
 
+  private handleOrderUpdate(msg: WsMessage): void {
+    const data = msg.data;
+    if (!data?.id) return;
+
+    const mapped = mapServerOrderToUnified(data);
+
+    if (msg.event === 'status_changed') {
+      unifiedOrderStorageService
+        .updateOrder(mapped.id, {
+          status: mapped.status,
+          paymentStatus: mapped.paymentStatus,
+          preparingAt: mapped.preparingAt,
+          readyAt: mapped.readyAt,
+          servedAt: mapped.servedAt,
+          paidAt: mapped.paidAt,
+          cancelledAt: mapped.cancelledAt,
+          pendingSync: false,
+          syncedAt: new Date().toISOString(),
+          updatedAt: mapped.updatedAt,
+        })
+        .then(async (result) => {
+          if (result) {
+            // Order existed locally — partial update applied
+            orderEventEmitter.emit('ORDER_STATUS_CHANGED', mapped.id, { status: mapped.status });
+          } else {
+            // Order doesn't exist locally yet — save the full mapped order
+            await unifiedOrderStorageService.saveOrder(mapped);
+            orderEventEmitter.emit('ORDER_CREATED', mapped.id, {});
+          }
+        })
+        .catch(() => {});
+    } else {
+      unifiedOrderStorageService
+        .saveOrder(mapped)
+        .then(() => {
+          const event = msg.event === 'created' ? 'ORDER_CREATED' : 'ORDER_SYNC_COMPLETE';
+          orderEventEmitter.emit(event, mapped.id, {});
+        })
+        .catch(() => {});
+    }
+  }
+
   private handleKitchenUpdate(msg: WsMessage): void {
-    // Kitchen updates are handled via polling; WS provides a signal to refresh
-    if (__DEV__) console.log('[WSSyncManager] Kitchen update received', msg.event);
+    const data = msg.data;
+    if (!data?.id) return;
+
+    const mapped = mapServerTicketToKitchenTicket(data);
+
+    if (msg.event === 'status_changed') {
+      kitchenStorageService
+        .updateTicket(mapped.id, {
+          status: mapped.status,
+          completedItemCount: mapped.completedItemCount,
+          startedAt: mapped.startedAt,
+          completedAt: mapped.completedAt,
+          servedAt: mapped.servedAt,
+          actualPrepTime: mapped.actualPrepTime,
+          pendingSync: false,
+          syncedAt: new Date().toISOString(),
+        })
+        .catch(() => {});
+    } else {
+      kitchenStorageService.saveTicket(mapped).catch(() => {});
+    }
   }
 
   private scheduleReconnect(): void {

@@ -87,12 +87,14 @@ function menuReducer(
         isLoading: false,
       };
 
-    case 'ADD_CATEGORY':
-      return {
+    case 'ADD_CATEGORY': {
+      const newState = {
         ...state,
         categories: [...state.categories, action.payload],
         categoriesWithStats: [...state.categoriesWithStats, action.payload],
       };
+      return newState;
+    }
 
     case 'UPDATE_CATEGORY': {
       const updateCat = (cat: MenuCategory) =>
@@ -372,7 +374,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       if (useLocalStorage) {
         await menuStorageService.initialize(restaurantId); // ensure DB ready first
         const storedData = await menuStorageService.getMenuData(restaurantId);
-        if (storedData && storedData.categories.length > 0 && storedData.menuItems.length > 0) {
+        if (storedData && (storedData.categories.length > 0 || storedData.menuItems.length > 0)) {
           // Convert stored items to base menu items
           const menuItems: MenuItem[] = storedData.menuItems.map((item) => ({
             id: item.id,
@@ -465,7 +467,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
       // No storage data — re-initialize which triggers mock data seeding
       await menuStorageService.initialize(restaurantId);
       const seededData = await menuStorageService.getMenuData(restaurantId);
-      if (seededData && seededData.menuItems.length > 0) {
+      if (seededData && (seededData.categories.length > 0 || seededData.menuItems.length > 0)) {
         const menuItems: MenuItem[] = seededData.menuItems.map((item) => ({
           id: item.id, restaurant_id: item.restaurant_id, category_id: item.category_id,
           name: item.name, description: item.description, price: item.price,
@@ -667,6 +669,8 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({
           newValue: newCategory,
         });
         return newCategory;
+      } catch (err) {
+        throw err;
       } finally {
         dispatch({ type: 'SET_SYNCING', payload: false });
       }

@@ -35,7 +35,7 @@ tags:
 
 - extendedWaitUntil:
     visible:
-      id: "settings-nav-restaurant_profile"
+      id: "settings-nav-menu_management"
     timeout: 10000
 
 # tapOn auto-scrolls the sidebar to find the item

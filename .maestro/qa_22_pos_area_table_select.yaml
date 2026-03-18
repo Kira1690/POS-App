@@ -118,6 +118,16 @@ tags:
           text: "Cancel Old Order"
       - waitForAnimationToEnd
 
+# Handle GuestCountModal if B-1 is free
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
 # POS screen should load with category chips
 - extendedWaitUntil:
     visible:

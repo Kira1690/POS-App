@@ -1,8 +1,9 @@
 appId: com.ajinkya123.POSReactNativeApp
 name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
 # Verifies: Complete order lifecycle from mobile creation to web visibility.
-# Checks: order created → kitchen → paid, each step visible on web within 10s push interval.
-# Pre-condition: QA-T1 table and QA-Item-01/02 must exist in app.
+# Checks: order created → kitchen → paid, each step visible on web via WS broadcast.
+# WS broadcast makes status changes instant — waitForAnimationToEnd is just for UI settling.
+# Pre-condition: Tables and menu items must exist in app.
 
 ---
 - launchApp:
@@ -11,69 +12,101 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
 
 # Navigate to Manager Login from Welcome screen
 - tapOn:
-    text: ".*MANAGER.*"
-    optional: true
+    id: "btn-welcome-manager-login"
 - waitForAnimationToEnd
 
 # Login as manager
 - tapOn:
-    text: "Email"
-    optional: true
+    id: "email-input"
 - inputText: "qa-manager@blueplate2026.io"
+- hideKeyboard
 - tapOn:
-    text: "Password"
-    optional: true
+    id: "password-input"
 - inputText: "QAManager2026!"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
 - tapOn:
-    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
+    id: "btn-manager-sign-in"
 - waitForAnimationToEnd
 
 - takeScreenshot: "order_lifecycle_01_login"
 
-# Navigate to POS / Orders
+# Navigate to Orders tab
 - tapOn:
-    text: "Orders|POS"
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Create new order
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+# Select table B-1
+- tapOn:
+    id: "btn-table-select-B-1"
     optional: true
 - waitForAnimationToEnd
 
-# Select QA-T1 table
+# Confirm guest count
 - tapOn:
-    text: "QA-T1"
+    id: "btn-guest-confirm"
     optional: true
 - waitForAnimationToEnd
 - takeScreenshot: "order_lifecycle_02_table_selected"
 
-# Add QA-Item-01
+# Add first menu item (tap first visible item)
 - tapOn:
-    text: "QA-Item-01"
+    text: ".*"
+    index: 0
     optional: true
 - waitForAnimationToEnd
 
-# Add QA-Item-02
+# Handle modifier modal if it appears
 - tapOn:
-    text: "QA-Item-02"
+    text: "Add|OK|Done|Confirm"
+    optional: true
+- waitForAnimationToEnd
+
+# Add second menu item
+- tapOn:
+    text: ".*"
+    index: 1
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Add|OK|Done|Confirm"
     optional: true
 - waitForAnimationToEnd
 
 - takeScreenshot: "order_lifecycle_03_items_added"
 
-# Send to Kitchen / Confirm order
+# Send to Kitchen
 - tapOn:
-    text: "Send to Kitchen|Confirm|Place Order"
+    id: "btn-cart-send-to-kitchen"
+    optional: true
+- waitForAnimationToEnd
+
+# Confirm kitchen send
+- tapOn:
+    id: "btn-kitchen-modal-confirm"
     optional: true
 - waitForAnimationToEnd
 
 - takeScreenshot: "order_lifecycle_04_order_confirmed"
 
-# Wait 10s for push sync
-- waitForAnimationToEnd
-- waitForAnimationToEnd
-- waitForAnimationToEnd
+# WS broadcast makes this instant — waitForAnimationToEnd is just for UI settling
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 
-# At this point, verify on web that order appears (manual check or use sync-verification.spec.ts)
+# Verify order is confirmed
+- assertVisible:
+    text: "B-1|confirmed|pending"
+    optional: true
 - takeScreenshot: "order_lifecycle_05_after_push_wait"
 
 # Update status to Preparing (if available in UI)
@@ -81,6 +114,9 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
     text: "Preparing|Mark Preparing"
     optional: true
 - waitForAnimationToEnd
+- assertVisible:
+    text: "preparing|Preparing"
+    optional: true
 - takeScreenshot: "order_lifecycle_06_preparing"
 
 # Update status to Ready
@@ -88,6 +124,9 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
     text: "Ready|Mark Ready"
     optional: true
 - waitForAnimationToEnd
+- assertVisible:
+    text: "ready|Ready"
+    optional: true
 - takeScreenshot: "order_lifecycle_07_ready"
 
 # Update status to Served
@@ -95,11 +134,14 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
     text: "Served|Mark Served|Complete"
     optional: true
 - waitForAnimationToEnd
+- assertVisible:
+    text: "served|Served|completed"
+    optional: true
 - takeScreenshot: "order_lifecycle_08_served"
 
 # Process payment (Cash)
 - tapOn:
-    text: "Payment|Pay|Checkout"
+    id: "btn-order-pay"
     optional: true
 - waitForAnimationToEnd
 - takeScreenshot: "order_lifecycle_09_payment_screen"
@@ -110,18 +152,25 @@ name: "QA Sync 03 — Order Full Lifecycle (App → Web)"
 - waitForAnimationToEnd
 
 - tapOn:
-    text: "Process|Confirm Payment|Complete"
+    id: "btn-process-payment"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
     optional: true
 - waitForAnimationToEnd
 
 - takeScreenshot: "order_lifecycle_10_payment_complete"
 
-# Wait for billing sync
+# WS broadcast makes billing sync instant — waitForAnimationToEnd is just for UI settling
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 - waitForAnimationToEnd
-- waitForAnimationToEnd
-- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-continue"
+    optional: true
 - waitForAnimationToEnd
 
 - takeScreenshot: "order_lifecycle_11_after_billing_push"

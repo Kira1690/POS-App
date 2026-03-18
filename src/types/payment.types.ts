@@ -139,6 +139,7 @@ export interface ProfessionalPayment extends BaseEntity {
   taxAmount: number;
   tipAmount: number;
   tipPercentage?: number;
+  processingFee?: number;
   
   // Loyalty and Promotions
   loyaltyPointsEarned?: number;

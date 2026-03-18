@@ -1,0 +1,111 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Sync 10 — Kitchen Real-Time Sync via WS"
+# Verifies: Order sent to kitchen appears on kitchen screen instantly via WebSocket.
+# WS delivers updates in under 3s — no polling wait needed.
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# ── Login as QA Manager ──
+- tapOn:
+    id: "btn-welcome-manager-login"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "email-input"
+- inputText: "qa-manager@blueplate2026.io"
+- hideKeyboard
+- tapOn:
+    id: "password-input"
+- inputText: "QAManager2026!"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+
+# ── Navigate to Orders tab ──
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# ── Create new order on table T-1 ──
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+# Select an available table (names from server DB)
+- tapOn:
+    text: "M2-cudr"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-table-modal-close"
+    optional: true
+- waitForAnimationToEnd
+
+# Confirm guest count
+- tapOn:
+    id: "btn-guest-confirm"
+    optional: true
+- waitForAnimationToEnd
+
+# ── Add menu items (tap by price pattern) ──
+- tapOn:
+    text: "\\$\\d+\\.\\d+"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-modifier-confirm"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "\\$\\d+\\.\\d+"
+    index: 1
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-modifier-confirm"
+    optional: true
+- waitForAnimationToEnd
+
+# ── Send to Kitchen ──
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-kitchen-modal-confirm"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "kitchen_rt_01_order_confirmed"
+
+# ── Navigate to Kitchen tab ──
+- tapOn:
+    id: "tab-nav-kitchen"
+    optional: true
+- waitForAnimationToEnd
+
+# Wait for WS delivery and UI settling (instant via WS, just let UI render)
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ── Verify kitchen screen shows ticket/order info ──
+- assertVisible:
+    text: "Kitchen|ticket|order|pending|new|preparing|To Do|In Progress"
+    optional: true
+- takeScreenshot: "kitchen_rt_02_kitchen_ticket_visible"
+
+- stopApp

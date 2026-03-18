@@ -1,0 +1,52 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "RBAC 04: Waiter sees only own orders (empty = correct)"
+tags:
+  - rbac
+  - waiter
+---
+
+# ─────────────────────────────────────────────────────
+#  TC-25 + TC-26: Waiter order filtering + no cancel
+#
+#  Fresh state → waiter has created 0 orders → sees 0 orders
+#  This proves the createdBy filter works (no other users' orders leak)
+#
+#  Also verifies:
+#    ✗ Kitchen tab NOT visible (double-check from test 01)
+#    ✗ Settings tab NOT visible
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/staff_login.yaml
+
+# Navigate to Orders tab
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "rbac_04_step1_order_list"
+
+# ── Assert: Waiter sees 0 orders (own-only filtering) ──
+# The status pill or empty state should show 0 orders
+- assertVisible:
+    text: ".*0 Orders.*"
+- takeScreenshot: "rbac_04_step2_zero_orders"
+
+# ── Assert: Empty state is shown ──
+- assertVisible:
+    text: ".*No Orders Found.*"
+- takeScreenshot: "rbac_04_step3_empty_state"
+
+# ── Assert: Kitchen tab still hidden ──
+- assertNotVisible:
+    id: "tab-nav-kitchen"
+
+# ── Assert: Settings tab still hidden ──
+- assertNotVisible:
+    id: "tab-nav-settings"
+
+- takeScreenshot: "rbac_04_final"

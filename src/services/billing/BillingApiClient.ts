@@ -52,4 +52,18 @@ export const billingApiClient = {
   addPayment: async (transactionId: string, paymentData: { payment_method: string; amount: number }): Promise<void> => {
     await apiClient.post(`/api/billing/transactions/${transactionId}/payments`, paymentData);
   },
+
+  /**
+   * Fetch store billing configuration (tax rate, CC surcharge, etc.)
+   */
+  getStoreConfig: async (restaurantId: string): Promise<{ taxRate: number; taxName: string; ccPercentage: number }> => {
+    try {
+      const response = await apiClient.get(`/api/billing/store-config`, {
+        params: { restaurant_id: restaurantId },
+      });
+      return response.data?.data || { taxRate: 0, taxName: 'Sales Tax', ccPercentage: 0 };
+    } catch {
+      return { taxRate: 0, taxName: 'Sales Tax', ccPercentage: 0 };
+    }
+  },
 };

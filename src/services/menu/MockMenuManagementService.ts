@@ -26,162 +26,11 @@ export class MockMenuManagementService {
     return MockMenuManagementService.instance;
   }
 
-  private mockCategories: CategoryWithStats[] = [
-    {
-      id: 'cat_1',
-      restaurant_id: 'rest_001',
-      name: 'Beverages',
-      description: 'Hot and cold beverages',
-      sort_order: 1,
-      is_active: true,
-      created_at: '2025-07-20T00:00:00Z',
-      updated_at: '2025-09-23T10:30:00Z',
-      stats: {
-        itemCount: 2, // Actual items: Fresh Coffee, Fresh Orange Juice
-        todayRevenue: 0,
-        avgPrice: 5.38,
-        popularItems: ['Coffee', 'Fresh Juice'],
-        lastUpdated: '2025-09-23T10:30:00Z',
-      },
-    },
-    {
-      id: 'cat_2',
-      restaurant_id: 'rest_001',
-      name: 'Chinese',
-      description: 'Chinese cuisine specialties',
-      sort_order: 2,
-      is_active: true,
-      created_at: '2025-07-20T00:00:00Z',
-      updated_at: '2025-09-23T09:15:00Z',
-      stats: {
-        itemCount: 1, // Actual items: Chicken Fried Rice
-        todayRevenue: 0,
-        avgPrice: 14.75,
-        popularItems: ['Fried Rice'],
-        lastUpdated: '2025-09-23T09:15:00Z',
-      },
-    },
-    {
-      id: 'cat_3',
-      restaurant_id: 'rest_001',
-      name: 'Non Veg',
-      description: 'Non-vegetarian dishes',
-      sort_order: 3,
-      is_active: false,
-      created_at: '2025-07-20T00:00:00Z',
-      updated_at: '2025-09-22T16:45:00Z',
-      stats: {
-        itemCount: 0, // No items yet
-        todayRevenue: 0,
-        avgPrice: 0,
-        popularItems: [],
-        lastUpdated: '2025-09-22T16:45:00Z',
-      },
-    },
-    {
-      id: 'cat_4',
-      restaurant_id: 'rest_001',
-      name: 'Vegetarian',
-      description: 'Vegetarian specialties',
-      sort_order: 4,
-      is_active: true,
-      created_at: '2025-07-20T00:00:00Z',
-      updated_at: '2025-09-23T11:20:00Z',
-      stats: {
-        itemCount: 0, // No items yet
-        todayRevenue: 0,
-        avgPrice: 0,
-        popularItems: [],
-        lastUpdated: '2025-09-23T11:20:00Z',
-      },
-    },
-    {
-      id: 'cat_5',
-      restaurant_id: 'rest_001',
-      name: 'Desserts',
-      description: 'Sweet treats and desserts',
-      sort_order: 5,
-      is_active: true,
-      created_at: '2025-07-20T00:00:00Z',
-      updated_at: '2025-09-23T12:00:00Z',
-      stats: {
-        itemCount: 0, // No items yet
-        todayRevenue: 0,
-        avgPrice: 0,
-        popularItems: [],
-        lastUpdated: '2025-09-23T12:00:00Z',
-      },
-    },
-  ];
+  // Empty by default — tests create their own data (strict no-mock-data policy)
+  private mockCategories: CategoryWithStats[] = [];
 
-  private mockMenuItems: MenuItemWithStats[] = [
-    // Beverages
-    {
-      id: 'item_1',
-      restaurant_id: 'rest_001',
-      category_id: 'cat_1',
-      name: 'Fresh Coffee',
-      description: 'Premium arabica coffee beans',
-      price: 4.50,
-      image_url: 'https://example.com/coffee.jpg',
-      is_available: true,
-      preparation_time_minutes: 5,
-      dietary_info: ['Vegan Option'],
-      ingredients: ['Coffee Beans', 'Water', 'Optional Milk'],
-      created_at: '2025-07-20T00:00:00Z',
-      updated_at: '2025-09-23T10:30:00Z',
-      stats: {
-        todayOrders: 25,
-        todayRevenue: 112.50,
-        avgOrderTime: 5.2,
-        customerRating: 4.7,
-        lastOrdered: '2025-09-23T12:15:00Z',
-      },
-    },
-    {
-      id: 'item_2',
-      restaurant_id: 'rest_001',
-      category_id: 'cat_1',
-      name: 'Fresh Orange Juice',
-      description: 'Freshly squeezed orange juice',
-      price: 6.25,
-      is_available: true,
-      preparation_time_minutes: 3,
-      dietary_info: ['Vegan', 'Gluten-Free'],
-      ingredients: ['Fresh Oranges'],
-      created_at: '2025-07-20T00:00:00Z',
-      updated_at: '2025-09-23T10:30:00Z',
-      stats: {
-        todayOrders: 18,
-        todayRevenue: 112.50,
-        avgOrderTime: 3.1,
-        customerRating: 4.9,
-        lastOrdered: '2025-09-23T11:45:00Z',
-      },
-    },
-    // Chinese
-    {
-      id: 'item_3',
-      restaurant_id: 'rest_001',
-      category_id: 'cat_2',
-      name: 'Chicken Fried Rice',
-      description: 'Wok-fried rice with chicken and vegetables',
-      price: 14.75,
-      is_available: true,
-      preparation_time_minutes: 12,
-      dietary_info: ['Contains Gluten'],
-      ingredients: ['Rice', 'Chicken', 'Vegetables', 'Soy Sauce'],
-      created_at: '2025-07-20T00:00:00Z',
-      updated_at: '2025-09-23T09:15:00Z',
-      stats: {
-        todayOrders: 32,
-        todayRevenue: 472.00,
-        avgOrderTime: 11.8,
-        customerRating: 4.6,
-        lastOrdered: '2025-09-23T12:30:00Z',
-      },
-    },
-  ];
+  // Empty by default — tests create their own data (strict no-mock-data policy)
+  private mockMenuItems: MenuItemWithStats[] = [];
 
   /**
    * Get all categories with stats
@@ -204,10 +53,12 @@ export class MockMenuManagementService {
     const totalItems = categories.reduce((sum, cat) => sum + cat.stats.itemCount, 0);
     const todayRevenue = categories.reduce((sum, cat) => sum + cat.stats.todayRevenue, 0);
     
-    // Find top performer
-    const topPerformer = categories.reduce((top, cat) => 
-      cat.stats.todayRevenue > top.stats.todayRevenue ? cat : top
-    );
+    // Find top performer (handle empty array)
+    const topPerformer = categories.length > 0
+      ? categories.reduce((top, cat) =>
+          cat.stats.todayRevenue > top.stats.todayRevenue ? cat : top
+        )
+      : null;
 
     return {
       totalCategories: categories.length,
@@ -215,7 +66,7 @@ export class MockMenuManagementService {
       inactiveCategories: inactiveCategories.length,
       totalItems,
       todayRevenue,
-      topPerformer: topPerformer.name,
+      topPerformer: topPerformer?.name || 'None',
     };
   }
 

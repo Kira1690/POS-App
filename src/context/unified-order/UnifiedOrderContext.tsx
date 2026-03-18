@@ -247,8 +247,35 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       dispatch({ type: 'RESET_STATE' });
     });
 
+    // Reload orders from SQLite whenever sync writes new data
+    const reloadOrders = async () => {
+      try {
+        const orders = await unifiedOrderStorageService.getAllOrders();
+        dispatch({ type: 'SET_ORDERS', payload: orders });
+        if (__DEV__) {
+          console.log('[UnifiedOrderContext] Reloaded', orders.length, 'orders after sync event');
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('[UnifiedOrderContext] Failed to reload after sync:', error);
+        }
+      }
+    };
+
+    // Pull sync completed (batch of orders applied)
+    const unsubscribeSyncComplete = orderEventEmitter.subscribe('ORDER_SYNC_COMPLETE', reloadOrders);
+
+    // WebSocket: new order received in real-time
+    const unsubscribeCreated = orderEventEmitter.subscribe('ORDER_CREATED', reloadOrders);
+
+    // WebSocket: order status changed in real-time
+    const unsubscribeStatusChanged = orderEventEmitter.subscribe('ORDER_STATUS_CHANGED', reloadOrders);
+
     return () => {
       unsubscribeReset();
+      unsubscribeSyncComplete();
+      unsubscribeCreated();
+      unsubscribeStatusChanged();
     };
   }, []);
 

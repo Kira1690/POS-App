@@ -1,0 +1,133 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Sync 09 — Cross-Role Order Sync (Manager creates → verify sync)"
+# Step 1: Manager logs in, sees orders from server (proves pull sync works)
+# Step 2: Manager creates order on mobile → push syncs to server
+# Step 3: Take screenshots at every stage for visual proof
+# Web verification: Run Playwright cross-role-sync.spec.ts immediately after
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ── Login as QA Manager (real online account) ──
+- tapOn:
+    id: "btn-welcome-manager-login"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "email-input"
+- inputText: "qa-manager@blueplate2026.io"
+- hideKeyboard
+- tapOn:
+    id: "password-input"
+- inputText: "QAManager2026!"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ── STEP 1: Verify orders synced from server on login ──
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 15000
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Wait for initial sync to complete
+- extendedWaitUntil:
+    visible:
+      text: "Order Management"
+    timeout: 15000
+- takeScreenshot: "cross_role_01_orders_synced_from_server"
+
+# ── STEP 2: Verify dashboard has data ──
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "Dashboard"
+    timeout: 10000
+- takeScreenshot: "cross_role_02_dashboard_with_server_data"
+
+# ── STEP 3: Go to orders and attempt to create new order ──
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- takeScreenshot: "cross_role_03_table_selection"
+
+# Select a table — dismiss if it has existing order
+- tapOn:
+    text: "P4-cudr"
+    optional: true
+- waitForAnimationToEnd
+
+# Handle existing order modal if it appears
+- tapOn:
+    text: "Cancel & New Order"
+    optional: true
+- waitForAnimationToEnd
+
+# Handle guest count
+- tapOn:
+    id: "btn-guest-confirm"
+    optional: true
+- waitForAnimationToEnd
+
+# ── POS Screen: Add an item and send to kitchen ──
+- takeScreenshot: "cross_role_04_pos_screen"
+
+# Tap first menu item by price
+- tapOn:
+    text: "\\$\\d+\\.\\d+"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-modifier-confirm"
+    optional: true
+- waitForAnimationToEnd
+
+# Send to kitchen
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-kitchen-modal-confirm"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "cross_role_05_order_sent_to_kitchen"
+
+# ── Wait for push sync (10s interval) + WS broadcast ──
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "cross_role_06_after_push_sync"
+- stopApp

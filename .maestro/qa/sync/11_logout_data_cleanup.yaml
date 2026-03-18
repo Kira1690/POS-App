@@ -1,0 +1,114 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA Sync 11 — Logout Data Cleanup & Fresh Sync"
+# Verifies: Logout clears user-specific data, and next login gets fresh sync.
+# Tests user switching: QA Manager → QA Admin with clean state between sessions.
+
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# ═══════════════════════════════════════════
+# PHASE 1: Login as QA Manager, verify orders
+# ═══════════════════════════════════════════
+
+- tapOn:
+    id: "btn-welcome-manager-login"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "email-input"
+- inputText: "qa-manager@blueplate2026.io"
+- hideKeyboard
+- tapOn:
+    id: "password-input"
+- inputText: "QAManager2026!"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+
+# Navigate to Orders tab and take screenshot of current state
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "logout_00_manager_orders_before"
+
+# ═══════════════════════════════════════════
+# PHASE 2: Logout
+# ═══════════════════════════════════════════
+
+# Navigate to Settings tab
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+# Scroll to find and tap Logout button
+- scrollUntilVisible:
+    element:
+      text: "Logout|Log Out|Sign Out|LOGOUT"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "Logout|Log Out|Sign Out|LOGOUT"
+- waitForAnimationToEnd
+
+# Handle confirmation dialog if it appears
+- tapOn:
+    text: "Confirm|Yes|OK|Log Out|Logout"
+    optional: true
+- waitForAnimationToEnd
+
+# Verify Welcome screen appears
+- extendedWaitUntil:
+    visible:
+      id: "btn-welcome-manager-login"
+    timeout: 10000
+- takeScreenshot: "logout_01_welcome_after_logout"
+
+# ═══════════════════════════════════════════
+# PHASE 3: Login as QA Admin, verify fresh data
+# ═══════════════════════════════════════════
+
+- tapOn:
+    id: "btn-welcome-manager-login"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "email-input"
+- inputText: "qa-admin@blueplate2026.io"
+- hideKeyboard
+- tapOn:
+    id: "password-input"
+- inputText: "QAAdmin2026!"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+
+# Navigate to Orders tab
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Wait for fresh sync to complete (WS + initial pull)
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: "logout_02_fresh_data_after_switch"
+
+- stopApp

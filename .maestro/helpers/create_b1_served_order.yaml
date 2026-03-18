@@ -83,6 +83,16 @@ appId: com.ajinkya123.POSReactNativeApp
             id: "btn-new-order"
           timeout: 10000
 
+# Handle GuestCountModal if B-1 is free
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
 # ── 4. Add items + send to kitchen (ONLY if we're still on the POS screen) ────
 # If "GO BACK" was tapped above, we're back on Order Management and this block is
 # skipped — the existing SERVED order is used as-is.

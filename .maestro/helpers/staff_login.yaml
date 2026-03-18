@@ -1,0 +1,48 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Helper: Staff (Waiter) Login — EMP001"
+---
+
+# Opens the dev build app, clears state, and logs in as Restaurant Staff (waiter).
+# Credentials: EMP001 / staff123 (John Doe - Restaurant Staff)
+# Waiter lands on Orders tab (RBAC: Dashboard + Orders visible)
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Navigate to Staff Login from Welcome screen
+- tapOn:
+    text: ".*Continue as Staff Member.*"
+- waitForAnimationToEnd
+
+# Wait for staff login screen
+- extendedWaitUntil:
+    visible: "Staff Login"
+    timeout: 15000
+
+# Fill in Employee ID
+- tapOn:
+    id: "employee-id-input"
+- inputText: "EMP001"
+
+# Fill in Password
+- tapOn:
+    id: "password-input"
+- inputText: "staff123"
+- hideKeyboard
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap the blue Clock In button using coordinate (center-bottom area of visible button)
+# The button is at the bottom of the form card, fully visible in the screenshot
+- tapOn:
+    point: "50%, 67%"
+
+# Wait for app to fully load — waiter lands on Orders tab
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 30000
+- waitForAnimationToEnd

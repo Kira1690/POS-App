@@ -1,0 +1,52 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "RBAC 02: Kitchen staff sees only Dashboard + Kitchen tabs"
+tags:
+  - rbac
+  - kitchen
+---
+
+# ─────────────────────────────────────────────────────
+#  TC-24: Kitchen Staff tab visibility
+#
+#  Expected:
+#    ✓ Dashboard tab visible
+#    ✓ Kitchen tab visible (initial tab)
+#    ✗ Orders tab NOT visible
+#    ✗ Settings tab NOT visible
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/kitchen_login.yaml
+
+# ── Assert: Kitchen tab is visible (kitchen staff's initial tab) ──
+- assertVisible:
+    id: "tab-nav-kitchen"
+- takeScreenshot: "rbac_02_step1_kitchen_tab_visible"
+
+# ── Assert: Dashboard tab is visible ──
+- assertVisible:
+    id: "tab-nav-dashboard"
+- takeScreenshot: "rbac_02_step2_dashboard_tab_visible"
+
+# ── Assert: Orders tab is NOT visible ──
+- assertNotVisible:
+    id: "tab-nav-orders"
+- takeScreenshot: "rbac_02_step3_orders_tab_hidden"
+
+# ── Assert: Settings tab is NOT visible ──
+- assertNotVisible:
+    id: "tab-nav-settings"
+- takeScreenshot: "rbac_02_step4_settings_tab_hidden"
+
+# ── Navigate to Dashboard to verify it works ──
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*Dashboard.*"
+- takeScreenshot: "rbac_02_step5_dashboard_accessible"
+
+# ── Navigate back to Kitchen to verify it works ──
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- takeScreenshot: "rbac_02_step6_kitchen_accessible"

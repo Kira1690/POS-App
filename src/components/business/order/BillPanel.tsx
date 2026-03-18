@@ -45,6 +45,7 @@ interface BillPanelProps {
   taxRate: number;
   taxAmount: number;
   discountAmount?: number;
+  processingFee?: number;
   total: number;
   orderTime: string;
   onItemQuantityChange: (itemId: string, quantity: number) => void;
@@ -52,8 +53,8 @@ interface BillPanelProps {
   onAddItem: () => void;
   onPrint: () => void;
   onSendToKitchen: () => void; // Renamed from onPayment - proper restaurant workflow
-  onDiscount: () => void;
-  onSplit: () => void;
+  onDiscount?: () => void;
+  onSplit?: () => void;
   onEditItemModifiers?: (itemId: string) => void; // Optional: Edit modifiers for cart item
   onItemDiscount?: (itemId: string) => void; // Optional: Apply discount to individual item
   isProcessing?: boolean;
@@ -78,6 +79,7 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
   taxRate,
   taxAmount,
   discountAmount = 0,
+  processingFee = 0,
   total,
   orderTime,
   onItemQuantityChange,
@@ -252,6 +254,12 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
             <Text style={[styles.compactTotalLabel, { color: theme.colors.onSurfaceVariant }]}>Tax</Text>
             <Text style={[styles.compactTotalValue, { color: theme.colors.onSurface }]}>{formatCurrency(taxAmount)}</Text>
           </View>
+          {processingFee > 0 && (
+            <View style={styles.compactTotalItem}>
+              <Text style={[styles.compactTotalLabel, { color: theme.colors.onSurfaceVariant }]}>CC Surcharge</Text>
+              <Text style={[styles.compactTotalValue, { color: theme.colors.onSurface }]}>{formatCurrency(processingFee)}</Text>
+            </View>
+          )}
           <View style={[styles.compactTotalItem, styles.compactGrandTotal]}>
             <Text style={[styles.compactTotalLabel, { color: theme.colors.primary, fontWeight: '700' }]}>Total</Text>
             <Text style={[styles.compactTotalValue, { color: theme.colors.primary, fontWeight: '700', fontSize: 16 }]}>{formatCurrency(total)}</Text>
@@ -288,6 +296,17 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
             </Text>
           </View>
 
+          {processingFee > 0 && (
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+                CC Surcharge
+              </Text>
+              <Text style={[styles.totalValue, { color: theme.colors.onSurface }]}>
+                {formatCurrency(processingFee)}
+              </Text>
+            </View>
+          )}
+
           <View style={[styles.totalRow, styles.grandTotalRow, { borderTopColor: theme.colors.outline }]}>
             <Text style={[styles.grandTotalLabel, { color: theme.colors.primary }]}>
               Total
@@ -307,15 +326,17 @@ export const BillPanel: React.FC<BillPanelProps> = memo(({
     <View style={[styles.actionButtons, isPortrait && { padding: spacing.xs, paddingHorizontal: spacing.sm, paddingBottom: spacing.xl }]}>
       {!isPortrait && (
         <View style={styles.secondaryActions}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
-            onPress={onDiscount}
-          >
-            <MaterialIcons name="local-offer" size={18} color={theme.colors.onSurfaceVariant} />
-            <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
-              Discount
-            </Text>
-          </TouchableOpacity>
+          {onDiscount && (
+            <TouchableOpacity
+              style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}
+              onPress={onDiscount}
+            >
+              <MaterialIcons name="local-offer" size={18} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.onSurfaceVariant }]}>
+                Discount
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.actionButton, styles.secondaryButton, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}

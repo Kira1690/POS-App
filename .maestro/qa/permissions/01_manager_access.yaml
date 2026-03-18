@@ -7,43 +7,52 @@ name: "QA Permissions 01 — Manager Access"
     clearState: true
 - waitForAnimationToEnd
 
-# Login as manager
+# Navigate to Manager Login from Welcome screen
 - tapOn:
-    text: "Email"
-    optional: true
-- inputText: "qa-manager@blueplate2026.io"
-- tapOn:
-    text: "Password"
-    optional: true
-- inputText: "QAManager2026!"
-- tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    id: "btn-welcome-manager-login"
 - waitForAnimationToEnd
 
-# Assert dashboard loaded
-- assertVisible:
-    text: ".*Dashboard|.*Overview|.*Orders"
-- takeScreenshot: "manager_01_dashboard"
-
-# Verify Orders tab accessible
+# Login as manager using testIDs
 - tapOn:
-    text: "Orders"
+    id: "email-input"
+- inputText: "qa-manager@blueplate2026.io"
+- tapOn:
+    id: "password-input"
+- inputText: "QAManager2026!"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+
+# Assert Order Management loaded (default screen after login)
+- assertVisible:
+    text: ".*Order Management.*|.*Orders.*"
+- takeScreenshot: "manager_01_order_management"
+
+# Verify Dashboard tab accessible
+- tapOn:
+    text: "Dashboard"
 - waitForAnimationToEnd
 - assertNotVisible:
     text: "Access Denied|Unauthorized|403"
-- takeScreenshot: "manager_02_orders"
+- takeScreenshot: "manager_02_dashboard"
 
-# Verify Tables tab accessible
+# Verify Order Management tab accessible
 - tapOn:
-    text: "Tables"
+    text: "Order Management"
 - waitForAnimationToEnd
 - assertNotVisible:
     text: "Access Denied|Unauthorized"
-- takeScreenshot: "manager_03_tables"
+- takeScreenshot: "manager_03_orders"
 
-# Verify Kitchen tab accessible
+# Verify Kitchen Operations tab accessible
 - tapOn:
-    text: "Kitchen"
+    text: "Kitchen Operations"
 - waitForAnimationToEnd
 - assertNotVisible:
     text: "Access Denied|Unauthorized"

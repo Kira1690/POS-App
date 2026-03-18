@@ -1,0 +1,58 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "RBAC 06: Admin sees all settings categories"
+tags:
+  - rbac
+  - admin
+---
+
+# ─────────────────────────────────────────────────────
+#  Admin settings access — all categories visible
+#
+#  Expected:
+#    ✓ All 4 tabs visible
+#    ✓ Settings tab accessible
+#    ✓ All settings categories visible (including admin-only)
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/admin_login.yaml
+
+# ── Assert: All 4 tabs visible for admin ──
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-orders"
+- assertVisible:
+    id: "tab-nav-kitchen"
+- assertVisible:
+    id: "tab-nav-settings"
+- takeScreenshot: "rbac_06_step1_all_tabs"
+
+# ── Navigate to Settings ──
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 15000
+
+- takeScreenshot: "rbac_06_step2_settings_loaded"
+
+# ── Assert: Admin-only categories are visible ──
+- assertVisible:
+    text: ".*User Management.*"
+- assertVisible:
+    text: ".*Restaurant Profile.*"
+- takeScreenshot: "rbac_06_step3_admin_categories_visible"
+
+# ── Assert: Operational categories also visible ──
+- assertVisible:
+    text: ".*Menu Management.*"
+- assertVisible:
+    text: ".*Kitchen Management.*"
+- takeScreenshot: "rbac_06_step4_operational_categories"
+
+# ── Assert: Help & Support always visible ──
+- assertVisible:
+    text: ".*Help.*Support.*"
+- takeScreenshot: "rbac_06_step5_help_visible"

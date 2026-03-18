@@ -7,68 +7,60 @@ name: "QA Permissions 05 — Store Admin Full Access"
     clearState: true
 - waitForAnimationToEnd
 
-# Login as store admin
+# Navigate to Manager Login from Welcome screen
 - tapOn:
-    text: "Email"
-    optional: true
-- inputText: "qa-admin@blueplate2026.io"
-- tapOn:
-    text: "Password"
-    optional: true
-- inputText: "QAAdmin2026!"
-- tapOn:
-    text: ".*Sign.*In.*|.*Login.*"
+    id: "btn-welcome-manager-login"
 - waitForAnimationToEnd
 
-- takeScreenshot: "admin_01_login"
+# Login as store admin using testIDs
+- tapOn:
+    id: "email-input"
+- inputText: "qa-admin@blueplate2026.io"
+- tapOn:
+    id: "password-input"
+- inputText: "QAAdmin2026!"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
 
-# Navigate to Settings
+- takeScreenshot: "admin_01_after_login"
+
+# Verify Dashboard accessible
+- tapOn:
+    text: "Dashboard"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "admin_02_dashboard"
+
+# Verify Order Management accessible
+- tapOn:
+    text: "Order Management"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "admin_03_orders"
+
+# Verify Kitchen Operations accessible
+- tapOn:
+    text: "Kitchen Operations"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "Access Denied|Unauthorized"
+- takeScreenshot: "admin_04_kitchen"
+
+# Verify Settings accessible
 - tapOn:
     text: "Settings"
 - waitForAnimationToEnd
-- takeScreenshot: "admin_02_settings_main"
-
-# Verify Restaurant Profile accessible
-- tapOn:
-    text: "Restaurant Profile"
-    optional: true
-- waitForAnimationToEnd
 - assertNotVisible:
     text: "Access Denied|Unauthorized"
-- takeScreenshot: "admin_03_restaurant_profile"
-- pressKey: "Back"
-- waitForAnimationToEnd
-
-# Verify Table Management accessible
-- tapOn:
-    text: "Table Management"
-    optional: true
-- waitForAnimationToEnd
-- assertNotVisible:
-    text: "Access Denied|Unauthorized"
-- takeScreenshot: "admin_04_table_management"
-- pressKey: "Back"
-- waitForAnimationToEnd
-
-# Verify Menu Management accessible
-- tapOn:
-    text: "Menu"
-    optional: true
-- waitForAnimationToEnd
-- assertNotVisible:
-    text: "Access Denied|Unauthorized"
-- takeScreenshot: "admin_05_menu_management"
-- pressKey: "Back"
-- waitForAnimationToEnd
-
-# Verify User Management accessible
-- tapOn:
-    text: "User Management"
-    optional: true
-- waitForAnimationToEnd
-- assertNotVisible:
-    text: "Access Denied|Unauthorized"
-- takeScreenshot: "admin_06_user_management"
-- pressKey: "Back"
+- takeScreenshot: "admin_05_settings"
 
 - stopApp

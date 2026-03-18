@@ -24,7 +24,7 @@ interface OrderActionPanelProps {
   order: Order;
   onPrint: (type: 'KOT' | 'Receipt') => void;
   onPayment?: () => void;
-  onCancelOrder: (orderId: string, reason: string) => Promise<void>;
+  onCancelOrder?: (orderId: string, reason: string) => Promise<void>;
   loading?: boolean;
 }
 
@@ -40,6 +40,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
   const [cancelReason, setCancelReason] = useState('');
 
   const handleCancelOrder = useCallback(async () => {
+    if (!onCancelOrder) return;
     if (!cancelReason.trim()) {
       showToast({
         type: 'error',
@@ -113,16 +114,18 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
           </TouchableOpacity>
         )}
         
-        <TouchableOpacity
-          style={[styles.actionButton, styles.errorButton, { borderColor: theme.colors.error }]}
-          onPress={() => setShowCancelModal(true)}
-          testID="btn-cancel-order"
-        >
-          <MaterialIcons name="cancel" size={20} color={theme.colors.error} />
-          <Text style={[styles.actionButtonText, { color: theme.colors.error }]}>
-            Cancel Order
-          </Text>
-        </TouchableOpacity>
+        {onCancelOrder && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.errorButton, { borderColor: theme.colors.error }]}
+            onPress={() => setShowCancelModal(true)}
+            testID="btn-cancel-order"
+          >
+            <MaterialIcons name="cancel" size={20} color={theme.colors.error} />
+            <Text style={[styles.actionButtonText, { color: theme.colors.error }]}>
+              Cancel Order
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Cancel Order Modal */}

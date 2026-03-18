@@ -1,0 +1,80 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "RBAC 05: Waiter cannot see discount on POS screen"
+tags:
+  - rbac
+  - waiter
+---
+
+# ─────────────────────────────────────────────────────
+#  TC-27: Waiter discount button hidden on POS screen
+#
+#  Fresh state → waiter opens POS → Discount NOT visible
+#  Send to Kitchen IS visible (even if disabled with 0 items)
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/staff_login.yaml
+
+# Navigate to Orders tab
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+# Create a new order (opens table selector)
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+# Wait for table selection modal
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-modal-close"
+    timeout: 10000
+
+# Select table T-1
+- tapOn:
+    text: "T-1"
+    optional: true
+- waitForAnimationToEnd
+
+# Handle guest count modal
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+# Handle existing order modal
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-update-order"
+    commands:
+      - tapOn:
+          id: "btn-existing-update-order"
+      - waitForAnimationToEnd
+
+# Wait for POS screen (empty menu but bill panel renders)
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 15000
+
+- takeScreenshot: "rbac_05_step1_pos_screen"
+
+# ── Assert: Discount button is NOT visible (RBAC hides it for waiters) ──
+- assertNotVisible:
+    text: "Discount"
+- takeScreenshot: "rbac_05_step2_no_discount"
+
+# ── Assert: Send to Kitchen button IS visible ──
+- assertVisible:
+    id: "btn-cart-send-to-kitchen"
+- takeScreenshot: "rbac_05_step3_send_visible"

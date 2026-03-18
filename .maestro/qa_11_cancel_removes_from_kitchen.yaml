@@ -76,6 +76,17 @@ tags:
     timeout: 10000
 - tapOn:
     text: "B-1"
+
+# Handle GuestCountModal if B-1 is free
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
 - extendedWaitUntil:
     visible: "Mains"
     timeout: 10000

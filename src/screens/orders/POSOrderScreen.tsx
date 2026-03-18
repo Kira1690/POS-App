@@ -41,6 +41,7 @@ import { formatPrice } from '@/utils/currency';
 import { usePayment } from '@/context/payment/PaymentContext';
 import { usePrinter } from '@/context/printer/PrinterContext';
 import { useKitchenConfig } from '@/context/kitchen/KitchenConfigContext';
+import { useAuthStatus } from '@/hooks/auth/useAuthStatus';
 import { UnifiedOrderItem } from '@/types/unified-order.types';
 
 const POSOrderScreen: React.FC = () => {
@@ -101,6 +102,7 @@ const POSOrderScreen: React.FC = () => {
   const { allowEditWhenReady } = useKitchenConfig();
 
   const { state: tableState, selectTable, refreshTables } = useTable();
+  const { isManagementLevel } = useAuthStatus();
 
   // Use MenuContext as single source of truth for menu items
   // This ensures real-time sync with Settings > Menu Management
@@ -154,6 +156,14 @@ const POSOrderScreen: React.FC = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingOrder?.id]);
+
+  // RBAC: Block waiters from editing sent orders
+  useEffect(() => {
+    if (editOrderId && editingOrder && !isManagementLevel) {
+      showToast({ type: 'warning', title: 'Not Authorized', message: 'Only managers can edit sent orders' });
+      navigation.goBack();
+    }
+  }, [editOrderId, editingOrder, isManagementLevel, navigation]);
 
   // Prevent the table-init effect from re-firing after CLEAR_CURRENT_ORDER resets selectedTable
   const tableInitializedRef = useRef(false);
@@ -865,10 +875,10 @@ const POSOrderScreen: React.FC = () => {
         onAddItem={handleAddItem}
         onPrint={handlePrint}
         onSendToKitchen={handleSendToKitchen}
-        onDiscount={handleDiscount}
-        onSplit={handleSplit}
+        onDiscount={isManagementLevel ? handleDiscount : undefined}
+        onSplit={isManagementLevel ? handleSplit : undefined}
         onEditItemModifiers={handleEditCartItemModifiers}
-        onItemDiscount={handleItemDiscount}
+        onItemDiscount={isManagementLevel ? handleItemDiscount : undefined}
         isProcessing={false}
         panelWidth={isPhone || isPortrait ? screenWidth : billPanelWidth}
         isPortrait={isPortrait}

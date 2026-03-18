@@ -32,7 +32,7 @@ tags:
     id: "tab-nav-settings"
 - extendedWaitUntil:
     visible:
-      id: "settings-nav-restaurant_profile"
+      id: "settings-nav-menu_management"
     timeout: 10000
 
 - takeScreenshot: "qa_26_step1_settings_screen"
@@ -93,7 +93,7 @@ tags:
     id: "tab-nav-settings"
 - extendedWaitUntil:
     visible:
-      id: "settings-nav-restaurant_profile"
+      id: "settings-nav-menu_management"
     timeout: 10000
 - tapOn:
     id: "settings-nav-printer_management"

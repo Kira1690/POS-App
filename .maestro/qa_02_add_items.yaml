@@ -25,6 +25,7 @@ tags:
 #      → just use waitForAnimationToEnd, skip the extendedWaitUntil check
 #    - Step 4 (Nutrition): wait for "Calories" or use "Create Item" button text
 #    - testID "input-item-name" and "input-selling-price" for text inputs
+#    - Mock service starts empty (no-mock-data policy), only 6 items total.
 # ─────────────────────────────────────────────────────
 
 - runFlow: helpers/ensure_dashboard.yaml
@@ -36,7 +37,7 @@ tags:
 
 - extendedWaitUntil:
     visible:
-      id: "settings-nav-restaurant_profile"
+      id: "settings-nav-menu_management"
     timeout: 10000
 
 # tapOn auto-scrolls the sidebar to find the item
@@ -128,8 +129,9 @@ tags:
     notVisible: "Create Item"
     timeout: 8000
 
-- extendedWaitUntil:
-    visible: "Latte"
+- scrollUntilVisible:
+    element: "Latte"
+    direction: DOWN
     timeout: 10000
 
 - assertVisible: "Latte"
@@ -139,6 +141,12 @@ tags:
 # ════════════════════════════════════════════════════
 # ITEM 2: Cappuccino — Drinks — $4.75
 # ════════════════════════════════════════════════════
+# Scroll up to make Add Item button visible
+- scrollUntilVisible:
+    element: "Add Item"
+    direction: UP
+    timeout: 5000
+
 - tapOn:
     text: "Add Item"
 
@@ -207,8 +215,9 @@ tags:
     notVisible: "Create Item"
     timeout: 8000
 
-- extendedWaitUntil:
-    visible: "Cappuccino"
+- scrollUntilVisible:
+    element: "Cappuccino"
+    direction: DOWN
     timeout: 10000
 
 - assertVisible: "Cappuccino"
@@ -218,6 +227,11 @@ tags:
 # ════════════════════════════════════════════════════
 # ITEM 3: Beef Burger — Mains — $12.99
 # ════════════════════════════════════════════════════
+- scrollUntilVisible:
+    element: "Add Item"
+    direction: UP
+    timeout: 5000
+
 - tapOn:
     text: "Add Item"
 
@@ -286,8 +300,9 @@ tags:
     notVisible: "Create Item"
     timeout: 8000
 
-- extendedWaitUntil:
-    visible: "Beef Burger"
+- scrollUntilVisible:
+    element: "Beef Burger"
+    direction: DOWN
     timeout: 10000
 
 - assertVisible: "Beef Burger"
@@ -297,6 +312,11 @@ tags:
 # ════════════════════════════════════════════════════
 # ITEM 4: Grilled Salmon — Mains — $15.50
 # ════════════════════════════════════════════════════
+- scrollUntilVisible:
+    element: "Add Item"
+    direction: UP
+    timeout: 5000
+
 - tapOn:
     text: "Add Item"
 
@@ -365,8 +385,9 @@ tags:
     notVisible: "Create Item"
     timeout: 8000
 
-- extendedWaitUntil:
-    visible: "Grilled Salmon"
+- scrollUntilVisible:
+    element: "Grilled Salmon"
+    direction: DOWN
     timeout: 10000
 
 - assertVisible: "Grilled Salmon"
@@ -376,6 +397,11 @@ tags:
 # ════════════════════════════════════════════════════
 # ITEM 5: Spring Rolls — Starters — $6.50
 # ════════════════════════════════════════════════════
+- scrollUntilVisible:
+    element: "Add Item"
+    direction: UP
+    timeout: 5000
+
 - tapOn:
     text: "Add Item"
 
@@ -444,8 +470,9 @@ tags:
     notVisible: "Create Item"
     timeout: 8000
 
-- extendedWaitUntil:
-    visible: "Spring Rolls"
+- scrollUntilVisible:
+    element: "Spring Rolls"
+    direction: DOWN
     timeout: 10000
 
 - assertVisible: "Spring Rolls"
@@ -455,6 +482,11 @@ tags:
 # ════════════════════════════════════════════════════
 # ITEM 6: Garlic Bread — Starters — $4.00
 # ════════════════════════════════════════════════════
+- scrollUntilVisible:
+    element: "Add Item"
+    direction: UP
+    timeout: 5000
+
 - tapOn:
     text: "Add Item"
 
@@ -523,8 +555,9 @@ tags:
     notVisible: "Create Item"
     timeout: 8000
 
-- extendedWaitUntil:
-    visible: "Garlic Bread"
+- scrollUntilVisible:
+    element: "Garlic Bread"
+    direction: DOWN
     timeout: 10000
 
 - assertVisible: "Garlic Bread"
@@ -532,6 +565,11 @@ tags:
 - takeScreenshot: "qa_02_PASS_garlic_bread_created"
 
 # ── FINAL QA: Verify all 6 items exist ───────────────
+# With only 6 items (no mock data), all should be visible without scrolling
+- scrollUntilVisible:
+    element: "Latte"
+    direction: UP
+    timeout: 5000
 - assertVisible: "Latte"
 - assertVisible: "Cappuccino"
 - assertVisible: "Beef Burger"

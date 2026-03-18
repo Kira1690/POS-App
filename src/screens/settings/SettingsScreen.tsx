@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Alert, ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useAuthStatus } from '@/hooks/auth/useAuthStatus';
 import {
   RestaurantProfileSettings,
   UserManagementSettings,
@@ -40,6 +41,7 @@ export default function SettingsScreen() {
   // Theme hook FIRST (REQUIRED per CLAUDE.md)
   const { theme, isDark } = useTheme();
   const { isPhone, isSmallTablet, isPortrait } = useResponsive();
+  const { isManagementLevel, canManageUsers, canAccessKitchen } = useAuthStatus();
   // Small tablets use phone layout — sidebar takes too much space on 600-800dp screens
   const usePhoneLayout = isPhone || isSmallTablet;
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>('restaurant_profile');
@@ -127,6 +129,36 @@ export default function SettingsScreen() {
       iconBackground: theme.colors.onSurfaceVariant,
     },
   ];
+
+  // RBAC: Per-category access rules
+  const categoryAccessMap: Record<string, boolean> = useMemo(() => ({
+    restaurant_profile: canManageUsers,   // admin/superadmin
+    user_management: canManageUsers,      // admin/superadmin
+    device_hardware: isManagementLevel,   // manager+
+    payment_config: canManageUsers,       // admin/superadmin
+    trx_payment: isManagementLevel,       // manager+
+    table_management: isManagementLevel,  // manager+
+    menu_management: isManagementLevel,   // manager+
+    kitchen_management: canAccessKitchen, // kitchen_staff + manager+
+    printer_management: isManagementLevel,// manager+
+    integrations: canManageUsers,         // admin/superadmin
+    security_backup: canManageUsers,      // admin/superadmin
+    system_logs: canManageUsers,          // admin/superadmin
+    help_support: true,                   // all roles
+  }), [isManagementLevel, canManageUsers, canAccessKitchen]);
+
+  const filteredCategories = useMemo(
+    () => SETTINGS_CATEGORIES.filter(cat => categoryAccessMap[cat.id] !== false),
+    [SETTINGS_CATEGORIES, categoryAccessMap]
+  );
+
+  const filteredGroups = useMemo(
+    () => SETTINGS_GROUPS.map(group => ({
+      ...group,
+      ids: group.ids.filter(id => categoryAccessMap[id] !== false),
+    })).filter(group => group.ids.length > 0),
+    [categoryAccessMap]
+  );
 
   // INTERACTION HANDLERS
   const handleCategoryChange = (category: SettingsCategory) => {
@@ -230,7 +262,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const sidebarItems: AppleSidebarItem[] = SETTINGS_CATEGORIES.map(category => ({
+  const sidebarItems: AppleSidebarItem[] = filteredCategories.map(category => ({
     ...category,
     selected: activeCategory === category.id,
     onPress: () => handleCategoryChange(category.id as SettingsCategory),
@@ -257,7 +289,7 @@ export default function SettingsScreen() {
     </View>
   );
 
-  const currentCategoryLabel = SETTINGS_CATEGORIES.find(
+  const currentCategoryLabel = filteredCategories.find(
     c => c.id === activeCategory
   )?.label || 'Settings';
 
@@ -300,14 +332,14 @@ export default function SettingsScreen() {
       style={[styles.phoneLayout, { backgroundColor: isDark ? theme.colors.layer0 : theme.colors.background }]}
       showsVerticalScrollIndicator={false}
     >
-      {SETTINGS_GROUPS.map((group) => {
+      {filteredGroups.map((group) => {
         const phoneIds = group.ids.filter(id => id !== 'table_management');
         if (phoneIds.length === 0) return null;
         return (
         <View key={group.label}>
           <Text style={styles.groupHeader}>{group.label}</Text>
           {phoneIds.map((id, idx) => {
-            const item = SETTINGS_CATEGORIES.find(c => c.id === id);
+            const item = filteredCategories.find(c => c.id === id);
             if (!item) return null;
             const isLast = idx === phoneIds.length - 1;
             return (
@@ -317,6 +349,7 @@ export default function SettingsScreen() {
                   onPress={() => handleCategoryChange(id as SettingsCategory)}
                   activeOpacity={0.7}
                   accessibilityLabel={item.label}
+                  testID={`settings-nav-${id}`}
                 >
                   <View style={[styles.iconBg, { backgroundColor: item.iconBackground }]}>
                     {item.icon}

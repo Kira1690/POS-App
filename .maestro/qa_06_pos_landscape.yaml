@@ -1,13 +1,12 @@
 appId: com.ajinkya123.POSReactNativeApp
-name: "QA 06: POS Order in Landscape Mode — Table B-1"
+name: "QA 06: POS Order — Table B-1 (Beef Burger + Garlic Bread)"
 tags:
   - qa
   - pos
-  - landscape
 ---
 
 # ─────────────────────────────────────────────────────
-#  QA Phase 6 — POS Order in Landscape mode
+#  QA Phase 6 — POS Order from Table B-1
 #
 #  Test scenario (different table + items from portrait test):
 #    Table: B-1 (Bar Seating — always first in selector, no scroll needed)
@@ -17,13 +16,10 @@ tags:
 #
 #  Prerequisites:
 #    - qa_05 completed (first order sent from T-1)
-#    - Emulator rotated to landscape BEFORE running:
-#        adb shell settings put system accelerometer_rotation 0
-#        adb shell settings put system user_rotation 1
 #
 #  NOTE: Tables sorted alphabetically in selector: B < P < T < VIP
-#        T-2 is at position 17 (after T-10, T-11, T-12) — too deep to scroll.
 #        B-1 is always at position 0 — reliably tappable.
+#        UI is fully responsive — no rotation needed.
 #
 #  QA Assertions:
 #    ✓ Protein modifier modal opens for Beef Burger
@@ -66,6 +62,16 @@ tags:
 # Select B-1 (always first in alphabetical list — no scrolling needed)
 - tapOn:
     text: "B-1"
+
+# Handle GuestCountModal if B-1 is free
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
 
 - extendedWaitUntil:
     visible: "Mains"

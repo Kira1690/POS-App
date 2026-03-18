@@ -170,21 +170,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     }
   }, [authServiceToUse, state.isAuthenticated, initializeAuth]);
 
-  // Role-based utilities
+  // ── Role mapping: Auth Service roles → POS operational roles ──
+  // Auth Service uses: super_admin, system_admin, store_admin, user
+  // POS Services use: restaurant_staff, kitchen_staff, manager, admin, superadmin
+  // This mapping bridges the two systems so role checks work with real server accounts.
+  const mapToOperationalRole = useCallback((authRole: string | undefined): UserRole => {
+    switch (authRole) {
+      case 'super_admin':
+      case 'superadmin':
+        return UserRole.SUPERADMIN;
+      case 'system_admin':
+      case 'admin':
+        return UserRole.ADMIN;
+      case 'store_admin':
+      case 'manager':
+        return UserRole.MANAGER;
+      case 'kitchen_staff':
+        return UserRole.KITCHEN_STAFF;
+      case 'restaurant_staff':
+      case 'user':
+      default:
+        return UserRole.RESTAURANT_STAFF;
+    }
+  }, []);
+
+  const effectiveRole = useMemo(() =>
+    mapToOperationalRole(state.user?.role as string | undefined),
+    [state.user?.role, mapToOperationalRole]
+  );
+
+  // Role-based utilities (use mapped operational role)
   const hasRole = useCallback((role: UserRole): boolean => {
-    return state.user?.role === role;
-  }, [state.user]);
+    return effectiveRole === role;
+  }, [effectiveRole]);
 
   const hasAnyRole = useCallback((roles: UserRole[]): boolean => {
-    return state.user ? roles.includes(state.user.role) : false;
-  }, [state.user]);
+    return roles.includes(effectiveRole);
+  }, [effectiveRole]);
 
   const canAccessResource = useCallback((requiredRoles: UserRole[]): boolean => {
     if (!state.isAuthenticated || !state.user) {
       return false;
     }
-    return requiredRoles.includes(state.user.role);
-  }, [state.isAuthenticated, state.user]);
+    return requiredRoles.includes(effectiveRole);
+  }, [state.isAuthenticated, state.user, effectiveRole]);
 
   const getSessionInfo = useCallback(() => {
     const timeUntilExpiry = state.sessionExpiresAt 

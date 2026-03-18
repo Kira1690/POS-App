@@ -39,6 +39,31 @@ class CustomerStorageService {
     }
   }
 
+  async createLocal(customer: Record<string, unknown>): Promise<void> {
+    const id = String(customer['id'] ?? `local_${Date.now()}`);
+    customer['id'] = id;
+    await this.ensureTable();
+    await this.db.runAsync(
+      `INSERT INTO customers_cache (id, data, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at;`,
+      [id, JSON.stringify(customer), new Date().toISOString()]
+    );
+  }
+
+  async updateLocal(id: string, updates: Record<string, unknown>): Promise<void> {
+    await this.ensureTable();
+    const existing = await this.db.getFirstAsync<{ data: string }>(
+      'SELECT data FROM customers_cache WHERE id = ?', [id]
+    );
+    if (!existing) return;
+    const current = JSON.parse(existing.data) as Record<string, unknown>;
+    const merged = { ...current, ...updates };
+    await this.db.runAsync(
+      `UPDATE customers_cache SET data = ?, updated_at = ? WHERE id = ?`,
+      [JSON.stringify(merged), new Date().toISOString(), id]
+    );
+  }
+
   async getAll(): Promise<unknown[]> {
     await this.ensureTable();
     const rows = await this.db.getAllAsync<{ data: string }>('SELECT data FROM customers_cache;');

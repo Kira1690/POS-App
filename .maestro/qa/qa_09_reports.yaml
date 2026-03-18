@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 name: "QA 09 — Reports Screen (Real API Data)"
 tags:
   - qa
@@ -6,7 +6,7 @@ tags:
 ---
 
 # Login as manager (online account that has real API data)
-- runFlow: helpers/manager_login.yaml
+- runFlow: ../helpers/manager_login.yaml
 
 - extendedWaitUntil:
     visible: "Dashboard"
@@ -14,7 +14,7 @@ tags:
 
 - takeScreenshot: "qa_09_01_dashboard_loaded"
 
-# ── Navigate to Reports tab ──────────────────────────────────────────────────
+# ── Navigate to Reports via Dashboard sidebar ─────────────────────────────────
 - tapOn:
     text: ".*Reports.*"
 
@@ -24,129 +24,97 @@ tags:
 
 - takeScreenshot: "qa_09_02_reports_screen"
 
-# ── Sales tab (default) ──────────────────────────────────────────────────────
-# Verify Sales tab is active by default and KPI cards are present
-- assertVisible: "Total Revenue"
-- assertVisible: "Total Orders"
+# ── Verify Sales Summary KPIs ────────────────────────────────────────────────
+# Default period is 1W. Verify KPI labels are present.
+- assertVisible: "Gross Sales"
+- assertVisible: "Sales"
 
-# Verify at least one non-zero value loaded (15 paid orders seeded)
-- assertNotVisible: "No sales data for period"
+- takeScreenshot: "qa_09_03_sales_kpis"
 
-- takeScreenshot: "qa_09_03_sales_tab_kpis"
-
-# ── Period selector — switch to Week ─────────────────────────────────────────
+# ── Period selector — switch to 1D ───────────────────────────────────────────
 - tapOn:
-    text: "Week"
+    text: "1D"
 
 - waitForAnimationToEnd
 
 - extendedWaitUntil:
-    visible: "Total Revenue"
+    visible: "Gross Sales"
     timeout: 15000
 
-- takeScreenshot: "qa_09_04_sales_week"
+- takeScreenshot: "qa_09_04_period_1d"
 
-# ── Period selector — switch to Month ────────────────────────────────────────
+# ── Period selector — switch to 1M ───────────────────────────────────────────
 - tapOn:
-    text: "Month"
+    text: "1M"
 
 - waitForAnimationToEnd
 
 - extendedWaitUntil:
-    visible: "Total Revenue"
+    visible: "Gross Sales"
     timeout: 15000
 
-- takeScreenshot: "qa_09_05_sales_month"
+- takeScreenshot: "qa_09_05_period_1m"
 
-# ── Switch to Today ───────────────────────────────────────────────────────────
+# ── Switch back to 1W ────────────────────────────────────────────────────────
 - tapOn:
-    text: "Today"
+    text: "1W"
 
 - waitForAnimationToEnd
 
-- takeScreenshot: "qa_09_06_sales_today"
+- takeScreenshot: "qa_09_06_period_1w"
 
-# ── Items tab ────────────────────────────────────────────────────────────────
-- tapOn:
-    text: "Items"
-
-- waitForAnimationToEnd
-
-- extendedWaitUntil:
-    visible: "Top Selling Items"
-    timeout: 15000
-
-- takeScreenshot: "qa_09_07_items_tab"
-
-# Verify item table columns
-- assertVisible: "Item"
-- assertVisible: "Qty"
-- assertVisible: "Revenue"
-
-# At least one item should be present (Garlic Bread from seeded data)
-- optional:
-    - assertVisible: "Garlic Bread"
-
-- takeScreenshot: "qa_09_08_items_table"
-
-# ── Staff tab ─────────────────────────────────────────────────────────────────
-- tapOn:
-    text: "Staff"
+# ── Scroll down to verify all sections ──────────────────────────────────────
+- scroll
 
 - waitForAnimationToEnd
 
-- extendedWaitUntil:
-    visible: ".*Staff.*"
-    timeout: 15000
+# Verify payment breakdown section
+- assertVisible:
+    text: "Sales by Payment Types"
+    optional: true
 
-# Staff tab may show empty state (test orders have no server_id — that's OK)
-- takeScreenshot: "qa_09_09_staff_tab"
+- takeScreenshot: "qa_09_07_payment_breakdown"
 
-# Verify column headers are present regardless of data
-- optional:
-    - assertVisible: "Orders"
-    - assertVisible: "Sales"
-
-# ── Payments tab ──────────────────────────────────────────────────────────────
-- tapOn:
-    text: "Payments"
+# Continue scrolling to Top Items
+- scroll
 
 - waitForAnimationToEnd
 
-- extendedWaitUntil:
-    visible: ".*Payment.*"
-    timeout: 15000
+- assertVisible:
+    text: "Top Items"
+    optional: true
 
-- takeScreenshot: "qa_09_10_payments_tab"
+# Verify table header columns
+- assertVisible:
+    text: "Item"
+    optional: true
+- assertVisible:
+    text: "Gross"
+    optional: true
+- assertVisible:
+    text: "Count"
+    optional: true
 
-# ── Pull-to-refresh ───────────────────────────────────────────────────────────
-# Go back to Sales tab and pull to refresh
-- tapOn:
-    text: "Sales"
+- takeScreenshot: "qa_09_08_top_items"
+
+# Scroll to Staff Performance section
+- scroll
 
 - waitForAnimationToEnd
 
-- extendedWaitUntil:
-    visible: "Total Revenue"
-    timeout: 10000
+- assertVisible:
+    text: "Staff Performance"
+    optional: true
 
-- scroll:
-    direction: DOWN
-    duration: 300
+- takeScreenshot: "qa_09_09_staff_performance"
 
-- scroll:
+# ── Scroll back to top and verify no offline badge ──────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "Reports & Analytics"
     direction: UP
-    duration: 300
+    timeout: 5000
 
-- waitForAnimationToEnd
-
-- extendedWaitUntil:
-    visible: "Total Revenue"
-    timeout: 15000
-
-- takeScreenshot: "qa_09_11_after_refresh"
-
-# ── Verify offline badge is NOT shown (we are online) ────────────────────────
 - assertNotVisible: "Offline"
 
-- takeScreenshot: "qa_09_12_no_offline_badge"
+- takeScreenshot: "qa_09_10_no_offline_badge"

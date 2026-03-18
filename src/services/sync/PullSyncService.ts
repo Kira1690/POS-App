@@ -9,9 +9,11 @@ import {
   tableStorageService,
   syncQueueService,
 } from '@/services/storage';
+import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
 import { customerStorageService } from '@/services/storage/CustomerStorageService';
 import { menuEventEmitter } from '@/services/menu/MenuEventEmitter';
 import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
+import { mapServerOrderToUnified } from './mappers';
 import { PullRequestBody, PullResponseData } from './types';
 
 const PAGE_SIZE = 100;
@@ -183,16 +185,57 @@ export class PullSyncService {
   async pullOrders(restaurantId: string): Promise<void> {
     try {
       const lastSync = await this.getLastSync();
-      await apiClient.post<PullResponseData>(
+      const response = await apiClient.post<PullResponseData>(
         '/api/orders/sync/pull',
         this.buildBody(restaurantId, ['orders'], lastSync),
         { silent: true } as any
       );
-      // Order pull results are handled by the server; local orders are source of truth
+
+      const outerData = response.data?.data as Record<string, unknown> | undefined;
+      const data = (outerData?.['data'] ?? outerData) as Record<string, unknown> | undefined;
+      if (!data) return;
+
+      await this.applyOrderChanges(data);
+
+      orderEventEmitter.emit('ORDER_SYNC_COMPLETE', '', {});
     } catch (error) {
       if (__DEV__) {
         console.error('[PullSyncService] pullOrders failed:', error);
       }
+    }
+  }
+
+  private async applyOrderChanges(data: Record<string, unknown>): Promise<void> {
+    const orders = data['orders'] as {
+      created?: Record<string, unknown>[];
+      updated?: Record<string, unknown>[];
+      deleted?: Array<{ id: string }>;
+    } | undefined;
+    if (!orders) return;
+
+    const toUpsert = [...(orders.created || []), ...(orders.updated || [])];
+
+    for (const raw of toUpsert) {
+      const mapped = mapServerOrderToUnified(raw);
+
+      // Conflict resolution: local pending changes win if newer
+      const local = await unifiedOrderStorageService.getOrder(mapped.id);
+      if (local && local.pendingSync) {
+        const localTime = new Date(local.updatedAt).getTime();
+        const serverTime = new Date(mapped.updatedAt).getTime();
+        if (localTime > serverTime) {
+          continue; // local wins
+        }
+      }
+
+      await unifiedOrderStorageService.saveOrder(mapped);
+    }
+
+    for (const item of orders.deleted || []) {
+      // Don't delete if local has pending changes
+      const local = await unifiedOrderStorageService.getOrder(item.id);
+      if (local?.pendingSync) continue;
+      await unifiedOrderStorageService.deleteOrder(item.id);
     }
   }
 }

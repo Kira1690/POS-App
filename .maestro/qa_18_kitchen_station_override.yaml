@@ -70,7 +70,7 @@ tags:
     id: "tab-nav-settings"
 - extendedWaitUntil:
     visible:
-      id: "settings-nav-restaurant_profile"
+      id: "settings-nav-menu_management"
     timeout: 10000
 # tapOn auto-scrolls the sidebar to find the item
 - tapOn:
@@ -410,6 +410,17 @@ tags:
     timeout: 10000
 - tapOn:
     text: "B-1"
+
+# Handle GuestCountModal if B-1 is free
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
 - extendedWaitUntil:
     visible: "Starters"
     timeout: 10000

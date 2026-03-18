@@ -1,0 +1,229 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "QA 39: Update Order via ExistingOrderModal — Edit Mode Opens with Existing Items"
+tags:
+  - qa
+  - orders
+  - edit
+---
+
+# ─────────────────────────────────────────────────────
+#  QA Phase 39 — Update Order from Table Selection
+#
+#  Verifies that when user taps NEW ORDER → selects
+#  an occupied table → "Update Order" button, the POS
+#  screen opens in EDIT MODE (not blank) showing the
+#  existing items in "Already Ordered" section.
+#
+#  Flow:
+#    1. Create a B-1 order with Fish Fry
+#    2. Go back to Orders → tap +NEW ORDER → tap B-1
+#    3. ExistingOrderModal appears
+#    4. Tap "Update Order" (btn-existing-update-order)
+#    5. Assert POS screen shows section-already-ordered
+#    6. Assert "Fish Fry" visible in existing items
+#    7. Add "Coffee" to cart
+#    8. Tap "Update Order" (btn-add-to-order)
+#    9. Verify order now has both items
+# ─────────────────────────────────────────────────────
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── SETUP: Clear + create B-1 CONFIRMED order ────────────────────────────────
+
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# Create a B-1 order with Fish Fry
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle GuestCountModal
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+
+# Handle modifier modal if shown
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Wait for Order Management
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_39_step1_b1_order_created"
+
+# ── STEP 1: Tap +NEW ORDER and select occupied B-1 ──────────────────────────
+
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# ── STEP 2: ExistingOrderModal should appear ─────────────────────────────────
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-existing-update-order"
+    timeout: 10000
+
+- takeScreenshot: "qa_39_step2_existing_order_modal"
+
+# ── STEP 3: Tap "Update Order" ──────────────────────────────────────────────
+
+- tapOn:
+    id: "btn-existing-update-order"
+- waitForAnimationToEnd
+
+# ── STEP 4: Assert POS opens in EDIT MODE with existing items ────────────────
+
+- extendedWaitUntil:
+    visible:
+      id: "section-already-ordered"
+    timeout: 10000
+
+- takeScreenshot: "qa_39_step3_edit_mode_with_existing_items"
+
+# Fish Fry should be visible in already-ordered section
+- assertVisible:
+    text: "Fish Fry"
+
+# ── STEP 5: Add Coffee to the order ─────────────────────────────────────────
+
+- extendedWaitUntil:
+    visible:
+      text: "Coffee"
+    timeout: 8000
+- tapOn:
+    text: "Coffee"
+- waitForAnimationToEnd
+
+# Handle modifier modal if shown
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Verify "Update Order" button visible (edit mode)
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-to-order"
+    timeout: 8000
+
+- takeScreenshot: "qa_39_step4_coffee_in_cart"
+
+# ── STEP 6: Tap "Update Order" ──────────────────────────────────────────────
+
+- tapOn:
+    id: "btn-add-to-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Wait for navigation back to Order Management
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "qa_39_step5_order_updated"
+
+# ── STEP 7: Verify order shows 2 items — open OrderDetails ──────────────────
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-order-view"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-add-items-to-order"
+    timeout: 10000
+
+- assertVisible:
+    text: "Fish Fry"
+- assertVisible:
+    text: "Coffee"
+
+- takeScreenshot: "qa_39_step6_both_items_in_order"
+
+# ── STEP 8: Verify kitchen has both items ────────────────────────────────────
+
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 10000
+- assertVisible:
+    text: "Coffee"
+
+- takeScreenshot: "qa_39_PASS_update_via_modal_both_items_in_kitchen"

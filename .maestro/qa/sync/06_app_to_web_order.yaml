@@ -7,6 +7,7 @@ name: "SY-09/SY-10 — App→Web Order Push Sync"
 # - Prod seed data loaded (Prod items + tables from 00_prod_seed.yaml)
 # - App logged in as qa-prod-manager
 # - SyncEngine running (10s push interval)
+# - WS broadcast makes this instant — waitForAnimationToEnd is just for UI settling
 #
 # Usage: maestro test POS-App/.maestro/qa/sync/06_app_to_web_order.yaml
 
@@ -17,21 +18,24 @@ name: "SY-09/SY-10 — App→Web Order Push Sync"
 
 # Navigate to Manager Login from Welcome screen
 - tapOn:
-    text: ".*MANAGER.*"
-    optional: true
+    id: "btn-welcome-manager-login"
 - waitForAnimationToEnd
 
 # Login
 - tapOn:
-    text: "Email"
-    optional: true
+    id: "email-input"
 - inputText: "qa-prod-manager@blueplate.io"
 - tapOn:
-    text: "Password"
-    optional: true
+    id: "password-input"
 - inputText: "QAProdMgr2026!"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
 - tapOn:
-    text: ".*SIGN.*IN.*|.*Sign.*In.*|.*Login.*|.*LOGIN.*"
+    id: "btn-manager-sign-in"
 - waitForAnimationToEnd
 - takeScreenshot: "sync_order_00_login"
 
@@ -78,7 +82,7 @@ name: "SY-09/SY-10 — App→Web Order Push Sync"
 - waitForAnimationToEnd
 - takeScreenshot: "sync_order_03_order_sent"
 
-# Wait 12s for push sync (interval = 10s)
+# WS broadcast makes this instant — waitForAnimationToEnd is just for UI settling
 - tapOn:
     text: "Orders|POS"
     optional: true

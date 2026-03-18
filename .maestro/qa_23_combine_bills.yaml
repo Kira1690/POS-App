@@ -98,6 +98,16 @@ tags:
           text: "Cancel Old Order"
       - waitForAnimationToEnd
 
+# Handle GuestCountModal if T-1 is free
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
 # POS screen for T-1 — add Spring Rolls (no modifier)
 - extendedWaitUntil:
     visible:

@@ -1,0 +1,101 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "RBAC 03: Manager sees all 4 tabs"
+tags:
+  - rbac
+  - manager
+---
+
+# ─────────────────────────────────────────────────────
+#  TC-28: Manager tab visibility + full access
+#
+#  Expected:
+#    ✓ Dashboard tab visible
+#    ✓ Orders tab visible (initial tab)
+#    ✓ Kitchen tab visible
+#    ✓ Settings tab visible
+#    ✓ Can navigate to all 4 tabs
+# ─────────────────────────────────────────────────────
+
+# Fresh manager login (clearState to remove any prior session)
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Navigate to Manager Login
+- tapOn:
+    id: "btn-welcome-manager-login"
+- waitForAnimationToEnd
+
+# Wait for login form
+- extendedWaitUntil:
+    visible: "Email Address"
+    timeout: 15000
+
+# Login as manager
+- tapOn:
+    id: "email-input"
+- inputText: "manager@foodcorner.com"
+- tapOn:
+    id: "password-input"
+- inputText: "manager123"
+- hideKeyboard
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+
+# Wait for app to load — manager sees all tabs
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 30000
+- waitForAnimationToEnd
+
+# ── Assert: All 4 tabs are visible ──
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-orders"
+- assertVisible:
+    id: "tab-nav-kitchen"
+- assertVisible:
+    id: "tab-nav-settings"
+- takeScreenshot: "rbac_03_step1_all_tabs_visible"
+
+# ── Navigate to Dashboard ──
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*Dashboard.*"
+- takeScreenshot: "rbac_03_step2_dashboard"
+
+# ── Navigate to Orders ──
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*Order Management.*"
+- takeScreenshot: "rbac_03_step3_orders"
+
+# ── Navigate to Kitchen ──
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- takeScreenshot: "rbac_03_step4_kitchen"
+
+# ── Navigate to Settings ──
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*Settings.*"
+- takeScreenshot: "rbac_03_step5_settings"

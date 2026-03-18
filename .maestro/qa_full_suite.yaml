@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: com.ajinkya123.POSReactNativeApp
 name: "QA Full Suite — Menu Setup + POS Orders + Kitchen + Billing + Payment"
 tags:
   - qa
@@ -20,13 +20,10 @@ tags:
 #
 #  Prerequisites (run ONCE before suite):
 #    1. Clear app data:
-#         adb shell pm clear host.exp.exponent
-#    2. Start Expo server:
+#         adb shell pm clear com.ajinkya123.POSReactNativeApp
+#    2. Start Metro bundler:
 #         bun expo start --clear
-#    3. Enable emulator auto-rotate:
-#         adb shell settings put system accelerometer_rotation 1
-#         adb shell settings put system user_rotation 0
-#    4. Launch Expo Go on emulator
+#    3. UI is fully responsive — no rotation needed
 #
 #  Phases:
 #    QA 01 — Add 3 categories: Drinks, Mains, Starters
@@ -34,12 +31,7 @@ tags:
 #    QA 03 — Add 2 modifier groups: Cup Size, Protein
 #    QA 04 — Assign modifiers to items
 #    QA 05 — POS order with modifier in portrait (Table T-1, Latte+Large)
-#
-#    ⚠️  MANUAL STEP before QA 06:
-#         Rotate emulator to landscape:
-#           adb shell settings put system user_rotation 1
-#
-#    QA 06 — POS order in landscape (Table B-1, Beef Burger+Extra + Garlic Bread)
+#    QA 06 — POS order from Table B-1 (Beef Burger+Extra + Garlic Bread)
 #    QA 07 — Kitchen: CONFIRMED → PREPARING → READY → SERVED (self-contained)
 #    QA 08 — Full Cash Payment: SERVED → Pay → Cash → PAID
 #    QA 09 — Equal Split Payment: 2 guests, each pay cash → PAID
@@ -80,21 +72,7 @@ tags:
 - runFlow: qa_03_add_modifiers.yaml
 - runFlow: qa_04_assign_modifiers.yaml
 - runFlow: qa_05_pos_portrait.yaml
-
-# ─────────────────────────────────────────────────────
-#  MANUAL STEP REQUIRED before qa_06:
-#  Rotate emulator to landscape:
-#    adb shell settings put system user_rotation 1
-#  OR press Ctrl+F11 in Android Studio emulator
-# ─────────────────────────────────────────────────────
-
 - runFlow: qa_06_pos_landscape.yaml
-
-# ─────────────────────────────────────────────────────
-#  Rotate back to portrait for QA 07-10:
-#    adb shell settings put system user_rotation 0
-# ─────────────────────────────────────────────────────
-
 - runFlow: qa_07_kitchen_ops.yaml
 - runFlow: qa_08_cash_payment.yaml
 - runFlow: qa_09_split_equal.yaml

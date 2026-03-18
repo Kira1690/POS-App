@@ -1,0 +1,82 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Helper: Staff Login — EMP001 (preserves app data)"
+---
+
+# Logs in as Restaurant Staff WITHOUT clearing app state.
+# Use when menu data must persist from prior test setup (qa_01/qa_02).
+# Credentials: EMP001 / staff123 (John Doe - Restaurant Staff)
+
+- launchApp
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# If already logged in, we need to get to Welcome screen.
+# Clear any stale modals first.
+- runFlow:
+    when:
+      visible:
+        id: "btn-table-modal-close"
+    commands:
+      - tapOn:
+          id: "btn-table-modal-close"
+      - waitForAnimationToEnd
+
+# If logged in as another role (sees tab bar), force logout
+- runFlow:
+    when:
+      visible:
+        id: "tab-nav-dashboard"
+    commands:
+      # Navigate to settings if available
+      - runFlow:
+          when:
+            visible:
+              id: "tab-nav-settings"
+          commands:
+            - tapOn:
+                id: "tab-nav-settings"
+            - waitForAnimationToEnd
+      # Force clear by relaunching with clearState
+      - launchApp:
+          clearState: true
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+# Now on Welcome screen — navigate to Staff Login
+- runFlow:
+    when:
+      visible: "Welcome to FoodPOS"
+    commands:
+      - tapOn:
+          text: ".*Continue as Staff Member.*"
+      - waitForAnimationToEnd
+
+# Wait for staff login screen
+- extendedWaitUntil:
+    visible: "Staff Login"
+    timeout: 15000
+
+# Fill in Employee ID
+- tapOn:
+    id: "employee-id-input"
+- inputText: "EMP001"
+
+# Fill in Password
+- tapOn:
+    id: "password-input"
+- inputText: "staff123"
+- hideKeyboard
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap the blue Clock In button
+- tapOn:
+    point: "50%, 67%"
+
+# Wait for app to fully load
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 30000
+- waitForAnimationToEnd

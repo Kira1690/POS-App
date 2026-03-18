@@ -1,0 +1,243 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "RBAC Functional 01: Waiter full order workflow"
+tags:
+  - rbac
+  - functional
+  - waiter
+---
+
+# ─────────────────────────────────────────────────────
+#  Full waiter workflow — requires menu data pre-seeded
+#  Run AFTER qa_01 + qa_02 (which seed categories + items)
+#
+#  Tests:
+#    ✓ Tab isolation (Dashboard + Orders only)
+#    ✓ Can create order, add items, send to kitchen
+#    ✓ Discount button hidden on POS
+#    ✓ Order appears in list (own-order filter)
+#    ✓ In order details: no Cancel, no Add Items
+# ─────────────────────────────────────────────────────
+
+# Launch WITHOUT clearState — preserves menu data from qa_01/qa_02
+- launchApp
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Dismiss any stale modals / dev overlays
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss dev overlay
+- tapOn:
+    point: "96%, 96%"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Check if already logged in — if so, need fresh waiter login
+# If tab bar visible, clear and re-login as waiter
+- runFlow:
+    when:
+      visible:
+        id: "tab-nav-dashboard"
+    commands:
+      - launchApp:
+          clearKeychain: true
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+# If still logged in after clearKeychain, we need full clear
+- runFlow:
+    when:
+      visible:
+        id: "tab-nav-dashboard"
+    commands:
+      - launchApp:
+          clearState: true
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+# On welcome screen — navigate to Staff Login
+- runFlow:
+    when:
+      visible: "Welcome to FoodPOS"
+    commands:
+      - tapOn:
+          text: ".*(?i)continue as staff member.*"
+      - waitForAnimationToEnd
+
+# If directly on Staff Login (from clearKeychain going to welcome)
+- runFlow:
+    when:
+      visible:
+        text: ".*(?i)continue as staff.*"
+    commands:
+      - tapOn:
+          text: ".*(?i)continue as staff.*"
+      - waitForAnimationToEnd
+
+# Wait for staff login form
+- extendedWaitUntil:
+    visible: "Staff Login"
+    timeout: 15000
+
+# Login as waiter
+- tapOn:
+    id: "employee-id-input"
+- inputText: "EMP001"
+- tapOn:
+    id: "password-input"
+- inputText: "staff123"
+- hideKeyboard
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap Clock In
+- tapOn:
+    point: "50%, 67%"
+
+# Wait for app to load
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 30000
+- waitForAnimationToEnd
+
+# ══════ ASSERTIONS START ══════
+
+# ── 1. Tab isolation ──
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-orders"
+- assertNotVisible:
+    id: "tab-nav-kitchen"
+- assertNotVisible:
+    id: "tab-nav-settings"
+- takeScreenshot: "rbac_func01_step1_waiter_tabs"
+
+# ── 2. Navigate to Orders ──
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+# ── 3. Create a new order ──
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+# Table selection
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-modal-close"
+    timeout: 10000
+
+- tapOn:
+    text: "T-1"
+    optional: true
+- waitForAnimationToEnd
+
+# Handle guest count
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+# Handle existing order
+- runFlow:
+    when:
+      visible:
+        id: "btn-existing-update-order"
+    commands:
+      - tapOn:
+          id: "btn-existing-update-order"
+      - waitForAnimationToEnd
+
+# Wait for POS screen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 15000
+- waitForAnimationToEnd
+
+# ── 4. Verify Discount hidden ──
+- assertNotVisible:
+    text: "Discount"
+- takeScreenshot: "rbac_func01_step2_no_discount"
+
+# ── 5. Add menu item (Latte from qa_02) ──
+- tapOn:
+    text: ".*Latte.*"
+    optional: true
+- waitForAnimationToEnd
+
+# Handle modifier modal (Latte has Cup Size from qa_03/04)
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# If Latte wasn't found, try Spring Rolls (no modifier)
+- tapOn:
+    text: ".*Spring Rolls.*"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "rbac_func01_step3_items_in_cart"
+
+# ── 6. Send to Kitchen ──
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "rbac_func01_step4_sent_to_kitchen"
+
+# ── 7. Verify order appears in list ──
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- assertVisible:
+    text: ".*ORD-.*"
+- takeScreenshot: "rbac_func01_step5_order_in_list"
+
+# ── 8. Open order details — verify no Cancel, no Add Items ──
+- tapOn:
+    text: ".*ORD-.*"
+    index: 0
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-print-kot"
+    timeout: 10000
+
+- assertNotVisible:
+    id: "btn-cancel-order"
+- assertNotVisible:
+    id: "btn-add-items-to-order"
+- assertVisible:
+    id: "btn-print-kot"
+- takeScreenshot: "rbac_func01_step6_no_cancel_no_edit"

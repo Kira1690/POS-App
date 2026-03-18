@@ -12,6 +12,7 @@ import { RestaurantProfile } from '@/types/settings.types';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/context/auth';
 import { Icon } from '@/components/common';
+import { billingApiClient } from '@/services/billing/BillingApiClient';
 
 interface RestaurantProfileSettingsProps {
   onChangesDetected: (hasChanges: boolean) => void;
@@ -80,6 +81,7 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const userEdited = useRef(false);
+  const [billingConfig, setBillingConfig] = useState<{ taxRate: number; ccPercentage: number; taxName: string } | null>(null);
 
   useEffect(() => {
     const restaurant = authState.restaurant;
@@ -88,6 +90,13 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
       const json = JSON.stringify(profileData);
       setProfile(profileData);
       setOriginalProfileJson(json);
+
+      // Fetch billing config from backend
+      billingApiClient.getStoreConfig(restaurant.id).then((config) => {
+        if (config.taxRate > 0 || config.ccPercentage > 0) {
+          setBillingConfig(config);
+        }
+      });
     }
     setLoading(false);
   }, []);
@@ -480,18 +489,40 @@ export default function RestaurantProfileSettings({ onChangesDetected }: Restaur
           </View>
         </View>
 
-        <View style={styles.formRow}>
-          <View style={[styles.formGroup, styles.formGroupQuarter]}>
-            <Text style={styles.label}>Sales Tax Rate (%)</Text>
-            <TextInput
-              style={[styles.input, styles.inputCenter]}
-              value={profile.sales_tax_rate.toString()}
-              onChangeText={(value) => updateProfile('sales_tax_rate', parseFloat(value) || 0)}
-              placeholder="8.25"
-              keyboardType="decimal-pad"
-            />
+        {billingConfig ? (
+          <View style={styles.formRow}>
+            <View style={[styles.formGroup, styles.formGroupHalf]}>
+              <Text style={styles.label}>{billingConfig.taxName} Rate</Text>
+              <View style={[styles.selectInput, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Text style={[styles.selectText, { fontWeight: '600' }]}>{billingConfig.taxRate.toFixed(2)}%</Text>
+              </View>
+            </View>
+            <View style={[styles.formGroup, styles.formGroupHalf]}>
+              <Text style={styles.label}>CC Surcharge</Text>
+              <View style={[styles.selectInput, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Text style={[styles.selectText, { fontWeight: '600' }]}>{billingConfig.ccPercentage.toFixed(2)}%</Text>
+              </View>
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={[styles.label, { fontStyle: 'italic', color: theme.colors.onSurfaceVariant }]}>
+                Configured by administrator
+              </Text>
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.formRow}>
+            <View style={[styles.formGroup, styles.formGroupQuarter]}>
+              <Text style={styles.label}>Sales Tax Rate (%)</Text>
+              <TextInput
+                style={[styles.input, styles.inputCenter]}
+                value={profile.sales_tax_rate.toString()}
+                onChangeText={(value) => updateProfile('sales_tax_rate', parseFloat(value) || 0)}
+                placeholder="8.25"
+                keyboardType="decimal-pad"
+              />
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Operating Hours Section */}

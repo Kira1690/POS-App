@@ -21,6 +21,7 @@ import { spacing } from '@/design-system/theme/spacing';
 import { borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 import { usePrinter } from '@/context/printer/PrinterContext';
+import { useAuthStatus } from '@/hooks/auth/useAuthStatus';
 import type { UnifiedOrder } from '@/types/unified-order.types';
 
 interface OrderDetailsScreenProps {
@@ -67,6 +68,7 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
   }, [order, navigation]);
 
   const { printKOT, printReceipt } = usePrinter();
+  const { isManagementLevel } = useAuthStatus();
 
   const handlePrint = useCallback((type: 'KOT' | 'Receipt') => {
     if (!order) return;
@@ -120,8 +122,8 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
           onStatusUpdate={(orderId, newStatus) => updateOrderStatus(orderId, newStatus as any)}
           loading={isLoadingDetails}
         />
-        {/* Add More Items — visible for active (non-paid, non-cancelled) orders */}
-        {(order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready') && (
+        {/* Add More Items — managers+ only for sent orders */}
+        {isManagementLevel && (order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready') && (
           <TouchableOpacity
             style={[styles.addItemsButton, { backgroundColor: theme.colors.primaryContainer }]}
             onPress={() => navigation?.navigate('POSOrder', { editOrderId: order.id })}
@@ -137,7 +139,7 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
           order={order as any}
           onPrint={handlePrint}
           onPayment={(order.status === 'ready' || order.status === 'served') ? handlePaymentNavigation : undefined}
-          onCancelOrder={(orderId) => cancelOrder(orderId, 'Cancelled by user')}
+          onCancelOrder={isManagementLevel ? (orderId) => cancelOrder(orderId, 'Cancelled by user') : undefined}
           loading={isLoadingDetails}
         />
       </View>

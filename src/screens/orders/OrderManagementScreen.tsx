@@ -31,6 +31,7 @@ import { GuestCountModal } from '@/components/modals/GuestCountModal';
 import { UnifiedOrder as UOrder } from '@/types/unified-order.types';
 import { showToast } from '@/utils/toast';
 import { useAuth } from '@/context/auth';
+import { useAuthStatus } from '@/hooks/auth/useAuthStatus';
 import { usePrinter } from '@/context/printer/PrinterContext';
 
 // APPLE COMPONENT SYSTEM (Advanced Search & Filter Components)
@@ -84,6 +85,15 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
 
   const { state: tableState, selectTable, refreshTables } = useTable();
   const { printKOT } = usePrinter();
+  const { isManagementLevel, user } = useAuthStatus();
+
+  // RBAC: Waiters see only their own orders, managers+ see all
+  const roleFilteredOrders = useMemo(() => {
+    if (isManagementLevel) return filteredOrders;
+    return filteredOrders.filter(order =>
+      order.createdBy === user?.id || order.createdBy === user?.employee_id
+    );
+  }, [filteredOrders, isManagementLevel, user]);
 
   // Compute table occupancy: local active orders take precedence (always up to date),
   // otherwise trust the server status (don't downgrade OCCUPIED → AVAILABLE just because
@@ -219,11 +229,11 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
 
   // Option 1: Update Order — open POS to add/edit items on same table
   const handleUpdateOrder = useCallback(() => {
-    const { table } = existingOrderModal;
-    if (!table) return;
+    const { table, order } = existingOrderModal;
+    if (!table || !order) return;
     closeExistingOrderModal();
     selectTable(table);
-    navigation?.navigate('POSOrder', { table });
+    navigation?.navigate('POSOrder', { table, editOrderId: order.id });
   }, [existingOrderModal, selectTable, navigation, closeExistingOrderModal]);
 
   // Option 2: Shift Table — re-open table picker; pick an available table to move the order
@@ -234,8 +244,12 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     setShowTableModal(true);
   }, [existingOrderModal, closeExistingOrderModal]);
 
-  // Option 3: Cancel existing order and start fresh on the same table
+  // Option 3: Cancel existing order and start fresh — RBAC: only managers+
   const handleCancelAndNew = useCallback(async () => {
+    if (!isManagementLevel) {
+      showToast({ type: 'warning', title: 'Not Authorized', message: 'Only managers can cancel orders' });
+      return;
+    }
     const { table, order } = existingOrderModal;
     if (!table || !order) return;
     closeExistingOrderModal();
@@ -246,7 +260,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     } catch {
       showToast({ type: 'error', title: 'Error', message: 'Could not cancel the existing order.' });
     }
-  }, [existingOrderModal, cancelOrder, selectTable, navigation, closeExistingOrderModal]);
+  }, [existingOrderModal, cancelOrder, selectTable, navigation, closeExistingOrderModal, isManagementLevel]);
 
   // Option 4: Split Table — open GuestCountModal to pick guest count for new order
   const handleSplitTable = useCallback(() => {
@@ -289,8 +303,12 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     });
   }, []);
 
-  // Handle order cancellation
+  // Handle order cancellation — RBAC: only managers+ can cancel
   const handleOrderCancel = useCallback(async (order: UnifiedOrder) => {
+    if (!isManagementLevel) {
+      showToast({ type: 'warning', title: 'Not Authorized', message: 'Only managers can cancel orders' });
+      return;
+    }
     try {
       await cancelOrder(order.id, 'Cancelled from order management');
       showToast({
@@ -305,7 +323,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
         message: 'Failed to cancel order',
       });
     }
-  }, [cancelOrder]);
+  }, [cancelOrder, isManagementLevel]);
 
   // Handle payment processing - Restaurant workflow
   // Payment only available for served orders in unified system
@@ -633,7 +651,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
       {!isPhone && (
         <AppleStatusPill
           status={isLoading ? "warning" : "success"}
-          text={`${filteredOrders.length} Orders`}
+          text={`${roleFilteredOrders.length} Orders`}
           size="small"
         />
       )}
@@ -684,7 +702,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
         scrollable={false}
       >
         <FlatList
-          data={filteredOrders}
+          data={roleFilteredOrders}
           keyExtractor={(item) => item.id}
           renderItem={renderOrderItem}
           numColumns={orderListColumns}
@@ -704,7 +722,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
             </>
           }
           ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={filteredOrders.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
+          contentContainerStyle={roleFilteredOrders.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
         />
       </AppleDashboardPanel>

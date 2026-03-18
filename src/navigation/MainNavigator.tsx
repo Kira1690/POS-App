@@ -12,6 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useAuthStatus } from '@/hooks/auth/useAuthStatus';
 import {
   MainTabParamList,
   OrdersStackParamList,
@@ -127,11 +128,20 @@ export const MainNavigator: React.FC = () => {
   const { theme } = useTheme();
   const { isPhone } = useResponsive();
   const insets = useSafeAreaInsets();
+  const { isKitchenStaff, isManagementLevel, canAccessKitchen } = useAuthStatus();
+
+  // Tab visibility by role
+  const showOrdersTab = !isKitchenStaff;        // everyone except kitchen staff
+  const showKitchenTab = canAccessKitchen;       // kitchen_staff + manager + admin + superadmin
+  const showSettingsTab = isManagementLevel;     // manager + admin + superadmin
+
+  // Initial route: kitchen staff → Kitchen, everyone else → Orders
+  const initialRoute = isKitchenStaff ? 'Kitchen' : 'Orders';
 
   return (
     <FloorPlanProvider>
     <Tab.Navigator
-      initialRouteName="Orders"
+      initialRouteName={initialRoute}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof MaterialIcons.glyphMap;
@@ -174,21 +184,27 @@ export const MainNavigator: React.FC = () => {
         component={DashboardWithProvider}
         options={{ title: 'Dashboard', headerShown: false, tabBarTestID: 'tab-nav-dashboard' }}
       />
-      <Tab.Screen
-        name="Orders"
-        component={OrdersStackNavigator}
-        options={{ title: 'Order Management', headerShown: false, tabBarTestID: 'tab-nav-orders' }}
-      />
-      <Tab.Screen
-        name="Kitchen"
-        component={KitchenStackNavigator}
-        options={{ title: 'Kitchen Operations', headerShown: false, tabBarTestID: 'tab-nav-kitchen' }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{ title: 'Settings', headerShown: false, tabBarTestID: 'tab-nav-settings' }}
-      />
+      {showOrdersTab && (
+        <Tab.Screen
+          name="Orders"
+          component={OrdersStackNavigator}
+          options={{ title: 'Order Management', headerShown: false, tabBarTestID: 'tab-nav-orders' }}
+        />
+      )}
+      {showKitchenTab && (
+        <Tab.Screen
+          name="Kitchen"
+          component={KitchenStackNavigator}
+          options={{ title: 'Kitchen Operations', headerShown: false, tabBarTestID: 'tab-nav-kitchen' }}
+        />
+      )}
+      {showSettingsTab && (
+        <Tab.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: 'Settings', headerShown: false, tabBarTestID: 'tab-nav-settings' }}
+        />
+      )}
     </Tab.Navigator>
     </FloorPlanProvider>
   );

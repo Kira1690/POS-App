@@ -20,36 +20,52 @@ name: "Helper: Ensure on Order Management (Dev Build)"
     point: "96%, 96%"
 - waitForAnimationToEnd
 
-# Login if on welcome / auth screen (handle before waiting for dashboard)
-- runFlow:
-    when:
-      visible:
-        id: "btn-welcome-manager-login"
-    commands:
-      - tapOn:
-          id: "btn-welcome-manager-login"
-      - waitForAnimationToEnd
+# Wait for app to fully stabilize before checking login state
+# Multiple waitForAnimationToEnd calls prevent race conditions where
+# Welcome screen briefly flashes during React Native init
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
 
+# Login if on welcome / auth screen (only if Orders tab NOT visible)
 - runFlow:
     when:
-      visible:
-        id: "email-input"
+      notVisible:
+        id: "tab-nav-orders"
     commands:
-      - tapOn:
-          id: "email-input"
-      - eraseText: 60
-      - inputText: "manager@foodcorner.com"
-      - hideKeyboard
-      - waitForAnimationToEnd
-      - tapOn:
-          id: "password-input"
-      - eraseText: 30
-      - inputText: "manager123"
-      - hideKeyboard
-      - waitForAnimationToEnd
-      - tapOn:
-          id: "btn-manager-sign-in"
-      - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible:
+              id: "btn-welcome-manager-login"
+          commands:
+            - tapOn:
+                id: "btn-welcome-manager-login"
+            - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible:
+              id: "email-input"
+          commands:
+            - tapOn:
+                id: "email-input"
+            - eraseText: 60
+            - inputText: "manager@foodcorner.com"
+            - hideKeyboard
+            - waitForAnimationToEnd
+            - tapOn:
+                id: "password-input"
+            - eraseText: 30
+            - inputText: "manager123"
+            - hideKeyboard
+            - waitForAnimationToEnd
+            - scrollUntilVisible:
+                element:
+                  id: "btn-manager-sign-in"
+                direction: DOWN
+                timeout: 5000
+            - tapOn:
+                id: "btn-manager-sign-in"
+            - waitForAnimationToEnd
 
 # Wait for app to fully initialize / login to complete
 - extendedWaitUntil:

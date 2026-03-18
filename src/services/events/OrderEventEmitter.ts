@@ -10,7 +10,8 @@ export type OrderEventType =
   | 'ORDER_CANCELLED'
   | 'ORDER_PAID'
   | 'SYSTEM_RESET'
-  | 'TABLE_SYNC_COMPLETE';
+  | 'TABLE_SYNC_COMPLETE'
+  | 'ORDER_SYNC_COMPLETE';
 
 export interface OrderEventData {
   status?: string;

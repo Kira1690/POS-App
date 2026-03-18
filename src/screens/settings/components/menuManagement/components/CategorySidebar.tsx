@@ -241,6 +241,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
           style={[styles.collapseButton, { alignSelf: 'center', marginTop: theme.spacing.sm }]}
           onPress={onToggleCollapse}
           accessibilityLabel="Expand sidebar"
+          testID="btn-expand-sidebar"
         >
           <Icon
             name="chevron-right"
@@ -343,7 +344,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       </TouchableOpacity>
 
       {/* Category List */}
-      <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false} testID="sidebar-categories-scroll">
         {/* All Items Card */}
         <TouchableOpacity
           style={[styles.allItemsCard, !selectedCategoryId && styles.allItemsCardSelected]}
@@ -389,6 +390,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
               accessibilityLabel={`${category.name} category with ${itemCount} items`}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
+              testID={`sidebar-category-${category.name}`}
             >
               {/* Icon */}
               <View style={[styles.categoryIconContainer, { backgroundColor: categoryColor }]}>

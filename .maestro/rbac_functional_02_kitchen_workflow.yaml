@@ -1,0 +1,138 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "RBAC Functional 02: Kitchen staff display workflow"
+tags:
+  - rbac
+  - functional
+  - kitchen
+---
+
+# ─────────────────────────────────────────────────────
+#  Kitchen staff workflow — requires data pre-seeded
+#  Run AFTER qa_01-qa_05 (categories + items + an order)
+#
+#  Tests:
+#    ✓ Tab isolation (Dashboard + Kitchen only)
+#    ✓ Kitchen display accessible and functional
+#    ✓ Dashboard accessible
+#    ✓ No Orders/Settings tabs
+# ─────────────────────────────────────────────────────
+
+# Launch WITHOUT clearState — preserves data from prior tests
+- launchApp
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Dismiss stale modals/dev overlays
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    point: "96%, 96%"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# If logged in, clear and re-login as kitchen staff
+- runFlow:
+    when:
+      visible:
+        id: "tab-nav-dashboard"
+    commands:
+      - launchApp:
+          clearKeychain: true
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+# If still logged in after clearKeychain
+- runFlow:
+    when:
+      visible:
+        id: "tab-nav-dashboard"
+    commands:
+      - launchApp:
+          clearState: true
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+# Navigate to Staff Login
+- runFlow:
+    when:
+      visible: "Welcome to FoodPOS"
+    commands:
+      - tapOn:
+          text: ".*Continue as Staff Member.*"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: ".*Continue as Staff Member.*"
+    commands:
+      - tapOn:
+          text: ".*Continue as Staff Member.*"
+      - waitForAnimationToEnd
+
+# Wait for staff login form
+- extendedWaitUntil:
+    visible: "Staff Login"
+    timeout: 15000
+
+# Login as kitchen staff
+- tapOn:
+    id: "employee-id-input"
+- inputText: "CHEF001"
+- tapOn:
+    id: "password-input"
+- inputText: "kitchen123"
+- hideKeyboard
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap Clock In
+- tapOn:
+    point: "50%, 67%"
+
+# Wait for app to load — kitchen staff lands on Kitchen tab
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-kitchen"
+    timeout: 30000
+- waitForAnimationToEnd
+
+# ══════ ASSERTIONS ══════
+
+# ── 1. Tab isolation ──
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-kitchen"
+- assertNotVisible:
+    id: "tab-nav-orders"
+- assertNotVisible:
+    id: "tab-nav-settings"
+- takeScreenshot: "rbac_func02_step1_kitchen_tabs"
+
+# ── 2. Kitchen display is functional ──
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: "rbac_func02_step2_kitchen_display"
+
+# ── 3. Dashboard accessible ──
+- tapOn:
+    id: "tab-nav-dashboard"
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*Dashboard.*"
+- takeScreenshot: "rbac_func02_step3_dashboard"
+
+# ── 4. Return to Kitchen ──
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- takeScreenshot: "rbac_func02_final_kitchen"

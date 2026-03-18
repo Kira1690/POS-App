@@ -84,7 +84,7 @@ export const APP_CONFIG = {
 // Development feature flags — separate from APP_CONFIG to retain boolean type
 // (avoids TypeScript narrowing `false` to literal type under `as const`)
 export const DEV_FLAGS: { SEED_DEMO_DATA: boolean } = {
-  SEED_DEMO_DATA: true, // Seed 5 categories + 7 items on first run for offline mode
+  SEED_DEMO_DATA: false, // Disabled — strict no-mock-data policy. Tests create their own data.
 };
 
 // Environment-specific configuration

@@ -1,0 +1,47 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Helper: Kitchen Staff Login — CHEF001"
+---
+
+# Opens the dev build app, clears state, and logs in as Kitchen Staff.
+# Credentials: CHEF001 / kitchen123 (Chef Mike Wilson - Kitchen Staff)
+# Kitchen staff lands on Kitchen tab (RBAC: Dashboard + Kitchen visible)
+
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Navigate to Staff Login from Welcome screen
+- tapOn:
+    text: ".*Continue as Staff Member.*"
+- waitForAnimationToEnd
+
+# Wait for staff login screen
+- extendedWaitUntil:
+    visible: "Staff Login"
+    timeout: 15000
+
+# Fill in Employee ID
+- tapOn:
+    id: "employee-id-input"
+- inputText: "CHEF001"
+
+# Fill in Password
+- tapOn:
+    id: "password-input"
+- inputText: "kitchen123"
+- hideKeyboard
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap the blue Clock In button
+- tapOn:
+    point: "50%, 67%"
+
+# Wait for app to fully load — kitchen staff lands on Kitchen tab
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-kitchen"
+    timeout: 30000
+- waitForAnimationToEnd

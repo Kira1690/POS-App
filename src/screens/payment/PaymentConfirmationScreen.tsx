@@ -243,7 +243,51 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             {formatCurrency(payment.amount)}
           </Text>
         </View>
-        
+
+        {order?.subtotal != null && order.subtotal > 0 && (
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
+              Subtotal
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
+              {formatCurrency(order.subtotal)}
+            </Text>
+          </View>
+        )}
+
+        {payment.taxAmount != null && payment.taxAmount > 0 && (
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
+              Tax
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
+              {formatCurrency(payment.taxAmount)}
+            </Text>
+          </View>
+        )}
+
+        {payment.processingFee != null && payment.processingFee > 0 && (
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
+              CC Surcharge
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
+              {formatCurrency(payment.processingFee)}
+            </Text>
+          </View>
+        )}
+
+        {payment.tipAmount != null && payment.tipAmount > 0 && (
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
+              Tip
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
+              {formatCurrency(payment.tipAmount)}
+            </Text>
+          </View>
+        )}
+
         {payment.transactionId && (
           <View style={styles.detailItem}>
             <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>

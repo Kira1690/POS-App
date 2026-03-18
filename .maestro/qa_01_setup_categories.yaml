@@ -8,17 +8,16 @@ tags:
 # ─────────────────────────────────────────────────────
 #  QA Phase 1 — Add 3 categories
 #  Test Data: Drinks, Mains, Starters
-#  Prerequisites: App cleared, dev build running
+#  Prerequisites: App data cleared (fresh start)
 #
 #  Notes:
 #    - Uses testID="btn-add-category" — same ID in both collapsed
-#      and expanded sidebar modes (no need to expand first).
-#    - Uses testID="input-category-name" for the name TextInput.
-#    - Uses testID="btn-save-category" for the Save button.
+#      and expanded sidebar modes.
+#    - After each save, re-expand sidebar (it may auto-collapse).
 #    - Triple waitForAnimationToEnd after each save: keyboard dismiss
 #      + KeyboardAvoidingView reflow + sidebar layout settle.
-#      Without this the sidebar flickers and btn-add-category is
-#      temporarily unavailable, causing only 2/3 categories.
+#    - Mock service starts empty (no-mock-data policy), so only
+#      test-created categories appear in the sidebar.
 # ─────────────────────────────────────────────────────
 
 - runFlow: helpers/ensure_dashboard.yaml
@@ -31,7 +30,7 @@ tags:
 
 - extendedWaitUntil:
     visible:
-      id: "settings-nav-restaurant_profile"
+      id: "settings-nav-menu_management"
     timeout: 10000
 
 - takeScreenshot: "qa_01_step0_settings_open"
@@ -43,6 +42,12 @@ tags:
 - extendedWaitUntil:
     visible: "Items"
     timeout: 10000
+
+# Expand category sidebar (auto-collapsed in portrait on small tablets)
+- tapOn:
+    id: "btn-expand-sidebar"
+    optional: true
+- waitForAnimationToEnd
 
 - takeScreenshot: "qa_01_step1_menu_mgmt_open"
 
@@ -57,10 +62,10 @@ tags:
     visible: "Save Category"
     timeout: 10000
 
-- takeScreenshot: "qa_01_step2a_add_category_modal_open"
-
 - tapOn:
     id: "input-category-name"
+
+- eraseText: 30
 
 - inputText: "Drinks"
 
@@ -82,11 +87,19 @@ tags:
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 
+# Re-expand sidebar if it collapsed
+- tapOn:
+    id: "btn-expand-sidebar"
+    optional: true
+- waitForAnimationToEnd
+
 - extendedWaitUntil:
-    visible: "Drinks"
+    visible:
+      id: "sidebar-category-Drinks"
     timeout: 8000
 
-- assertVisible: "Drinks"
+- assertVisible:
+    id: "sidebar-category-Drinks"
 
 - takeScreenshot: "qa_01_step2b_drinks_created"
 
@@ -102,6 +115,8 @@ tags:
 
 - tapOn:
     id: "input-category-name"
+
+- eraseText: 30
 
 - inputText: "Mains"
 
@@ -123,11 +138,19 @@ tags:
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 
+# Re-expand sidebar if it collapsed
+- tapOn:
+    id: "btn-expand-sidebar"
+    optional: true
+- waitForAnimationToEnd
+
 - extendedWaitUntil:
-    visible: "Mains"
+    visible:
+      id: "sidebar-category-Mains"
     timeout: 8000
 
-- assertVisible: "Mains"
+- assertVisible:
+    id: "sidebar-category-Mains"
 
 - takeScreenshot: "qa_01_step3_mains_created"
 
@@ -143,6 +166,8 @@ tags:
 
 - tapOn:
     id: "input-category-name"
+
+- eraseText: 30
 
 - inputText: "Starters"
 
@@ -164,17 +189,28 @@ tags:
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 
+# Re-expand sidebar if it collapsed
+- tapOn:
+    id: "btn-expand-sidebar"
+    optional: true
+- waitForAnimationToEnd
+
 - extendedWaitUntil:
-    visible: "Starters"
+    visible:
+      id: "sidebar-category-Starters"
     timeout: 8000
 
-- assertVisible: "Starters"
+- assertVisible:
+    id: "sidebar-category-Starters"
 
 - takeScreenshot: "qa_01_step4_starters_created"
 
-# FINAL QA: All 3 categories present
-- assertVisible: "Drinks"
-- assertVisible: "Mains"
-- assertVisible: "Starters"
+# FINAL QA: All 3 categories present (only 3 exist — no mock data)
+- assertVisible:
+    id: "sidebar-category-Drinks"
+- assertVisible:
+    id: "sidebar-category-Mains"
+- assertVisible:
+    id: "sidebar-category-Starters"
 
 - takeScreenshot: "qa_01_PASS_all_categories"
