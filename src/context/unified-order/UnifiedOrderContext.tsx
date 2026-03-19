@@ -161,6 +161,7 @@ const UnifiedOrderContext = createContext<UnifiedOrderContextValue | undefined>(
  */
 function buildOrderSyncPayload(order: UnifiedOrder): Record<string, unknown> {
   return {
+    id: order.id,
     restaurant_id: order.restaurantId || '1',
     order_number: order.orderNumber,
     table_id: order.tableId,
@@ -270,6 +271,26 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
 
     // WebSocket: order status changed in real-time
     const unsubscribeStatusChanged = orderEventEmitter.subscribe('ORDER_STATUS_CHANGED', reloadOrders);
+
+    // Fetch store config (tax rate, CC surcharge) from server
+    // This runs once on mount — replaces the hardcoded 10% default with the actual rate
+    const fetchStoreConfig = async () => {
+      try {
+        const { billingApiClient } = await import('@/services/billing/BillingApiClient');
+        const config = await billingApiClient.getStoreConfig('1');
+        if (config.taxRate > 0) {
+          // Server returns tax as percentage (e.g., 10 for 10%), convert to decimal
+          const rate = config.taxRate >= 1 ? config.taxRate / 100 : config.taxRate;
+          dispatch({ type: 'SET_CART_TAX_RATE', payload: rate });
+          if (__DEV__) {
+            console.log('[UnifiedOrderContext] Tax rate from server:', rate, 'CC:', config.ccPercentage);
+          }
+        }
+      } catch {
+        // Silent — use hardcoded default if server unreachable
+      }
+    };
+    fetchStoreConfig();
 
     return () => {
       unsubscribeReset();

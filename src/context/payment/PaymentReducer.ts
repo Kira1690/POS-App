@@ -35,7 +35,7 @@ export const initialPaymentState: PaymentContextState = {
   error: null,
   
   // Configuration
-  taxRate: 0.0825, // 8.25% default
+  taxRate: 0.10, // 10% default — matches cart and server
   defaultTipRates: [15, 18, 20, 25],
   minimumTipAmount: 0,
   maximumCashPayment: 1000,

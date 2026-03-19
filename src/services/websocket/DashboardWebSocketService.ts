@@ -152,12 +152,14 @@ export class DashboardWebSocketService {
     // Simulate different types of updates based on role
     switch (userRole) {
       case UserRole.MANAGER:
-      case UserRole.ADMIN:
-      case UserRole.SUPERADMIN:
+      case UserRole.STORE_ADMIN:
+      case UserRole.SUPER_ADMIN:
+      case UserRole.SYSTEM_ADMIN:
         this.simulateManagerUpdates();
         break;
         
-      case UserRole.RESTAURANT_STAFF:
+      case UserRole.WAITER:
+      case UserRole.CASHIER:
         this.simulateStaffUpdates();
         break;
         

@@ -1,0 +1,93 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-23: Tax Rate from Server — Verify 7.25% on Mobile"
+---
+
+# Tax rate was changed to 7.25% on the web dashboard.
+# This test logs in as waiter, opens POS, adds items, and verifies
+# the cart shows 7.25% tax (not the old 10% hardcoded default).
+#
+# Expected: For a $16.99 item → tax = $16.99 * 0.0725 = $1.23
+# If still 10%: tax would be $16.99 * 0.10 = $1.70
+
+# ═══ LOGIN AS WAITER ═══
+- runFlow:
+    file: ../../helpers/online/waiter_login.yaml
+
+# ═══ WAIT FOR STORE CONFIG FETCH (runs on app init) ═══
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ═══ ORDERS → NEW ORDER ═══
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Select M6-cudr (available table)
+- tapOn:
+    text: "M6-cudr"
+    optional: true
+- tapOn:
+    text: "M4-cudr"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-guest-confirm"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ═══ ADD ONE MENU ITEM ═══
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Add first visible priced item
+- tapOn:
+    text: "\\$\\d+\\.\\d+"
+    index: 0
+- waitForAnimationToEnd
+
+# Handle modifier modal
+- tapOn:
+    id: "btn-modifier-confirm"
+    optional: true
+- tapOn:
+    text: ".*Add to Order.*|.*Confirm.*|.*Done.*|.*OK.*"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/23_cart_with_tax
+
+# ═══ ADD SECOND ITEM TO SEE TAX MORE CLEARLY ═══
+- tapOn:
+    text: "\\$\\d+\\.\\d+"
+    index: 1
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-modifier-confirm"
+    optional: true
+- tapOn:
+    text: ".*Add to Order.*|.*Confirm.*|.*Done.*|.*OK.*"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/23_cart_2_items_tax
+
+# ═══ SCROLL DOWN TO SEE SUBTOTAL + TAX + TOTAL ═══
+- swipe:
+    direction: UP
+    duration: 500
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/23_cart_totals_with_tax

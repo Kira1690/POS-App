@@ -1,0 +1,49 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Helper: Cashier Login (Online — Blue Plate Bistro)"
+---
+
+# Logs in as cashier with real API credentials.
+# Credentials: cashier@blueplatebistro.io / BluePlateCsh2026!
+# Cashier sees: Dashboard + Orders tabs (2 tabs, read-all orders)
+
+- launchApp:
+    clearState: true
+
+# Wait for database initialization + welcome screen to fully load
+- extendedWaitUntil:
+    visible:
+      id: "btn-welcome-manager-login"
+    timeout: 30000
+- waitForAnimationToEnd
+
+# Navigate to Manager Login (email-based login screen)
+- tapOn:
+    id: "btn-welcome-manager-login"
+- waitForAnimationToEnd
+
+# Fill credentials
+- tapOn:
+    id: "email-input"
+- inputText: "cashier@blueplatebistro.io"
+- tapOn:
+    id: "password-input"
+- inputText: "BluePlateCsh2026!"
+- hideKeyboard
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "btn-manager-sign-in"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "btn-manager-sign-in"
+- waitForAnimationToEnd
+
+# Wait for app to fully load — cashier lands on Dashboard or Orders
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 30000
+- waitForAnimationToEnd
+- waitForAnimationToEnd

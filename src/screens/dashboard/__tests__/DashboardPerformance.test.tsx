@@ -90,7 +90,7 @@ describe('Dashboard Performance Tests', () => {
       const startTime = performance.now();
       
       await act(async () => {
-        renderWithProviders(UserRole.RESTAURANT_STAFF);
+        renderWithProviders(UserRole.WAITER);
       });
       
       const renderTime = performance.now() - startTime;
@@ -114,7 +114,7 @@ describe('Dashboard Performance Tests', () => {
       const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
       
       // Render different roles sequentially
-      const roles = [UserRole.MANAGER, UserRole.RESTAURANT_STAFF, UserRole.KITCHEN_STAFF];
+      const roles = [UserRole.MANAGER, UserRole.WAITER, UserRole.KITCHEN_STAFF];
       
       for (const role of roles) {
         await act(async () => {
@@ -179,7 +179,7 @@ describe('Dashboard Performance Tests', () => {
     it('should provide performance summary', () => {
       // Track multiple renders
       ['Manager', 'Staff', 'Kitchen'].forEach((dashboardType, index) => {
-        const role = [UserRole.MANAGER, UserRole.RESTAURANT_STAFF, UserRole.KITCHEN_STAFF][index];
+        const role = [UserRole.MANAGER, UserRole.WAITER, UserRole.KITCHEN_STAFF][index];
         performanceMonitor.startRenderTracking(`${dashboardType}Dashboard`);
         renderWithProviders(role);
         performanceMonitor.endRenderTracking(`${dashboardType}Dashboard`);

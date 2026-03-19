@@ -4,11 +4,14 @@
  */
 
 export enum UserRole {
-  RESTAURANT_STAFF = 'restaurant_staff',
-  KITCHEN_STAFF = 'kitchen_staff',
+  SUPER_ADMIN = 'super_admin',
+  SYSTEM_ADMIN = 'system_admin',
+  STORE_ADMIN = 'store_admin',
   MANAGER = 'manager',
-  ADMIN = 'admin',
-  SUPERADMIN = 'superadmin',
+  CASHIER = 'cashier',
+  WAITER = 'waiter',
+  KITCHEN_STAFF = 'kitchen_staff',
+  SELF_ORDER = 'self_order',
 }
 
 export interface User {

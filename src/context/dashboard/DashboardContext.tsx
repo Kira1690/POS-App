@@ -276,7 +276,7 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
       dispatch({ type: 'SET_NOTIFICATIONS', payload: 5 });
 
       // Role-specific data
-      if (userRole === UserRole.RESTAURANT_STAFF) {
+      if (userRole === UserRole.WAITER) {
         const staffMetrics: StaffMetrics = {
           shift: { startTime: '9:00 AM', duration: '5h 30m', scheduledEnd: '6:00 PM', status: 'active' },
           myOrders: { count: 18, totalValue: '$456.75', averageOrder: '$25.38' },
@@ -359,7 +359,7 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
 
   // Actions — memoized to stabilize context value
   const actions = useMemo(() => ({
-    refreshDashboard: () => loadDashboardData(authState.user?.role || UserRole.RESTAURANT_STAFF),
+    refreshDashboard: () => loadDashboardData(authState.user?.role || UserRole.WAITER),
     markTaskComplete: (taskId: string) => dispatch({ type: 'MARK_TASK_COMPLETE', payload: taskId }),
     updateOrderStatus: (orderId: string, status: OrderItem['status']) =>
       dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, status } }),

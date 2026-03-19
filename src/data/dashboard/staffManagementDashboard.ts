@@ -7,7 +7,7 @@ export interface StaffMember {
   id: string;
   employeeId: string;
   name: string;
-  role: 'restaurant_staff' | 'kitchen_staff' | 'manager' | 'admin';
+  role: 'super_admin' | 'system_admin' | 'store_admin' | 'manager' | 'cashier' | 'waiter' | 'kitchen_staff' | 'self_order';
   department: string;
   avatar?: string;
   status: 'on-duty' | 'off-duty' | 'break' | 'late' | 'absent';
@@ -181,7 +181,7 @@ export const STAFF_MANAGEMENT_DASHBOARD_DATA: StaffManagementDashboardData = {
       id: 'staff_001',
       employeeId: 'EMP001',
       name: 'John Doe',
-      role: 'restaurant_staff',
+      role: 'waiter',
       department: 'Service',
       status: 'on-duty',
       shiftStart: '9:00 AM',
@@ -212,7 +212,7 @@ export const STAFF_MANAGEMENT_DASHBOARD_DATA: StaffManagementDashboardData = {
       id: 'staff_002',
       employeeId: 'EMP002',
       name: 'Jane Smith',
-      role: 'restaurant_staff',
+      role: 'waiter',
       department: 'Service',
       status: 'on-duty',
       shiftStart: '10:00 AM',
@@ -274,7 +274,7 @@ export const STAFF_MANAGEMENT_DASHBOARD_DATA: StaffManagementDashboardData = {
       id: 'staff_003',
       employeeId: 'EMP003',
       name: 'Sarah Wilson',
-      role: 'restaurant_staff',
+      role: 'waiter',
       department: 'Service',
       status: 'break',
       shiftStart: '11:00 AM',
@@ -305,7 +305,7 @@ export const STAFF_MANAGEMENT_DASHBOARD_DATA: StaffManagementDashboardData = {
       id: 'staff_004',
       employeeId: 'EMP004',
       name: 'David Johnson',
-      role: 'restaurant_staff',
+      role: 'waiter',
       department: 'Service',
       status: 'late',
       shiftStart: '2:00 PM',
@@ -592,7 +592,7 @@ export const STAFF_MANAGEMENT_DASHBOARD_DATA: StaffManagementDashboardData = {
       from: 'Alice Johnson (Manager)',
       time: '2:00 PM',
       priority: 'medium',
-      targetRoles: ['restaurant_staff'],
+      targetRoles: ['waiter'],
       acknowledged: ['EMP001', 'EMP002'],
       totalRecipients: 4,
     },
@@ -604,7 +604,7 @@ export const STAFF_MANAGEMENT_DASHBOARD_DATA: StaffManagementDashboardData = {
       from: 'Alice Johnson (Manager)',
       time: '1:30 PM',
       priority: 'high',
-      targetRoles: ['restaurant_staff', 'kitchen_staff'],
+      targetRoles: ['waiter', 'kitchen_staff'],
       acknowledged: ['EMP001', 'CHEF001'],
       totalRecipients: 6,
     },
@@ -616,7 +616,7 @@ export const STAFF_MANAGEMENT_DASHBOARD_DATA: StaffManagementDashboardData = {
       from: 'Management',
       time: '12:00 PM',
       priority: 'low',
-      targetRoles: ['restaurant_staff', 'kitchen_staff', 'manager'],
+      targetRoles: ['waiter', 'kitchen_staff', 'manager'],
       acknowledged: ['EMP001', 'EMP002', 'CHEF001'],
       totalRecipients: 8,
     },

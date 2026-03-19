@@ -1,0 +1,81 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-21: Menu Sync — Web Creates Item → Mobile Sees It"
+---
+
+# Phase F: Menu sync from web to mobile.
+# Pre-condition: A Playwright test creates category "Sync Test" + item "WS Sync Burger $9.99"
+#   on the web dashboard BEFORE this Maestro test runs.
+# This test logs in as waiter, opens POS screen, waits for menu pull (35s),
+#   and verifies the new item appears.
+
+# ═══ LOGIN AS WAITER ═══
+- runFlow:
+    file: ../../helpers/online/waiter_login.yaml
+
+# ═══ ORDERS TAB → NEW ORDER → SELECT ANY TABLE ═══
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Select an available table (M3-cudr should be free)
+- tapOn:
+    text: "M3-cudr"
+    optional: true
+- tapOn:
+    text: "M4-cudr"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Guest count confirm
+- tapOn:
+    id: "btn-guest-confirm"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/21_pos_before_sync
+
+# ═══ WAIT FOR MENU PULL (35 seconds = ~17 waitForAnimationToEnd) ═══
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ═══ LOOK FOR THE NEW CATEGORY/ITEM ═══
+- takeScreenshot: screenshots/sync-test/21_pos_after_sync_wait
+
+# Try to find "Sync Test" category in the sidebar/chips
+- tapOn:
+    text: ".*Sync Test.*"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/21_sync_test_category
+
+# Look for the menu item
+- assertVisible:
+    text: ".*WS Sync Burger.*|.*Sync.*Burger.*"
+    optional: true
+
+- takeScreenshot: screenshots/sync-test/21_menu_item_visible

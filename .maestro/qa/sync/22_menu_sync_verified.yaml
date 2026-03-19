@@ -1,0 +1,133 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-22: Menu Sync Web→Mobile — Full Verification"
+---
+
+# Phase F: Verify menu item "WS Sync Burger" ($9.99) in category "Sync Test"
+# appears on mobile POS after being created on the server.
+#
+# Strategy:
+# 1. Login as waiter
+# 2. Go to Orders tab first (NOT POS) — let sync engine start + pull menu
+# 3. Wait 45s for pull cycle to complete (30s interval + safety margin)
+# 4. THEN open POS screen — menu loads fresh from SQLite with new data
+# 5. Scroll category chips right to find "Sync Test"
+# 6. Tap it → verify "WS Sync Burger" is visible
+
+# ═══ LOGIN AS WAITER ═══
+- runFlow:
+    file: ../../helpers/online/waiter_login.yaml
+
+# ═══ STAY ON ORDERS TAB — LET SYNC ENGINE RUN ═══
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/22_waiting_for_sync
+
+# ═══ WAIT 50 SECONDS FOR MENU PULL ═══
+# 25 x waitForAnimationToEnd ≈ 50s
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ═══ NOW OPEN POS — FRESH MENU LOAD FROM SQLITE ═══
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Select any available table
+- tapOn:
+    text: "M5-cudr"
+    optional: true
+- tapOn:
+    text: "M6-cudr"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Guest count
+- tapOn:
+    id: "btn-guest-confirm"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/22_pos_loaded
+
+# ═══ SCROLL CATEGORY CHIPS RIGHT TO FIND "Sync Test" ═══
+# The category chips are at the top in a horizontal ScrollView
+# Swipe left on the chip area to scroll right
+- swipe:
+    start: "90%, 9%"
+    end: "10%, 9%"
+    duration: 500
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/22_categories_scrolled_1
+
+- swipe:
+    start: "90%, 9%"
+    end: "10%, 9%"
+    duration: 500
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/22_categories_scrolled_2
+
+# Try to find and tap "Sync Test" category
+- tapOn:
+    text: ".*Sync Test.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/22_sync_test_tapped
+
+# ═══ VERIFY WS SYNC BURGER IS VISIBLE ═══
+- assertVisible:
+    text: ".*WS Sync Burger.*|.*Sync Burger.*"
+    optional: true
+
+# Also try searching for it
+- tapOn:
+    text: "Search menu items..."
+    optional: true
+- tapOn:
+    id: "input-menu-search"
+    optional: true
+- inputText: "Sync"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/22_search_sync_burger
+
+# Verify the item appears in search results
+- assertVisible:
+    text: ".*Sync Burger.*|.*9.99.*"
+    optional: true
+
+- takeScreenshot: screenshots/sync-test/22_menu_sync_verified

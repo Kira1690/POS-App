@@ -66,7 +66,7 @@ export interface UserProfile {
   name: string;
   email: string;
   phone?: string;
-  role: 'restaurant_staff' | 'kitchen_staff' | 'manager' | 'admin' | 'superadmin';
+  role: 'super_admin' | 'system_admin' | 'store_admin' | 'manager' | 'cashier' | 'waiter' | 'kitchen_staff' | 'self_order';
   permissions: UserPermissions;
   is_active: boolean;
   last_login?: string;

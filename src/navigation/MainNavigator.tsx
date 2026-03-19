@@ -128,12 +128,12 @@ export const MainNavigator: React.FC = () => {
   const { theme } = useTheme();
   const { isPhone } = useResponsive();
   const insets = useSafeAreaInsets();
-  const { isKitchenStaff, isManagementLevel, canAccessKitchen } = useAuthStatus();
+  const { isKitchenStaff, isManagementLevel, canAccessKitchen, canCreateOrders, isCashier } = useAuthStatus();
 
   // Tab visibility by role
-  const showOrdersTab = !isKitchenStaff;        // everyone except kitchen staff
-  const showKitchenTab = canAccessKitchen;       // kitchen_staff + manager + admin + superadmin
-  const showSettingsTab = isManagementLevel;     // manager + admin + superadmin
+  const showOrdersTab = canCreateOrders || isCashier;     // waiter, manager, store_admin, cashier, self_order
+  const showKitchenTab = canAccessKitchen;                 // kitchen_staff, manager, store_admin
+  const showSettingsTab = isManagementLevel;                // store_admin, manager
 
   // Initial route: kitchen staff → Kitchen, everyone else → Orders
   const initialRoute = isKitchenStaff ? 'Kitchen' : 'Orders';

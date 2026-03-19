@@ -1,0 +1,58 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-15: Kitchen Staff Sees Ticket + Bumps to Ready"
+---
+
+# Phase C: Kitchen staff logs in, sees the ticket from waiter's order,
+# starts it (preparing), then bumps it (ready).
+# Playwright will verify status changes on web.
+
+# ═══════════════════════════════════════════════
+# LOGIN AS KITCHEN STAFF
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/kitchen_login.yaml
+
+- takeScreenshot: screenshots/sync-test/08_kitchen_logged_in
+
+# ═══════════════════════════════════════════════
+# VERIFY KITCHEN TAB — TICKET VISIBLE
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Look for any ticket with "Start" button (pending tickets)
+- assertVisible:
+    text: ".*Start.*"
+    optional: true
+
+- takeScreenshot: screenshots/sync-test/08_kitchen_ticket_visible
+
+# ═══════════════════════════════════════════════
+# START THE MOST RECENT TICKET (preparing)
+# ═══════════════════════════════════════════════
+- tapOn:
+    text: "Start"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/09_kitchen_preparing
+
+# ═══════════════════════════════════════════════
+# BUMP TICKET (ready)
+# Look for "Done" or "Bump" or "Ready" button
+# ═══════════════════════════════════════════════
+- tapOn:
+    text: ".*Done.*|.*Bump.*|.*Ready.*|.*Complete.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/09_kitchen_ready

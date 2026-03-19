@@ -1,0 +1,121 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-17: Cashier Processes Cash Payment"
+---
+
+# Phase E: Cashier logs in, finds the confirmed order, processes payment.
+# After payment, Playwright verifies order shows "paid" on web.
+#
+# Cashier sees: Dashboard + Orders (2 tabs)
+# Cashier can see ALL orders (RBAC: isCashier sees all for payment)
+
+# ═══════════════════════════════════════════════
+# LOGIN AS CASHIER
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/cashier_login.yaml
+
+- takeScreenshot: screenshots/sync-test/11_cashier_logged_in
+
+# ═══════════════════════════════════════════════
+# ORDERS TAB — FIND THE ORDER
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/11_cashier_orders_tab
+
+# ═══════════════════════════════════════════════
+# TAP VIEW ON MOST RECENT ORDER → ORDER DETAIL
+# ═══════════════════════════════════════════════
+- tapOn:
+    text: ".*View.*"
+    index: 0
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/11_cashier_order_detail
+
+# ═══════════════════════════════════════════════
+# PROCESS PAYMENT — Navigate to Bill/Payment
+# ═══════════════════════════════════════════════
+
+# Scroll down to find payment button
+- scrollUntilVisible:
+    element:
+      text: ".*Pay.*|.*Payment.*|.*Bill.*|.*Process.*"
+    direction: DOWN
+    timeout: 8000
+
+- tapOn:
+    text: ".*Pay.*|.*Process Payment.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/11_cashier_payment_screen
+
+# ═══════════════════════════════════════════════
+# SELECT CASH PAYMENT → CONFIRM
+# ═══════════════════════════════════════════════
+- tapOn:
+    text: ".*Cash.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+    optional: true
+- tapOn:
+    text: ".*Confirm.*|.*Process.*|.*Complete.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/11_cashier_payment_confirmed
+
+# ═══════════════════════════════════════════════
+# CONTINUE / CLOSE PAYMENT SUCCESS
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "btn-continue"
+    optional: true
+- tapOn:
+    text: ".*Continue.*|.*Done.*|.*Close.*|.*Back.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ═══════════════════════════════════════════════
+# WAIT FOR PUSH SYNC (12 seconds)
+# ═══════════════════════════════════════════════
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Navigate back to orders to see updated status
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/11_cashier_after_payment

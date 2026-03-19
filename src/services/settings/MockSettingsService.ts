@@ -98,7 +98,7 @@ export class MockSettingsService {
       name: 'John Doe',
       email: 'john.doe@foodcorner.com',
       phone: '+1 (555) 123-4569',
-      role: 'restaurant_staff',
+      role: 'waiter',
       permissions: {
         dashboard: true,
         orders: true,

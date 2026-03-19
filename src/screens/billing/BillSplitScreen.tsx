@@ -86,7 +86,7 @@ export const BillSplitScreen: React.FC = () => {
     () => order?.items.reduce((sum, item) => sum + item.itemTotal, 0) || 0,
     [order]
   );
-  const taxRate = order?.taxRate || 0.0825;
+  const taxRate = order?.taxRate || 0.10;
   const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
   const totalAmount = subtotal + taxAmount;
 

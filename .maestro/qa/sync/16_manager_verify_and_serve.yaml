@@ -1,0 +1,73 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-16: Manager Verifies Order + Kitchen, Then Serves"
+---
+
+# Phase D: Manager logs in, verifies:
+# 1. Orders tab — sees all orders including waiter's B3-cudr order
+# 2. Kitchen tab — sees kitchen tickets
+# Then navigates to the most recent order and serves it.
+#
+# Visual verification: Manager sees SAME data as waiter + web dashboard
+
+# ═══════════════════════════════════════════════
+# LOGIN AS MANAGER
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/manager_login.yaml
+
+- takeScreenshot: screenshots/sync-test/10_manager_logged_in
+
+# ═══════════════════════════════════════════════
+# VERIFY ORDERS TAB — ALL ORDERS VISIBLE
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Manager should see all orders (not filtered like waiter)
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Verify orders are loaded — look for any order card
+- assertVisible:
+    text: "ORD-"
+    optional: true
+
+- takeScreenshot: screenshots/sync-test/10_manager_orders_tab
+
+# ═══════════════════════════════════════════════
+# VERIFY KITCHEN TAB — TICKETS VISIBLE
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Kitchen should show tickets
+- assertVisible:
+    text: "Kitchen Display"
+
+- takeScreenshot: screenshots/sync-test/10_manager_kitchen_tab
+
+# ═══════════════════════════════════════════════
+# GO BACK TO ORDERS — TAP MOST RECENT ORDER → VIEW DETAILS
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap "View" on the first visible order card
+- tapOn:
+    text: ".*View.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/10_manager_order_detail

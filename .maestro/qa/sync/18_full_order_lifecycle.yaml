@@ -1,0 +1,212 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-18: Full Order Lifecycle — Kitchen Ready → Manager Serves → Cashier Pays"
+---
+
+# Complete lifecycle for order ORD-20260318-9780 (B3-cudr, $68.16):
+#   Step 1: Kitchen staff bumps ticket to READY
+#   Step 2: Manager marks order SERVED
+#   Step 3: Cashier processes CASH PAYMENT
+#
+# Each step is verified with screenshots on mobile.
+# Playwright will verify web dashboard after each major status change.
+
+# ═══════════════════════════════════════════════════
+# STEP 1: KITCHEN STAFF — BUMP TICKET TO READY
+# ═══════════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/kitchen_login.yaml
+
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_kitchen_before_start
+
+# Scroll to find the B3-cudr ticket (our waiter's order)
+# It may be at the bottom since there are 29 tickets
+# First, tap Start on the first visible pending ticket
+- tapOn:
+    text: "Start"
+    index: 0
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_kitchen_started
+
+# Now tap Ready/Done to bump it
+- tapOn:
+    text: "Ready"
+    index: 0
+    optional: true
+- tapOn:
+    text: "Done"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_kitchen_bumped_ready
+
+# Wait for WS broadcast to propagate
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ═══════════════════════════════════════════════════
+# STEP 2: MANAGER — MARK ORDER AS SERVED
+# ═══════════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/manager_login.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_manager_sees_orders
+
+# Tap View on first order to see its detail
+- tapOn:
+    text: ".*View.*"
+    index: 0
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_manager_order_detail
+
+# Tap "Update Status" to change to served
+- tapOn:
+    text: ".*Update Status.*"
+    optional: true
+- waitForAnimationToEnd
+
+# If a status picker appears, select "served" or next status
+- tapOn:
+    text: ".*Served.*|.*served.*"
+    optional: true
+- tapOn:
+    text: ".*Ready.*|.*ready.*"
+    optional: true
+- tapOn:
+    text: ".*Confirm.*|.*Update.*|.*Save.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_manager_status_updated
+
+# Wait for sync
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ═══════════════════════════════════════════════════
+# STEP 3: CASHIER — PROCESS CASH PAYMENT
+# ═══════════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/cashier_login.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_cashier_sees_orders
+
+# Tap View on first order
+- tapOn:
+    text: ".*View.*"
+    index: 0
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_cashier_order_before_pay
+
+# Scroll down to find Pay button (only visible for ready/served orders)
+- scrollUntilVisible:
+    element:
+      text: ".*Pay.*|.*Bill.*"
+    direction: DOWN
+    timeout: 10000
+    optional: true
+
+- tapOn:
+    text: ".*Pay.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_cashier_bill_screen
+
+# Navigate payment flow
+# The Bill screen may show total + payment methods
+- tapOn:
+    text: ".*Cash.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Process.*|.*Confirm.*|.*Complete.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-process-payment"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-cash-confirm"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_cashier_payment_result
+
+# Continue/Done after payment
+- tapOn:
+    id: "btn-continue"
+    optional: true
+- tapOn:
+    text: ".*Continue.*|.*Done.*|.*Close.*|.*Back.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Wait for push sync (12s)
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Final state — navigate to orders
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/18_cashier_final_state

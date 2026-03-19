@@ -10,6 +10,7 @@ import {
 } from '@/services/storage';
 import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
 import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
+import { menuEventEmitter } from '@/services/menu/MenuEventEmitter';
 import { mapServerOrderToUnified, mapServerTicketToKitchenTicket } from './mappers';
 
 const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:5005';
@@ -93,6 +94,9 @@ export class WebSocketSyncManager {
       case 'kitchen':
         this.handleKitchenUpdate(msg);
         break;
+      case 'billing':
+        this.handleBillingUpdate(msg);
+        break;
       default:
         break;
     }
@@ -100,14 +104,20 @@ export class WebSocketSyncManager {
 
   private handleMenuUpdate(msg: WsMessage): void {
     const data = msg.data;
-    if (!data?.id) return;
 
-    if (msg.event === 'deleted') {
-      menuStorageService.deleteMenuItem(data.id as string).catch(() => {});
-    } else {
-      menuStorageService.addMenuItem(data as Parameters<typeof menuStorageService.addMenuItem>[0]).catch(() => {});
+    // For individual item updates with full data, write directly to SQLite
+    if (data?.id && data?.name) {
+      if (msg.event === 'deleted') {
+        menuStorageService.deleteMenuItem(data.id as string).catch(() => {});
+      } else {
+        menuStorageService.addMenuItem(data as Parameters<typeof menuStorageService.addMenuItem>[0]).catch(() => {});
+      }
     }
-    // Data written to SQLite; UI picks up changes on next poll cycle
+
+    // Emit MENU_SYNC_COMPLETE to trigger UI refresh from SQLite
+    // For broadcast-style events (from web dashboard), this triggers the menu context
+    // to reload, and the next pull cycle (30s) will fetch the actual data
+    menuEventEmitter.emitEvent('MENU_SYNC_COMPLETE', {});
   }
 
   private handleTableUpdate(msg: WsMessage): void {
@@ -183,6 +193,29 @@ export class WebSocketSyncManager {
         .catch(() => {});
     } else {
       kitchenStorageService.saveTicket(mapped).catch(() => {});
+    }
+  }
+
+  private handleBillingUpdate(msg: WsMessage): void {
+    const data = msg.data;
+    if (!data) return;
+
+    // When a payment completes a transaction, update the associated order's payment status
+    if (data.order_id && (data.status === 'completed' || msg.event === 'payment_created')) {
+      const orderId = String(data.order_id);
+      unifiedOrderStorageService
+        .updateOrder(orderId, {
+          paymentStatus: data.status === 'completed' ? 'paid' : 'partial',
+          paidAt: data.status === 'completed' ? new Date().toISOString() : undefined,
+          pendingSync: false,
+          syncedAt: new Date().toISOString(),
+        })
+        .then((result) => {
+          if (result) {
+            orderEventEmitter.emit('ORDER_STATUS_CHANGED', orderId, { paymentStatus: 'paid' });
+          }
+        })
+        .catch(() => {});
     }
   }
 

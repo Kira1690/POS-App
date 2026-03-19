@@ -1,0 +1,104 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-12: Role Tab Verification — All 5 Store Roles"
+---
+
+# Phase A: Verify each role sees correct tabs on mobile.
+# Tests RBAC tab visibility after 8-role overhaul.
+#
+# Expected:
+#   waiter:        Dashboard + Orders (2 tabs)
+#   kitchen_staff: Dashboard + Kitchen (2 tabs)
+#   cashier:       Dashboard + Orders (2 tabs)
+#   manager:       Dashboard + Orders + Kitchen + Settings (4 tabs)
+#   store_admin:   Dashboard + Orders + Kitchen + Settings (4 tabs)
+
+# ═══════════════════════════════════════════════
+# TEST 1: WAITER — Dashboard + Orders only
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/waiter_login.yaml
+
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-orders"
+- assertNotVisible:
+    id: "tab-nav-kitchen"
+    optional: true
+- assertNotVisible:
+    id: "tab-nav-settings"
+    optional: true
+
+- takeScreenshot: screenshots/sync-test/01_waiter_tabs
+
+# ═══════════════════════════════════════════════
+# TEST 2: KITCHEN STAFF — Dashboard + Kitchen only
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/kitchen_login.yaml
+
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-kitchen"
+- assertNotVisible:
+    id: "tab-nav-orders"
+    optional: true
+- assertNotVisible:
+    id: "tab-nav-settings"
+    optional: true
+
+- takeScreenshot: screenshots/sync-test/02_kitchen_tabs
+
+# ═══════════════════════════════════════════════
+# TEST 3: CASHIER — Dashboard + Orders only
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/cashier_login.yaml
+
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-orders"
+- assertNotVisible:
+    id: "tab-nav-kitchen"
+    optional: true
+- assertNotVisible:
+    id: "tab-nav-settings"
+    optional: true
+
+- takeScreenshot: screenshots/sync-test/03_cashier_tabs
+
+# ═══════════════════════════════════════════════
+# TEST 4: MANAGER — All 4 tabs
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/manager_login.yaml
+
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-orders"
+- assertVisible:
+    id: "tab-nav-kitchen"
+- assertVisible:
+    id: "tab-nav-settings"
+
+- takeScreenshot: screenshots/sync-test/04_manager_tabs
+
+# ═══════════════════════════════════════════════
+# TEST 5: STORE ADMIN — All 4 tabs
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/store_admin_login.yaml
+
+- assertVisible:
+    id: "tab-nav-dashboard"
+- assertVisible:
+    id: "tab-nav-orders"
+- assertVisible:
+    id: "tab-nav-kitchen"
+- assertVisible:
+    id: "tab-nav-settings"
+
+- takeScreenshot: screenshots/sync-test/05_store_admin_tabs

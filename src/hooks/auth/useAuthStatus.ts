@@ -38,61 +38,83 @@ export const useAuthStatus = () => {
   }, [getSessionInfo, state.lastLoginAt, state.sessionExpiresAt]);
 
   // Role checking utilities
-  const isStaff = useMemo(() => 
-    hasRole(UserRole.RESTAURANT_STAFF), [hasRole]
+  const isStaff = useMemo(() =>
+    hasRole(UserRole.WAITER), [hasRole]
   );
 
-  const isKitchenStaff = useMemo(() => 
+  const isKitchenStaff = useMemo(() =>
     hasRole(UserRole.KITCHEN_STAFF), [hasRole]
   );
 
-  const isManager = useMemo(() => 
+  const isCashier = useMemo(() =>
+    hasRole(UserRole.CASHIER), [hasRole]
+  );
+
+  const isManager = useMemo(() =>
     hasRole(UserRole.MANAGER), [hasRole]
   );
 
-  const isAdmin = useMemo(() => 
-    hasRole(UserRole.ADMIN), [hasRole]
+  const isStoreAdmin = useMemo(() =>
+    hasRole(UserRole.STORE_ADMIN), [hasRole]
   );
 
-  const isSuperAdmin = useMemo(() => 
-    hasRole(UserRole.SUPERADMIN), [hasRole]
+  const isAdmin = useMemo(() =>
+    hasAnyRole([UserRole.SUPER_ADMIN, UserRole.SYSTEM_ADMIN]), [hasAnyRole]
   );
 
-  const isManagementLevel = useMemo(() => 
-    hasAnyRole([UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPERADMIN]), [hasAnyRole]
+  const isSuperAdmin = useMemo(() =>
+    hasRole(UserRole.SUPER_ADMIN), [hasRole]
   );
 
-  const canManageUsers = useMemo(() => 
-    canAccessResource([UserRole.ADMIN, UserRole.SUPERADMIN]), [canAccessResource]
+  const isManagementLevel = useMemo(() =>
+    hasAnyRole([UserRole.STORE_ADMIN, UserRole.MANAGER]), [hasAnyRole]
   );
 
-  const canAccessKitchen = useMemo(() => 
-    canAccessResource([UserRole.KITCHEN_STAFF, UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPERADMIN]), 
+  const canManageUsers = useMemo(() =>
+    canAccessResource([UserRole.STORE_ADMIN, UserRole.SUPER_ADMIN, UserRole.SYSTEM_ADMIN]), [canAccessResource]
+  );
+
+  const canAccessKitchen = useMemo(() =>
+    canAccessResource([UserRole.KITCHEN_STAFF, UserRole.MANAGER, UserRole.STORE_ADMIN]),
+    [canAccessResource]
+  );
+
+  const canCreateOrders = useMemo(() =>
+    canAccessResource([UserRole.STORE_ADMIN, UserRole.MANAGER, UserRole.WAITER, UserRole.SELF_ORDER]),
+    [canAccessResource]
+  );
+
+  const canAccessBilling = useMemo(() =>
+    canAccessResource([UserRole.STORE_ADMIN, UserRole.MANAGER, UserRole.CASHIER]),
     [canAccessResource]
   );
 
   return {
     // Auth status
     ...authStatus,
-    
+
     // User info
     ...userInfo,
-    
+
     // Session info
     ...sessionInfo,
-    
+
     // Role checks
     isStaff,
     isKitchenStaff,
+    isCashier,
     isManager,
+    isStoreAdmin,
     isAdmin,
     isSuperAdmin,
     isManagementLevel,
-    
+
     // Permission checks
     canManageUsers,
     canAccessKitchen,
-    
+    canCreateOrders,
+    canAccessBilling,
+
     // Utility functions
     hasRole,
     hasAnyRole,

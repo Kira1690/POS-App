@@ -176,7 +176,7 @@ export class DummyAuthService implements IAuthService {
       throw new Error('User not authenticated');
     }
 
-    if (this.currentUser.role === UserRole.SUPERADMIN) {
+    if (this.currentUser.role === UserRole.SUPER_ADMIN) {
       return getRestaurantsForSuperadmin().map(restaurant => ({
         id: restaurant.id,
         name: restaurant.name,
@@ -252,7 +252,7 @@ export class DummyAuthService implements IAuthService {
       last_name: userData.last_name,
       email: userData.email,
       phone_number: userData.phone_number,
-      role: userData.role || UserRole.RESTAURANT_STAFF,
+      role: userData.role || UserRole.WAITER,
       default_restaurant_id: 'rest_001', // Default restaurant for demo
       is_active: true,
       created_at: new Date().toISOString(),

@@ -60,6 +60,13 @@ export async function processOrderSync(item: SyncQueueItem): Promise<boolean> {
     );
 
     if (response.data?.success) {
+      // Check individual result status — don't mark as synced if conflict
+      const results = response.data?.data?.results;
+      const result = results?.[0];
+      if (result?.status === 'conflict') {
+        if (__DEV__) console.warn('[OrderSyncProcessor] Push returned conflict:', result.error);
+        return false;
+      }
       await unifiedOrderStorageService.markAsSynced([item.entityId]);
       return true;
     }

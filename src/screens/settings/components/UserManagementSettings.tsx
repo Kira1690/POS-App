@@ -51,14 +51,9 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
   const isTabletLandscape = !useCompactLayout && !isPortrait;
   const isTabletPortrait = !useCompactLayout && isPortrait;
 
-  // Map Auth Service role names to the roles the UI expects
+  // Map Auth Service role names directly (8-role RBAC — no mapping needed)
   const mapRole = (role: string): UserProfile['role'] => {
-    const roleMap: Record<string, UserProfile['role']> = {
-      system_admin: 'superadmin',
-      store_admin: 'manager',
-      user: 'restaurant_staff',
-    };
-    return roleMap[role] || (role as UserProfile['role']);
+    return role as UserProfile['role'];
   };
 
   // Default permissions based on role
@@ -68,21 +63,27 @@ export default function UserManagementSettings({ onChangesDetected }: UserManage
       kitchen: false, customers: false, inventory: false, staff: false,
       reports: false, settings: false, payments: false, advanced: false,
     };
-    if (role === 'superadmin' || role === 'admin') return { ...base, orders: true, tables: true, menu: true, kitchen: true, customers: true, inventory: true, staff: true, reports: true, settings: true, payments: true, advanced: true };
+    if (role === 'super_admin' || role === 'system_admin') return { ...base, orders: true, tables: true, menu: true, kitchen: true, customers: true, inventory: true, staff: true, reports: true, settings: true, payments: true, advanced: true };
+    if (role === 'store_admin') return { ...base, orders: true, tables: true, menu: true, kitchen: true, customers: true, inventory: true, staff: true, reports: true, settings: true, payments: true };
     if (role === 'manager') return { ...base, orders: true, tables: true, menu: true, kitchen: true, customers: true, inventory: true, staff: true, reports: true, settings: true, payments: true };
-    if (role === 'restaurant_staff') return { ...base, orders: true, tables: true, customers: true, payments: true };
+    if (role === 'waiter') return { ...base, orders: true, tables: true, customers: true, payments: true };
+    if (role === 'cashier') return { ...base, orders: true, payments: true };
     if (role === 'kitchen_staff') return { ...base, orders: true, menu: true, kitchen: true, inventory: true };
+    if (role === 'self_order') return { ...base, orders: true, menu: true, payments: true };
     return base;
   };
 
   // 4. Role color helper (uses theme, so inside component)
   const getRoleColors = useCallback((role: UserProfile['role']) => {
     switch (role) {
+      case 'super_admin':      return { bg: theme.colors.primaryContainer, border: theme.colors.primary };
+      case 'system_admin':     return { bg: theme.colors.errorLight,       border: theme.colors.error };
+      case 'store_admin':      return { bg: theme.colors.errorLight,       border: theme.colors.error };
       case 'manager':          return { bg: theme.colors.warningLight,     border: theme.colors.warning };
-      case 'restaurant_staff': return { bg: theme.colors.successLight,     border: theme.colors.success };
+      case 'cashier':          return { bg: theme.colors.successLight,     border: theme.colors.success };
+      case 'waiter':           return { bg: theme.colors.successLight,     border: theme.colors.success };
       case 'kitchen_staff':    return { bg: theme.colors.infoLight,        border: theme.colors.info };
-      case 'admin':            return { bg: theme.colors.errorLight,       border: theme.colors.error };
-      case 'superadmin':       return { bg: theme.colors.primaryContainer, border: theme.colors.primary };
+      case 'self_order':       return { bg: theme.colors.surfaceVariant,   border: theme.colors.outline };
       default:                 return { bg: theme.colors.surfaceVariant,   border: theme.colors.outline };
     }
   }, [theme]);

@@ -62,8 +62,9 @@ const RoleDashboard: React.FC<RoleDashboardProps> = () => {
 
     switch (user.role) {
       case UserRole.MANAGER:
-      case UserRole.ADMIN:
-      case UserRole.SUPERADMIN:
+      case UserRole.STORE_ADMIN:
+      case UserRole.SUPER_ADMIN:
+      case UserRole.SYSTEM_ADMIN:
         // Managers and admins can switch between dashboard types
         const dashboardType = selectedDashboard === 'staff-management' ? 'staff-management' : 'manager';
         return {
@@ -77,7 +78,8 @@ const RoleDashboard: React.FC<RoleDashboardProps> = () => {
           ]
         };
 
-      case UserRole.RESTAURANT_STAFF:
+      case UserRole.WAITER:
+      case UserRole.CASHIER:
         return {
           type: 'staff',
           statusBarStyle: 'light-content' as const,

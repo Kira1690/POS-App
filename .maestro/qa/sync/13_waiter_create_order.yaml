@@ -1,0 +1,163 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-13: Waiter Creates Order on B1 (Online Sync)"
+---
+
+# Phase B: Waiter creates a new order with items on table B1-cudr.
+# After order is confirmed, we wait for push sync (12s).
+# Then Playwright verifies the order on web dashboard.
+#
+# Pre-condition: Services running, Blue Plate Bistro tables + menu seeded
+# Post-condition: Order confirmed on server, visible on web
+
+# ═══════════════════════════════════════════════
+# LOGIN AS WAITER
+# ═══════════════════════════════════════════════
+- runFlow:
+    file: ../../helpers/online/waiter_login.yaml
+
+- takeScreenshot: screenshots/sync-test/06_waiter_logged_in
+
+# ═══════════════════════════════════════════════
+# NAVIGATE TO ORDERS → NEW ORDER
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/06_table_modal
+
+# ═══════════════════════════════════════════════
+# SELECT TABLE B3-cudr (available table, green border)
+# Using B3 to avoid conflicts with occupied tables
+# ═══════════════════════════════════════════════
+- tapOn:
+    text: "B3-cudr"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Handle guest count modal
+- tapOn:
+    id: "btn-guest-confirm"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# If existing order modal appears, tap Update Order
+- tapOn:
+    text: ".*Update Order.*"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/06_pos_screen
+
+# ═══════════════════════════════════════════════
+# WAIT FOR MENU TO LOAD FROM SERVER
+# ═══════════════════════════════════════════════
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ═══════════════════════════════════════════════
+# ADD MENU ITEMS
+# Tap on price labels which are always visible on menu items
+# ═══════════════════════════════════════════════
+
+# Tap first item with a dollar price (any menu item)
+- tapOn:
+    text: "\\$\\d+\\.\\d+"
+    index: 0
+- waitForAnimationToEnd
+
+# Handle modifier modal if it appears
+- tapOn:
+    id: "btn-modifier-confirm"
+    optional: true
+- tapOn:
+    text: ".*Add to Order.*|.*Confirm.*|.*Done.*|.*OK.*"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap second item
+- tapOn:
+    text: "\\$\\d+\\.\\d+"
+    index: 1
+    optional: true
+- waitForAnimationToEnd
+
+# Handle modifier modal
+- tapOn:
+    id: "btn-modifier-confirm"
+    optional: true
+- tapOn:
+    text: ".*Add to Order.*|.*Confirm.*|.*Done.*|.*OK.*"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/06_cart_with_items
+
+# ═══════════════════════════════════════════════
+# SEND TO KITCHEN → CONFIRM
+# ═══════════════════════════════════════════════
+- scrollUntilVisible:
+    element:
+      id: "btn-cart-send-to-kitchen"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Confirm kitchen send modal
+- tapOn:
+    id: "btn-kitchen-modal-confirm"
+    optional: true
+- tapOn:
+    text: ".*Confirm.*|.*Send.*|.*Yes.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/06_order_confirmed
+
+# ═══════════════════════════════════════════════
+# NAVIGATE BACK TO ORDER LIST TO SEE ORDER NUMBER
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap Refresh to see latest
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/06_order_in_list
+
+# ═══════════════════════════════════════════════
+# WAIT FOR PUSH SYNC (12 seconds = 6 x waitForAnimationToEnd)
+# ═══════════════════════════════════════════════
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/06_after_sync_wait
