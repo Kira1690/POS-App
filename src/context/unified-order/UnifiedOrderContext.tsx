@@ -48,6 +48,7 @@ import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStora
 import { syncQueueService } from '@/services/storage';
 import { activityLogService } from '@/services/storage/ActivityLogService';
 import { orderEventEmitter, OrderEventType, OrderEventData } from '@/services/events/OrderEventEmitter';
+import { useAuth } from '@/context/auth';
 
 // Re-export the SINGLE event emitter for use by other modules
 // This ensures ALL contexts use the SAME event emitter instance
@@ -201,6 +202,13 @@ interface UnifiedOrderProviderProps {
 
 export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(unifiedOrderReducer, initialUnifiedOrderState);
+
+  // Get auth user for setting createdBy on orders
+  const { state: authState } = useAuth();
+  const authUserId = authState.user?.id;
+  const authUserName = authState.user?.name
+    || (authState.user ? `${authState.user.first_name || ''} ${authState.user.last_name || ''}`.trim() : '')
+    || authState.user?.email;
 
   // Refs for accessing current state in callbacks
   const stateRef = useRef(state);
@@ -440,8 +448,8 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         tableId: currentState.selectedTable.id,
         tableName: currentState.selectedTable.table_number,
         guestCount: currentState.pendingGuestCount ?? 1,
-        createdBy: 'current_user',
-        createdByName: 'Current User',
+        createdBy: authUserId || 'current_user',
+        createdByName: authUserName || 'Staff',
         items,
         subtotal: currentState.cartSubtotal,
         taxRate: currentState.cartTaxRate,
