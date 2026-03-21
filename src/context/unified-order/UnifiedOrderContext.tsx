@@ -274,11 +274,19 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     // Pull sync completed (batch of orders applied)
     const unsubscribeSyncComplete = orderEventEmitter.subscribe('ORDER_SYNC_COMPLETE', reloadOrders);
 
-    // WebSocket: new order received in real-time
-    const unsubscribeCreated = orderEventEmitter.subscribe('ORDER_CREATED', reloadOrders);
+    // WebSocket: new order or status change — trigger immediate pull then reload
+    const pullAndReload = async () => {
+      try {
+        // Import dynamically to avoid circular dependency
+        const { PullSyncService } = await import('@/services/sync/PullSyncService');
+        const pullService = new PullSyncService();
+        await pullService.pullOrders('1');
+      } catch { /* silent — pull may fail if offline */ }
+      reloadOrders();
+    };
 
-    // WebSocket: order status changed in real-time
-    const unsubscribeStatusChanged = orderEventEmitter.subscribe('ORDER_STATUS_CHANGED', reloadOrders);
+    const unsubscribeCreated = orderEventEmitter.subscribe('ORDER_CREATED', pullAndReload);
+    const unsubscribeStatusChanged = orderEventEmitter.subscribe('ORDER_STATUS_CHANGED', pullAndReload);
 
     // Fetch store config (tax rate, CC surcharge) from server
     // This runs once on mount — replaces the hardcoded 10% default with the actual rate

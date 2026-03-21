@@ -131,45 +131,14 @@ export class WebSocketSyncManager {
   }
 
   private handleOrderUpdate(msg: WsMessage): void {
-    const data = msg.data;
-    if (!data?.id) return;
-
-    const mapped = mapServerOrderToUnified(data);
-
-    if (msg.event === 'status_changed') {
-      unifiedOrderStorageService
-        .updateOrder(mapped.id, {
-          status: mapped.status,
-          paymentStatus: mapped.paymentStatus,
-          preparingAt: mapped.preparingAt,
-          readyAt: mapped.readyAt,
-          servedAt: mapped.servedAt,
-          paidAt: mapped.paidAt,
-          cancelledAt: mapped.cancelledAt,
-          pendingSync: false,
-          syncedAt: new Date().toISOString(),
-          updatedAt: mapped.updatedAt,
-        })
-        .then(async (result) => {
-          if (result) {
-            // Order existed locally — partial update applied
-            orderEventEmitter.emit('ORDER_STATUS_CHANGED', mapped.id, { status: mapped.status });
-          } else {
-            // Order doesn't exist locally yet — save the full mapped order
-            await unifiedOrderStorageService.saveOrder(mapped);
-            orderEventEmitter.emit('ORDER_CREATED', mapped.id, {});
-          }
-        })
-        .catch(() => {});
-    } else {
-      unifiedOrderStorageService
-        .saveOrder(mapped)
-        .then(() => {
-          const event = msg.event === 'created' ? 'ORDER_CREATED' : 'ORDER_SYNC_COMPLETE';
-          orderEventEmitter.emit(event, mapped.id, {});
-        })
-        .catch(() => {});
-    }
+    // WS broadcasts contain minimal data (id, status, total_amount).
+    // Instead of saving incomplete data, just emit an event to trigger
+    // the UnifiedOrderContext to reload orders from the full pull sync.
+    // This ensures the UI always has complete order data.
+    const eventType = msg.event === 'created' ? 'ORDER_CREATED'
+      : msg.event === 'status_changed' ? 'ORDER_STATUS_CHANGED'
+      : 'ORDER_SYNC_COMPLETE';
+    orderEventEmitter.emit(eventType, msg.data?.id || '', msg.data || {});
   }
 
   private handleKitchenUpdate(msg: WsMessage): void {
