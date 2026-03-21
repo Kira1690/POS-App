@@ -87,13 +87,8 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
   const { printKOT } = usePrinter();
   const { isManagementLevel, user, isCashier } = useAuthStatus();
 
-  // RBAC: Waiters see only their own orders, cashiers and managers+ see all
-  const roleFilteredOrders = useMemo(() => {
-    if (isManagementLevel || isCashier) return filteredOrders;
-    return filteredOrders.filter(order =>
-      order.createdBy === user?.id || order.createdBy === user?.employee_id
-    );
-  }, [filteredOrders, isManagementLevel, isCashier, user]);
+  // All roles see all orders for their restaurant
+  const roleFilteredOrders = filteredOrders;
 
   // Compute table occupancy: local active orders take precedence (always up to date),
   // otherwise trust the server status (don't downgrade OCCUPIED → AVAILABLE just because
