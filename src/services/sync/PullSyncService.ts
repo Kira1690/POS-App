@@ -224,7 +224,8 @@ export class PullSyncService {
 
       // Dedup: if a local order with the same order_number exists under a different ID
       // (e.g., local UUID vs server BigInt), remove the local duplicate before saving
-      if (!local && mapped.orderNumber) {
+      const existingById = await unifiedOrderStorageService.getOrder(mapped.id);
+      if (!existingById && mapped.orderNumber) {
         try {
           const allOrders = await unifiedOrderStorageService.getAllOrders();
           const localDup = allOrders.find(
