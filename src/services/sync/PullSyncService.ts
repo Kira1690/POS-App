@@ -218,15 +218,9 @@ export class PullSyncService {
     for (const raw of toUpsert) {
       const mapped = mapServerOrderToUnified(raw);
 
-      // Conflict resolution: local pending changes win if newer
-      const local = await unifiedOrderStorageService.getOrder(mapped.id);
-      if (local && local.pendingSync) {
-        const localTime = new Date(local.updatedAt).getTime();
-        const serverTime = new Date(mapped.updatedAt).getTime();
-        if (localTime > serverTime) {
-          continue; // local wins
-        }
-      }
+      // Server is the source of truth — always accept server data.
+      // Local changes are pushed via sync queue; once the server processes them,
+      // the next pull will bring the confirmed state back.
 
       // Dedup: if a local order with the same order_number exists under a different ID
       // (e.g., local UUID vs server BigInt), remove the local duplicate before saving

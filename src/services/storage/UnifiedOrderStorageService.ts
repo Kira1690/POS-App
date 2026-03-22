@@ -192,7 +192,7 @@ class UnifiedOrderStorageService {
       order.submittedAt || null, order.paidAt || null, order.cancelledAt || null,
       order.preparingAt || null, order.readyAt || null, order.servedAt || null,
       order.estimatedPrepTime || null, order.actualPrepTime || null,
-      order.pendingSync !== false ? 1 : 0, order.syncedAt || null,
+      order.pendingSync === true ? 1 : 0, order.syncedAt || null,
       order.createdAt || ts, order.updatedAt || ts
     );
 
