@@ -22,6 +22,8 @@ export interface StoredArea {
   description: string;
   isActive: boolean;
   color?: string;
+  displayOrder?: number;
+  isDeleted?: boolean;
 }
 
 // Table data structure for storage
@@ -57,8 +59,11 @@ interface TableRow {
   notes: string | null;
   position_x: number;
   position_y: number;
+  width: number | null;
+  height: number | null;
   shape: string;
   is_active: number;
+  is_deleted: number;
   created_at: string;
   updated_at: string;
 }
@@ -70,7 +75,9 @@ interface AreaRow {
   icon: string | null;
   description: string | null;
   is_active: number;
+  is_deleted: number;
   color: string | null;
+  display_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -99,9 +106,11 @@ class TableStorageService {
       notes: row.notes || undefined,
       position_x: row.position_x,
       position_y: row.position_y,
+      width: row.width ?? undefined,
+      height: row.height ?? undefined,
       shape: row.shape as Table['shape'],
       is_active: fromSqlBool(row.is_active),
-      is_deleted: false,
+      is_deleted: fromSqlBool(row.is_deleted ?? 0),
       created_at: row.created_at,
       updated_at: row.updated_at,
     };
@@ -114,7 +123,9 @@ class TableStorageService {
       icon: row.icon || '',
       description: row.description || '',
       isActive: fromSqlBool(row.is_active),
+      isDeleted: fromSqlBool(row.is_deleted ?? 0),
       color: row.color || undefined,
+      displayOrder: row.display_order ?? 0,
     };
   }
 
@@ -159,13 +170,14 @@ class TableStorageService {
     for (const t of tables) {
       await this.db.runAsync(
         `INSERT OR REPLACE INTO tables (id, restaurant_id, table_number, capacity, status, section,
-          current_order_id, notes, position_x, position_y, shape, is_active, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          current_order_id, notes, position_x, position_y, width, height, shape, is_active, is_deleted, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         t.id, t.restaurant_id, t.table_number, t.capacity,
         t.status, t.section || null,
         t.current_order_id || null, t.notes || null,
-        t.position_x || 0, t.position_y || 0, t.shape || 'square',
-        toSqlBool(t.is_active), t.created_at || now(), t.updated_at || now()
+        t.position_x || 0, t.position_y || 0, t.width ?? null, t.height ?? null,
+        t.shape || 'square', toSqlBool(t.is_active), toSqlBool(t.is_deleted),
+        t.created_at || now(), t.updated_at || now()
       );
     }
     await this.updateLastSync();
@@ -173,7 +185,7 @@ class TableStorageService {
 
   async getTables(): Promise<Table[]> {
     const rows = await this.db.getAllAsync<TableRow>(
-      'SELECT * FROM tables ORDER BY table_number'
+      'SELECT * FROM tables WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY table_number'
     );
     return rows.map((r) => this.tableFromRow(r));
   }
@@ -197,13 +209,14 @@ class TableStorageService {
   async addTable(table: Table): Promise<void> {
     await this.db.runAsync(
       `INSERT OR REPLACE INTO tables (id, restaurant_id, table_number, capacity, status, section,
-        current_order_id, notes, position_x, position_y, shape, is_active, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        current_order_id, notes, position_x, position_y, width, height, shape, is_active, is_deleted, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       table.id, table.restaurant_id, table.table_number, table.capacity,
       table.status, table.section || null,
       table.current_order_id || null, table.notes || null,
-      table.position_x || 0, table.position_y || 0, table.shape || 'square',
-      toSqlBool(table.is_active), table.created_at || now(), table.updated_at || now()
+      table.position_x || 0, table.position_y || 0, table.width ?? null, table.height ?? null,
+      table.shape || 'square', toSqlBool(table.is_active), toSqlBool(table.is_deleted),
+      table.created_at || now(), table.updated_at || now()
     );
     await this.updateLastSync();
   }
@@ -217,13 +230,14 @@ class TableStorageService {
     const updated = { ...this.tableFromRow(existing), ...data, updated_at: now() };
     await this.db.runAsync(
       `INSERT OR REPLACE INTO tables (id, restaurant_id, table_number, capacity, status, section,
-        current_order_id, notes, position_x, position_y, shape, is_active, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        current_order_id, notes, position_x, position_y, width, height, shape, is_active, is_deleted, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       updated.id, updated.restaurant_id, updated.table_number, updated.capacity,
       updated.status, updated.section || null,
       updated.current_order_id || null, updated.notes || null,
-      updated.position_x || 0, updated.position_y || 0, updated.shape || 'square',
-      toSqlBool(updated.is_active), updated.created_at, updated.updated_at
+      updated.position_x || 0, updated.position_y || 0, updated.width ?? null, updated.height ?? null,
+      updated.shape || 'square', toSqlBool(updated.is_active), toSqlBool(updated.is_deleted),
+      updated.created_at, updated.updated_at
     );
     await this.updateLastSync();
   }
@@ -245,10 +259,11 @@ class TableStorageService {
   async saveAreas(areas: StoredArea[]): Promise<void> {
     for (const a of areas) {
       await this.db.runAsync(
-        `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, color, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, is_deleted, color, display_order, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         a.id, this.DEFAULT_RESTAURANT_ID, a.name, a.icon || null, a.description || null,
-        toSqlBool(a.isActive), a.color || null, now(), now()
+        toSqlBool(a.isActive), toSqlBool(a.isDeleted), a.color || null, a.displayOrder ?? 0,
+        now(), now()
       );
     }
     await this.updateLastSync();
@@ -256,24 +271,25 @@ class TableStorageService {
 
   async getAreas(): Promise<StoredArea[]> {
     const rows = await this.db.getAllAsync<AreaRow>(
-      'SELECT * FROM table_areas ORDER BY name'
+      'SELECT * FROM table_areas WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY display_order, name'
     );
     return rows.map((r) => this.areaFromRow(r));
   }
 
   async getActiveAreas(): Promise<StoredArea[]> {
     const rows = await this.db.getAllAsync<AreaRow>(
-      'SELECT * FROM table_areas WHERE is_active = 1 ORDER BY name'
+      'SELECT * FROM table_areas WHERE is_active = 1 AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY display_order, name'
     );
     return rows.map((r) => this.areaFromRow(r));
   }
 
   async addArea(area: StoredArea): Promise<void> {
     await this.db.runAsync(
-      `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, color, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, is_deleted, color, display_order, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       area.id, this.DEFAULT_RESTAURANT_ID, area.name, area.icon || null, area.description || null,
-      toSqlBool(area.isActive), area.color || null, now(), now()
+      toSqlBool(area.isActive), toSqlBool(area.isDeleted), area.color || null, area.displayOrder ?? 0,
+      now(), now()
     );
     await this.updateLastSync();
   }
@@ -288,10 +304,11 @@ class TableStorageService {
     const updated = { ...current, ...data };
 
     await this.db.runAsync(
-      `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, color, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT OR REPLACE INTO table_areas (id, restaurant_id, name, icon, description, is_active, is_deleted, color, display_order, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id, existing.restaurant_id, updated.name, updated.icon || null, updated.description || null,
-      toSqlBool(updated.isActive), updated.color || null, existing.created_at, now()
+      toSqlBool(updated.isActive), toSqlBool(updated.isDeleted), updated.color || null,
+      updated.displayOrder ?? 0, existing.created_at, now()
     );
     await this.updateLastSync();
   }

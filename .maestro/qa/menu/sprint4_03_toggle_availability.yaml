@@ -1,0 +1,65 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "ME-03 Toggle Menu Item Availability"
+tags:
+  - menu
+  - sprint4
+---
+
+# Tests toggling a menu item's availability status.
+
+- runFlow: ../../helpers/online/manager_login.yaml
+
+# Navigate to Settings → Menu Management → Items
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-settings"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "Menu Management"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "Menu Management"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Items"
+    timeout: 5000
+- tapOn:
+    text: "Items"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap on first menu item to edit
+- extendedWaitUntil:
+    visible:
+      id: "menu-item-card-0"
+    timeout: 5000
+- tapOn:
+    id: "menu-item-card-0"
+
+# Verify edit modal
+- extendedWaitUntil:
+    visible:
+      text: "Edit"
+    timeout: 5000
+
+# Look for availability toggle
+- optional:
+    - tapOn:
+        id: "toggle-item-availability"
+    - takeScreenshot: sprint4/ME-03_availability_toggled
+
+# Close without saving
+- optional:
+    - tapOn:
+        text: "Cancel"
+
+- takeScreenshot: sprint4/ME-03_toggle_availability

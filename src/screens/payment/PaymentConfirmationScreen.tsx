@@ -87,7 +87,13 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
         }
       } else if (orderId && payment?.id) {
         // Full payment: mark entire order paid and release table
-        await processPayment(orderId, payment.method, payment.transactionId || payment.id);
+        await processPayment(orderId, payment.method, payment.transactionId || payment.id, {
+          amount: payment.amount,
+          cardBrand: payment.cardType,
+          cardLastFour: payment.cardLast4,
+          authorizationCode: payment.authorizationCode,
+          processingFee: payment.processingFee,
+        });
       }
     };
     markPaid();

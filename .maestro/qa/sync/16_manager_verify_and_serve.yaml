@@ -3,7 +3,7 @@ name: "SYNC-16: Manager Verifies Order + Kitchen, Then Serves"
 ---
 
 # Phase D: Manager logs in, verifies:
-# 1. Orders tab — sees all orders including waiter's B3-cudr order
+# 1. Orders tab — sees all orders including waiter's B3-197q order
 # 2. Kitchen tab — sees kitchen tickets
 # Then navigates to the most recent order and serves it.
 #

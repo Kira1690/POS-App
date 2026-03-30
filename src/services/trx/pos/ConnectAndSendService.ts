@@ -131,19 +131,27 @@ export class ConnectAndSendService {
   private async createTcpClient(config: ConnectionConfig): Promise<{ client: SocketConnection; stream: SocketConnection }> {
     const deviceIP = await this.getDeviceIPAddress();
 
+    // Only bind localAddress if device and target are on the same subnet.
+    // On emulators, the device IP (e.g., 192.168.232.x) differs from the
+    // target subnet (e.g., 192.168.1.x), causing NoRouteToHostException.
+    const sameSubnet = deviceIP && config.host
+      ? deviceIP.split('.').slice(0, 3).join('.') === config.host.split('.').slice(0, 3).join('.')
+      : false;
+
     return new Promise((resolve, reject) => {
       const options: SocketOptions = {
         host: config.host,
         port: config.port,
         timeout: config.sendTimeout,
-        localAddress: deviceIP,
+        ...(sameSubnet ? { localAddress: deviceIP } : {}),
         reuseAddress: true,
       };
 
       this.logger.debug('Creating TCP client', 'createTcpClient', {
         host: config.host,
         port: config.port,
-        localAddress: deviceIP || 'default',
+        localAddress: sameSubnet ? deviceIP : 'os-default',
+        sameSubnet,
         reuseAddress: true,
       });
 

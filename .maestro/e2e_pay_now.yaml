@@ -1,0 +1,48 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Pay Now"
+---
+# Bill screen showing - tap Pay
+- tapOn: "Pay $21.44"
+- waitForAnimationToEnd
+
+# Payment methods - scroll down and tap Card Payment
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+
+# TRX modal
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+- takeScreenshot: /tmp/e2e_50_trx_modal
+
+# Wait for charge button
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 60000
+- takeScreenshot: /tmp/e2e_51_trx_ready
+
+# Charge
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_52_processing
+
+# Wait for swipe result
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_53_complete
+
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_54_details
+
+- tapOn: "Continue"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_55_done

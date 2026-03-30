@@ -58,13 +58,76 @@ class PaymentService implements PaymentServiceInterface {
       if (request.printReceipt || request.emailReceipt) {
         await this.generateReceipt(updatedPayment.id, ReceiptType.CUSTOMER);
       }
-      
+
+      // Persist to SQLite and enqueue for backend sync
+      try {
+        const paymentRecord = {
+          id: updatedPayment.id,
+          orderId: updatedPayment.orderId,
+          orderNumber: '',
+          restaurantId: '1',
+          tableId: '',
+          tableName: '',
+          subtotal: updatedPayment.amount,
+          taxAmount: updatedPayment.taxAmount || 0,
+          discountAmount: 0,
+          tipAmount: updatedPayment.tipAmount || 0,
+          totalAmount: updatedPayment.amount,
+          paymentMethod: 'card',
+          isSplitPayment: false,
+          status: 'completed',
+          paidAmount: updatedPayment.amount,
+          remainingAmount: 0,
+          transactions: [],
+          processedBy: updatedPayment.processedBy || '',
+          processedByName: '',
+          pendingSync: true,
+          createdAt: updatedPayment.created_at,
+          created_at: updatedPayment.created_at,
+          updated_at: updatedPayment.updated_at,
+        };
+        await paymentStorageService.savePayment(paymentRecord as any);
+
+        const txnNumber = `TXN-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString(36).toUpperCase()}`;
+        const syncRecord = {
+          order_id: updatedPayment.orderId,
+          transaction_number: txnNumber,
+          restaurant_id: '1',
+          subtotal: updatedPayment.amount,
+          tax_amount: updatedPayment.taxAmount || 0,
+          discount_amount: 0,
+          tip_amount: updatedPayment.tipAmount || 0,
+          total_amount: updatedPayment.amount,
+          paid_amount: updatedPayment.amount,
+          change_amount: 0,
+          status: 'completed',
+          payment_method: 'card',
+          processed_by: updatedPayment.processedBy || '1',
+          is_split_payment: false,
+          pending_sync: true,
+          created_at: updatedPayment.created_at,
+          updated_at: updatedPayment.updated_at,
+          transactions: [{
+            method: 'card',
+            amount: updatedPayment.amount,
+            status: 'completed',
+            transaction_id: updatedPayment.transactionId,
+            authorization_code: updatedPayment.authorizationCode,
+            card_last4: updatedPayment.cardLast4,
+            card_type: updatedPayment.cardType,
+          }],
+        };
+        await syncQueueService.enqueue('payment', paymentRecord.id, 'create', syncRecord as any);
+      } catch (syncErr) {
+        if (__DEV__) console.error('[PaymentService] Failed to enqueue card payment for sync:', syncErr);
+      }
+
       showToast({
         type: 'success',
         title: 'Payment Successful',
         message: `Card payment of $${request.amount.toFixed(2)} processed successfully`,
       });
-      
+
       return updatedPayment;
     } catch (error) {
       throw this.createPaymentError('CARD_PROCESSING_FAILED', 'Card payment failed', error);
@@ -224,13 +287,73 @@ class PaymentService implements PaymentServiceInterface {
       if (request.printReceipt || request.emailReceipt) {
         await this.generateReceipt(updatedPayment.id, ReceiptType.CUSTOMER);
       }
-      
+
+      // Persist to SQLite and enqueue for backend sync
+      try {
+        const paymentRecord = {
+          id: updatedPayment.id,
+          orderId: updatedPayment.orderId,
+          orderNumber: '',
+          restaurantId: '1',
+          tableId: '',
+          tableName: '',
+          subtotal: updatedPayment.amount,
+          taxAmount: updatedPayment.taxAmount || 0,
+          discountAmount: 0,
+          tipAmount: updatedPayment.tipAmount || 0,
+          totalAmount: updatedPayment.amount,
+          paymentMethod: 'split',
+          isSplitPayment: true,
+          status: 'completed',
+          paidAmount: updatedPayment.amount,
+          remainingAmount: 0,
+          transactions: [],
+          processedBy: updatedPayment.processedBy || '',
+          processedByName: '',
+          pendingSync: true,
+          createdAt: updatedPayment.created_at,
+          created_at: updatedPayment.created_at,
+          updated_at: updatedPayment.updated_at,
+        };
+        await paymentStorageService.savePayment(paymentRecord as any);
+
+        const txnNumber = `TXN-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString(36).toUpperCase()}`;
+        const syncRecord = {
+          order_id: updatedPayment.orderId,
+          transaction_number: txnNumber,
+          restaurant_id: '1',
+          subtotal: updatedPayment.amount,
+          tax_amount: updatedPayment.taxAmount || 0,
+          discount_amount: 0,
+          tip_amount: updatedPayment.tipAmount || 0,
+          total_amount: updatedPayment.amount,
+          paid_amount: updatedPayment.amount,
+          change_amount: 0,
+          status: 'completed',
+          payment_method: 'split',
+          processed_by: updatedPayment.processedBy || '1',
+          is_split_payment: true,
+          pending_sync: true,
+          created_at: updatedPayment.created_at,
+          updated_at: updatedPayment.updated_at,
+          transactions: processedSplitPayments.map(s => ({
+            method: s.method,
+            amount: s.amount,
+            status: 'completed',
+            transaction_id: s.transactionId,
+          })),
+        };
+        await syncQueueService.enqueue('payment', paymentRecord.id, 'create', syncRecord as any);
+      } catch (syncErr) {
+        if (__DEV__) console.error('[PaymentService] Failed to enqueue split payment for sync:', syncErr);
+      }
+
       showToast({
         type: 'success',
         title: 'Split Payment Successful',
         message: `Payment of $${request.amount.toFixed(2)} processed with ${processedSplitPayments.length} methods`,
       });
-      
+
       return updatedPayment;
     } catch (error) {
       throw this.createPaymentError('SPLIT_PROCESSING_FAILED', 'Split payment failed', error);

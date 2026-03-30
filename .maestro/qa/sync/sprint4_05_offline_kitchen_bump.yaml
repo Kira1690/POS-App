@@ -1,0 +1,134 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "ND-02 Offline Kitchen Bump → Sync on Reconnect"
+tags:
+  - sync
+  - offline
+  - sprint4
+---
+
+# Tests kitchen operations while offline:
+# 1. Create and confirm order while online
+# 2. Go offline
+# 3. Kitchen bumps order (start preparing → ready)
+# 4. Go online
+# 5. Verify kitchen status syncs correctly
+
+- runFlow: ../../helpers/online/manager_login.yaml
+
+# Create order while online
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B2-197q"
+    timeout: 15000
+- tapOn:
+    id: "btn-table-select-B2-197q"
+- waitForAnimationToEnd
+
+# Handle guest popup
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Wait for sync
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# GO OFFLINE
+- toggleAirplaneMode
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Kitchen operations while offline
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Start"
+    timeout: 8000
+- tapOn:
+    text: "Start"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Ready"
+    timeout: 8000
+- tapOn:
+    text: "Ready"
+- waitForAnimationToEnd
+
+- takeScreenshot: sprint4/ND-02_kitchen_bumped_offline
+
+# GO ONLINE
+- toggleAirplaneMode
+- repeat:
+    times: 8
+    commands:
+      - waitForAnimationToEnd
+
+# Verify status synced
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "ready"
+    timeout: 15000
+
+- takeScreenshot: sprint4/ND-02_kitchen_synced_online

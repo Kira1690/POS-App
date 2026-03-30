@@ -8,6 +8,7 @@ import {
   menuStorageService,
   tableStorageService,
   syncQueueService,
+  paymentStorageService,
 } from '@/services/storage';
 import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
 import { customerStorageService } from '@/services/storage/CustomerStorageService';
@@ -131,14 +132,18 @@ export class PullSyncService {
       const data = (outerData?.['data'] ?? outerData) as Record<string, unknown> | undefined;
       if (!data) return;
 
-      const tables = data['tables'] as { created?: unknown[]; updated?: unknown[] } | undefined;
+      const tables = data['tables'] as { created?: unknown[]; updated?: unknown[]; deleted?: unknown[] } | undefined;
       if (tables) {
         for (const item of [...(tables.created || []), ...(tables.updated || [])]) {
           await tableStorageService.addTable(item as Parameters<typeof tableStorageService.addTable>[0]);
         }
+        for (const item of (tables.deleted || [])) {
+          const d = item as Record<string, unknown>;
+          if (d['id']) await tableStorageService.deleteTable(String(d['id']));
+        }
       }
 
-      const areas = data['table_areas'] as { created?: unknown[]; updated?: unknown[] } | undefined;
+      const areas = data['table_areas'] as { created?: unknown[]; updated?: unknown[]; deleted?: unknown[] } | undefined;
       if (areas) {
         for (const rawArea of [...(areas.created || []), ...(areas.updated || [])]) {
           const a = rawArea as Record<string, unknown>;
@@ -148,8 +153,14 @@ export class PullSyncService {
             icon: String(a['icon'] ?? ''),
             description: String(a['description'] ?? ''),
             isActive: Boolean(a['isActive'] ?? a['is_active'] ?? true),
+            isDeleted: Boolean(a['isDeleted'] ?? a['is_deleted'] ?? false),
             color: a['color'] ? String(a['color']) : undefined,
+            displayOrder: Number(a['displayOrder'] ?? a['display_order'] ?? 0),
           });
+        }
+        for (const item of (areas.deleted || [])) {
+          const d = item as Record<string, unknown>;
+          if (d['id']) await tableStorageService.deleteArea(String(d['id']));
         }
       }
 
@@ -218,10 +229,6 @@ export class PullSyncService {
     for (const raw of toUpsert) {
       const mapped = mapServerOrderToUnified(raw);
 
-      // Server is the source of truth — always accept server data.
-      // Local changes are pushed via sync queue; once the server processes them,
-      // the next pull will bring the confirmed state back.
-
       // Dedup: if a local order with the same order_number exists under a different ID
       // (e.g., local UUID vs server BigInt), remove the local duplicate before saving
       const existingById = await unifiedOrderStorageService.getOrder(mapped.id);
@@ -232,9 +239,23 @@ export class PullSyncService {
             o => o.orderNumber === mapped.orderNumber && o.id !== mapped.id
           );
           if (localDup) {
+            // Don't delete the local duplicate if it has pending sync changes —
+            // the push will eventually send those changes to the server
+            if (localDup.pendingSync) {
+              if (__DEV__) console.log(`[PullSync] Skipping dedup for ${localDup.id} — has pending sync`);
+              continue;
+            }
             await unifiedOrderStorageService.deleteOrder(localDup.id);
           }
         } catch { /* ignore dedup errors */ }
+      }
+
+      // Don't overwrite local orders that have pending sync changes.
+      // The push cycle will send local changes to the server first;
+      // the next pull after push succeeds will reconcile correctly.
+      if (existingById?.pendingSync) {
+        if (__DEV__) console.log(`[PullSync] Skipping overwrite for order ${mapped.id} — local has pending sync`);
+        continue;
       }
 
       await unifiedOrderStorageService.saveOrder(mapped);
@@ -245,6 +266,29 @@ export class PullSyncService {
       const local = await unifiedOrderStorageService.getOrder(item.id);
       if (local?.pendingSync) continue;
       await unifiedOrderStorageService.deleteOrder(item.id);
+    }
+  }
+
+  /**
+   * Pull tax and CC settings from server.
+   * Every merchant has different tax rates — never use hardcoded defaults.
+   * This runs on startup and periodically to keep settings current.
+   */
+  async pullSettings(): Promise<void> {
+    try {
+      const response = await apiClient.get<any>('/api/settings/tax', { silent: true } as any);
+      const data = response.data?.data ?? response.data;
+      if (data && data.tax_rate !== undefined) {
+        const taxRate = parseFloat(data.tax_rate) / 100; // Server stores as percentage (e.g., 10.000), convert to decimal (0.10)
+        await paymentStorageService.updateTaxRate(taxRate);
+        if (__DEV__) {
+          console.log(`[PullSyncService] Tax rate synced from server: ${data.tax_rate}% → ${taxRate}`);
+        }
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[PullSyncService] pullSettings failed:', error);
+      }
     }
   }
 }

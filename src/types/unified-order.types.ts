@@ -406,10 +406,10 @@ export const canAcceptPayment = (order: UnifiedOrder): boolean => {
 };
 
 /**
- * Check if order is active (not completed/cancelled)
+ * Check if order is active (not completed/paid/cancelled)
  */
 export const isActiveOrder = (order: UnifiedOrder): boolean => {
-  return !['paid', 'cancelled'].includes(order.status);
+  return !['paid', 'completed', 'cancelled'].includes(order.status);
 };
 
 /**

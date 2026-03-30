@@ -4,7 +4,7 @@
  * Uses real data from UnifiedOrder and TableStats
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,8 @@ import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
 import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
 import { useTableStats } from '@/hooks/context/useTableSelectors';
+import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
+import { reportsApiService } from '@/services/api/ReportsApiService';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
@@ -37,35 +39,81 @@ const StaffDashboard: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
 
+  // Server KPI state
+  const [serverKpis, setServerKpis] = useState<{
+    totalRevenue: number;
+    totalOrders: number;
+    avgOrderValue: number;
+  } | null>(null);
+  const [kpiSource, setKpiSource] = useState<'server' | 'cache'>('cache');
+  const fetchingKpisRef = useRef(false);
+
   // Real data hooks
   const { orders, refreshOrders, isLoading } = useUnifiedOrder();
   const tableStats = useTableStats();
+
+  // Fetch KPIs from server API (authoritative source)
+  const fetchServerKpis = useCallback(async () => {
+    if (fetchingKpisRef.current) return;
+    fetchingKpisRef.current = true;
+    try {
+      const today = new Date().toISOString().slice(0, 10); // UTC YYYY-MM-DD
+      const data = await reportsApiService.getDailySales(today);
+      setServerKpis({
+        totalRevenue: data.totalRevenue,
+        totalOrders: data.totalOrders,
+        avgOrderValue: data.avgOrderValue,
+      });
+      setKpiSource('server');
+    } catch {
+      setKpiSource('cache');
+    } finally {
+      fetchingKpisRef.current = false;
+    }
+  }, []);
 
   // Refresh on screen focus
   useFocusEffect(
     useCallback(() => {
       refreshOrders();
-    }, [refreshOrders])
+      fetchServerKpis();
+    }, [refreshOrders, fetchServerKpis])
   );
 
-  // Compute today's start timestamp
+  // Refresh KPIs immediately when a payment is processed
+  useEffect(() => {
+    const unsubscribe = orderEventEmitter.subscribe('ORDER_PAID', () => {
+      refreshOrders();
+      fetchServerKpis();
+    });
+    return unsubscribe;
+  }, [refreshOrders, fetchServerKpis]);
+
+  // Compute today's start timestamp using UTC for consistency with server
   const todayStart = useMemo(() => {
-    const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    return d.getTime();
   }, []);
 
-  // Compute staff metrics from real data
-  const todaysOrders = useMemo(() => {
-    return orders.filter(o => new Date(o.createdAt).getTime() >= todayStart);
+  // Local fallback: compute from SQLite orders (paid, created today UTC)
+  const localTodaysOrders = useMemo(() => {
+    return orders.filter(o => o.status === 'paid' && new Date(o.createdAt).getTime() >= todayStart);
   }, [orders, todayStart]);
 
-  const todaysOrderTotal = useMemo(() => {
-    return todaysOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-  }, [todaysOrders]);
+  const localTodaysOrderTotal = useMemo(() => {
+    return localTodaysOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  }, [localTodaysOrders]);
 
-  const avgOrderValue = useMemo(() => {
-    if (todaysOrders.length === 0) return 0;
-    return todaysOrderTotal / todaysOrders.length;
-  }, [todaysOrders, todaysOrderTotal]);
+  const localAvgOrderValue = useMemo(() => {
+    if (localTodaysOrders.length === 0) return 0;
+    return localTodaysOrderTotal / localTodaysOrders.length;
+  }, [localTodaysOrders, localTodaysOrderTotal]);
+
+  // Use server KPIs when available, otherwise local
+  const todaysOrderCount = serverKpis !== null ? serverKpis.totalOrders : localTodaysOrders.length;
+  const todaysOrderTotal = serverKpis !== null ? serverKpis.totalRevenue : localTodaysOrderTotal;
+  const avgOrderValue = serverKpis !== null ? serverKpis.avgOrderValue : localAvgOrderValue;
 
   const staffName = authState.user?.name || 'Staff';
   const staffEmployeeId = authState.user?.employeeId || '--';
@@ -76,9 +124,9 @@ const StaffDashboard: React.FC = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshOrders();
+    await Promise.all([refreshOrders(), fetchServerKpis()]);
     setRefreshing(false);
-  }, [refreshOrders]);
+  }, [refreshOrders, fetchServerKpis]);
 
   const tabItems = [
     { label: 'Dashboard', icon: 'dashboard', active: activeTab === 'Dashboard' },
@@ -182,10 +230,11 @@ const StaffDashboard: React.FC = () => {
           My Orders Today
         </Text>
         <Text style={[styles.metricValue, { color: theme.colors.success }]}>
-          {loading ? '--' : `${todaysOrders.length} Orders | ${formatCurrency(todaysOrderTotal)} Total`}
+          {loading ? '--' : `${todaysOrderCount} Orders | ${formatCurrency(todaysOrderTotal)} Total`}
         </Text>
         <Text style={[styles.metricSubtext, { color: theme.colors.onSurfaceVariant }]}>
           Average Order: {loading ? '--' : formatCurrency(avgOrderValue)}
+          {' '}({kpiSource === 'cache' ? 'cached' : 'live'})
         </Text>
       </View>
 

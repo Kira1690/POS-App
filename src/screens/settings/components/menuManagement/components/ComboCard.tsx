@@ -284,11 +284,11 @@ export const ComboCard: React.FC<ComboCardProps> = ({
           )}
 
           <View style={styles.pricingRow}>
-            <Text style={styles.comboPrice}>${combo.combo_price.toFixed(2)}</Text>
-            <Text style={styles.regularPrice}>${combo.regular_price.toFixed(2)}</Text>
+            <Text style={styles.comboPrice}>${(Number(combo.combo_price) || 0).toFixed(2)}</Text>
+            <Text style={styles.regularPrice}>${(Number(combo.regular_price) || 0).toFixed(2)}</Text>
             <View style={styles.savingsBadge}>
               <Text style={styles.savingsText}>
-                Save {combo.savings_percentage.toFixed(0)}%
+                Save {(Number(combo.savings_percentage) || 0).toFixed(0)}%
               </Text>
             </View>
           </View>

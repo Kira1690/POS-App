@@ -120,7 +120,7 @@ export const BillScreen: React.FC = () => {
   const { isPhone } = useResponsive();
   const navigation = useNavigation<BillScreenNavigationProp>();
   const route = useRoute<BillScreenRouteProp>();
-  const { orderId } = route.params;
+  const { orderId, order: passedOrder } = route.params;
 
   // Use unified order context
   const { orders, getOrderById, processPayment, canProcessPayment, applyOrderDiscount } = useUnifiedOrder();
@@ -132,10 +132,19 @@ export const BillScreen: React.FC = () => {
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
 
-  // Find the order using unified context
+  // Find the order — prefer passed order, then context lookup, then getOrderById
   const order = useMemo(
-    () => orders.find((o) => o.id === orderId) || null,
-    [orders, orderId]
+    () => {
+      const found = orders.find((o) => o.id === orderId || String(o.id) === String(orderId));
+      if (found) return found;
+      if (getOrderById) {
+        const byId = getOrderById(orderId);
+        if (byId) return byId;
+      }
+      // Fallback: use the order passed via navigation params
+      return passedOrder || null;
+    },
+    [orders, orderId, getOrderById, passedOrder]
   );
 
   // Check if payment is allowed (order must be served)

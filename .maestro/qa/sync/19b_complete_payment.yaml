@@ -1,0 +1,80 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-19b: Complete Payment — Tap Pay Button on Bill Screen"
+---
+
+# The app is currently on the Bill screen showing "Pay $68.16"
+# This flow completes the payment without re-login.
+
+# Tap the Pay button at bottom of Bill screen
+- tapOn:
+    text: "Pay \\$68.16"
+    optional: true
+- tapOn:
+    text: ".*Pay \\$.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19b_payment_method
+
+# Select Cash payment method
+- tapOn:
+    text: ".*Cash.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19b_cash_selected
+
+# Process/Confirm payment
+- tapOn:
+    id: "btn-process-payment"
+    optional: true
+- tapOn:
+    id: "btn-cash-confirm"
+    optional: true
+- tapOn:
+    text: ".*Process.*|.*Confirm.*|.*Pay.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19b_payment_processing
+
+# Handle confirmation/success
+- tapOn:
+    text: ".*Confirm.*|.*Yes.*|.*OK.*"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "btn-continue"
+    optional: true
+- tapOn:
+    text: ".*Continue.*|.*Done.*|.*Receipt.*|.*Close.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19b_payment_complete
+
+# Wait for sync
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19b_final_state

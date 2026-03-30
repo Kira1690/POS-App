@@ -1,0 +1,145 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Phase 4 - Full E2E Payment Test"
+---
+
+# Login
+- runFlow: helpers/online/manager_login.yaml
+
+# Go to Orders
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Create new order
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "M5-197q"
+    timeout: 20000
+- waitForAnimationToEnd
+
+# Select table M6 (should be available)
+- tapOn: "M6-197q"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Confirm"
+    commands:
+      - tapOn: "Confirm"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Has an Active Order"
+    commands:
+      - tapOn: "Cancel & Pick Table"
+      - waitForAnimationToEnd
+      - tapOn: "P4-197q"
+      - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "Confirm"
+          commands:
+            - tapOn: "Confirm"
+            - waitForAnimationToEnd
+
+# Wait for menu
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 30000
+
+# Add items
+- tapOn: "Garlic Bread"
+- waitForAnimationToEnd
+- tapOn: "Classic Cheeseburger"
+- waitForAnimationToEnd
+
+# Send to Kitchen
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Open order from list
+- extendedWaitUntil:
+    visible: "$21.44"
+    timeout: 10000
+- tapOn: "$21.44"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+# Status chain: Confirmed -> Preparing -> Ready -> Served
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Preparing"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Ready"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Served"
+- waitForAnimationToEnd
+
+# Process Payment
+- tapOn: "Process Payment"
+- waitForAnimationToEnd
+
+# Bill screen - Pay
+- extendedWaitUntil:
+    visible: "Pay $21.44"
+    timeout: 10000
+- tapOn: "Pay $21.44"
+- waitForAnimationToEnd
+
+# Payment methods - scroll to Card Payment
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+
+# TRX modal
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+- takeScreenshot: /tmp/e2e_60_trx_modal
+
+# Wait for charge button (with TCP fix, should connect)
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 60000
+- takeScreenshot: /tmp/e2e_61_trx_connected
+
+# Charge!
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_62_processing
+
+# Wait for payment result
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_63_payment_complete
+
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_64_details
+
+- tapOn: "Continue"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_65_done

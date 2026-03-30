@@ -1,0 +1,76 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-19e: Scroll to Cash Button and Complete Payment"
+---
+
+# App is on Payment Processing screen. Need to scroll down past tip section
+# to find Cash/Card payment method buttons.
+
+# First, tap "No Tip" to skip tip selection
+- tapOn:
+    text: "No Tip"
+    optional: true
+- waitForAnimationToEnd
+
+# Swipe up to scroll down and find payment method buttons
+- swipe:
+    direction: UP
+    duration: 400
+
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19e_scrolled
+
+# Look for Cash or payment method button
+- tapOn:
+    text: ".*Cash.*|.*cash.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19e_after_cash_tap
+
+# If cash amount entry screen appears, confirm
+- tapOn:
+    id: "btn-process-payment"
+    optional: true
+- tapOn:
+    id: "btn-cash-confirm"
+    optional: true
+- tapOn:
+    text: ".*Process.*|.*Confirm.*|.*Pay.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19e_payment_confirmed
+
+# Continue/Done
+- tapOn:
+    id: "btn-continue"
+    optional: true
+- tapOn:
+    text: ".*Continue.*|.*Done.*|.*View Receipt.*|.*Back.*"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19e_done
+
+# Sync wait
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19e_final

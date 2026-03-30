@@ -188,6 +188,34 @@ class SyncQueueService {
     await this.enqueue(entityType, entityId, 'update', data);
   }
 
+  /**
+   * Remap entity_id and data.id in all pending queue items for a given entity.
+   * Called after a create push returns a server_id different from the local_id.
+   */
+  async remapEntityId(
+    entityType: SyncEntityType,
+    oldEntityId: string,
+    newEntityId: string
+  ): Promise<void> {
+    if (oldEntityId === newEntityId) return;
+    // Get all pending items for the old entity ID
+    const rows = await this.db.getAllAsync<QueueItemRow>(
+      `SELECT * FROM sync_queue WHERE entity_type = ? AND entity_id = ? AND status = 'pending'`,
+      entityType, oldEntityId
+    );
+    for (const row of rows) {
+      // Update data JSON to replace the old ID with the new server ID
+      let data: Record<string, unknown> = {};
+      try { data = JSON.parse(row.data); } catch { /* empty */ }
+      data.id = newEntityId;
+      await this.db.runAsync(
+        `UPDATE sync_queue SET entity_id = ?, data = ?, updated_at = ? WHERE id = ?`,
+        newEntityId, JSON.stringify(data), now(), row.id
+      );
+    }
+    if (__DEV__) console.log(`[SyncQueue] Remapped ${rows.length} items: ${oldEntityId} → ${newEntityId}`);
+  }
+
   async getNextItems(limit: number = 10, entityType?: string): Promise<SyncQueueItem[]> {
     const ts = now();
     if (entityType) {

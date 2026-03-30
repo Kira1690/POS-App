@@ -11,7 +11,8 @@ export type OrderEventType =
   | 'ORDER_PAID'
   | 'SYSTEM_RESET'
   | 'TABLE_SYNC_COMPLETE'
-  | 'ORDER_SYNC_COMPLETE';
+  | 'ORDER_SYNC_COMPLETE'
+  | 'ORDER_ID_REMAPPED';
 
 export interface OrderEventData {
   status?: string;

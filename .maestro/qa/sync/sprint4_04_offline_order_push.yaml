@@ -1,0 +1,145 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "ND-01 Offline Order Creation → Push on Reconnect"
+tags:
+  - sync
+  - offline
+  - sprint4
+---
+
+# Tests offline order creation and sync on reconnect.
+# 1. Login while online
+# 2. Toggle airplane mode OFF (go offline)
+# 3. Create orders offline
+# 4. Toggle airplane mode ON (go online)
+# 5. Verify orders sync without errors
+
+# Login while online
+- runFlow: ../../helpers/online/waiter_login.yaml
+
+# Take screenshot before going offline
+- takeScreenshot: sprint4/ND-01_before_offline
+
+# ===============================
+# GO OFFLINE (airplane mode)
+# ===============================
+- toggleAirplaneMode
+
+# Wait for offline state to register
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Create order #1 offline
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B2-197q"
+    timeout: 15000
+- tapOn:
+    id: "btn-table-select-B2-197q"
+- waitForAnimationToEnd
+
+# Handle guest popup
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Create order #2 offline
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-M1-197q"
+    timeout: 15000
+- tapOn:
+    id: "btn-table-select-M1-197q"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Drinks"
+    timeout: 5000
+- tapOn:
+    text: "Drinks"
+- extendedWaitUntil:
+    visible:
+      text: "Latte"
+    timeout: 5000
+- tapOn:
+    text: "Latte"
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Screenshot showing orders created offline
+- takeScreenshot: sprint4/ND-01_orders_created_offline
+
+# ===============================
+# GO ONLINE (airplane mode off)
+# ===============================
+- toggleAirplaneMode
+
+# Wait for push sync to complete (10s push interval + processing)
+- repeat:
+    times: 8
+    commands:
+      - waitForAnimationToEnd
+
+# Verify no error messages
+- assertNotVisible:
+    text: "Failed"
+
+- assertNotVisible:
+    text: "Error"
+
+# Take evidence screenshot
+- takeScreenshot: sprint4/ND-01_orders_synced_online

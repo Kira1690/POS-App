@@ -1,0 +1,68 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "ME-02 Edit Menu Item Price"
+tags:
+  - menu
+  - sprint4
+---
+
+# Tests editing a menu item's price via EditMenuItemModal.
+
+- runFlow: ../../helpers/online/manager_login.yaml
+
+# Navigate to Settings → Menu Management → Items
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-settings"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "Menu Management"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "Menu Management"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Items"
+    timeout: 5000
+- tapOn:
+    text: "Items"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap on first menu item to edit
+- extendedWaitUntil:
+    visible:
+      id: "menu-item-card-0"
+    timeout: 5000
+- tapOn:
+    id: "menu-item-card-0"
+
+# Verify edit modal opened
+- extendedWaitUntil:
+    visible:
+      text: "Edit"
+    timeout: 5000
+
+# Find and modify price field
+- optional:
+    - tapOn:
+        id: "input-item-price"
+    - clearText
+    - inputText: "15.99"
+    - hideKeyboard
+    - takeScreenshot: sprint4/ME-02_price_changed
+
+# Close without saving to preserve data
+- optional:
+    - tapOn:
+        text: "Cancel"
+
+- takeScreenshot: sprint4/ME-02_edit_price

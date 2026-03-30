@@ -653,7 +653,7 @@ const POSOrderScreen: React.FC = () => {
   // Professional Bill Panel - SkyTab style
   const renderBillPanel = () => {
     // Use tax rate from payment context (single source of truth)
-    const taxRate = contextTaxRate || 0.0825; // Default 8.25% if not configured
+    const taxRate = contextTaxRate; // Tax rate from PaymentContext — synced from server, never hardcoded
 
     // Calculate bill data — use discount from submitted order or cart
     const subtotal = cartTotal;

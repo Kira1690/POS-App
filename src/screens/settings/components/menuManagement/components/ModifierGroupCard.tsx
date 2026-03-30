@@ -208,7 +208,7 @@ export const ModifierGroupCard: React.FC<ModifierGroupCardProps> = ({
   });
 
   const renderOptionChip = (option: typeof group.options[0]) => {
-    const priceAdjustment = option.price_adjustment;
+    const priceAdjustment = Number(option.price_adjustment) || 0;
     const priceText = priceAdjustment > 0
       ? `+$${priceAdjustment.toFixed(2)}`
       : priceAdjustment < 0

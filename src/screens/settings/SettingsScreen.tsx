@@ -130,22 +130,22 @@ export default function SettingsScreen() {
     },
   ];
 
-  // RBAC: Per-category access rules
+  // RBAC: Per-category access rules — manager has full settings access
   const categoryAccessMap: Record<string, boolean> = useMemo(() => ({
-    restaurant_profile: canManageUsers,   // admin/superadmin
-    user_management: canManageUsers,      // admin/superadmin
-    device_hardware: isManagementLevel,   // manager+
-    payment_config: canManageUsers,       // admin/superadmin
-    trx_payment: isManagementLevel,       // manager+
-    table_management: isManagementLevel,  // manager+
-    menu_management: isManagementLevel,   // manager+
-    kitchen_management: canAccessKitchen, // kitchen_staff + manager+
-    printer_management: isManagementLevel,// manager+
-    integrations: canManageUsers,         // admin/superadmin
-    security_backup: canManageUsers,      // admin/superadmin
-    system_logs: canManageUsers,          // admin/superadmin
-    help_support: true,                   // all roles
-  }), [isManagementLevel, canManageUsers, canAccessKitchen]);
+    restaurant_profile: isManagementLevel, // manager + store_admin
+    user_management: isManagementLevel,    // manager + store_admin
+    device_hardware: isManagementLevel,    // manager + store_admin
+    payment_config: isManagementLevel,     // manager + store_admin
+    trx_payment: isManagementLevel,        // manager + store_admin
+    table_management: isManagementLevel,   // manager + store_admin
+    menu_management: isManagementLevel,    // manager + store_admin
+    kitchen_management: isManagementLevel, // manager + store_admin
+    printer_management: isManagementLevel, // manager + store_admin
+    integrations: isManagementLevel,       // manager + store_admin
+    security_backup: isManagementLevel,    // manager + store_admin
+    system_logs: isManagementLevel,        // manager + store_admin
+    help_support: true,                    // all roles
+  }), [isManagementLevel]);
 
   const filteredCategories = useMemo(
     () => SETTINGS_CATEGORIES.filter(cat => categoryAccessMap[cat.id] !== false),
@@ -333,7 +333,7 @@ export default function SettingsScreen() {
       showsVerticalScrollIndicator={false}
     >
       {filteredGroups.map((group) => {
-        const phoneIds = group.ids.filter(id => id !== 'table_management');
+        const phoneIds = group.ids;
         if (phoneIds.length === 0) return null;
         return (
         <View key={group.label}>

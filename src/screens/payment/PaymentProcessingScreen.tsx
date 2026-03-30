@@ -112,7 +112,11 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
     }
   }, [splitPayments, openSplitPaymentModal]);
 
+  // Only go back if order is missing on initial mount — not on subsequent re-renders
+  const hasInitialized = React.useRef(false);
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
     if (!order && !orderId) {
       showToast({
         type: 'error',
@@ -443,7 +447,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
       
       <TRXPaymentModal
         visible={showTRXModal}
-        totalAmount={trxModalAmount ?? totals.total}
+        totalAmount={trxModalAmount ?? totals.subtotal}
         onPayment={(result) => {
           setShowTRXModal(false);
           setTrxModalAmount(null);

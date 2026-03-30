@@ -165,9 +165,9 @@ export const ComboList: React.FC<ComboListProps> = ({
   // Calculate stats
   const activeCount = combos.filter(c => c.is_active).length;
   const availableNowCount = combos.filter(c => isComboAvailableNow(c)).length;
-  const totalSavings = combos.reduce((sum, c) => sum + c.savings_amount, 0);
+  const totalSavings = combos.reduce((sum, c) => sum + (Number(c.savings_amount) || 0), 0);
   const avgSavingsPercent = combos.length > 0
-    ? combos.reduce((sum, c) => sum + c.savings_percentage, 0) / combos.length
+    ? combos.reduce((sum, c) => sum + (Number(c.savings_percentage) || 0), 0) / combos.length
     : 0;
 
   const styles = StyleSheet.create({

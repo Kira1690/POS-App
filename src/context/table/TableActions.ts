@@ -24,10 +24,25 @@ async function isUsingDummyCredentials(): Promise<boolean> {
 
 // Reconcile table statuses against actual active orders.
 // Resets OCCUPIED tables to AVAILABLE if they have no active order in storage.
+// IMPORTANT: Skip reconciliation if orders haven't been synced yet (empty storage
+// after cold boot would incorrectly reset all occupied tables to available).
 // Silently returns the original list on any error.
 const reconcileTableStatuses = async (tables: Table[]): Promise<Table[]> => {
   try {
     const activeOrders = await unifiedOrderStorageService.getActiveOrders();
+
+    // If no orders in local storage at all, orders likely haven't synced yet.
+    // Trust server statuses — don't reconcile.
+    if (activeOrders.length === 0) {
+      if (__DEV__) {
+        const occupiedCount = tables.filter(t => t.status === TableStatus.OCCUPIED).length;
+        if (occupiedCount > 0) {
+          console.log(`[TableActions] Skipping reconciliation — no orders in storage yet (${occupiedCount} occupied tables preserved)`);
+        }
+      }
+      return tables;
+    }
+
     const activeTableIds = new Set(activeOrders.map((o) => o.tableId).filter(Boolean));
 
     const corrected: string[] = [];
@@ -73,65 +88,100 @@ export const createTableActions = (
   dispatch: React.Dispatch<TableAction>
 ) => {
   
-  const loadTables = async (restaurantId: string): Promise<void> => {
-    dispatch({ type: 'TABLE_LOAD_START' });
+  // In-flight dedup: if a loadTables is already running, callers wait for it
+  let loadTablesPromise: Promise<void> | null = null;
+  let loadTablesStartedAt = 0;
 
-    // Dummy/offline credentials — skip API entirely, go straight to SQLite
-    const isDummy = await isUsingDummyCredentials();
-    if (isDummy) {
-      try {
-        const data = await tableStorageService.initialize(restaurantId);
-        const reconciled = await reconcileTableStatuses(data.tables);
-        dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: reconciled });
-      } catch (storageError: unknown) {
-        const errorMessage = (storageError as Error).message || 'Failed to load tables';
-        dispatch({ type: 'TABLE_LOAD_FAILURE', payload: errorMessage });
+  const loadTables = async (restaurantId: string, fromStorageOnly = false): Promise<void> => {
+    // Dedup: if already loading, piggyback — but timeout after 10s to avoid stuck promises
+    if (loadTablesPromise) {
+      if (Date.now() - loadTablesStartedAt < 10000) {
+        return loadTablesPromise;
       }
-      return;
+      // Previous load hung — reset and retry
+      loadTablesPromise = null;
     }
+    loadTablesStartedAt = Date.now();
 
-    try {
-      const apiTables = await tableService.getTables(restaurantId);
+    const doLoad = async () => {
+      dispatch({ type: 'TABLE_LOAD_START' });
 
-      // Merge with locally-created tables not yet synced to server.
-      // Only include user-created tables (timestamp-based IDs), not seeded mock data.
-      let merged = apiTables;
-      try {
-        const localTables = await tableStorageService.getTables();
-        const apiIds = new Set(apiTables.map(t => t.id));
-        const apiNumbers = new Set(apiTables.map(t => t.table_number));
-        const localOnly = localTables.filter(t => {
-          if (apiIds.has(t.id) || apiNumbers.has(t.table_number)) return false;
-          // Skip seeded mock tables (IDs: t-001 to t-030). Only include user-created
-          // tables which have timestamp-based IDs like t-1741305834.
-          const numPart = parseInt(t.id.replace('t-', ''), 10);
-          return !isNaN(numPart) && numPart > 1000;
-        });
-        if (localOnly.length > 0) {
-          merged = [...apiTables, ...localOnly];
+      // Dummy/offline credentials — skip API entirely, go straight to SQLite
+      const isDummy = await isUsingDummyCredentials();
+      if (isDummy) {
+        try {
+          const data = await tableStorageService.initialize(restaurantId);
+          const reconciled = await reconcileTableStatuses(data.tables);
+          dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: reconciled });
+        } catch (storageError: unknown) {
+          const errorMessage = (storageError as Error).message || 'Failed to load tables';
+          dispatch({ type: 'TABLE_LOAD_FAILURE', payload: errorMessage });
         }
-      } catch {
-        // SQLite read failed — use API data only
+        return;
       }
 
-      const reconciled = await reconcileTableStatuses(merged);
-      dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: reconciled });
-    } catch {
-      // API unavailable — fall back to SQLite (seeds mock data if empty)
-      try {
-        const data = await tableStorageService.initialize(restaurantId);
-        const reconciled = await reconcileTableStatuses(data.tables);
-        dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: reconciled });
-      } catch (storageError: any) {
-        const errorMessage = storageError.message || 'Failed to load tables';
-        dispatch({ type: 'TABLE_LOAD_FAILURE', payload: errorMessage });
-        showToast({
-          type: 'error',
-          title: 'Load Failed',
-          message: errorMessage,
-        });
+      // Storage-only: read from SQLite (sync pull already wrote data there).
+      // Skip initialize() to avoid seeding mock data when using real credentials.
+      // Skip reconciliation — server is the authority for table status when online.
+      if (fromStorageOnly) {
+        try {
+          const tables = await tableStorageService.getTables();
+          if (tables.length > 0) {
+            dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: tables });
+          }
+          // If no tables in storage yet, don't dispatch — wait for API or next sync
+        } catch {
+          // Silent — storage read failure is non-critical
+        }
+        return;
       }
-    }
+
+      try {
+        const apiTables = await tableService.getTables(restaurantId);
+
+        // Merge with locally-created tables not yet synced to server.
+        let merged = apiTables;
+        try {
+          const localTables = await tableStorageService.getTables();
+          const apiIds = new Set(apiTables.map(t => t.id));
+          const apiNumbers = new Set(apiTables.map(t => t.table_number));
+          const localOnly = localTables.filter(t => {
+            if (apiIds.has(t.id) || apiNumbers.has(t.table_number)) return false;
+            const numPart = parseInt(t.id.replace('t-', ''), 10);
+            return !isNaN(numPart) && numPart > 1000;
+          });
+          if (localOnly.length > 0) {
+            merged = [...apiTables, ...localOnly];
+          }
+        } catch {
+          // SQLite read failed — use API data only
+        }
+
+        // Server is the authority for table status — no local reconciliation
+        dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: merged });
+      } catch {
+        // API unavailable — fall back to SQLite (no mock seeding for real credentials)
+        try {
+          const tables = await tableStorageService.getTables();
+          if (tables.length > 0) {
+            dispatch({ type: 'TABLE_LOAD_SUCCESS', payload: tables });
+          } else {
+            dispatch({ type: 'TABLE_LOAD_FAILURE', payload: 'No tables available — waiting for server sync' });
+          }
+        } catch (storageError: any) {
+          const errorMessage = storageError.message || 'Failed to load tables';
+          dispatch({ type: 'TABLE_LOAD_FAILURE', payload: errorMessage });
+          showToast({
+            type: 'error',
+            title: 'Load Failed',
+            message: errorMessage,
+          });
+        }
+      }
+    };
+
+    loadTablesPromise = doLoad().finally(() => { loadTablesPromise = null; });
+    return loadTablesPromise;
   };
 
   const selectTable = (table: Table): void => {

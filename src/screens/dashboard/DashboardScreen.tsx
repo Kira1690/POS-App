@@ -57,32 +57,34 @@ export const DashboardScreen: React.FC = () => {
   const [apiToday, setApiToday] = useState<DailySales | null>(null);
   const [apiYesterday, setApiYesterday] = useState<DailySales | null>(null);
 
-  useEffect(() => {
-    if (!isOnline) return; // Skip API calls when offline/dummy credentials
-    const fetchApiKpis = async () => {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      const fmt = (d: Date) => d.toISOString().split('T')[0];
-      try {
-        const [t, y] = await Promise.all([
-          reportsApiService.getDailySales(fmt(today)),
-          reportsApiService.getDailySales(fmt(yesterday)),
-        ]);
-        setApiToday(t);
-        setApiYesterday(y);
-      } catch {
-        // Falls back to local order data in kpis useMemo
-      }
-    };
-    fetchApiKpis();
+  const fetchApiKpis = useCallback(async () => {
+    if (!isOnline) return;
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+    try {
+      const [t, y] = await Promise.all([
+        reportsApiService.getDailySales(fmt(today)),
+        reportsApiService.getDailySales(fmt(yesterday)),
+      ]);
+      setApiToday(t);
+      setApiYesterday(y);
+    } catch {
+      // Falls back to local order data in kpis useMemo
+    }
   }, [isOnline]);
 
-  // Refresh on screen focus
+  useEffect(() => {
+    fetchApiKpis();
+  }, [fetchApiKpis]);
+
+  // Refresh on screen focus — refresh both orders and API KPIs
   useFocusEffect(
     useCallback(() => {
       refreshOrders();
-    }, [refreshOrders])
+      fetchApiKpis();
+    }, [refreshOrders, fetchApiKpis])
   );
 
   // Compute today's start timestamp
@@ -243,9 +245,9 @@ export const DashboardScreen: React.FC = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshOrders();
+    await Promise.all([refreshOrders(), fetchApiKpis()]);
     setRefreshing(false);
-  }, [refreshOrders]);
+  }, [refreshOrders, fetchApiKpis]);
 
   const getTimeGreeting = () => {
     const hour = new Date().getHours();

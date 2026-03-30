@@ -272,7 +272,7 @@ export const SendToKitchenModal: React.FC<SendToKitchenModalProps> = ({
     [items]
   );
 
-  const formatPrice = (price: number): string => `$${price.toFixed(2)}`;
+  const formatPrice = (price: number): string => `$${(Number(price) || 0).toFixed(2)}`;
 
   return (
     <Modal

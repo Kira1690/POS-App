@@ -1,0 +1,103 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Order to Payment"
+---
+# First visit TRX settings to initialize terminal DB tables
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+- tapOn: "TRX Terminal"
+- waitForAnimationToEnd
+- tapOn: "Manage Terminals"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_70_terminal_init
+
+# Go back
+- back
+- waitForAnimationToEnd
+
+# Go to orders
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Open the first confirmed order
+- tapOn: "ORD-20260329-9645"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- takeScreenshot: /tmp/e2e_71_order_detail
+
+# Status chain
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Preparing"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Ready"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Served"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_72_served
+
+# Process Payment
+- tapOn: "Process Payment"
+- waitForAnimationToEnd
+
+# Pay
+- extendedWaitUntil:
+    visible: "Pay $21.44"
+    timeout: 10000
+- tapOn: "Pay $21.44"
+- waitForAnimationToEnd
+
+# Card Payment
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+
+# TRX modal
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+- takeScreenshot: /tmp/e2e_73_trx_modal
+
+# Wait for charge button
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 60000
+- takeScreenshot: /tmp/e2e_74_connected
+
+# CHARGE
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_75_processing
+
+# Wait for card swipe result
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_76_complete
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_77_scroll
+- tapOn: "Continue"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_78_done

@@ -8,7 +8,7 @@
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 
 const DB_NAME = 'pos_app.db';
-const CURRENT_SCHEMA_VERSION = 8;
+const CURRENT_SCHEMA_VERSION = 9;
 
 class DatabaseService {
   private db: SQLiteDatabase | null = null;
@@ -147,6 +147,12 @@ class DatabaseService {
       // v8: add multi-transport columns to printer_settings + station_printers
       await this.runV8Migration();
       if (__DEV__) console.log('[DatabaseService] Running v7 → v8 migration (multi-transport printer fields)');
+    }
+
+    if (currentVersion < 9) {
+      // v9: align tables + table_areas schemas with server for full bidirectional sync
+      await this.runV9Migration();
+      if (__DEV__) console.log('[DatabaseService] Running v8 → v9 migration (table sync alignment)');
     }
 
     if (currentVersion < CURRENT_SCHEMA_VERSION) {
@@ -356,6 +362,39 @@ class DatabaseService {
     }
   }
 
+  private async runV9Migration(): Promise<void> {
+    if (!this.db) return;
+
+    // tables: add width, height, is_deleted columns
+    const tblCols = await this.db.getAllAsync<{ name: string }>('PRAGMA table_info(tables)');
+    const tblColNames = new Set(tblCols.map(c => c.name));
+
+    const tblNewCols: [string, string][] = [
+      ['width', 'REAL'],
+      ['height', 'REAL'],
+      ['is_deleted', 'INTEGER DEFAULT 0'],
+    ];
+    for (const [col, def] of tblNewCols) {
+      if (!tblColNames.has(col)) {
+        await this.db.execAsync(`ALTER TABLE tables ADD COLUMN ${col} ${def}`);
+      }
+    }
+
+    // table_areas: add display_order, is_deleted columns
+    const areaCols = await this.db.getAllAsync<{ name: string }>('PRAGMA table_info(table_areas)');
+    const areaColNames = new Set(areaCols.map(c => c.name));
+
+    const areaNewCols: [string, string][] = [
+      ['display_order', 'INTEGER DEFAULT 0'],
+      ['is_deleted', 'INTEGER DEFAULT 0'],
+    ];
+    for (const [col, def] of areaNewCols) {
+      if (!areaColNames.has(col)) {
+        await this.db.execAsync(`ALTER TABLE table_areas ADD COLUMN ${col} ${def}`);
+      }
+    }
+  }
+
   /**
    * Close the database connection
    */
@@ -389,7 +428,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS table_areas (
   id TEXT PRIMARY KEY, restaurant_id TEXT NOT NULL,
   name TEXT NOT NULL, icon TEXT, description TEXT, is_active INTEGER DEFAULT 1,
-  color TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+  color TEXT, display_order INTEGER DEFAULT 0, is_deleted INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tables (
@@ -398,7 +438,9 @@ CREATE TABLE IF NOT EXISTS tables (
   status TEXT NOT NULL DEFAULT 'available', section TEXT,
   current_order_id TEXT, notes TEXT,
   position_x REAL DEFAULT 0, position_y REAL DEFAULT 0,
+  width REAL, height REAL,
   shape TEXT DEFAULT 'square', is_active INTEGER DEFAULT 1,
+  is_deleted INTEGER DEFAULT 0,
   created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
 

@@ -1,0 +1,71 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Phase 4 - Final Payment"
+---
+# Navigate to Orders, open served order, pay
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Open the served order ($21.44)
+- extendedWaitUntil:
+    visible: "$21.44"
+    timeout: 10000
+- tapOn: "$21.44"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Process Payment"
+    timeout: 10000
+
+# Process Payment
+- tapOn: "Process Payment"
+- waitForAnimationToEnd
+
+# Bill screen - No Tip, then scroll to Card Payment
+- extendedWaitUntil:
+    visible: "No Tip"
+    timeout: 10000
+- tapOn: "No Tip"
+- waitForAnimationToEnd
+
+# Scroll to Card Payment
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+
+# Select Card Payment
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+
+# TRX modal opens - wait for terminal connection
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+
+# Wait for charge button (terminal should connect from SQLite config)
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 60000
+- takeScreenshot: /tmp/e2e_50_trx_ready
+
+# Charge!
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_51_processing
+
+# Wait for payment (user swipes card)
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_52_payment_complete
+
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_53_payment_scroll
+
+- tapOn: "Continue"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_54_done

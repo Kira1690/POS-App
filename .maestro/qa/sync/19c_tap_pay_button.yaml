@@ -1,0 +1,88 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-19c: Tap Pay on Order Card → Complete Cash Payment"
+---
+
+# App is on the Orders list with SERVED order showing "Pay" button.
+# Tap the Pay button on the order card to go to payment processing.
+
+# Tap "Pay" on the first order card (the served one)
+- tapOn:
+    text: "Pay"
+    index: 0
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19c_after_pay_tap
+
+# We should be on a Bill or Payment screen now
+# Tap the main Pay button if on Bill screen
+- tapOn:
+    text: "Pay \\$.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19c_payment_screen
+
+# Select Cash
+- tapOn:
+    text: "Cash"
+    optional: true
+- waitForAnimationToEnd
+
+# Process payment
+- tapOn:
+    id: "btn-process-payment"
+    optional: true
+- tapOn:
+    text: ".*Process.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19c_processing
+
+# Confirm cash
+- tapOn:
+    id: "btn-cash-confirm"
+    optional: true
+- tapOn:
+    text: ".*Confirm.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19c_confirmed
+
+# Continue/Done
+- tapOn:
+    id: "btn-continue"
+    optional: true
+- tapOn:
+    text: ".*Continue.*|.*Done.*|.*View Receipt.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19c_payment_done
+
+# Wait for push sync
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19c_final_orders

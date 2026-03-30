@@ -335,6 +335,20 @@ class MenuStorageService {
   }
 
   async addMenuItem(item: MenuItemExtended): Promise<void> {
+    // When syncing from server, modifier_groups comes as Prisma nested relation
+    // (e.g. { modifier_group_id, modifier_group: { id, name, options } })
+    // but saveMenuItems expects modifier_assignments. Convert if needed.
+    if ((!item.modifier_assignments || item.modifier_assignments.length === 0) && (item as any).modifier_groups) {
+      const serverGroups = (item as any).modifier_groups as any[];
+      if (serverGroups.length > 0 && serverGroups[0]?.modifier_group_id) {
+        item.modifier_assignments = serverGroups.map((sg: any, idx: number) => ({
+          id: `${item.id}_${String(sg.modifier_group_id)}`,
+          menu_item_id: String(item.id),
+          modifier_group_id: String(sg.modifier_group_id),
+          sort_order: idx,
+        }));
+      }
+    }
     await this.saveMenuItems([item]);
   }
 

@@ -3,8 +3,9 @@
  * Layout composition, navigation, and data loading only
  */
 
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useUnifiedOrderManagement } from '@/context/unified-order';
 import { useTheme } from '@/hooks/useTheme';
@@ -17,11 +18,12 @@ import {
   OrderStatusManager,
   OrderActionPanel
 } from '@/components/business/order';
-import { spacing } from '@/design-system/theme/spacing';
-import { borderRadius } from '@/design-system/theme/spacing';
+import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
+import { showToast } from '@/utils/toast';
 import { usePrinter } from '@/context/printer/PrinterContext';
 import { useAuthStatus } from '@/hooks/auth/useAuthStatus';
+import { RefundModal } from './modals/RefundModal';
 import type { UnifiedOrder } from '@/types/unified-order.types';
 
 interface OrderDetailsScreenProps {
@@ -49,11 +51,21 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
     return orders.find((o) => o.id === orderId) || null;
   }, [orders, route?.params?.orderId, selectedOrderId]);
 
+  // Track if user navigated away to a child screen (Bill, Payment, etc.)
+  const navigatedToChild = useRef(false);
+  const isFocused = useIsFocused();
+
+  // Only navigate back if order is null, screen IS focused, and we didn't navigate to a child
   useEffect(() => {
-    if (!order) {
-      navigation?.goBack();
+    if (!order && isFocused && !navigatedToChild.current) {
+      const timeout = setTimeout(() => {
+        if (isFocused && !navigatedToChild.current) {
+          navigation?.goBack();
+        }
+      }, 2000);
+      return () => clearTimeout(timeout);
     }
-  }, [order, navigation]);
+  }, [order, navigation, isFocused]);
 
   // Navigation handlers
   const handleBack = useCallback(() => {
@@ -62,13 +74,29 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
 
   const handlePaymentNavigation = useCallback(() => {
     if (!order) return;
+    navigatedToChild.current = true;
     navigation.navigate('Bill', {
       orderId: order.id,
+      order,
     });
   }, [order, navigation]);
 
   const { printKOT, printReceipt } = usePrinter();
-  const { isManagementLevel } = useAuthStatus();
+  const { isManagementLevel, user, restaurant } = useAuthStatus();
+  const [showRefundModal, setShowRefundModal] = useState(false);
+
+  const handleRefund = useCallback(() => {
+    setShowRefundModal(true);
+  }, []);
+
+  const handleRefundComplete = useCallback(() => {
+    setShowRefundModal(false);
+    showToast({
+      type: 'success',
+      title: 'Refund Submitted',
+      message: `Refund request for order ${(order as any)?.order_number || order?.id} has been submitted`,
+    });
+  }, [order]);
 
   const handlePrint = useCallback((type: 'KOT' | 'Receipt') => {
     if (!order) return;
@@ -139,10 +167,23 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
           order={order as any}
           onPrint={handlePrint}
           onPayment={(order.status === 'ready' || order.status === 'served') ? handlePaymentNavigation : undefined}
+          onRefund={isManagementLevel && (order.status === 'paid' || (order as any).payment_status === 'paid' || (order as any).paymentStatus === 'paid') ? handleRefund : undefined}
           onCancelOrder={isManagementLevel ? (orderId) => cancelOrder(orderId, 'Cancelled by user') : undefined}
           loading={isLoadingDetails}
         />
       </View>
+
+      {/* Refund Modal */}
+      {order && (
+        <RefundModal
+          visible={showRefundModal}
+          order={order as any}
+          restaurantId={restaurant?.id?.toString() || user?.default_restaurant_id || ''}
+          userId={user?.id?.toString() || ''}
+          onClose={() => setShowRefundModal(false)}
+          onRefundComplete={handleRefundComplete}
+        />
+      )}
     </SafeAreaView>
   );
 };

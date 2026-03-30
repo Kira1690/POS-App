@@ -42,7 +42,7 @@ name: "QA Sync 10 — Kitchen Real-Time Sync via WS"
 
 # Select an available table (names from server DB)
 - tapOn:
-    text: "M2-cudr"
+    id: "btn-table-select-M2-197q"
     optional: true
 - waitForAnimationToEnd
 - tapOn:

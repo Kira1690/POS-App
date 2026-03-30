@@ -48,6 +48,7 @@ import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStora
 import { syncQueueService } from '@/services/storage';
 import { activityLogService } from '@/services/storage/ActivityLogService';
 import { orderEventEmitter, OrderEventType, OrderEventData } from '@/services/events/OrderEventEmitter';
+import { apiClient } from '@/services/api/apiClient';
 import { useAuth } from '@/context/auth';
 
 // Re-export the SINGLE event emitter for use by other modules
@@ -154,6 +155,9 @@ export interface UnifiedOrderContextValue {
 
 const UnifiedOrderContext = createContext<UnifiedOrderContextValue | undefined>(undefined);
 
+// Debounce guard: skip pullAndReload if we just called the API directly for a status update
+let lastDirectStatusUpdateAt = 0;
+
 // ============== SYNC HELPER ==============
 
 /**
@@ -198,6 +202,17 @@ function buildOrderSyncPayload(order: UnifiedOrder): Record<string, unknown> {
       item_status: i.itemStatus,
       kitchen_station: i.kitchenStation,
       special_instructions: i.specialInstructions,
+      selected_modifiers: i.selectedModifiers
+        ? JSON.stringify(
+            i.selectedModifiers.flatMap((mod) =>
+              (mod.options || []).map((opt) => ({
+                modifier_id: opt.optionId,
+                name: opt.optionName,
+                price_adjustment: opt.priceAdjustment,
+              }))
+            )
+          )
+        : null,
     })),
   };
 }
@@ -284,6 +299,10 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
 
     // WebSocket: new order or status change — trigger immediate pull then reload
     const pullAndReload = async () => {
+      // Skip pull if we just updated status via direct API <2s ago — server already has our data
+      if (Date.now() - lastDirectStatusUpdateAt < 2000) {
+        return;
+      }
       try {
         // Import dynamically to avoid circular dependency
         const { PullSyncService } = await import('@/services/sync/PullSyncService');
@@ -506,10 +525,22 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
             name: i.name,
             quantity: i.quantity,
             base_price: i.basePrice,
+            modifier_total: i.modifierTotal,
             item_total: i.itemTotal,
             item_status: i.itemStatus,
             kitchen_station: i.kitchenStation,
             special_instructions: i.specialInstructions,
+            selected_modifiers: i.selectedModifiers
+              ? JSON.stringify(
+                  i.selectedModifiers.flatMap((mod) =>
+                    (mod.options || []).map((opt) => ({
+                      modifier_id: opt.optionId,
+                      name: opt.optionName,
+                      price_adjustment: opt.priceAdjustment,
+                    }))
+                  )
+                )
+              : null,
           })),
         }
       ).then(() => {
@@ -589,12 +620,13 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       try {
         const order = stateRef.current.orders.find((o) => o.id === orderId);
 
+        // 1. Optimistic UI update
         dispatch({
           type: 'UPDATE_ORDER_STATUS',
           payload: { orderId, status },
         });
 
-        // Update storage
+        // 2. Update SQLite
         const updatedOrder = await unifiedOrderStorageService.updateOrder(orderId, {
           status,
           updatedAt: new Date().toISOString(),
@@ -603,10 +635,34 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           ...(status === 'served' && { servedAt: new Date().toISOString() }),
         });
 
-        // Sync to backend (deduped — only latest status update queued)
-        if (updatedOrder) {
-          syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updatedOrder))
-            .catch(() => { /* silent — next sync cycle will retry */ });
+        // 3. Direct API call — server updates DB + broadcasts WS immediately
+        // This eliminates the race condition where sync queue push is slow
+        // and a pull overwrites the local optimistic update
+        const isServerId = /^\d+$/.test(orderId);
+        if (isServerId) {
+          try {
+            lastDirectStatusUpdateAt = Date.now();
+            await apiClient.patch(`/api/orders/${orderId}/status`, { status }, { silent: true } as any);
+            // Success: mark as synced (no need for sync queue)
+            if (updatedOrder) {
+              await unifiedOrderStorageService.updateOrder(orderId, {
+                pendingSync: false,
+                syncedAt: new Date().toISOString(),
+              });
+            }
+          } catch {
+            // Offline or API error — fall back to sync queue
+            if (updatedOrder) {
+              syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updatedOrder))
+                .catch(() => {});
+            }
+          }
+        } else {
+          // Local UUID — can't call API directly, use sync queue
+          if (updatedOrder) {
+            syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updatedOrder))
+              .catch(() => {});
+          }
         }
 
         // Log ready / served transitions
@@ -682,10 +738,10 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         return { success: false, error: 'Order not found' };
       }
 
-      if (order.status !== 'served') {
+      if (order.status !== 'ready' && order.status !== 'served') {
         return {
           success: false,
-          error: `Cannot process payment. Order must be served first. Current status: ${order.status}`,
+          error: `Cannot process payment. Order must be ready or served first. Current status: ${order.status}`,
         };
       }
 
@@ -708,10 +764,29 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
           updatedAt: now,
         });
 
-        // Sync paid order to backend (highest priority)
-        if (paidOrder) {
+        // Direct API call to mark order as paid on server — single source of truth
+        const isServerId = /^\d+$/.test(orderId);
+        if (isServerId) {
+          try {
+            lastDirectStatusUpdateAt = Date.now();
+            await apiClient.patch(`/api/orders/${orderId}/status`, { status: 'paid' }, { silent: true } as any);
+            // Server handles table release + WS broadcast
+            if (paidOrder) {
+              await unifiedOrderStorageService.updateOrder(orderId, {
+                pendingSync: false,
+                syncedAt: new Date().toISOString(),
+              });
+            }
+          } catch {
+            // Offline fallback — enqueue to sync
+            if (paidOrder) {
+              syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(paidOrder))
+                .catch(() => {});
+            }
+          }
+        } else if (paidOrder) {
           syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(paidOrder))
-            .catch(() => { /* silent */ });
+            .catch(() => {});
         }
 
         // Log payment

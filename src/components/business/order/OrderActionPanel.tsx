@@ -24,6 +24,7 @@ interface OrderActionPanelProps {
   order: Order;
   onPrint: (type: 'KOT' | 'Receipt') => void;
   onPayment?: () => void;
+  onRefund?: () => void;
   onCancelOrder?: (orderId: string, reason: string) => Promise<void>;
   loading?: boolean;
 }
@@ -32,6 +33,7 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
   order,
   onPrint,
   onPayment,
+  onRefund,
   onCancelOrder,
   loading = false,
 }) => {
@@ -114,6 +116,20 @@ export const OrderActionPanel: React.FC<OrderActionPanelProps> = ({
           </TouchableOpacity>
         )}
         
+        {/* Refund Button - Available for paid orders (managers+) */}
+        {onRefund && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton, { borderColor: theme.colors.warning }]}
+            onPress={onRefund}
+            testID="btn-refund-order"
+          >
+            <MaterialIcons name="undo" size={20} color={theme.colors.warning} />
+            <Text style={[styles.actionButtonText, { color: theme.colors.warning }]}>
+              Refund
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {onCancelOrder && (
           <TouchableOpacity
             style={[styles.actionButton, styles.errorButton, { borderColor: theme.colors.error }]}

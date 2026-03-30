@@ -51,9 +51,10 @@ const getItemModifiers = (item: AnyOrderItem): string[] => {
     for (const mod of item.selectedModifiers) {
       if (mod.options) {
         for (const opt of mod.options) {
-          const prefix = opt.priceAdjustment > 0 ? '+' : '';
-          const priceStr = opt.priceAdjustment !== 0
-            ? ` (${prefix}$${opt.priceAdjustment.toFixed(2)})`
+          const adj = Number(opt.priceAdjustment) || 0;
+          const prefix = adj > 0 ? '+' : '';
+          const priceStr = adj !== 0
+            ? ` (${prefix}$${adj.toFixed(2)})`
             : '';
           modifiers.push(`${opt.optionName}${priceStr}`);
         }

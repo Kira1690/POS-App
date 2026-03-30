@@ -24,9 +24,14 @@ name: "Helper: Cashier Login (Online — Blue Plate Bistro)"
 # Fill credentials
 - tapOn:
     id: "email-input"
+- eraseText: 50
 - inputText: "cashier@blueplatebistro.io"
+- hideKeyboard
+- waitForAnimationToEnd
+
 - tapOn:
     id: "password-input"
+- eraseText: 50
 - inputText: "BluePlateCsh2026!"
 - hideKeyboard
 - waitForAnimationToEnd

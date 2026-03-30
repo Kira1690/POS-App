@@ -1,0 +1,77 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "MR-01 Full Refund from Order Detail"
+tags:
+  - refund
+  - sprint4
+---
+
+# Prerequisites: manager already logged in (don't use clearState login helper)
+# Create a paid order first
+- launchApp
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- runFlow: ../../helpers/create_paid_order.yaml
+
+# Navigate to Orders → wait for payment status to propagate → tap first order
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn:
+    text: "REFRESH"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "ORD-.*"
+    timeout: 10000
+- tapOn:
+    text: "ORD-.*"
+    index: 0
+- waitForAnimationToEnd
+
+# Tap Refund button via testID
+- extendedWaitUntil:
+    visible:
+      id: "btn-refund-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-refund-order"
+
+# Verify form state is visible
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-form"
+    timeout: 5000
+
+# Select reason via testID (index 0 = Customer request)
+- tapOn:
+    id: "btn-refund-reason-0"
+
+# Submit via testID
+- tapOn:
+    id: "btn-refund-submit"
+
+# Verify processing state
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-processing"
+    timeout: 5000
+
+# Verify success state
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-success"
+    timeout: 15000
+
+# Take evidence screenshot
+- takeScreenshot: sprint4/MR-01_full_refund_success
+
+# Verify auto-close (modal disappears after 3s)
+- assertNotVisible:
+    id: "refund-state-success"

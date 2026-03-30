@@ -16,6 +16,8 @@ import { mapServerOrderToUnified, mapServerTicketToKitchenTicket } from './mappe
 const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:5005';
 const MAX_RECONNECT = 5;
 const RECONNECT_DELAY_MS = 5000;
+const HEARTBEAT_INTERVAL_MS = 10_000;
+const HEARTBEAT_TIMEOUT_MS = 30_000;
 
 interface WsMessage {
   channel: string;
@@ -28,6 +30,14 @@ export class WebSocketSyncManager {
   private restaurantId: string | null = null;
   private reconnectAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private onReconnectCallback: (() => void) | null = null;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private lastMessageAt = 0;
+
+  /** Register callback to trigger full pull sync on WS reconnection */
+  onReconnect(callback: () => void): void {
+    this.onReconnectCallback = callback;
+  }
 
   connect(restaurantId: string): void {
     if (this.connection && this.restaurantId === restaurantId) return;
@@ -43,14 +53,23 @@ export class WebSocketSyncManager {
       this.connection = new WebSocket(`${WS_URL}/ws`);
 
       this.connection.onopen = () => {
-        if (__DEV__) console.log('[WSSyncManager] Connected');
+        const wasReconnect = this.reconnectAttempts > 0;
+        if (__DEV__) console.log(`[WSSyncManager] Connected${wasReconnect ? ' (reconnect — triggering full sync)' : ''}`);
         this.reconnectAttempts = 0;
+        this.lastMessageAt = Date.now();
+        this.startHeartbeat();
         this.subscribe();
+        // On reconnect, emit event so SyncEngine can trigger immediate full pull
+        if (wasReconnect && this.onReconnectCallback) {
+          this.onReconnectCallback();
+        }
       };
 
       this.connection.onmessage = (event: MessageEvent) => {
+        this.lastMessageAt = Date.now();
         try {
           const msg: WsMessage = JSON.parse(event.data as string);
+          if (msg.channel === 'pong') return; // heartbeat response
           this.handleMessage(msg);
         } catch {
           // ignore malformed messages
@@ -188,6 +207,28 @@ export class WebSocketSyncManager {
     }
   }
 
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.connection?.readyState === WebSocket.OPEN) {
+        this.connection.send(JSON.stringify({ type: 'ping' }));
+      }
+      // If no message received in 30s, force reconnect
+      if (Date.now() - this.lastMessageAt > HEARTBEAT_TIMEOUT_MS) {
+        if (__DEV__) console.log('[WSSyncManager] Heartbeat timeout — forcing reconnect');
+        this.stopHeartbeat();
+        this.connection?.close();
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= MAX_RECONNECT) {
       if (__DEV__) console.error('[WSSyncManager] Max reconnect attempts reached');
@@ -202,6 +243,7 @@ export class WebSocketSyncManager {
   }
 
   disconnect(): void {
+    this.stopHeartbeat();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;

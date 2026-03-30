@@ -2,7 +2,7 @@ appId: com.ajinkya123.POSReactNativeApp
 name: "SYNC-13: Waiter Creates Order on B1 (Online Sync)"
 ---
 
-# Phase B: Waiter creates a new order with items on table B1-cudr.
+# Phase B: Waiter creates a new order with items on table B1-197q.
 # After order is confirmed, we wait for push sync (12s).
 # Then Playwright verifies the order on web dashboard.
 #
@@ -34,11 +34,15 @@ name: "SYNC-13: Waiter Creates Order on B1 (Online Sync)"
 - takeScreenshot: screenshots/sync-test/06_table_modal
 
 # ═══════════════════════════════════════════════
-# SELECT TABLE B3-cudr (available table, green border)
+# SELECT TABLE B3-197q (available table, green border)
 # Using B3 to avoid conflicts with occupied tables
 # ═══════════════════════════════════════════════
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B3-197q"
+    timeout: 15000
 - tapOn:
-    text: "B3-cudr"
+    id: "btn-table-select-B3-197q"
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 

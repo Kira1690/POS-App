@@ -24,12 +24,12 @@ name: "SYNC-21: Menu Sync — Web Creates Item → Mobile Sees It"
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 
-# Select an available table (M3-cudr should be free)
+# Select an available table (M3-197q should be free)
 - tapOn:
-    text: "M3-cudr"
+    id: "btn-table-select-M3-197q"
     optional: true
 - tapOn:
-    text: "M4-cudr"
+    id: "btn-table-select-M4-197q"
     optional: true
 - waitForAnimationToEnd
 - waitForAnimationToEnd

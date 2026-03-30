@@ -1,0 +1,81 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "OS-01 Create Order on Mobile — Verify Syncs to Server"
+tags:
+  - sync
+  - sprint4
+  - critical
+---
+
+# This flow creates a real order on mobile and verifies it pushes to server.
+# Paired with: e2e/sync/order-lifecycle-sync.spec.ts (OS-01)
+# The Playwright test verifies the web side after this flow runs.
+
+# Login as waiter (online)
+- runFlow: ../../helpers/online/waiter_login.yaml
+
+# Navigate to Orders tab
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Create new order
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+# Select table B-2 (wait for tables to load from server)
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B2-197q"
+    timeout: 15000
+- tapOn:
+    id: "btn-table-select-B2-197q"
+- waitForAnimationToEnd
+
+# Handle guest popup
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+# Add items from Mains category
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+
+# Confirm the order
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Wait for push sync (max 12s for push interval)
+- extendedWaitUntil:
+    visible:
+      text: "confirmed"
+    timeout: 15000
+
+# Take evidence screenshot
+- takeScreenshot: sprint4/OS-01_order_created_mobile
+
+# Order created and confirmed — sync test complete on mobile side

@@ -24,9 +24,14 @@ name: "Helper: Store Admin Login (Online — Blue Plate Bistro)"
 # Fill credentials
 - tapOn:
     id: "email-input"
+- eraseText: 50
 - inputText: "admin@blueplatebistro.io"
+- hideKeyboard
+- waitForAnimationToEnd
+
 - tapOn:
     id: "password-input"
+- eraseText: 50
 - inputText: "BluePlate2026!"
 - hideKeyboard
 - waitForAnimationToEnd

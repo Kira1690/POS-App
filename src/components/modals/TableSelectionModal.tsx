@@ -622,7 +622,7 @@ export const TableSelectionModal: React.FC<TableSelectionModalProps> = ({
               if (Math.abs(inner - containerWidth) > 2) setContainerWidth(inner);
             }}
           >
-            {isLoading ? (
+            {isLoading && filteredTables.length === 0 ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />
                 <Text style={[styles.emptyText, { marginTop: 16 }]}>Loading tables...</Text>

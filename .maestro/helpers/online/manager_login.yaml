@@ -21,12 +21,18 @@ name: "Helper: Manager Login (Online — Blue Plate Bistro)"
     id: "btn-welcome-manager-login"
 - waitForAnimationToEnd
 
-# Fill credentials
+# Fill credentials — email
 - tapOn:
     id: "email-input"
+- eraseText: 50
 - inputText: "manager@blueplatebistro.io"
+- hideKeyboard
+- waitForAnimationToEnd
+
+# Fill credentials — password
 - tapOn:
     id: "password-input"
+- eraseText: 50
 - inputText: "BluePlateMgr2026!"
 - hideKeyboard
 - waitForAnimationToEnd

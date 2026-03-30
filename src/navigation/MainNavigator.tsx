@@ -26,7 +26,7 @@ import { FloorPlanProvider } from '@/context/floorPlan';
 import POSOrderScreen from '@/screens/orders/POSOrderScreen';
 import OrderManagementScreen from '@/screens/orders/OrderManagementScreen';
 import OrderDetailsScreen from '@/screens/orders/OrderDetailsScreen';
-import KitchenDisplayScreen from '@/screens/orders/KitchenDisplayScreen';
+import KitchenDisplayScreen from '@/screens/kitchen/KitchenStaffDashboard';
 // Enhanced ordering screen
 import OrderingScreen from '@/screens/orders/OrderingScreen';
 // Direct imports for payment screens

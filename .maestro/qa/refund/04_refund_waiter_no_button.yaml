@@ -1,0 +1,32 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "MR-04 Waiter Cannot See Refund Button"
+tags:
+  - refund
+  - rbac
+  - sprint4
+---
+
+# Login as waiter (NOT manager — should not have refund permission)
+- runFlow: ../../helpers/online/waiter_login.yaml
+
+# Navigate to Orders tab
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Tap on the first order in the default All Orders list
+- extendedWaitUntil:
+    visible:
+      text: "ORD-.*"
+    timeout: 10000
+- tapOn:
+    text: "ORD-.*"
+    index: 0
+- waitForAnimationToEnd
+
+# Refund button should NOT be visible for waiter role
+- assertNotVisible:
+    id: "btn-refund-order"
+
+# Take evidence screenshot
+- takeScreenshot: sprint4/MR-04_waiter_no_refund

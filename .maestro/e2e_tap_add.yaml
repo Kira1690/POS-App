@@ -1,0 +1,9 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Tap Add Terminal"
+---
+- tapOn: "Add Terminal"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Terminal"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_83_after_add

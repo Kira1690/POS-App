@@ -5,8 +5,9 @@
 
 import { apiClient } from '@/services/api/apiClient';
 import { unifiedOrderStorageService } from '@/services/storage';
-import { SyncQueueItem } from '@/services/storage/SyncQueueService';
+import { SyncQueueItem, syncQueueService } from '@/services/storage/SyncQueueService';
 import { PushResponse } from '../types';
+import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
 
 const DEVICE_ID = 'pos-mobile-device';
 
@@ -67,7 +68,22 @@ export async function processOrderSync(item: SyncQueueItem): Promise<boolean> {
         if (__DEV__) console.warn('[OrderSyncProcessor] Push returned conflict:', result.error);
         return false;
       }
-      await unifiedOrderStorageService.markAsSynced([item.entityId]);
+
+      // After a successful CREATE, remap local ID → server ID so subsequent
+      // UPDATE pushes use the numeric server ID (fixes BigInt parse failures)
+      const serverId = result?.server_id;
+      if (item.operation === 'create' && serverId && serverId !== item.entityId) {
+        await unifiedOrderStorageService.remapOrderId(item.entityId, serverId);
+        await syncQueueService.remapEntityId('order', item.entityId, serverId);
+        // Notify context to reload orders with the new IDs
+        orderEventEmitter.emit('ORDER_ID_REMAPPED', item.entityId, {
+          localId: item.entityId,
+          serverId,
+        });
+        if (__DEV__) console.log(`[OrderSyncProcessor] Remapped ${item.entityId} → ${serverId}`);
+      } else {
+        await unifiedOrderStorageService.markAsSynced([item.entityId]);
+      }
       return true;
     }
 

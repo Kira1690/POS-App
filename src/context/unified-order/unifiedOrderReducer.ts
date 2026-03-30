@@ -610,8 +610,8 @@ export function unifiedOrderReducer(
         return state;
       }
 
-      // Payment can only happen after order is served
-      if (order.status !== 'served') {
+      // Payment can happen when order is ready or served
+      if (order.status !== 'ready' && order.status !== 'served') {
         return state;
       }
 

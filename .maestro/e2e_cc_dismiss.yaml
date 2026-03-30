@@ -1,0 +1,110 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Dismiss and pick table"
+---
+# Close the dialog via X button
+- tapOn:
+    point: "83%,5%"
+- waitForAnimationToEnd
+
+# Should be back on table grid - try Patio section for P3 or P4
+- extendedWaitUntil:
+    visible: "Patio"
+    timeout: 5000
+- tapOn: "Patio"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_cc_patio
+
+# Pick P3 (should be available after paid order released it)
+- tapOn: "P3-197q"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Confirm"
+    commands:
+      - tapOn: "Confirm"
+      - waitForAnimationToEnd
+
+# POS screen
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_cc_pos
+- tapOn: "Garlic Bread"
+- waitForAnimationToEnd
+- tapOn: "Classic Cheeseburger"
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Status chain on the new order
+- extendedWaitUntil:
+    visible: "Confirmed"
+    timeout: 10000
+- tapOn: "Confirmed"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "$21.44"
+    timeout: 10000
+- tapOn:
+    text: ".*21\\.44.*"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Preparing"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Ready"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Served"
+- waitForAnimationToEnd
+
+# Payment
+- tapOn: "Process Payment"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Pay $21.44"
+    timeout: 10000
+- tapOn: "Pay $21.44"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_cc_500_trx
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_cc_501_processing
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_cc_502_complete
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_cc_503_details
+- tapOn: "Continue"
+- waitForAnimationToEnd

@@ -139,14 +139,17 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
 
   // Load orders and tables on component mount and when screen is focused
   // Using useFocusEffect ensures data is refreshed after payment completion
+  // Skip table refresh if tables are already loaded (avoids spinner flash from re-dispatch)
   useFocusEffect(
     useCallback(() => {
       const initializeData = async () => {
         try {
-          await Promise.all([
-            loadOrders(),
-            refreshTables(),
-          ]);
+          const tasks: Promise<unknown>[] = [loadOrders()];
+          // Only refresh tables if not already loaded (sync pull may have already populated them)
+          if (!tableState.tables || tableState.tables.length === 0) {
+            tasks.push(refreshTables());
+          }
+          await Promise.all(tasks);
         } catch (error) {
           showToast({
             type: 'error',
@@ -157,7 +160,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
       };
 
       initializeData();
-    }, [loadOrders, refreshTables])
+    }, [loadOrders, refreshTables, tableState.tables])
   );
 
   // Handle pull-to-refresh
@@ -176,9 +179,11 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     }
   }, [loadOrders]);
 
-  // Handle new order - refresh tables then show selection modal
+  // Handle new order - show table selection modal immediately, refresh in background
   const handleNewOrder = useCallback(() => {
-    refreshTables().catch(() => {}).finally(() => setShowTableModal(true));
+    setShowTableModal(true);
+    // Refresh tables in background (don't block modal opening)
+    refreshTables().catch(() => {});
   }, [refreshTables]);
 
   // Handle table selection from modal:
@@ -336,6 +341,7 @@ const OrderManagementScreen: React.FC<OrderManagementScreenProps> = ({ navigatio
     // Navigate to Bill screen (detailed view with split/discount/combine options)
     navigation?.navigate('Bill', {
       orderId: order.id,
+      order,
     });
   }, [navigation]);
 

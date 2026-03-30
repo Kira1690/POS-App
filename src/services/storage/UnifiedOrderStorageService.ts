@@ -355,6 +355,8 @@ class UnifiedOrderStorageService {
       ...existing,
       ...updates,
       updatedAt: now(),
+      // Mark as pending sync so pull sync won't overwrite this change
+      pendingSync: true,
     };
 
     await this.saveOrder(updatedOrder);
@@ -651,6 +653,25 @@ class UnifiedOrderStorageService {
       `UPDATE orders SET pending_sync = 0, synced_at = ? WHERE id IN (${placeholders})`,
       ts, ...orderIds
     );
+  }
+
+  /**
+   * Remap a local order ID to the server-assigned numeric ID.
+   * Called after a successful create push returns a server_id.
+   * Updates orders table, order_items foreign keys, and marks as synced.
+   */
+  async remapOrderId(localId: string, serverId: string): Promise<void> {
+    if (localId === serverId) return;
+    const db = await this.ensureDb();
+    const ts = now();
+    // Update order_items foreign key first
+    await db.runAsync('UPDATE order_items SET order_id = ? WHERE order_id = ?', serverId, localId);
+    // Update the order ID itself + mark as synced
+    await db.runAsync(
+      'UPDATE orders SET id = ?, pending_sync = 0, synced_at = ? WHERE id = ?',
+      serverId, ts, localId
+    );
+    if (__DEV__) console.log(`[UnifiedOrderStorage] Remapped order ID: ${localId} → ${serverId}`);
   }
 
   // ============== CLEAR AND RESET OPERATIONS ==============

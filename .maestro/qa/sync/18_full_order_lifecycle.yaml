@@ -2,7 +2,7 @@ appId: com.ajinkya123.POSReactNativeApp
 name: "SYNC-18: Full Order Lifecycle — Kitchen Ready → Manager Serves → Cashier Pays"
 ---
 
-# Complete lifecycle for order ORD-20260318-9780 (B3-cudr, $68.16):
+# Complete lifecycle for order ORD-20260318-9780 (B3-197q, $68.16):
 #   Step 1: Kitchen staff bumps ticket to READY
 #   Step 2: Manager marks order SERVED
 #   Step 3: Cashier processes CASH PAYMENT
@@ -25,7 +25,7 @@ name: "SYNC-18: Full Order Lifecycle — Kitchen Ready → Manager Serves → Ca
 
 - takeScreenshot: screenshots/sync-test/18_kitchen_before_start
 
-# Scroll to find the B3-cudr ticket (our waiter's order)
+# Scroll to find the B3-197q ticket (our waiter's order)
 # It may be at the bottom since there are 29 tickets
 # First, tap Start on the first visible pending ticket
 - tapOn:

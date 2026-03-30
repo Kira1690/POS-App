@@ -1,0 +1,226 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Helper: Create Paid Order"
+---
+
+# Creates a PAID order. Uses Update Status button (not kitchen).
+# Requires: Manager already logged in
+
+# ── 1. CREATE ORDER ──
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B2-197q"
+    timeout: 5000
+- tapOn:
+    id: "btn-table-select-B2-197q"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Handle popups (active order → new order, then guest confirm)
+- runFlow:
+    when:
+      visible:
+        text: ".*Active Order.*"
+    commands:
+      - tapOn:
+          text: ".*New Order.*"
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+# Second wait for guest popup to appear after active order popup
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+# Add item
+- extendedWaitUntil:
+    visible:
+      id: "btn-menu-item-286"
+    timeout: 5000
+- tapOn:
+    id: "btn-menu-item-286"
+- waitForAnimationToEnd
+
+# Handle modifier modal if it appears (tap Add to Cart)
+- runFlow:
+    when:
+      visible:
+        text: "Add to Cart"
+    commands:
+      - tapOn:
+          text: "Add to Cart"
+      - waitForAnimationToEnd
+
+# Send to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "confirmed"
+    timeout: 15000
+
+# ── 2. OPEN ORDER DETAIL ──
+- tapOn:
+    text: "REFRESH"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "ORD-.*"
+    index: 0
+- waitForAnimationToEnd
+
+# ── 3. UPDATE STATUS: confirmed → preparing ──
+- extendedWaitUntil:
+    visible:
+      id: "btn-update-status"
+    timeout: 5000
+- tapOn:
+    id: "btn-update-status"
+
+# Wait for modal to fully appear
+- extendedWaitUntil:
+    visible:
+      text: "Update Order Status"
+    timeout: 5000
+
+# Tap preparing
+- extendedWaitUntil:
+    visible:
+      id: "btn-status-preparing"
+    timeout: 3000
+- tapOn:
+    id: "btn-status-preparing"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ── 4. UPDATE STATUS: preparing → ready ──
+- extendedWaitUntil:
+    visible:
+      id: "btn-update-status"
+    timeout: 5000
+- tapOn:
+    id: "btn-update-status"
+
+- extendedWaitUntil:
+    visible:
+      text: "Update Order Status"
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-status-ready"
+    timeout: 3000
+- tapOn:
+    id: "btn-status-ready"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ── 5. PROCESS PAYMENT ──
+- extendedWaitUntil:
+    visible:
+      id: "btn-process-payment"
+    timeout: 8000
+- tapOn:
+    id: "btn-process-payment"
+- waitForAnimationToEnd
+
+# Bill Screen → Pay Full
+- extendedWaitUntil:
+    visible:
+      id: "btn-pay-full"
+    timeout: 5000
+- tapOn:
+    id: "btn-pay-full"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ── 6. WAIT FOR PAYMENT PROCESSING SCREEN ──
+- extendedWaitUntil:
+    visible:
+      text: "Payment Processing"
+    timeout: 8000
+
+# Scroll down to see Payment Methods section
+- scrollUntilVisible:
+    element:
+      text: "Cash Payment"
+    direction: DOWN
+    timeout: 5000
+
+# Tap Cash Payment button
+- tapOn:
+    text: "Cash Payment"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ── 7. CASH MODAL → TAP NUMPAD TO ENTER AMOUNT ──
+- extendedWaitUntil:
+    visible:
+      text: "Cash Payment"
+    timeout: 5000
+
+# Tap a Quick Amount that covers the total (first one is always >= total)
+- extendedWaitUntil:
+    visible:
+      text: "Quick Amounts"
+    timeout: 3000
+# Tap the first quick amount button
+- tapOn:
+    text: "\\$25\\.00|\\$30\\.00|\\$40\\.00|\\$50\\.00"
+    index: 0
+- waitForAnimationToEnd
+
+# Confirm Payment
+- extendedWaitUntil:
+    visible:
+      id: "btn-cash-confirm"
+    timeout: 3000
+- tapOn:
+    id: "btn-cash-confirm"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# ── 8. HANDLE LARGE CHANGE DIALOG IF IT APPEARS ──
+- runFlow:
+    when:
+      visible:
+        text: "CONTINUE"
+    commands:
+      - tapOn:
+          text: "CONTINUE"
+      - waitForAnimationToEnd
+
+# ── 9. VERIFY PAYMENT COMPLETED ──
+# App navigates to PaymentConfirmation then back to Dashboard/Orders
+- extendedWaitUntil:
+    visible:
+      text: ".*Payment Successful.*|.*Key Metrics.*|.*Order Management.*"
+    timeout: 15000

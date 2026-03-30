@@ -1,0 +1,128 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "CC quick"
+---
+# Tap "Cancel & Pick Table" - try matching partial
+- tapOn: "Pick Table"
+- waitForAnimationToEnd
+
+# Wait for table grid
+- extendedWaitUntil:
+    visible: "B2-197q"
+    timeout: 10000
+
+# Scroll down to find more tables — use Patio section
+- tapOn: "Patio"
+- waitForAnimationToEnd
+
+# Pick P4
+- tapOn: "P4-197q"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Confirm"
+    commands:
+      - tapOn: "Confirm"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Pick Table"
+    commands:
+      - tapOn: "Pick Table"
+      - waitForAnimationToEnd
+      - tapOn: "Bar Seating"
+      - waitForAnimationToEnd
+      - tapOn: "B2-197q"
+      - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "Confirm"
+          commands:
+            - tapOn: "Confirm"
+            - waitForAnimationToEnd
+
+# Wait for POS
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_cc_400_pos
+- tapOn: "Garlic Bread"
+- waitForAnimationToEnd
+- tapOn: "Classic Cheeseburger"
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Open newest confirmed order
+- extendedWaitUntil:
+    visible: "Confirmed"
+    timeout: 10000
+- tapOn: "Confirmed"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "$21.44"
+    timeout: 10000
+- tapOn:
+    text: ".*21\\.44.*"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+# Status: Confirmed → Served
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Preparing"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Ready"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Served"
+- waitForAnimationToEnd
+
+# Pay
+- tapOn: "Process Payment"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Pay $21.44"
+    timeout: 10000
+- tapOn: "Pay $21.44"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_cc_401_trx
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_cc_402_processing
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_cc_403_complete
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_cc_404_details
+- tapOn: "Continue"
+- waitForAnimationToEnd

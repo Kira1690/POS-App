@@ -1,0 +1,82 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Phase 4 - Payment Step (retry with TCP fix)"
+---
+
+# Navigate to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Find the served order
+- extendedWaitUntil:
+    visible: "$21.44"
+    timeout: 10000
+
+# Tap on served tab to filter
+- tapOn: "Served"
+- waitForAnimationToEnd
+
+# Tap the order
+- tapOn: "$21.44"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Process Payment"
+    timeout: 10000
+- takeScreenshot: /tmp/e2e_20_order_served
+
+# Tap Process Payment
+- tapOn: "Process Payment"
+- waitForAnimationToEnd
+
+# Tap Pay button on Bill screen
+- extendedWaitUntil:
+    visible: "Pay $21.44"
+    timeout: 10000
+- tapOn: "No Tip"
+- waitForAnimationToEnd
+
+# Scroll to payment methods
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+
+# Tap Card Payment
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+
+# TRX modal - wait for terminal to connect
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+- takeScreenshot: /tmp/e2e_21_trx_modal
+
+# Wait for charge button (terminal connecting via fixed routing)
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 60000
+- takeScreenshot: /tmp/e2e_22_trx_connected
+
+# Tap Charge
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_23_processing
+
+# Wait for payment result (card swipe — up to 180s)
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_24_payment_complete
+
+# Scroll to see all details
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_25_payment_details
+
+# Tap Continue
+- tapOn: "Continue"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_26_after_payment

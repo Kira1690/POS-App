@@ -1,0 +1,49 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Add terminal 192.168.1.18"
+---
+# Should be on TRX Terminal settings page
+- tapOn: "Manage Terminals"
+- waitForAnimationToEnd
+
+# Tap Add Terminal Manually to expand form
+- extendedWaitUntil:
+    visible: "Add Terminal Manually"
+    timeout: 5000
+- tapOn: "Add Terminal Manually"
+- waitForAnimationToEnd
+
+# Wait for IP field to appear
+- extendedWaitUntil:
+    visible: "192.168.1.12"
+    timeout: 5000
+
+# Tap the common IP chip for 192.168.1.12 first (clears field), then manually type
+# Actually tap the IP field directly
+- tapOn: "IP Address"
+- waitForAnimationToEnd
+- eraseText: 30
+- inputText: "192.168.1.18"
+- hideKeyboard
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_43_ip_set
+
+# Scroll down to find the Add button
+- scrollUntilVisible:
+    element: "Cancel"
+    direction: DOWN
+    timeout: 5000
+
+# Look for the green Add Terminal button
+- takeScreenshot: /tmp/e2e_44_buttons_visible
+
+# Tap the green button (Add Terminal) - it's to the right of Cancel
+- tapOn:
+    point: "75%,57%"
+- waitForAnimationToEnd
+
+# Wait for result
+- takeScreenshot: /tmp/e2e_45_result
+- extendedWaitUntil:
+    visible: "Found 1"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_46_connected

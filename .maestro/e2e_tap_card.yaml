@@ -1,0 +1,29 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Tap Card Payment and Process"
+---
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+- takeScreenshot: /tmp/e2e_30_trx_modal
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 60000
+- takeScreenshot: /tmp/e2e_31_trx_ready
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_32_processing
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_33_payment_complete
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_34_payment_scroll
+- tapOn: "Continue"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_35_done

@@ -87,6 +87,7 @@ export type OrdersStackParamList = {
   // Bill screen with splitting options
   Bill: {
     orderId: string;
+    order?: any;
   };
   // Bill split screen
   BillSplit: {

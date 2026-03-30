@@ -29,12 +29,12 @@ name: "SYNC-23: Tax Rate from Server — Verify 7.25% on Mobile"
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 
-# Select M6-cudr (available table)
+# Select M6-197q (available table)
 - tapOn:
-    text: "M6-cudr"
+    id: "btn-table-select-M6-197q"
     optional: true
 - tapOn:
-    text: "M4-cudr"
+    id: "btn-table-select-M4-197q"
     optional: true
 - waitForAnimationToEnd
 - waitForAnimationToEnd

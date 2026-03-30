@@ -1,0 +1,72 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "MR-02 Partial Refund 50%"
+tags:
+  - refund
+  - sprint4
+---
+
+- runFlow: ../../helpers/online/manager_login.yaml
+- runFlow: ../../helpers/create_paid_order.yaml
+
+# Navigate to Orders → paid order
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "paid"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "paid"
+    index: 0
+- waitForAnimationToEnd
+
+# Open Refund Modal
+- extendedWaitUntil:
+    visible:
+      id: "btn-refund-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-refund-order"
+
+# Verify form state
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-form"
+    timeout: 5000
+
+# Toggle to Partial Refund
+- tapOn:
+    id: "btn-refund-partial-toggle"
+
+# Use 50% quick select
+- tapOn:
+    id: "btn-refund-quick-50"
+- waitForAnimationToEnd
+
+# Take screenshot showing partial amount
+- takeScreenshot: sprint4/MR-02_partial_50_amount
+
+# Select reason
+- tapOn:
+    id: "btn-refund-reason-1"
+
+# Submit
+- tapOn:
+    id: "btn-refund-submit"
+
+# Verify processing
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-processing"
+    timeout: 5000
+
+# Verify success
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-success"
+    timeout: 15000
+
+- takeScreenshot: sprint4/MR-02_partial_50_success

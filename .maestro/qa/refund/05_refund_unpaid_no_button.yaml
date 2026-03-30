@@ -1,0 +1,31 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "MR-05 Unpaid Order Has No Refund Button"
+tags:
+  - refund
+  - sprint4
+---
+
+- runFlow: ../../helpers/online/manager_login.yaml
+
+# Navigate to Orders tab
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Find an unpaid order (confirmed, preparing, ready, or served — NOT paid)
+- scrollUntilVisible:
+    element:
+      text: "confirmed"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "confirmed"
+    index: 0
+- waitForAnimationToEnd
+
+# Refund button should NOT be visible on unpaid orders
+- assertNotVisible:
+    id: "btn-refund-order"
+
+# Take evidence screenshot
+- takeScreenshot: sprint4/MR-05_unpaid_no_refund

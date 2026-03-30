@@ -1,0 +1,20 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Enter terminal IP"
+---
+# Tap IP field and enter 192.168.1.18
+- tapOn: "192.168.1.100"
+- eraseText: 30
+- inputText: "192.168.1.18"
+- hideKeyboard
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_81_ip_entered
+
+# Tap Add Terminal
+- tapOn: "Add Terminal"
+- waitForAnimationToEnd
+
+# Wait for connection result
+- extendedWaitUntil:
+    visible: "Found 1"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_82_terminal_added

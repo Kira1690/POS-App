@@ -61,10 +61,10 @@ name: "SYNC-22: Menu Sync Web→Mobile — Full Verification"
 
 # Select any available table
 - tapOn:
-    text: "M5-cudr"
+    id: "btn-table-select-M5-197q"
     optional: true
 - tapOn:
-    text: "M6-cudr"
+    id: "btn-table-select-M6-197q"
     optional: true
 - waitForAnimationToEnd
 - waitForAnimationToEnd

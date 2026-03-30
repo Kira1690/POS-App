@@ -1,0 +1,101 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Phase 4 - E2E Payment Flow"
+---
+
+# Step 1: Login as manager
+- runFlow: helpers/online/manager_login.yaml
+
+# Step 2: Navigate to Order Management
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Order Management"
+    timeout: 10000
+
+# Step 3: New Order -> Select Table
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "B2-197q"
+    timeout: 20000
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_03_tables
+
+# Step 4: Select table B3 (available)
+- tapOn: "M5-197q"
+- waitForAnimationToEnd
+# Handle optional guest count dialog
+- runFlow:
+    when:
+      visible: "Confirm"
+    commands:
+      - tapOn: "Confirm"
+      - waitForAnimationToEnd
+# Handle active order dialog
+- runFlow:
+    when:
+      visible: "Has an Active Order"
+    commands:
+      - tapOn: "Cancel & Pick Table"
+      - waitForAnimationToEnd
+
+# Step 5: Add items on POS screen
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_04_pos_screen
+- tapOn: "Garlic Bread"
+- waitForAnimationToEnd
+- tapOn: "Classic Cheeseburger"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_05_items_added
+
+# Step 6: Send to Kitchen
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_06_order_sent
+
+# Step 7: Open the new order from list — tap on the confirmed tab order
+- extendedWaitUntil:
+    visible: "Confirmed"
+    timeout: 10000
+- tapOn: "Confirmed"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "$21.44"
+    timeout: 10000
+- tapOn: "$21.44"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- takeScreenshot: /tmp/e2e_07_order_detail
+
+# Step 8: Status chain — Confirmed -> Preparing -> Ready -> Served
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Preparing"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- takeScreenshot: /tmp/e2e_08_preparing
+
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Ready"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- takeScreenshot: /tmp/e2e_09_ready
+
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Served"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_10_served

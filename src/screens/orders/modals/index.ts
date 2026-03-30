@@ -25,3 +25,6 @@ export type { ComboDeal } from '@/types/menu-management-extended.types';
 // Quantity Modal
 export { QuantityModal } from './QuantityModal';
 export type { QuantityModalProps } from './QuantityModal';
+
+// Refund Modal
+export { RefundModal } from './RefundModal';

@@ -83,13 +83,19 @@ const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children
       const restaurantId = 'rest_001'; // Default restaurant ID
 
       try {
-        await Promise.all([
-          tableStorageService.initialize(restaurantId),
+        // Only seed mock table data for dummy/offline credentials.
+        // Real credentials get tables from server sync — seeding mocks causes 43-table bloat.
+        const session = await authStorageService.getSession();
+        const isDummy = session?.accessToken?.startsWith('dummy_') ?? false;
+
+        const tasks: Promise<unknown>[] = [
           kitchenStorageService.initialize(),
           authStorageService.seedDummyUsers(),
-          // menuStorageService.initialize() is called by MenuContext.refreshMenu()
-          // — removed here to eliminate double-initialization race condition
-        ]);
+        ];
+        if (isDummy) {
+          tasks.push(tableStorageService.initialize(restaurantId));
+        }
+        await Promise.all(tasks);
 
         if (__DEV__) {
           console.log('[OptimizedAppProviders] Storage services initialized (seeding complete)');

@@ -1,0 +1,98 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Pay Order - Final"
+---
+# Dismiss success dialog
+- tapOn: "OK"
+- waitForAnimationToEnd
+
+# Close terminal management
+- back
+- waitForAnimationToEnd
+
+# Go to Orders
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+# Open the confirmed order
+- tapOn: "ORD-20260329-9645"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+# Walk status: Confirmed -> Preparing -> Ready -> Served
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Preparing"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Ready"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Served"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_90_served
+
+# Process Payment
+- tapOn: "Process Payment"
+- waitForAnimationToEnd
+
+# Bill screen
+- extendedWaitUntil:
+    visible: "Pay $21.44"
+    timeout: 10000
+- takeScreenshot: /tmp/e2e_91_bill
+- tapOn: "Pay $21.44"
+- waitForAnimationToEnd
+
+# Card Payment
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+
+# TRX modal
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+
+# Wait for charge button - terminal is already connected
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_92_trx_ready
+
+# CHARGE - user swipes card!
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_93_processing
+
+# Wait for card swipe result (up to 3 minutes)
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_94_payment_complete
+
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_95_details
+
+- tapOn: "Continue"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_96_done

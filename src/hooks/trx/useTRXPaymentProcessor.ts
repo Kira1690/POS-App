@@ -58,8 +58,8 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
   const [amount, setAmount] = useState('');
   const [displayAmount, setDisplayAmount] = useState(initialAmount ? initialAmount.toFixed(2) : '0.00');
   const [transactionResult, setTransactionResult] = useState('');
-  const [taxRate, setTaxRate] = useState(0.08); // Default tax rate 8%
-  const [ccSurchargeRate, setCCSurchargeRate] = useState(0.029); // Default CC surcharge 2.9%
+  const [taxRate, setTaxRate] = useState(0); // Will be set from server on mount
+  const [ccSurchargeRate, setCCSurchargeRate] = useState(0); // Will be set from server on mount
   const [merchantConfig, setMerchantConfig] = useState<unknown>(null);
   // Terminal config - will be loaded from ConfigurationService (updated when terminal is discovered)
   const [terminalConfig, setTerminalConfig] = useState({ ip: '', port: 1180, name: 'Main Terminal' });
@@ -153,28 +153,48 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
     logger.info('✅ Payment modal dismissed and state reset', 'dismissPaymentModal');
   }, [currentPaymentState, displayAmount, transitionPaymentState, forceResetState, logger, stateManager]);
 
-  // Load configuration on mount
+  // Load configuration on mount — fetch tax/CC rates from SERVER store config API,
+  // NOT from local TRX settings. The web dashboard is the single source of truth.
   useEffect(() => {
     const loadConfiguration = async () => {
       try {
+        // PRIMARY: Fetch tax/CC from server billing API (configured on web dashboard)
+        try {
+          const { billingApiClient } = await import('@/services/billing/BillingApiClient');
+          const storeConfig = await billingApiClient.getStoreConfig('1');
+          if (storeConfig.taxRate !== undefined) {
+            // Server returns tax as percentage (e.g., 10 for 10%), convert to decimal if needed
+            const rate = storeConfig.taxRate >= 1 ? storeConfig.taxRate / 100 : storeConfig.taxRate;
+            setTaxRate(rate);
+            if (__DEV__) console.log('[TRXPaymentProcessor] Tax rate from server:', rate);
+          }
+          if (storeConfig.ccPercentage !== undefined) {
+            const ccRate = storeConfig.ccPercentage >= 1 ? storeConfig.ccPercentage / 100 : storeConfig.ccPercentage;
+            setCCSurchargeRate(ccRate);
+            if (__DEV__) console.log('[TRXPaymentProcessor] CC surcharge from server:', ccRate);
+          }
+        } catch (serverError) {
+          logger.warn('Failed to load server store config, falling back to local TRX settings', 'useTRXPaymentProcessor', {
+            error: serverError instanceof Error ? serverError.message : String(serverError)
+          });
+          // FALLBACK: Use local TRX settings if server unreachable
+          const configService = ConfigurationServiceFactory.getInstance();
+          const taxConfig = await configService.getTaxConfig();
+          setTaxRate(taxConfig.defaultTaxRate);
+          setCCSurchargeRate(taxConfig.ccProcessingFee);
+        }
+
+        // Load merchant and POS terminal configuration (always from local TRX settings)
         const configService = ConfigurationServiceFactory.getInstance();
-
-        // Load tax and surcharge configuration
-        const taxConfig = await configService.getTaxConfig();
-        setTaxRate(taxConfig.defaultTaxRate);
-        setCCSurchargeRate(taxConfig.ccProcessingFee);
-
-        // Load merchant configuration
         const merchantInfo = await configService.getMerchantConfig();
         setMerchantConfig(merchantInfo);
 
-        // Load POS terminal configuration
         try {
           const posConfig = await configService.getPOSConfig();
           setTerminalConfig({
             ip: posConfig.host,
             port: posConfig.port,
-            name: 'Main Terminal' // Default terminal name
+            name: 'Main Terminal'
           });
         } catch (posError) {
           logger.warn('Failed to load POS config, using defaults', 'useTRXPaymentProcessor', {
@@ -183,12 +203,10 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
         }
 
         logger.info('Configuration loaded successfully', 'useTRXPaymentProcessor', {
-          taxRate: taxConfig.defaultTaxRate,
-          terminalIp: terminalConfig.ip
+          taxRate, terminalIp: terminalConfig.ip
         });
       } catch (error) {
         logger.error('Failed to load configuration', error instanceof Error ? error : new Error(String(error)));
-        // Keep default fallback values
       }
     };
 
@@ -199,25 +217,36 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
       logger.info(`Settings changed: ${event.key}`, 'useTRXPaymentProcessor');
 
       try {
-        // Invalidate cache and reload configuration
-        const configService = ConfigurationServiceFactory.getInstance();
-        configService.invalidateCache();
+        // Reload from server first, fallback to local
+        try {
+          const { billingApiClient } = await import('@/services/billing/BillingApiClient');
+          const storeConfig = await billingApiClient.getStoreConfig('1');
+          if (storeConfig.taxRate !== undefined) {
+            const rate = storeConfig.taxRate >= 1 ? storeConfig.taxRate / 100 : storeConfig.taxRate;
+            setTaxRate(rate);
+          }
+          if (storeConfig.ccPercentage !== undefined) {
+            const ccRate = storeConfig.ccPercentage >= 1 ? storeConfig.ccPercentage / 100 : storeConfig.ccPercentage;
+            setCCSurchargeRate(ccRate);
+          }
+        } catch {
+          const configService = ConfigurationServiceFactory.getInstance();
+          configService.invalidateCache();
+          const taxConfig = await configService.getTaxConfig();
+          setTaxRate(taxConfig.defaultTaxRate);
+          setCCSurchargeRate(taxConfig.ccProcessingFee);
+        }
 
-        const taxConfig = await configService.getTaxConfig();
-        setTaxRate(taxConfig.defaultTaxRate);
-        setCCSurchargeRate(taxConfig.ccProcessingFee);
-
-        logger.info(`Configuration reloaded: tax=${taxConfig.defaultTaxRate}, cc=${taxConfig.ccProcessingFee}`, 'useTRXPaymentProcessor');
+        logger.info(`Configuration reloaded after settings change`, 'useTRXPaymentProcessor');
       } catch (error) {
         logger.error('Failed to reload configuration after settings change', error instanceof Error ? error : new Error(String(error)));
       }
     });
 
-    // Cleanup function to unsubscribe from settings changes
     return () => {
       unsubscribe();
     };
-  }, []); // Removed logger from dependencies
+  }, []);
 
   const calculateTax = useCallback(() => {
     const numAmount = parseFloat(displayAmount || '0');
@@ -328,10 +357,13 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
     const transactionId = `${Date.now()}`;
     const now = new Date();
 
-    // Calculate and store transaction amount (so it persists even after displayAmount is cleared)
-    const tax = calculatorService.calculateTax(parseFloat(displayAmount), taxRate);
-    const total = calculatorService.calculateTotal(parseFloat(displayAmount), tax);
-    setTransactionAmount(total.toFixed(2));
+    // Calculate and store transaction amount including CC surcharge
+    const subtotalNum = parseFloat(displayAmount);
+    const tax = calculatorService.calculateTax(subtotalNum, taxRate);
+    const subtotalPlusTax = subtotalNum + tax;
+    const ccSurcharge = subtotalPlusTax * ccSurchargeRate;
+    const grandTotal = subtotalPlusTax + ccSurcharge;
+    setTransactionAmount(grandTotal.toFixed(2));
 
     // Set payment start time for progress modal
     setPaymentStartTime(now);
@@ -358,10 +390,10 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
         transaction_date: now.toISOString().split('T')[0],
         transaction_time: now.toISOString().split('T')[1].substring(0, 8),
         transaction_datetime: now.toISOString(),
-        amount: parseFloat(displayAmount) + taxAmount,
-        subtotal: parseFloat(displayAmount),
+        amount: grandTotal,
+        subtotal: subtotalNum,
         tax: taxAmount,
-        processing_fee: 0,
+        processing_fee: ccSurcharge,
         currency: 'USD',
         status: 'pending',
         payment_method: 'card',
@@ -403,16 +435,22 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
-      logger.info('📊 TAX CALCULATION COMPLETE', 'handleProcessPayment', {
+      logger.info('📊 AMOUNT CALCULATION COMPLETE', 'handleProcessPayment', {
         timestamp: new Date().toISOString(),
-        amount: parseFloat(displayAmount).toFixed(2),
+        subtotal: subtotalNum.toFixed(2),
         tax: taxAmount.toFixed(2),
-        total: (parseFloat(displayAmount) + taxAmount).toFixed(2),
-        taxRate: (taxRate * 100).toFixed(1) + '%'
+        ccSurcharge: ccSurcharge.toFixed(2),
+        grandTotal: grandTotal.toFixed(2),
+        taxRate: (taxRate * 100).toFixed(1) + '%',
+        ccRate: (ccSurchargeRate * 100).toFixed(1) + '%',
       });
 
       // === STEP 3: Process payment via terminal ===
-      const result = await processSale(parseFloat(displayAmount), taxAmount) as Record<string, unknown>;
+      // Send grand total (subtotal + tax + CC surcharge) to terminal
+      // Terminal receives: amount = subtotal + ccSurcharge, tax = taxAmount
+      // So terminal charges: amount + tax = grandTotal
+      const amountForTerminal = subtotalNum + ccSurcharge;
+      const result = await processSale(amountForTerminal, taxAmount) as Record<string, unknown>;
 
       logger.info('📨 PAYMENT PROCESSING RESULT RECEIVED', 'handleProcessPayment', {
         timestamp: new Date().toISOString(),
@@ -520,7 +558,7 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
 
       // Modal will auto-dismiss after 5 seconds and call dismissPaymentModal()
     }
-  }, [displayAmount, calculatorService, transitionPaymentState, forceResetState, handleClear, logger, taxRate, terminalConfig, merchantConfig, currentPaymentState]);
+  }, [displayAmount, calculatorService, transitionPaymentState, forceResetState, handleClear, logger, taxRate, ccSurchargeRate, terminalConfig, merchantConfig, currentPaymentState]);
 
   const handleBalanceInquiry = useCallback(async (
     processBalanceInquiry: () => Promise<unknown>

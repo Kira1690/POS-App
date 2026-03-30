@@ -1,0 +1,120 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "CC Surcharge Test"
+---
+# Table grid is showing — pick M4
+- tapOn: "M4-197q"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Confirm"
+    commands:
+      - tapOn: "Confirm"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Has an Active Order"
+    commands:
+      - tapOn: "Cancel & Pick Table"
+      - waitForAnimationToEnd
+      - tapOn: "M3-197q"
+      - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "Confirm"
+          commands:
+            - tapOn: "Confirm"
+            - waitForAnimationToEnd
+
+# Add items
+- extendedWaitUntil:
+    visible: "Garlic Bread"
+    timeout: 30000
+- tapOn: "Garlic Bread"
+- waitForAnimationToEnd
+- tapOn: "Classic Cheeseburger"
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Open order from list
+- extendedWaitUntil:
+    visible: "Confirmed"
+    timeout: 10000
+- tapOn: "Confirmed"
+- waitForAnimationToEnd
+# Tap first $21.44 order
+- extendedWaitUntil:
+    visible: "$21.44"
+    timeout: 10000
+- tapOn:
+    text: ".*21\\.44.*"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+
+# Status chain
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Preparing"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Ready"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Update Status"
+    timeout: 10000
+- tapOn: "Update Status"
+- waitForAnimationToEnd
+- tapOn: "Served"
+- waitForAnimationToEnd
+
+# Payment
+- tapOn: "Process Payment"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Pay $21.44"
+    timeout: 10000
+- tapOn: "Pay $21.44"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Card Payment"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Card Payment"
+- waitForAnimationToEnd
+
+# TRX modal — CC surcharge should show 3%
+- extendedWaitUntil:
+    visible: "TRX Terminal Payment"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "btn-trx-charge"
+    timeout: 30000
+- takeScreenshot: /tmp/e2e_cc_200_trx_ready
+
+# Charge
+- tapOn:
+    id: "btn-trx-charge"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_cc_201_processing
+
+# Wait for swipe
+- extendedWaitUntil:
+    visible: "Payment Details"
+    timeout: 180000
+- takeScreenshot: /tmp/e2e_cc_202_complete
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: /tmp/e2e_cc_203_details
+- tapOn: "Continue"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_cc_204_done

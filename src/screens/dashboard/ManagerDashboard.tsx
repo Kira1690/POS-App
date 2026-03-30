@@ -4,7 +4,7 @@
  * Uses real data from UnifiedOrder, TableStats, and KitchenTickets
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,10 +23,12 @@ import { typography } from '@/design-system/theme/typography';
 import { useUnifiedOrder } from '@/context/unified-order/UnifiedOrderContext';
 import { useTableStats } from '@/hooks/context/useTableSelectors';
 import { useKitchenStats } from '@/context/unified-order/UnifiedOrderContext';
+import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
 import { UNIFIED_ORDER_STATUS_LABELS, UnifiedOrder } from '@/types/unified-order.types';
 import { SimpleLineChart } from './components/SimpleLineChart';
 import OrderSummarySheet from './components/OrderSummarySheet';
 import ActivityLogsSheet from './components/ActivityLogsSheet';
+import { reportsApiService } from '@/services/api/ReportsApiService';
 
 
 const formatCurrency = (amount: number) =>
@@ -55,29 +57,79 @@ const ManagerDashboard: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<UnifiedOrder | null>(null);
   const [showActivityLogs, setShowActivityLogs] = useState(false);
 
+  // Server KPI state: when online, we use server-authoritative numbers
+  const [serverKpis, setServerKpis] = useState<{
+    totalRevenue: number;
+    totalOrders: number;
+    paidOrders: number;
+  } | null>(null);
+  const [kpiSource, setKpiSource] = useState<'server' | 'cache'>('cache');
+  const fetchingKpisRef = useRef(false);
+
   // Real data hooks
   const { orders, activeOrders, refreshOrders, isLoading } = useUnifiedOrder();
   const tableStats = useTableStats();
   const kitchenStats = useKitchenStats();
 
+  // Fetch KPIs from server API (authoritative source)
+  const fetchServerKpis = useCallback(async () => {
+    if (fetchingKpisRef.current) return;
+    fetchingKpisRef.current = true;
+    try {
+      const today = new Date().toISOString().slice(0, 10); // UTC date YYYY-MM-DD
+      const data = await reportsApiService.getDailySales(today);
+      setServerKpis({
+        totalRevenue: data.totalRevenue,
+        totalOrders: data.totalOrders,
+        paidOrders: data.paidOrders,
+      });
+      setKpiSource('server');
+    } catch {
+      // Offline or error — fall back to local cache
+      setKpiSource('cache');
+    } finally {
+      fetchingKpisRef.current = false;
+    }
+  }, []);
+
   // Refresh on screen focus
   useFocusEffect(
     useCallback(() => {
       refreshOrders();
-    }, [refreshOrders])
+      fetchServerKpis();
+    }, [refreshOrders, fetchServerKpis])
   );
 
-  // Compute today's start timestamp
+  // Refresh KPIs immediately when a payment is processed
+  useEffect(() => {
+    const unsubscribe = orderEventEmitter.subscribe('ORDER_PAID', () => {
+      refreshOrders();
+      fetchServerKpis();
+    });
+    return unsubscribe;
+  }, [refreshOrders, fetchServerKpis]);
+
+  // Compute today's start timestamp using UTC for consistency with server
   const todayStart = useMemo(() => {
-    const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    return d.getTime();
   }, []);
 
-  // Compute dashboard metrics from real data
-  const todaysSales = useMemo(() => {
+  // Local fallback: compute from SQLite orders (paid, created today UTC)
+  const localTodaysSales = useMemo(() => {
     return orders
       .filter(o => o.status === 'paid' && new Date(o.createdAt).getTime() >= todayStart)
       .reduce((sum, o) => sum + o.totalAmount, 0);
   }, [orders, todayStart]);
+
+  const localTodaysOrderCount = useMemo(() => {
+    return orders.filter(o => new Date(o.createdAt).getTime() >= todayStart).length;
+  }, [orders, todayStart]);
+
+  // Use server KPIs when available, otherwise fall back to local
+  const todaysSales = serverKpis !== null ? serverKpis.totalRevenue : localTodaysSales;
+  const todaysTotalOrders = serverKpis !== null ? serverKpis.totalOrders : localTodaysOrderCount;
 
   const recentOrders = useMemo(() => {
     return [...orders]
@@ -85,15 +137,15 @@ const ManagerDashboard: React.FC = () => {
       .slice(0, 5);
   }, [orders]);
 
-  // Sales chart: last 7 days of paid orders grouped by day
+  // Sales chart: last 7 days of paid orders grouped by day (UTC boundaries)
   const salesChartData = useMemo(() => {
     const days: { label: string; value: number; date: string }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
-      d.setDate(d.getDate() - i);
-      d.setHours(0, 0, 0, 0);
+      d.setUTCDate(d.getUTCDate() - i);
+      d.setUTCHours(0, 0, 0, 0);
       const dayEnd = new Date(d);
-      dayEnd.setHours(23, 59, 59, 999);
+      dayEnd.setUTCHours(23, 59, 59, 999);
       const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
       const daySales = orders
         .filter(o => o.status === 'paid' &&
@@ -115,9 +167,9 @@ const ManagerDashboard: React.FC = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshOrders();
+    await Promise.all([refreshOrders(), fetchServerKpis()]);
     setRefreshing(false);
-  }, [refreshOrders]);
+  }, [refreshOrders, fetchServerKpis]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarVisible(prev => !prev);
@@ -258,6 +310,9 @@ const ManagerDashboard: React.FC = () => {
           <Text style={[styles.statsValue, { color: theme.colors.success, fontSize: statValueSize }]}>
             {loading ? '--' : formatCurrency(todaysSales)}
           </Text>
+          <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            {kpiSource === 'cache' ? 'From local cache' : 'Live from server'}
+          </Text>
         </View>
 
         <View style={[styles.statsCard, cardStyle]}>
@@ -271,7 +326,7 @@ const ManagerDashboard: React.FC = () => {
             {loading ? '--' : activeOrders.length}
           </Text>
           <Text style={[styles.statsSubtext, { color: theme.colors.onSurfaceVariant }]}>
-            {orders.length} total today
+            {todaysTotalOrders} total today
           </Text>
         </View>
 

@@ -1,0 +1,149 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "OS-06 Full Status Chain — All Transitions"
+tags:
+  - sync
+  - sprint4
+  - critical
+---
+
+# Tests the full order lifecycle on mobile:
+# confirmed → preparing → ready → served
+# Each transition should sync to server for web verification.
+
+- runFlow: ../../helpers/online/manager_login.yaml
+
+# Create new order
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B2-197q"
+    timeout: 15000
+- tapOn:
+    id: "btn-table-select-B2-197q"
+- waitForAnimationToEnd
+
+# Handle guest popup
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Wait for confirmed status
+- extendedWaitUntil:
+    visible:
+      text: "confirmed"
+    timeout: 15000
+- takeScreenshot: sprint4/OS-06_status_confirmed
+
+# Kitchen: start preparing
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Start"
+    timeout: 8000
+- tapOn:
+    text: "Start"
+- waitForAnimationToEnd
+- takeScreenshot: sprint4/OS-06_status_preparing
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Kitchen: mark ready
+- extendedWaitUntil:
+    visible:
+      text: "Ready"
+    timeout: 8000
+- tapOn:
+    text: "Ready"
+- waitForAnimationToEnd
+- takeScreenshot: sprint4/OS-06_status_ready
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Serve order
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "ready"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "ready"
+    index: 0
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-serve-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-serve-order"
+- waitForAnimationToEnd
+- takeScreenshot: sprint4/OS-06_status_served
+
+# Verify final state is served
+- extendedWaitUntil:
+    visible:
+      text: "served"
+    timeout: 10000
+
+# Wait for push sync
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: sprint4/OS-06_full_chain_complete

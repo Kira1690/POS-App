@@ -154,7 +154,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(
     });
 
     const formatPrice = (price: number): string => {
-      return `$${price.toFixed(2)}`;
+      return `$${(Number(price) || 0).toFixed(2)}`;
     };
 
     const renderDietaryTags = () => {

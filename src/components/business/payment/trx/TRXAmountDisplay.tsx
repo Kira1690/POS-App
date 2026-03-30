@@ -26,8 +26,9 @@ export const TRXAmountDisplay: React.FC<TRXAmountDisplayProps> = ({
   const { theme } = useTheme();
 
   const currencySymbol = '$';
-  const displayTaxRate = taxRate ? (taxRate * 100).toFixed(1) : '8.0';
-  const displayCCSurchargeRate = ccSurchargeRate ? (ccSurchargeRate * 100).toFixed(1) : '2.9';
+  // Show actual rates from server config — no hardcoded fallbacks that hide zero values
+  const displayTaxRate = taxRate !== undefined ? (taxRate * 100).toFixed(1) : '0.0';
+  const displayCCSurchargeRate = ccSurchargeRate !== undefined ? (ccSurchargeRate * 100).toFixed(1) : '0.0';
   const displayTax = taxAmount || tax || '0.00';
   const displaySurcharge = surchargeAmount || '0.00';
   const displayTotal = totalAmount || total || amount;

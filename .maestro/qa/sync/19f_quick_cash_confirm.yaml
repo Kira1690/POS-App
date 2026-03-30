@@ -1,0 +1,51 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "SYNC-19f: Tap Quick Amount → Confirm Cash Payment"
+---
+
+# On the Cash Payment modal. Tap $70.00 quick amount then confirm.
+
+- tapOn:
+    text: "\\$70.00"
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19f_cash_70
+
+# Now Confirm Payment should be active
+- tapOn:
+    text: "Confirm Payment"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19f_payment_success
+
+# Continue/Done/Receipt
+- tapOn:
+    id: "btn-continue"
+    optional: true
+- tapOn:
+    text: ".*Continue.*|.*Done.*|.*View Receipt.*|.*New Order.*"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19f_after_payment
+
+# Sync wait (12s)
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-nav-orders"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "btn-refresh-orders"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: screenshots/sync-test/19f_final_paid

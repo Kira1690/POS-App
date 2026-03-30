@@ -63,9 +63,13 @@ export const TableProvider: React.FC<TableProviderProps> = ({
   }, [actions]);
 
   const refreshTables = useCallback(async () => {
-    // Use mock restaurant ID for UI development
-    const restaurantId = 'rest_001'; // Mock restaurant ID that matches mock data
+    const restaurantId = 'rest_001';
     return actions.loadTables(restaurantId);
+  }, [actions]);
+
+  const refreshTablesFromStorage = useCallback(async () => {
+    const restaurantId = 'rest_001';
+    return actions.loadTables(restaurantId, true);
   }, [actions]);
 
   // Order operations
@@ -171,12 +175,12 @@ export const TableProvider: React.FC<TableProviderProps> = ({
     });
 
     const unsubscribeReset = orderEventEmitter.subscribe('SYSTEM_RESET', () => {
-      refreshTables().catch(() => { /* silent */ });
+      refreshTablesFromStorage().catch(() => { /* silent */ });
     });
 
-    // TABLE_SYNC_COMPLETE: Refresh tables when sync pulls new data from server
+    // TABLE_SYNC_COMPLETE: Sync pull already wrote data to SQLite — read from storage, skip API
     const unsubscribeTableSync = orderEventEmitter.subscribe('TABLE_SYNC_COMPLETE', () => {
-      refreshTables().catch(() => {
+      refreshTablesFromStorage().catch(() => {
         // Non-blocking — silently ignore errors
       });
     });
@@ -188,7 +192,7 @@ export const TableProvider: React.FC<TableProviderProps> = ({
       unsubscribeReset();
       unsubscribeTableSync();
     };
-  }, [updateTableStatus, refreshTables]);
+  }, [updateTableStatus, refreshTablesFromStorage]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -16,6 +16,7 @@ import { MenuItemCard } from './components/MenuItemCard';
 import { MenuItemsTableHeader } from './components/MenuItemsTableHeader';
 import { MenuItemFiltersBar } from './components/MenuItemFiltersBar';
 import { AddMenuItemModal } from './components/AddMenuItemModal';
+import { EditMenuItemModal, MenuItemUpdateData } from '@/screens/settings/components/menuManagement/modals/EditMenuItemModal';
 import { MockMenuManagementService } from '@/services/menu/MockMenuManagementService';
 import {
   MenuItemWithStats,
@@ -24,6 +25,7 @@ import {
   CreateMenuItemRequest,
   UpdateMenuItemRequest,
 } from '@/types/menu-management.types';
+import { MenuItemExtended } from '@/types/menu-management-extended.types';
 
 interface MenuItemsScreenProps {
   categoryId?: string;
@@ -43,6 +45,8 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedEditItem, setSelectedEditItem] = useState<MenuItemExtended | null>(null);
   
   // Filters and view mode
   const [filters, setFilters] = useState<MenuItemFilters>({
@@ -160,6 +164,21 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
   };
 
   /**
+   * Handle edit item save
+   */
+  const handleSaveEditItem = async (itemId: string, updates: MenuItemUpdateData) => {
+    try {
+      await menuService.updateMenuItem(itemId, updates as UpdateMenuItemRequest);
+      setShowEditModal(false);
+      setSelectedEditItem(null);
+      loadMenuItems();
+      Alert.alert('Success', 'Menu item updated successfully');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update menu item');
+    }
+  };
+
+  /**
    * Handle item actions
    */
   const handleItemAction = async (
@@ -171,8 +190,8 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
 
     switch (action) {
       case 'edit':
-        // TODO: Open edit modal
-        Alert.alert('Edit Item', `Edit functionality for ${item.name} coming soon`);
+        setSelectedEditItem(item as unknown as MenuItemExtended);
+        setShowEditModal(true);
         break;
 
       case 'duplicate':
@@ -557,6 +576,19 @@ export const MenuItemsScreen: React.FC<MenuItemsScreenProps> = ({
         defaultCategoryId={filters.categoryId}
         onSubmit={handleAddMenuItem}
         onClose={() => setShowAddModal(false)}
+      />
+
+      {/* Edit Menu Item Modal */}
+      <EditMenuItemModal
+        visible={showEditModal}
+        item={selectedEditItem}
+        categories={categories}
+        modifierGroups={[]}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedEditItem(null);
+        }}
+        onSave={handleSaveEditItem}
       />
     </View>
   );

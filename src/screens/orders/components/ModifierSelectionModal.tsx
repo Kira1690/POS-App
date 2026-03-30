@@ -91,7 +91,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
             .map((opt): InternalSelection => ({
               optionId: opt.id,
               optionName: opt.name,
-              priceAdjustment: opt.price_adjustment,
+              priceAdjustment: Number(opt.price_adjustment) || 0,
               quantity: 1,
             }));
           if (defaults.length > 0) {
@@ -338,7 +338,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
         const newSelection: InternalSelection = {
           optionId: option.id,
           optionName: option.name,
-          priceAdjustment: option.price_adjustment,
+          priceAdjustment: Number(option.price_adjustment) || 0,
           quantity: 1,
         };
 
@@ -451,7 +451,7 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
     onClose();
   }, [item, selectedOptions, quantity, notes, isValid, onConfirm, onClose]);
 
-  const formatPrice = (price: number): string => `$${price.toFixed(2)}`;
+  const formatPrice = (price: number): string => `$${(Number(price) || 0).toFixed(2)}`;
 
   if (!item) return null;
 
@@ -531,10 +531,10 @@ export const ModifierSelectionModal: React.FC<ModifierSelectionModalProps> = ({
                             </Text>
                           )}
                         </View>
-                        {option.price_adjustment !== 0 && (
+                        {Number(option.price_adjustment) !== 0 && (
                           <Text style={styles.optionPrice}>
-                            {option.price_adjustment > 0 ? '+' : ''}
-                            {formatPrice(option.price_adjustment)}
+                            {Number(option.price_adjustment) > 0 ? '+' : ''}
+                            {formatPrice(Number(option.price_adjustment) || 0)}
                           </Text>
                         )}
                       </TouchableOpacity>

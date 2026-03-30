@@ -123,7 +123,7 @@ const CartItemRow: React.FC<CartItemRowProps> = React.memo(
       },
     });
 
-    const formatPrice = (price: number): string => `$${price.toFixed(2)}`;
+    const formatPrice = (price: number): string => `$${(Number(price) || 0).toFixed(2)}`;
 
     return (
       <View style={styles.container}>
@@ -382,7 +382,7 @@ export const OrderCart: React.FC<OrderCartProps> = ({
     },
   });
 
-  const formatPrice = (price: number): string => `$${price.toFixed(2)}`;
+  const formatPrice = (price: number): string => `$${(Number(price) || 0).toFixed(2)}`;
 
   const itemCount = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity, 0),

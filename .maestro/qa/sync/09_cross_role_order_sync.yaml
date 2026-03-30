@@ -75,7 +75,7 @@ name: "QA Sync 09 — Cross-Role Order Sync (Manager creates → verify sync)"
 
 # Select a table — dismiss if it has existing order
 - tapOn:
-    text: "P4-cudr"
+    id: "btn-table-select-P4-197q"
     optional: true
 - waitForAnimationToEnd
 

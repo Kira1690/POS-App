@@ -1,0 +1,69 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "MR-07 Refund Amount Validation"
+tags:
+  - refund
+  - validation
+  - sprint4
+---
+
+- runFlow: ../../helpers/online/manager_login.yaml
+- runFlow: ../../helpers/create_paid_order.yaml
+
+# Navigate to paid order → open refund modal
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "paid"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "paid"
+    index: 0
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-refund-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-refund-order"
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-form"
+    timeout: 5000
+
+# Toggle to partial refund mode
+- tapOn:
+    id: "btn-refund-partial-toggle"
+
+# Test: enter 0 amount
+- tapOn:
+    id: "input-refund-amount"
+- clearText
+- inputText: "0"
+- hideKeyboard
+- takeScreenshot: sprint4/MR-07_zero_amount
+
+# Test: enter amount exceeding total (very large)
+- tapOn:
+    id: "input-refund-amount"
+- clearText
+- inputText: "99999"
+- hideKeyboard
+- takeScreenshot: sprint4/MR-07_exceed_amount
+
+# Test: enter valid amount
+- tapOn:
+    id: "input-refund-amount"
+- clearText
+- inputText: "5.00"
+- hideKeyboard
+
+# Select reason
+- tapOn:
+    id: "btn-refund-reason-2"
+
+# Submit should now be enabled
+- takeScreenshot: sprint4/MR-07_valid_amount

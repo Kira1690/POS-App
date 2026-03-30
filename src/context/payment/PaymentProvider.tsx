@@ -20,6 +20,8 @@ import {
   RefundPaymentRequest,
 } from '@/types/payment.types';
 import { showToast } from '@/utils/toast';
+import { useUnifiedOrder } from '@/context/unified-order';
+import { ProfessionalPaymentMethod } from '@/types/payment-extended.types';
 
 interface PaymentProviderProps {
   children: ReactNode;
@@ -27,37 +29,50 @@ interface PaymentProviderProps {
 
 export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(paymentReducer, initialPaymentState);
+  const { processPayment: markOrderPaid } = useUnifiedOrder();
   // Use direct service instance to avoid DI registration issues
   const paymentServiceInstance = paymentService;
 
-  // Load tax rate from storage on mount
-  useEffect(() => {
-    const loadPaymentConfig = async () => {
-      try {
-        const config = await paymentStorageService.getPaymentConfig();
-        if (config) {
-          // Load tax rate
-          if (config.taxRate !== undefined) {
-            dispatch(PaymentActions.setTaxRate(config.taxRate));
-          }
-          // Load tip rates
-          if (config.defaultTipRates) {
-            dispatch(PaymentActions.setTipRates(config.defaultTipRates));
-          }
-          // Load receipt settings
-          if (config.receiptSettings) {
-            dispatch(PaymentActions.updateReceiptSettings(config.receiptSettings));
-          }
+  // Load tax rate from storage on mount + reload when sync updates it
+  const loadPaymentConfig = useCallback(async () => {
+    try {
+      const config = await paymentStorageService.getPaymentConfig();
+      if (config) {
+        if (config.taxRate !== undefined) {
+          dispatch(PaymentActions.setTaxRate(config.taxRate));
+        }
+        if (config.defaultTipRates) {
+          dispatch(PaymentActions.setTipRates(config.defaultTipRates));
+        }
+        if (config.receiptSettings) {
+          dispatch(PaymentActions.updateReceiptSettings(config.receiptSettings));
+        }
+        if (__DEV__) {
+          console.log('[PaymentProvider] Loaded payment config:', { taxRate: config.taxRate });
+        }
+      }
+    } catch { /* silent */ }
+  }, []);
 
+  useEffect(() => {
+    loadPaymentConfig();
+  }, [loadPaymentConfig]);
+
+  // Re-read tax rate from storage every 10s (picks up sync changes)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const rate = await paymentStorageService.getTaxRate();
+        if (rate !== null && rate !== state.taxRate) {
+          dispatch(PaymentActions.setTaxRate(rate));
           if (__DEV__) {
-            console.log('[PaymentProvider] Loaded payment config from storage:', config);
+            console.log(`[PaymentProvider] Tax rate updated from sync: ${state.taxRate} → ${rate}`);
           }
         }
       } catch { /* silent */ }
-    };
-
-    loadPaymentConfig();
-  }, []);
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [state.taxRate]);
 
   // Payment Processing Methods
   const processCardPayment = useCallback(async (request: ProcessPaymentRequest): Promise<ProfessionalPayment> => {
@@ -67,10 +82,17 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.clearError());
 
       const payment = await paymentServiceInstance.processCardPayment(request);
-      
+
       dispatch(PaymentActions.addPayment(payment));
       dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.COMPLETED));
-      
+
+      // Mark order as paid in unified order context (sets status + paymentStatus)
+      if (request.orderId) {
+        markOrderPaid(String(request.orderId), String(request.method || 'cash'), String(payment.id || '')).catch((e) => {
+          if (__DEV__) console.log('[PaymentProvider] markOrderPaid error:', e);
+        });
+      }
+
       return payment;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Card payment failed';
@@ -89,10 +111,17 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       dispatch(PaymentActions.clearError());
 
       const payment = await paymentServiceInstance.processCashPayment(request);
-      
+
       dispatch(PaymentActions.addPayment(payment));
       dispatch(PaymentActions.setProcessingStatus(PaymentProcessingStatus.COMPLETED));
-      
+
+      // Mark order as paid in unified order context (sets status + paymentStatus)
+      if (request.orderId) {
+        markOrderPaid(String(request.orderId), String(request.method || 'cash'), String(payment.id || '')).catch((e) => {
+          if (__DEV__) console.log('[PaymentProvider] markOrderPaid error:', e);
+        });
+      }
+
       return payment;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Cash payment failed';

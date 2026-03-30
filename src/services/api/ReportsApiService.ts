@@ -161,7 +161,7 @@ class ReportsApiService {
       totalRevenue: num(d.total_revenue ?? d.totalRevenue),
       totalTax: num(d.total_tax ?? d.totalTax),
       netRevenue: d.net_revenue !== undefined ? num(d.net_revenue) : undefined,
-      avgOrderValue: num(d.avg_order_value ?? d.avgOrderValue),
+      avgOrderValue: num(d.average_order_value ?? d.avg_order_value ?? d.avgOrderValue),
       paidOrders: num(d.paid_orders ?? d.paidOrders),
     };
   }

@@ -28,7 +28,7 @@ interface SyncProviderProps {
 async function isBackendReachable(): Promise<boolean> {
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 3000);
+    const id = setTimeout(() => controller.abort(), 800);
     const res = await fetch(`${API_CONFIG.BASE_URL}/health`, {
       method: 'GET',
       signal: controller.signal,
@@ -107,8 +107,8 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
 
       await syncEngine.start({
         restaurantId,
-        pushIntervalMs: 10_000,
-        pullIntervalMs: 30_000,
+        pushIntervalMs: 5_000,
+        pullIntervalMs: 5_000,
       });
     };
 

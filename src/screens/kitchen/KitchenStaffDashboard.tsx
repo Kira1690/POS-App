@@ -1,9 +1,9 @@
 /**
- * Kitchen Staff Dashboard — connected to real SQLite order data
+ * Kitchen Staff Dashboard — fetches orders directly from API (no sync engine).
  * Shows confirmed/preparing/ready orders with live elapsed timers and priority.
  */
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,9 +15,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { AppleCard, AppleProgressBar } from '@/components/apple';
-import { useUnifiedKitchen } from '@/context/unified-order/UnifiedOrderContext';
 import { UnifiedOrder, UnifiedOrderStatus } from '@/types/unified-order.types';
 import { formatCurrency } from '@/utils/currency';
+import { apiClient } from '@/services/api/apiClient';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -378,19 +378,133 @@ const StatCard: React.FC<StatCardProps> = ({ icon, iconColor, value, label }) =>
 
 type StatusFilter = 'all' | 'pending' | 'preparing' | 'ready';
 
+// ─── Direct API helpers (no sync engine) ────────────────────────────────────
+
+const KITCHEN_STATUSES = ['confirmed', 'preparing', 'ready'];
+
+function mapApiOrder(raw: any): UnifiedOrder {
+  const items = (raw.order_items ?? raw.items ?? []).map((item: any) => ({
+    id: String(item.id),
+    menuItemId: String(item.menu_item_id ?? ''),
+    name: item.name ?? item.item_name ?? '',
+    category: item.category ?? '',
+    categoryId: item.category_id ?? '',
+    basePrice: Number(item.base_price ?? item.price ?? 0),
+    quantity: Number(item.quantity ?? 1),
+    modifierTotal: Number(item.modifier_total ?? 0),
+    itemTotal: Number(item.item_total ?? item.total ?? 0),
+    selectedModifiers: item.selected_modifiers ?? item.modifiers ?? [],
+    dietaryTags: item.dietary_tags ?? [],
+    allergens: item.allergens ?? [],
+    hasAllergenWarning: false,
+    kitchenStation: item.kitchen_station ?? item.station ?? '',
+    itemStatus: item.status ?? item.item_status ?? 'pending',
+    specialInstructions: item.special_instructions ?? '',
+    kitchenNotes: item.kitchen_notes ?? '',
+    isComboItem: false,
+    comboId: '',
+    comboName: '',
+    addedAt: item.created_at ?? new Date().toISOString(),
+    modifiedAt: item.updated_at ?? new Date().toISOString(),
+  }));
+
+  return {
+    id: String(raw.id),
+    orderNumber: raw.order_number ?? '',
+    restaurantId: String(raw.restaurant_id ?? '1'),
+    tableId: String(raw.table_id ?? ''),
+    tableName: raw.table_name ?? raw.table?.table_number ?? '',
+    guestCount: Number(raw.guest_count ?? 1),
+    customerId: raw.customer_id ? String(raw.customer_id) : undefined,
+    createdBy: String(raw.created_by ?? ''),
+    createdByName: raw.created_by_name ?? '',
+    servedBy: raw.served_by ? String(raw.served_by) : undefined,
+    servedByName: raw.served_by_name ?? undefined,
+    subtotal: Number(raw.subtotal ?? 0),
+    taxRate: Number(raw.tax_rate ?? 0),
+    taxAmount: Number(raw.tax_amount ?? 0),
+    discountType: raw.discount_type ?? undefined,
+    discountValue: raw.discount_value != null ? Number(raw.discount_value) : undefined,
+    discountAmount: Number(raw.discount_amount ?? 0),
+    tipAmount: Number(raw.tip_amount ?? 0),
+    totalAmount: Number(raw.total_amount ?? 0),
+    status: (raw.status ?? 'draft') as UnifiedOrderStatus,
+    paymentStatus: (raw.payment_status ?? 'pending') as any,
+    specialInstructions: raw.special_instructions ?? undefined,
+    cancellationReason: raw.cancellation_reason ?? undefined,
+    submittedAt: raw.submitted_at ?? undefined,
+    paidAt: raw.paid_at ?? undefined,
+    cancelledAt: raw.cancelled_at ?? undefined,
+    preparingAt: raw.preparing_at ?? undefined,
+    readyAt: raw.ready_at ?? undefined,
+    servedAt: raw.served_at ?? undefined,
+    estimatedPrepTime: raw.estimated_prep_time != null ? Number(raw.estimated_prep_time) : undefined,
+    actualPrepTime: raw.actual_prep_time != null ? Number(raw.actual_prep_time) : undefined,
+    pendingSync: false,
+    syncedAt: new Date().toISOString(),
+    createdAt: raw.created_at ?? new Date().toISOString(),
+    updatedAt: raw.updated_at ?? new Date().toISOString(),
+    items,
+  } as UnifiedOrder;
+}
+
+async function fetchKitchenOrders(): Promise<UnifiedOrder[]> {
+  try {
+    const res = await apiClient.get('/api/orders', { silent: true } as any);
+    const data = res.data?.data;
+    const arr: any[] = data?.data ?? (Array.isArray(data) ? data : []);
+    return arr
+      .filter((o: any) => KITCHEN_STATUSES.includes(o.status))
+      .map(mapApiOrder);
+  } catch {
+    return [];
+  }
+}
+
+async function updateStatusViaApi(orderId: string, status: UnifiedOrderStatus): Promise<boolean> {
+  try {
+    await apiClient.patch(`/api/orders/${orderId}/status`, { status }, { silent: true } as any);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Main Dashboard ──────────────────────────────────────────────────────────
+
 const KitchenStaffDashboard: React.FC = () => {
   const { theme, isDark } = useTheme();
   const { isPhone, headingSize } = useResponsive();
-  const { orders, updateOrderStatus, refreshOrders, isLoading } = useUnifiedKitchen();
+
+  // Direct API state — no sync engine
+  const [orders, setOrders] = useState<UnifiedOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Guard: skip polling for 3s after a status update to prevent stale data overwriting optimistic UI
+  const lastStatusUpdateRef = useRef<number>(0);
+
+  // Fetch from API on mount + poll every 5s
+  const loadOrders = useCallback(async () => {
+    // Skip if we just updated status — server may not have propagated yet
+    if (Date.now() - lastStatusUpdateRef.current < 3000) return;
+    const fetched = await fetchKitchenOrders();
+    setOrders(fetched);
+  }, []);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchKitchenOrders().then(fetched => {
+      setOrders(fetched);
+      setIsLoading(false);
+    });
+    pollRef.current = setInterval(loadOrders, 5000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [loadOrders]);
 
   // Compute stats from real data
   const stats = useMemo(() => {
-    const now = Date.now();
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
     const active = orders.filter(o => o.status === 'preparing').length;
     const pending = orders.filter(o => o.status === 'confirmed').length;
     const ready = orders.filter(o => o.status === 'ready').length;
@@ -401,7 +515,6 @@ const KitchenStaffDashboard: React.FC = () => {
       return elapsed > estimated * 1.2;
     }).length;
 
-    // Average time for all kitchen orders (as elapsed so far)
     const avgTime = orders.length > 0
       ? Math.round(orders.reduce((sum, o) => sum + getMinutesElapsed(o.createdAt), 0) / orders.length)
       : 0;
@@ -416,7 +529,6 @@ const KitchenStaffDashboard: React.FC = () => {
       return mapKitchenStatus(o.status) === statusFilter;
     });
 
-    // Sort: overdue first, then by elapsed time descending
     return result.sort((a, b) => {
       const aElapsed = getMinutesElapsed(a.createdAt);
       const bElapsed = getMinutesElapsed(b.createdAt);
@@ -432,15 +544,29 @@ const KitchenStaffDashboard: React.FC = () => {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshOrders();
+    await loadOrders();
     setRefreshing(false);
-  }, [refreshOrders]);
+  }, [loadOrders]);
 
   const handleUpdateStatus = useCallback(
-    (order: UnifiedOrder, next: UnifiedOrderStatus) => {
-      updateOrderStatus(order.id, next);
+    async (order: UnifiedOrder, next: UnifiedOrderStatus) => {
+      // Set guard to prevent poll from overwriting optimistic update
+      lastStatusUpdateRef.current = Date.now();
+
+      // Optimistic update — immediately reflect in UI
+      setOrders(prev => prev.map(o =>
+        o.id === order.id ? { ...o, status: next } : o
+      ));
+
+      // Call API — if it fails, revert by refetching
+      const ok = await updateStatusViaApi(order.id, next);
+      if (!ok) {
+        lastStatusUpdateRef.current = 0; // allow poll to refetch
+        const fetched = await fetchKitchenOrders();
+        setOrders(fetched);
+      }
     },
-    [updateOrderStatus],
+    [],
   );
 
   const filterOptions: { key: StatusFilter; label: string; count: number }[] = [

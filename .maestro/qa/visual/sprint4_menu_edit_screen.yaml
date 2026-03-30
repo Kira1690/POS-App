@@ -1,0 +1,63 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "VS Sprint4 Menu Edit Visual Tour"
+tags:
+  - visual
+  - sprint4
+---
+
+# Visual tour of the EditMenuItemModal (replaces "coming soon" alert).
+
+- runFlow: ../../helpers/online/manager_login.yaml
+
+# Navigate to Settings → Menu Management
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-settings"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "Menu Management"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "Menu Management"
+- waitForAnimationToEnd
+
+# VS-11a: Screenshot menu management screen
+- takeScreenshot: sprint4/VS-11a_menu_management
+
+# Navigate to Items tab
+- extendedWaitUntil:
+    visible:
+      text: "Items"
+    timeout: 5000
+- tapOn:
+    text: "Items"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# VS-11b: Screenshot items list
+- takeScreenshot: sprint4/VS-11b_menu_items_list
+
+# Tap on first item to open edit modal
+- extendedWaitUntil:
+    visible:
+      id: "menu-item-card-0"
+    timeout: 5000
+- tapOn:
+    id: "menu-item-card-0"
+
+# VS-11c: Screenshot edit modal (should NOT show "coming soon")
+- assertNotVisible:
+    text: "coming soon"
+- takeScreenshot: sprint4/VS-11c_edit_menu_item_modal
+
+# Close
+- optional:
+    - tapOn:
+        text: "Cancel"

@@ -35,7 +35,15 @@ export class SimpleTCPTester {
     this.logger.debug('Starting TCP connection test', 'testConnection', { host, port, timeoutMs });
 
     const startTime = Date.now();
-    const localAddress = await this.getDeviceIP();
+    const deviceIP = await this.getDeviceIP();
+
+    // Only bind localAddress if device and target are on the same subnet.
+    // On emulators the device IP (e.g., 192.168.232.x) differs from the
+    // target (e.g., 192.168.1.x), causing NoRouteToHostException.
+    const sameSubnet = deviceIP && host
+      ? deviceIP.split('.').slice(0, 3).join('.') === host.split('.').slice(0, 3).join('.')
+      : false;
+    const localAddress = sameSubnet ? deviceIP : undefined;
 
     const methods = [
       () => this.method1_simpleConnect(host, port, timeoutMs, localAddress),

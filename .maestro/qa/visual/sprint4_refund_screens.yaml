@@ -1,0 +1,80 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "VS Sprint4 Refund Visual Tour"
+tags:
+  - visual
+  - sprint4
+---
+
+# Visual tour of all refund UI states for screenshot evidence.
+# Captures: order detail with refund button, form state, partial mode, processing.
+
+- runFlow: ../../helpers/online/manager_login.yaml
+- runFlow: ../../helpers/create_paid_order.yaml
+
+# Navigate to paid order
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "paid"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "paid"
+    index: 0
+- waitForAnimationToEnd
+
+# VS-07: Screenshot order detail with Refund button visible
+- takeScreenshot: sprint4/VS-07_order_detail_refund_button
+
+# Open Refund Modal
+- extendedWaitUntil:
+    visible:
+      id: "btn-refund-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-refund-order"
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-form"
+    timeout: 5000
+
+# VS-08: Screenshot form state (full refund, no reason selected)
+- takeScreenshot: sprint4/VS-08_refund_modal_form
+
+# Toggle partial refund
+- tapOn:
+    id: "btn-refund-partial-toggle"
+
+# Select a reason
+- tapOn:
+    id: "btn-refund-reason-0"
+
+# Tap 50% quick select
+- tapOn:
+    id: "btn-refund-quick-50"
+
+# VS-08b: Screenshot partial mode with quick select and reason
+- takeScreenshot: sprint4/VS-08b_refund_modal_partial
+
+# Submit the refund
+- tapOn:
+    id: "btn-refund-submit"
+
+# VS-09: Screenshot processing state
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-processing"
+    timeout: 5000
+- takeScreenshot: sprint4/VS-09_refund_processing
+
+# Wait for result
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# VS-10: Screenshot final result (success or error)
+- takeScreenshot: sprint4/VS-10_refund_result

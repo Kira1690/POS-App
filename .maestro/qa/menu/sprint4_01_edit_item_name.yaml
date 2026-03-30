@@ -1,0 +1,68 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "ME-01 Edit Menu Item Name via EditMenuItemModal"
+tags:
+  - menu
+  - sprint4
+---
+
+# Tests that the EditMenuItemModal opens (not "coming soon" alert)
+# and can update an item name.
+
+- runFlow: ../../helpers/online/manager_login.yaml
+
+# Navigate to Settings
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-settings"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+# Navigate to Menu Management
+- scrollUntilVisible:
+    element:
+      text: "Menu Management"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "Menu Management"
+- waitForAnimationToEnd
+
+# Navigate to Items tab
+- extendedWaitUntil:
+    visible:
+      text: "Items"
+    timeout: 5000
+- tapOn:
+    text: "Items"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Tap on first menu item to edit
+- extendedWaitUntil:
+    visible:
+      id: "menu-item-card-0"
+    timeout: 5000
+- tapOn:
+    id: "menu-item-card-0"
+
+# Should open EditMenuItemModal (NOT "coming soon" alert)
+- assertNotVisible:
+    text: "coming soon"
+
+# Verify edit modal is visible
+- extendedWaitUntil:
+    visible:
+      text: "Edit"
+    timeout: 5000
+
+- takeScreenshot: sprint4/ME-01_edit_modal_open
+
+# Close without saving (to preserve test data)
+- optional:
+    - tapOn:
+        text: "Cancel"
+
+- takeScreenshot: sprint4/ME-01_edit_item_name

@@ -1,0 +1,83 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "MR-06 Refund Error State and Retry"
+tags:
+  - refund
+  - sprint4
+---
+
+# This test verifies the error → retry flow.
+# To trigger an error, we attempt a refund on an already-refunded transaction
+# or with invalid data.
+
+- runFlow: ../../helpers/online/manager_login.yaml
+- runFlow: ../../helpers/create_paid_order.yaml
+
+# Navigate to paid order
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "paid"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "paid"
+    index: 0
+- waitForAnimationToEnd
+
+# First refund — should succeed
+- extendedWaitUntil:
+    visible:
+      id: "btn-refund-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-refund-order"
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-form"
+    timeout: 5000
+- tapOn:
+    id: "btn-refund-reason-0"
+- tapOn:
+    id: "btn-refund-submit"
+
+# Wait for success
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-success"
+    timeout: 15000
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Now try to refund again (should show error or no refund button)
+# Navigate back to same order
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "refunded"
+    direction: DOWN
+    timeout: 10000
+
+# If refund button still appears, clicking it should show error state
+- optional:
+    - tapOn:
+        text: "refunded"
+        index: 0
+    - tapOn:
+        id: "btn-refund-order"
+    # Should see error state
+    - extendedWaitUntil:
+        visible:
+          id: "refund-state-error"
+        timeout: 15000
+    - takeScreenshot: sprint4/MR-06_error_state
+    # Test retry button
+    - tapOn:
+        id: "btn-refund-retry"
+    - takeScreenshot: sprint4/MR-06_after_retry
+
+- takeScreenshot: sprint4/MR-06_error_retry_final

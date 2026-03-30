@@ -14,9 +14,11 @@ export interface Table extends BaseEntity {
   last_cleaned_at?: string; // Alias for last_cleaned (backward compatibility)
   last_occupied_at?: string; // Timestamp of last occupation
   notes?: string;
-  position_x?: number; // X coordinate for floor plan positioning
-  position_y?: number; // Y coordinate for floor plan positioning
-  shape?: 'square' | 'round' | 'rectangle'; // Table shape for floor plan visualization
+  position_x?: number;
+  position_y?: number;
+  width?: number;
+  height?: number;
+  shape?: 'square' | 'round' | 'rectangle';
 }
 
 export interface TableReservation extends BaseEntity {

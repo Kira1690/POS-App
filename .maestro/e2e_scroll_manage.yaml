@@ -1,0 +1,15 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Scroll to Manage Terminals"
+---
+- scrollUntilVisible:
+    element: "Manage Terminals"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Manage Terminals"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Add Terminal Manually"
+    timeout: 10000
+- tapOn: "Add Terminal Manually"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/e2e_80_add_form

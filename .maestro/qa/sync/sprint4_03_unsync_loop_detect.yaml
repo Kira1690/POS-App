@@ -1,0 +1,139 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "OS-09 Unsync Loop Detection — Status Must Not Revert"
+tags:
+  - sync
+  - sprint4
+  - critical
+  - unsync-loop
+---
+
+# THIS IS THE CRITICAL SYNC BUG TEST
+#
+# The "unsync loop" bug:
+# 1. Create order → confirmed
+# 2. Kitchen bumps → preparing
+# 3. Wait 35s (full pull cycle fires)
+# 4. Verify mobile STILL shows "preparing" (NOT reverted to "confirmed")
+#
+# If step 4 shows "confirmed" instead of "preparing" → BUG CONFIRMED
+
+# Login as manager (has all permissions)
+- runFlow: ../../helpers/online/manager_login.yaml
+
+# Create order
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-new-order"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B2-197q"
+    timeout: 15000
+- tapOn:
+    id: "btn-table-select-B2-197q"
+- waitForAnimationToEnd
+
+# Handle guest popup
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+- extendedWaitUntil:
+    visible:
+      text: "BBQ Bacon Burger"
+    timeout: 5000
+- tapOn:
+    text: "BBQ Bacon Burger"
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "confirmed"
+    timeout: 15000
+
+# Kitchen: start preparing
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-kitchen"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Start"
+    timeout: 8000
+- tapOn:
+    text: "Start"
+- waitForAnimationToEnd
+
+# Verify preparing status
+- extendedWaitUntil:
+    visible:
+      text: "preparing"
+    timeout: 5000
+
+# Take screenshot BEFORE the pull cycle
+- takeScreenshot: sprint4/OS-09_before_pull_preparing
+
+# ====================================================
+# CRITICAL: Wait 35 seconds (full pull cycle at 30s)
+# ====================================================
+- repeat:
+    times: 14
+    commands:
+      - waitForAnimationToEnd
+
+# Go back to Orders tab to check the status
+- extendedWaitUntil:
+    visible:
+      id: "tab-nav-orders"
+    timeout: 5000
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# CRITICAL ASSERTION: Status must STILL be "preparing"
+# If it shows "confirmed" → THE UNSYNC LOOP BUG IS CONFIRMED
+- scrollUntilVisible:
+    element:
+      text: "preparing"
+    direction: DOWN
+    timeout: 10000
+
+# Take screenshot AFTER the pull cycle
+- takeScreenshot: sprint4/OS-09_after_pull_still_preparing
+
+# Double-check: "confirmed" should NOT be visible for this order
+# (Other orders may show "confirmed", but our recent order must show "preparing")

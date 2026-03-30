@@ -1,0 +1,47 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "MR-08 No Reason Selected — Submit Disabled"
+tags:
+  - refund
+  - validation
+  - sprint4
+---
+
+- runFlow: ../../helpers/online/manager_login.yaml
+- runFlow: ../../helpers/create_paid_order.yaml
+
+# Navigate to paid order → open refund modal
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "paid"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    text: "paid"
+    index: 0
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: "btn-refund-order"
+    timeout: 5000
+- tapOn:
+    id: "btn-refund-order"
+- extendedWaitUntil:
+    visible:
+      id: "refund-state-form"
+    timeout: 5000
+
+# Do NOT select any reason — submit should be disabled
+- takeScreenshot: sprint4/MR-08_no_reason_submit_disabled
+
+# Now select a reason — submit should become enabled
+- tapOn:
+    id: "btn-refund-reason-3"
+- takeScreenshot: sprint4/MR-08_reason_selected_submit_enabled
+
+# Close the modal without submitting
+- tapOn:
+    id: "btn-refund-close"

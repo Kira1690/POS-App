@@ -1,0 +1,33 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "Close modal and configure terminal"
+---
+# Close TRX modal
+- tapOn:
+    id: "btn-trx-cancel"
+- waitForAnimationToEnd
+
+# Go back from payment screen
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+
+# Navigate to Settings
+- tapOn:
+    id: "tab-nav-settings"
+- waitForAnimationToEnd
+
+# Find TRX Terminal settings
+- tapOn: "TRX Terminal"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Manage Terminals"
+    timeout: 10000
+- tapOn: "Manage Terminals"
+- waitForAnimationToEnd
+
+# Add terminal manually with 192.168.1.18
+- extendedWaitUntil:
+    visible: "IP Address"
+    timeout: 10000
+- takeScreenshot: /tmp/e2e_40_terminal_mgmt

@@ -30,11 +30,21 @@ class SyncEngine {
 
     this.wsManager.connect(restaurantId);
 
+    // On WS reconnect, trigger immediate full pull to catch up
+    this.wsManager.onReconnect(() => {
+      if (__DEV__) console.log('[SyncEngine] WS reconnected — triggering full pull sync');
+      this.pullAll(restaurantId).catch((err) => {
+        if (__DEV__) console.error('[SyncEngine] Reconnect pull error:', err);
+      });
+    });
+
     // Reset lastSync so initial full pull fetches ALL server data (not incremental)
     await syncQueueService.resetLastSyncTime();
 
-    // Initial full sync on startup
-    await this.fullSync(restaurantId);
+    // Initial full sync on startup — fire in background, don't block startup
+    this.fullSync(restaurantId).catch((err) => {
+      if (__DEV__) console.error('[SyncEngine] Initial fullSync error:', err);
+    });
 
     this.pushTimer = setInterval(() => {
       this.pushPending(restaurantId).catch((err) => {
@@ -91,12 +101,20 @@ class SyncEngine {
   }
 
   private async pullAll(restaurantId: string): Promise<void> {
-    await Promise.allSettled([
+    // Pull tables first (critical for UI) — don't wait for others
+    const tablesPull = this.pullService.pullTablesAndAreas(restaurantId);
+    // Fire remaining pulls in parallel (including settings for tax rate)
+    const otherPulls = Promise.allSettled([
       this.pullService.pullMenu(restaurantId),
-      this.pullService.pullTablesAndAreas(restaurantId),
       this.pullService.pullOrders(restaurantId),
       this.pullService.pullCustomers(restaurantId),
+      this.pullService.pullSettings(),
     ]);
+    // Wait for tables first, then the rest
+    await tablesPull.catch((err) => {
+      if (__DEV__) console.error('[SyncEngine] Table pull error:', err);
+    });
+    await otherPulls;
   }
 
   async pushPending(restaurantId: string): Promise<number> {
