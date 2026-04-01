@@ -5,7 +5,8 @@
  * DO NOT add provider wrappers here - they're already at the app root level.
  */
 
-import React from 'react';
+import React, { Suspense, lazy, ComponentType } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -22,23 +23,39 @@ import {
 import { DashboardNavigator } from './DashboardNavigator';
 import { DashboardProvider } from '@/context/dashboard/DashboardContext';
 import { FloorPlanProvider } from '@/context/floorPlan';
-// Direct imports for order screens
-import POSOrderScreen from '@/screens/orders/POSOrderScreen';
+
+// --- Lazy loading wrapper for React Navigation compatibility ---
+function LazyScreen(importFn: () => Promise<{ default: ComponentType<unknown> }>) {
+  const Component = lazy(importFn);
+  return function LazyWrapper(props: Record<string, unknown>) {
+    return (
+      <Suspense
+        fallback={
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" />
+          </View>
+        }
+      >
+        <Component {...props} />
+      </Suspense>
+    );
+  };
+}
+
+// --- Eager imports (initial screens users see immediately) ---
 import OrderManagementScreen from '@/screens/orders/OrderManagementScreen';
-import OrderDetailsScreen from '@/screens/orders/OrderDetailsScreen';
 import KitchenDisplayScreen from '@/screens/kitchen/KitchenStaffDashboard';
-// Enhanced ordering screen
-import OrderingScreen from '@/screens/orders/OrderingScreen';
-// Direct imports for payment screens
-import PaymentProcessingScreen from '@/screens/payment/PaymentProcessingScreen';
-import PaymentConfirmationScreen from '@/screens/payment/PaymentConfirmationScreen';
-// Billing screens
-import BillScreen from '@/screens/billing/BillScreen';
-import BillSplitScreen from '@/screens/billing/BillSplitScreen';
-// Receipt screens
-import { ReceiptPreviewScreen } from '@/screens/receipt';
-// Import actual Settings screen
-import SettingsScreen from '@/screens/settings/SettingsScreen';
+
+// --- Lazy imports (loaded on first navigation) ---
+const POSOrderScreen = LazyScreen(() => import('@/screens/orders/POSOrderScreen'));
+const OrderDetailsScreen = LazyScreen(() => import('@/screens/orders/OrderDetailsScreen'));
+const OrderingScreen = LazyScreen(() => import('@/screens/orders/OrderingScreen'));
+const PaymentProcessingScreen = LazyScreen(() => import('@/screens/payment/PaymentProcessingScreen'));
+const PaymentConfirmationScreen = LazyScreen(() => import('@/screens/payment/PaymentConfirmationScreen'));
+const BillScreen = LazyScreen(() => import('@/screens/billing/BillScreen'));
+const BillSplitScreen = LazyScreen(() => import('@/screens/billing/BillSplitScreen'));
+const ReceiptPreviewScreen = LazyScreen(() => import('@/screens/receipt/ReceiptPreviewScreen'));
+const SettingsScreen = LazyScreen(() => import('@/screens/settings/SettingsScreen'));
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const OrdersStack = createStackNavigator<OrdersStackParamList>();

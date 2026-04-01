@@ -6,6 +6,7 @@
  */
 
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import { AppState, type NativeEventSubscription } from 'react-native';
 
 const DB_NAME = 'pos_app.db';
 const CURRENT_SCHEMA_VERSION = 9;
@@ -13,6 +14,7 @@ const CURRENT_SCHEMA_VERSION = 9;
 class DatabaseService {
   private db: SQLiteDatabase | null = null;
   private initPromise: Promise<void> | null = null;
+  private appStateSubscription: NativeEventSubscription | null = null;
 
   /**
    * Initialize the database - opens/creates DB and runs schema setup.
@@ -71,6 +73,15 @@ class DatabaseService {
 
       await this.createSchema();
       await this.runMigrations();
+
+      // Checkpoint WAL when app goes to background to reclaim memory/disk
+      if (!this.appStateSubscription) {
+        this.appStateSubscription = AppState.addEventListener('change', (nextState) => {
+          if (nextState === 'background' && this.db) {
+            this.checkpoint();
+          }
+        });
+      }
 
       if (__DEV__) {
         console.log('[DatabaseService] Database initialized successfully');
@@ -396,9 +407,28 @@ class DatabaseService {
   }
 
   /**
+   * Checkpoint the WAL file to reclaim disk space and reduce memory.
+   * Uses TRUNCATE mode which resets the WAL file to zero bytes.
+   * Called automatically when the app goes to background.
+   */
+  async checkpoint(): Promise<void> {
+    if (!this.db) return;
+    try {
+      await this.db.execAsync('PRAGMA wal_checkpoint(TRUNCATE)');
+      if (__DEV__) console.log('[DatabaseService] WAL checkpoint completed');
+    } catch (error) {
+      if (__DEV__) console.error('[DatabaseService] WAL checkpoint failed:', error);
+    }
+  }
+
+  /**
    * Close the database connection
    */
   async close(): Promise<void> {
+    if (this.appStateSubscription) {
+      this.appStateSubscription.remove();
+      this.appStateSubscription = null;
+    }
     if (this.db) {
       await this.db.closeAsync();
       this.db = null;

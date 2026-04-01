@@ -13,20 +13,20 @@ import { processCustomerSync } from '@/services/sync/processors/CustomerSyncProc
 import { SyncConfig, SyncResult } from './types';
 
 class SyncEngine {
-  private pushTimer: ReturnType<typeof setInterval> | null = null;
-  private pullTimer: ReturnType<typeof setInterval> | null = null;
+  private mainTimer: ReturnType<typeof setInterval> | null = null;
+  private tickCount = 0;
   private wsManager = new WebSocketSyncManager();
   private pullService = new PullSyncService();
   private isRunning = false;
 
   async start(config: SyncConfig): Promise<void> {
     if (this.isRunning) return;
-    // Clear any stale timers before starting (defensive — prevents timer stacking)
-    if (this.pushTimer) { clearInterval(this.pushTimer); this.pushTimer = null; }
-    if (this.pullTimer) { clearInterval(this.pullTimer); this.pullTimer = null; }
+    // Clear any stale timer before starting (defensive — prevents timer stacking)
+    if (this.mainTimer) { clearInterval(this.mainTimer); this.mainTimer = null; }
+    this.tickCount = 0;
     this.isRunning = true;
 
-    const { restaurantId, pushIntervalMs, pullIntervalMs } = config;
+    const { restaurantId } = config;
 
     this.wsManager.connect(restaurantId);
 
@@ -46,30 +46,33 @@ class SyncEngine {
       if (__DEV__) console.error('[SyncEngine] Initial fullSync error:', err);
     });
 
-    this.pushTimer = setInterval(() => {
+    // Single consolidated timer — 5s base tick
+    // Every tick (5s): push + pull
+    // Tick counter used by SyncProvider for less-frequent tasks
+    this.mainTimer = setInterval(() => {
+      this.tickCount++;
       this.pushPending(restaurantId).catch((err) => {
         if (__DEV__) console.error('[SyncEngine] Push error:', err);
       });
-    }, pushIntervalMs);
-
-    this.pullTimer = setInterval(() => {
       this.pullAll(restaurantId).catch((err) => {
         if (__DEV__) console.error('[SyncEngine] Pull error:', err);
       });
-    }, pullIntervalMs);
+    }, 5_000);
 
     if (__DEV__) console.log('[SyncEngine] Started for restaurant', restaurantId);
   }
 
+  /** Current tick count — used by SyncProvider to schedule less-frequent work */
+  getTickCount(): number {
+    return this.tickCount;
+  }
+
   async stop(): Promise<void> {
-    if (this.pushTimer) {
-      clearInterval(this.pushTimer);
-      this.pushTimer = null;
+    if (this.mainTimer) {
+      clearInterval(this.mainTimer);
+      this.mainTimer = null;
     }
-    if (this.pullTimer) {
-      clearInterval(this.pullTimer);
-      this.pullTimer = null;
-    }
+    this.tickCount = 0;
     this.wsManager.disconnect();
     this.isRunning = false;
 

@@ -268,7 +268,7 @@ export const OrderBusinessLogicProvider: React.FC<OrderBusinessLogicProviderProp
     return { isValid: true };
   }, []);
 
-  const contextValue: OrderBusinessLogicContextValue = {
+  const contextValue: OrderBusinessLogicContextValue = useMemo(() => ({
     ...state,
     validateOrder,
     validateCartItems,
@@ -279,7 +279,18 @@ export const OrderBusinessLogicProvider: React.FC<OrderBusinessLogicProviderProp
     checkOrderConstraints,
     checkTimeConstraints,
     checkTableConstraints,
-  };
+  }), [
+    state,
+    validateOrder,
+    validateCartItems,
+    applyBusinessRules,
+    calculateOrderTotals,
+    calculateEstimatedTime,
+    createOrderFromCart,
+    checkOrderConstraints,
+    checkTimeConstraints,
+    checkTableConstraints,
+  ]);
   
   return (
     <OrderBusinessLogicContext.Provider value={contextValue}>

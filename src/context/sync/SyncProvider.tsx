@@ -126,9 +126,22 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     };
   }, [isAuthenticated, restaurantId]);
 
-  // Periodic health check — detects backend going offline or coming back online (60s interval)
+  // Single consolidated timer for health check (every 60s) + pending refresh (every 15s)
+  // Uses a 15s base interval with a tick counter to schedule the health check every 4th tick.
   useEffect(() => {
     if (!isAuthenticated) return;
+
+    let providerTick = 0;
+
+    const refreshPending = async () => {
+      try {
+        const stats = await syncQueueService.getStats();
+        setPendingCount(stats.pending + stats.inProgress);
+        setLastSyncTime(await syncQueueService.getLastSyncTime());
+      } catch {
+        // ignore — SQLite failure shouldn't surface to user
+      }
+    };
 
     const checkHealth = async () => {
       // Check dummy first to avoid unnecessary network request
@@ -158,7 +171,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
           offlineToastShownRef.current = false;
           isOnlineRef.current = true;
           try {
-            await syncEngine.start({ restaurantId, pushIntervalMs: 10_000, pullIntervalMs: 30_000 });
+            await syncEngine.start({ restaurantId, pushIntervalMs: 5_000, pullIntervalMs: 5_000 });
             setSyncStatus('idle');
           } catch (err) {
             if (__DEV__) console.error('[SyncProvider] Reconnect sync start failed:', err);
@@ -168,28 +181,21 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       }
     };
 
-    const healthTimer = setInterval(checkHealth, 60_000);
-    return () => clearInterval(healthTimer);
-  }, [isAuthenticated, restaurantId]);
-
-  // Refresh pending count from local SQLite — works offline too
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const refreshPending = async () => {
-      try {
-        const stats = await syncQueueService.getStats();
-        setPendingCount(stats.pending + stats.inProgress);
-        setLastSyncTime(await syncQueueService.getLastSyncTime());
-      } catch {
-        // ignore — SQLite failure shouldn't surface to user
-      }
-    };
-
+    // Run pending refresh immediately on mount
     refreshPending();
-    const timer = setInterval(refreshPending, 15_000);
+
+    const timer = setInterval(() => {
+      providerTick++;
+      // Every tick (15s): refresh pending count
+      refreshPending();
+      // Every 4th tick (60s): health check
+      if (providerTick % 4 === 0) {
+        checkHealth();
+      }
+    }, 15_000);
+
     return () => clearInterval(timer);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, restaurantId]);
 
   const triggerSync = useCallback(async () => {
     if (syncStatus === 'syncing') return;
@@ -224,7 +230,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       if (!isOnlineRef.current) {
         // Engine was never started (was offline at login) — start it now
         isOnlineRef.current = true;
-        await syncEngine.start({ restaurantId, pushIntervalMs: 10_000, pullIntervalMs: 30_000 });
+        await syncEngine.start({ restaurantId, pushIntervalMs: 5_000, pullIntervalMs: 5_000 });
       } else {
         await syncEngine.fullSync(restaurantId);
       }

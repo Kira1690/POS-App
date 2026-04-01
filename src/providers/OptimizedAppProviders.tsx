@@ -1,20 +1,17 @@
 /**
- * Optimized App Providers - Performance-optimized provider tree
- * Reduces unnecessary provider re-renders through memoization
- * Implements proper provider composition for better performance
- */
-
-/**
- * Optimized App Providers - Clean unified provider tree
+ * Optimized App Providers - Flattened provider tree with compose helper
  *
  * UNIFIED ORDER SYSTEM:
  * - UnifiedOrderProvider is the SINGLE source of truth for all order state
  * - No more duplicate order contexts (legacy OrderContext, EnhancedOrderContext removed)
  * - Kitchen updates flow through unified order events
  * - Clear data resets BOTH storage AND context state
+ *
+ * Provider groups (2 memoization boundaries):
+ *   Auth → Sync → [BusinessProviders (memo): Table, Order, BillSplit, Payment, KitchenConfig, Printer]
  */
 
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, FC, ReactNode } from 'react';
 import { AuthProvider } from '@/context/auth/AuthProvider';
 import { SyncProvider } from '@/context/sync/SyncProvider';
 import { TableProvider } from '@/context/table/TableProvider';
@@ -34,57 +31,64 @@ interface AppProvidersProps {
 }
 
 /**
- * Optimized App Providers with performance optimizations
- * - Memoized provider composition
- * - Reduced re-render cascade
- * - Proper provider separation
+ * composeProviders — reduces N nested providers into a single wrapper component.
+ * Providers are applied outermost-first (first in the array wraps everything).
+ */
+function composeProviders(...providers: FC<{ children: ReactNode }>[]) {
+  return providers.reduce(
+    (Acc, Curr) =>
+      function Composed({ children }: { children: ReactNode }) {
+        return (
+          <Acc>
+            <Curr>{children}</Curr>
+          </Acc>
+        );
+      }
+  );
+}
+
+/**
+ * Optimized App Providers
+ * - Auth and Sync at the top (auth changes rarely, sync depends on auth)
+ * - All business providers composed flat inside a single memo boundary
  */
 export const OptimizedAppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <AuthProvider>
       <SyncProvider>
-        <BusinessStateProviders>
+        <BusinessProviders>
           {children}
-        </BusinessStateProviders>
+        </BusinessProviders>
       </SyncProvider>
     </AuthProvider>
   );
 };
 
 /**
- * Business State Providers - Memoized to prevent auth changes from
- * causing unnecessary re-creation of business context providers
+ * Composed business providers — flattened from 3 nesting levels to 1 memo boundary.
+ * Order matters: TableProvider must wrap UnifiedOrderProvider (orders reference tables).
+ * UnifiedOrderProvider must wrap BillSplitProvider and PaymentProvider (they read order state).
  */
-const BusinessStateProviders = memo<{ children: React.ReactNode }>(({ children }) => {
-  return (
-    <TableProvider>
-      <OrderManagementProviders>
-        {children}
-      </OrderManagementProviders>
-    </TableProvider>
-  );
-});
-
-BusinessStateProviders.displayName = 'BusinessStateProviders';
+const ComposedBusinessProviders = composeProviders(
+  TableProvider,
+  UnifiedOrderProvider,
+  BillSplitProvider,
+  PaymentProvider,
+  KitchenConfigProvider,
+  PrinterProvider,
+);
 
 /**
- * Order Management Providers - Unified order system
- *
- * UNIFIED ORDER SYSTEM:
- * - UnifiedOrderProvider: SINGLE source of truth for all order state
- * - Status flow: draft -> confirmed -> preparing -> ready -> served -> paid
- * - Kitchen updates flow through unified order events
+ * BusinessProviders - Single memoized boundary for all business state.
+ * Prevents auth/sync changes from re-creating business context providers.
  */
-const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children }) => {
+const BusinessProviders = memo<{ children: React.ReactNode }>(({ children }) => {
   // Initialize storage services that need seeding on mount
-  // Database tables are created by DatabaseService; these calls seed mock/default data
   useEffect(() => {
     const initializeStorageServices = async () => {
-      const restaurantId = 'rest_001'; // Default restaurant ID
+      const restaurantId = 'rest_001';
 
       try {
-        // Only seed mock table data for dummy/offline credentials.
-        // Real credentials get tables from server sync — seeding mocks causes 43-table bloat.
         const session = await authStorageService.getSession();
         const isDummy = session?.accessToken?.startsWith('dummy_') ?? false;
 
@@ -107,35 +111,13 @@ const OrderManagementProviders = memo<{ children: React.ReactNode }>(({ children
   }, []);
 
   return (
-    <UnifiedOrderProvider>
-      <BillSplitProvider>
-        <TransactionProviders>
-          {children}
-        </TransactionProviders>
-      </BillSplitProvider>
-    </UnifiedOrderProvider>
+    <ComposedBusinessProviders>
+      {children}
+    </ComposedBusinessProviders>
   );
 });
 
-OrderManagementProviders.displayName = 'OrderManagementProviders';
-
-/**
- * Transaction Providers - Payment and kitchen config
- * Final level of provider memoization
- */
-const TransactionProviders = memo<{ children: React.ReactNode }>(({ children }) => {
-  return (
-    <PaymentProvider>
-      <KitchenConfigProvider>
-        <PrinterProvider>
-          {children}
-        </PrinterProvider>
-      </KitchenConfigProvider>
-    </PaymentProvider>
-  );
-});
-
-TransactionProviders.displayName = 'TransactionProviders';
+BusinessProviders.displayName = 'BusinessProviders';
 
 /**
  * Context Performance Monitor - Development helper
@@ -180,23 +162,20 @@ export const DevOptimizedAppProviders: React.FC<AppProvidersProps> = ({ children
 export const analyzeProviderPerformance = () => {
   if (__DEV__) {
     console.group('Provider Tree Analysis');
-    console.log('✅ AuthProvider: Top-level, changes rarely');
-    console.log('✅ SyncProvider: Starts/stops SyncEngine on auth change');
-    console.log('✅ BusinessStateProviders: Memoized, isolated from auth changes');
-    console.log('✅ OrderManagementProviders: Memoized, isolated from table changes');
-    console.log('   └─ UnifiedOrderProvider: NEW single source of truth for orders');
-    console.log('✅ TransactionProviders: Memoized, isolated from order changes');
+    console.log('AuthProvider: Top-level, changes rarely');
+    console.log('SyncProvider: Starts/stops SyncEngine on auth change');
+    console.log('BusinessProviders (memo): Single boundary, flattened via composeProviders');
+    console.log('  Table → UnifiedOrder → BillSplit → Payment → KitchenConfig → Printer');
     console.log('');
     console.log('UNIFIED ORDER SYSTEM:');
-    console.log('- Status flow: draft → confirmed → preparing → ready → served → paid');
+    console.log('- Status flow: draft -> confirmed -> preparing -> ready -> served -> paid');
     console.log('- Kitchen is the ONLY source of status updates (except payment)');
-    console.log('- Payment button appears ONLY after status is "served"');
     console.log('- Clear data resets BOTH storage AND context state via SYSTEM_RESET event');
     console.log('');
     console.log('Performance Benefits:');
-    console.log('- Auth changes don\'t recreate business providers');
-    console.log('- Table changes don\'t recreate payment/kitchen providers');
-    console.log('- Proper provider isolation reduces cascade re-renders');
+    console.log('- Auth changes do not recreate business providers (memo boundary)');
+    console.log('- composeProviders flattens 6 providers into a single composed component');
+    console.log('- Screens lazy-loaded: Settings, OrderDetails, POS, Ordering, Payment, Billing, Receipt');
     console.groupEnd();
   }
 };
