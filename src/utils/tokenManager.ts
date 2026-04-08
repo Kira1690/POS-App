@@ -1,7 +1,23 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import axios from 'axios';
 import { APP_CONFIG, API_CONFIG, API_ENDPOINTS } from '@/constants';
 import { AuthTokens, RefreshTokenRequest, RefreshTokenResponse } from '@/types';
+
+// Web fallback: expo-secure-store has no web implementation — use localStorage
+const WebStore = {
+  async getItemAsync(key: string): Promise<string | null> {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+  },
+  async setItemAsync(key: string, value: string): Promise<void> {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+  },
+  async deleteItemAsync(key: string): Promise<void> {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+  },
+};
+
+const Store = Platform.OS === 'web' ? WebStore : SecureStore;
 
 /**
  * Interface for token refresh functionality
@@ -105,38 +121,46 @@ export class TokenManager {
    * Following Single Responsibility Principle
    */
   private async performTokenRefresh(): Promise<boolean> {
-    try {
-      const refreshToken = await this.getRefreshToken();
-      if (!refreshToken) {
-        return false;
-      }
-
-      let response: RefreshTokenResponse;
-
-      if (this.refreshProvider) {
-        // Use injected refresh provider
-        response = await this.refreshProvider.refreshToken(refreshToken);
-      } else {
-        // Fallback to direct API call to avoid circular dependency
-        response = await this.makeDirectRefreshRequest(refreshToken);
-      }
-      
-      if (response.accessToken) {
-        const newTokens: AuthTokens = {
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken || refreshToken, // Keep old refresh token if new one not provided
-          expiresAt: response.expiresAt,
-        };
-        
-        await this.setTokens(newTokens);
-        return true;
-      }
-      
-      return false;
-    } catch {
-      await this.clearTokens();
+    const refreshToken = await this.getRefreshToken();
+    if (!refreshToken) {
       return false;
     }
+
+    // Retry up to 2 times before giving up (network can be flaky on POS devices)
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        let response: RefreshTokenResponse;
+
+        if (this.refreshProvider) {
+          response = await this.refreshProvider.refreshToken(refreshToken);
+        } else {
+          response = await this.makeDirectRefreshRequest(refreshToken);
+        }
+
+        if (response.accessToken) {
+          const newTokens: AuthTokens = {
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken || refreshToken,
+            expiresAt: response.expiresAt,
+          };
+
+          await this.setTokens(newTokens);
+          return true;
+        }
+
+        return false;
+      } catch (error: unknown) {
+        if (__DEV__) console.warn(`[TokenManager] Refresh attempt ${attempt} failed:`, error);
+        // Only clear tokens on final attempt — transient network errors shouldn't force re-login
+        if (attempt === 2) {
+          await this.clearTokens();
+          return false;
+        }
+        // Brief pause before retry
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    return false;
   }
 
   /**
@@ -180,7 +204,7 @@ export class TokenManager {
   async clearTokens(): Promise<void> {
     this.tokens = null;
     try {
-      await SecureStore.deleteItemAsync(APP_CONFIG.STORAGE_KEYS.AUTH_TOKENS);
+      await Store.deleteItemAsync(APP_CONFIG.STORAGE_KEYS.AUTH_TOKENS);
     } catch { /* silent */ }
   }
 
@@ -190,7 +214,7 @@ export class TokenManager {
    */
   private async loadTokens(): Promise<void> {
     try {
-      const tokensJson = await SecureStore.getItemAsync(APP_CONFIG.STORAGE_KEYS.AUTH_TOKENS);
+      const tokensJson = await Store.getItemAsync(APP_CONFIG.STORAGE_KEYS.AUTH_TOKENS);
       if (tokensJson) {
         this.tokens = JSON.parse(tokensJson);
         
@@ -211,8 +235,8 @@ export class TokenManager {
    */
   private async saveTokens(tokens: AuthTokens): Promise<void> {
     try {
-      await SecureStore.setItemAsync(
-        APP_CONFIG.STORAGE_KEYS.AUTH_TOKENS, 
+      await Store.setItemAsync(
+        APP_CONFIG.STORAGE_KEYS.AUTH_TOKENS,
         JSON.stringify(tokens)
       );
     } catch (error) {

@@ -17,6 +17,13 @@ class SyncEngine {
   private wsManager = new WebSocketSyncManager();
   private pullService = new PullSyncService();
   private isRunning = false;
+  private consecutive401Count = 0;
+  private onAuthFailure?: () => void;
+
+  /** Register callback for when sync detects persistent auth failure */
+  setAuthFailureHandler(handler: () => void): void {
+    this.onAuthFailure = handler;
+  }
 
   async start(config: SyncConfig): Promise<void> {
     if (this.isRunning) return;
@@ -48,11 +55,23 @@ class SyncEngine {
     // Single consolidated timer — 5s base tick
     // Every tick: push FIRST (clears pending_sync), THEN pull (safe to overwrite)
     // Sequential push→pull prevents race where pull overwrites before push completes
+    this.consecutive401Count = 0;
     this.mainTimer = setInterval(async () => {
       this.tickCount++;
       try {
         await this.pushPending(restaurantId);
-      } catch (err) {
+        this.consecutive401Count = 0; // Reset on success
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 401) {
+          this.consecutive401Count++;
+          if (this.consecutive401Count >= 3) {
+            if (__DEV__) console.error('[SyncEngine] 3 consecutive 401s — stopping sync, auth required');
+            this.stop();
+            this.onAuthFailure?.();
+            return;
+          }
+        }
         if (__DEV__) console.error('[SyncEngine] Push error:', err);
       }
       this.pullAll(restaurantId).catch((err) => {
