@@ -25,6 +25,7 @@ export interface User {
   employee_id?: string;
   employeeId?: string; // Alias for employee_id (backward compatibility)
   default_restaurant_id?: string;
+  store_id?: string; // Server alias for default_restaurant_id
   is_active: boolean;
   created_at: string;
   updated_at: string;

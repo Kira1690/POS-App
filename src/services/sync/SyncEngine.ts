@@ -7,7 +7,6 @@ import { syncQueueService } from '@/services/storage';
 import { PullSyncService } from './PullSyncService';
 import { WebSocketSyncManager } from './WebSocketSyncManager';
 import { processOrderSync } from '@/services/sync/processors/OrderSyncProcessor';
-import { processKitchenSync } from '@/services/sync/processors/KitchenSyncProcessor';
 import { processPaymentSync } from '@/services/sync/processors/PaymentSyncProcessor';
 import { processCustomerSync } from '@/services/sync/processors/CustomerSyncProcessor';
 import { SyncConfig, SyncResult } from './types';
@@ -47,13 +46,15 @@ class SyncEngine {
     });
 
     // Single consolidated timer — 5s base tick
-    // Every tick (5s): push + pull
-    // Tick counter used by SyncProvider for less-frequent tasks
-    this.mainTimer = setInterval(() => {
+    // Every tick: push FIRST (clears pending_sync), THEN pull (safe to overwrite)
+    // Sequential push→pull prevents race where pull overwrites before push completes
+    this.mainTimer = setInterval(async () => {
       this.tickCount++;
-      this.pushPending(restaurantId).catch((err) => {
+      try {
+        await this.pushPending(restaurantId);
+      } catch (err) {
         if (__DEV__) console.error('[SyncEngine] Push error:', err);
-      });
+      }
       this.pullAll(restaurantId).catch((err) => {
         if (__DEV__) console.error('[SyncEngine] Pull error:', err);
       });
@@ -111,7 +112,7 @@ class SyncEngine {
       this.pullService.pullMenu(restaurantId),
       this.pullService.pullOrders(restaurantId),
       this.pullService.pullCustomers(restaurantId),
-      this.pullService.pullSettings(),
+      this.pullService.pullSettings(restaurantId),
     ]);
     // Wait for tables first, then the rest
     await tablesPull.catch((err) => {
@@ -121,15 +122,14 @@ class SyncEngine {
   }
 
   async pushPending(restaurantId: string): Promise<number> {
-    const [orderResult, kitchenResult, paymentResult, customerResult] = await Promise.allSettled([
+    const [orderResult, paymentResult, customerResult] = await Promise.allSettled([
       syncQueueService.processBatch(processOrderSync, 10, 'order'),
-      syncQueueService.processBatch(processKitchenSync, 10, 'kitchen_ticket'),
       syncQueueService.processBatch(processPaymentSync, 10, 'payment'),
       syncQueueService.processBatch(processCustomerSync, 10, 'customer'),
     ]);
 
     let total = 0;
-    for (const r of [orderResult, kitchenResult, paymentResult, customerResult]) {
+    for (const r of [orderResult, paymentResult, customerResult]) {
       if (r.status === 'fulfilled') total += r.value.succeeded;
     }
 

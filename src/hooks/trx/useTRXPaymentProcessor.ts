@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from '@/context/auth';
 import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { AmountCalculatorService } from '@/services/trx/pos/AmountCalculatorService';
@@ -55,6 +56,10 @@ interface UseTRXPaymentProcessorReturn {
 
 // Single Responsibility Principle - Only handles payment processing business logic
 export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentProcessorReturn => {
+  const { state: authState } = useAuth();
+  const restaurantId = authState.user?.store_id || authState.user?.default_restaurant_id || authState.user?.restaurantId;
+  const restaurantIdRef = useRef(restaurantId);
+  restaurantIdRef.current = restaurantId;
   const [amount, setAmount] = useState('');
   const [displayAmount, setDisplayAmount] = useState(initialAmount ? initialAmount.toFixed(2) : '0.00');
   const [transactionResult, setTransactionResult] = useState('');
@@ -161,7 +166,7 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
         // PRIMARY: Fetch tax/CC from server billing API (configured on web dashboard)
         try {
           const { billingApiClient } = await import('@/services/billing/BillingApiClient');
-          const storeConfig = await billingApiClient.getStoreConfig('1');
+          const storeConfig = await billingApiClient.getStoreConfig(restaurantIdRef.current || '1');
           if (storeConfig.taxRate !== undefined) {
             // Server returns tax as percentage (e.g., 10 for 10%), convert to decimal if needed
             const rate = storeConfig.taxRate >= 1 ? storeConfig.taxRate / 100 : storeConfig.taxRate;
@@ -220,7 +225,7 @@ export const useTRXPaymentProcessor = (initialAmount?: number): UseTRXPaymentPro
         // Reload from server first, fallback to local
         try {
           const { billingApiClient } = await import('@/services/billing/BillingApiClient');
-          const storeConfig = await billingApiClient.getStoreConfig('1');
+          const storeConfig = await billingApiClient.getStoreConfig(restaurantIdRef.current || '1');
           if (storeConfig.taxRate !== undefined) {
             const rate = storeConfig.taxRate >= 1 ? storeConfig.taxRate / 100 : storeConfig.taxRate;
             setTaxRate(rate);

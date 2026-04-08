@@ -271,18 +271,19 @@ export class PullSyncService {
 
   /**
    * Pull tax and CC settings from server.
-   * Every merchant has different tax rates — never use hardcoded defaults.
-   * This runs on startup and periodically to keep settings current.
+   * Uses /api/billing/store-config (accessible to store_admin) instead of
+   * /api/settings/tax which requires system_admin role.
    */
-  async pullSettings(): Promise<void> {
+  async pullSettings(restaurantId?: string): Promise<void> {
     try {
-      const response = await apiClient.get<any>('/api/settings/tax', { silent: true } as any);
+      const params = restaurantId ? { restaurant_id: restaurantId } : {};
+      const response = await apiClient.get<any>('/api/billing/store-config', { params, silent: true } as any);
       const data = response.data?.data ?? response.data;
-      if (data && data.tax_rate !== undefined) {
-        const taxRate = parseFloat(data.tax_rate) / 100; // Server stores as percentage (e.g., 10.000), convert to decimal (0.10)
+      if (data && data.taxRate !== undefined) {
+        const taxRate = data.taxRate >= 1 ? data.taxRate / 100 : data.taxRate;
         await paymentStorageService.updateTaxRate(taxRate);
         if (__DEV__) {
-          console.log(`[PullSyncService] Tax rate synced from server: ${data.tax_rate}% → ${taxRate}`);
+          console.log(`[PullSyncService] Tax rate synced from server: ${data.taxRate}% → ${taxRate}`);
         }
       }
     } catch (error) {

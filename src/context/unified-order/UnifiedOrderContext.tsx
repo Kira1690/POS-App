@@ -229,6 +229,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
   // Get auth user for setting createdBy on orders
   const { state: authState } = useAuth();
   const authUserId = authState.user?.id;
+  const authRestaurantId = authState.user?.store_id || authState.user?.default_restaurant_id || authState.user?.restaurantId;
   const authUserName = authState.user?.name
     || (authState.user ? `${authState.user.first_name || ''} ${authState.user.last_name || ''}`.trim() : '')
     || authState.user?.email;
@@ -307,7 +308,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         // Import dynamically to avoid circular dependency
         const { PullSyncService } = await import('@/services/sync/PullSyncService');
         const pullService = new PullSyncService();
-        await pullService.pullOrders('1');
+        await pullService.pullOrders(authRestaurantId || '1');
       } catch { /* silent — pull may fail if offline */ }
       reloadOrders();
     };
@@ -315,25 +316,7 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
     const unsubscribeCreated = orderEventEmitter.subscribe('ORDER_CREATED', pullAndReload);
     const unsubscribeStatusChanged = orderEventEmitter.subscribe('ORDER_STATUS_CHANGED', pullAndReload);
 
-    // Fetch store config (tax rate, CC surcharge) from server
-    // This runs once on mount — replaces the hardcoded 10% default with the actual rate
-    const fetchStoreConfig = async () => {
-      try {
-        const { billingApiClient } = await import('@/services/billing/BillingApiClient');
-        const config = await billingApiClient.getStoreConfig('1');
-        if (config.taxRate > 0) {
-          // Server returns tax as percentage (e.g., 10 for 10%), convert to decimal
-          const rate = config.taxRate >= 1 ? config.taxRate / 100 : config.taxRate;
-          dispatch({ type: 'SET_CART_TAX_RATE', payload: rate });
-          if (__DEV__) {
-            console.log('[UnifiedOrderContext] Tax rate from server:', rate, 'CC:', config.ccPercentage);
-          }
-        }
-      } catch {
-        // Silent — use hardcoded default if server unreachable
-      }
-    };
-    fetchStoreConfig();
+    // Store config is fetched in a separate effect keyed on authRestaurantId (see below)
 
     return () => {
       unsubscribeReset();
@@ -342,6 +325,23 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
       unsubscribeStatusChanged();
     };
   }, []);
+
+  // Fetch store config once auth restaurant ID is available
+  useEffect(() => {
+    if (!authRestaurantId) return;
+    (async () => {
+      try {
+        const { billingApiClient } = await import('@/services/billing/BillingApiClient');
+        const config = await billingApiClient.getStoreConfig(authRestaurantId);
+        if (config.taxRate > 0) {
+          const rate = config.taxRate >= 1 ? config.taxRate / 100 : config.taxRate;
+          dispatch({ type: 'SET_CART_TAX_RATE', payload: rate });
+        }
+      } catch {
+        // Silent — use default if server unreachable
+      }
+    })();
+  }, [authRestaurantId]);
 
   // ============== CART ACTIONS ==============
 
@@ -689,33 +689,55 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         const prevOrder = stateRef.current.orders.find((o) => o.id === orderId);
         const prevOrderStatus = prevOrder?.status;
 
-        // Update item status in storage + auto-recalculate order status
+        // 1. Update item status in storage + auto-recalculate order status
         const updatedOrder = await unifiedOrderStorageService.updateItemStatus(
           orderId, itemId, status
         );
-        if (updatedOrder) {
-          dispatch({ type: 'UPDATE_ORDER', payload: updatedOrder });
+        if (!updatedOrder) return;
 
-          // Sync to backend (deduped)
-          syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updatedOrder))
-            .catch(() => { /* silent */ });
+        // 2. Optimistic UI update
+        dispatch({ type: 'UPDATE_ORDER', payload: updatedOrder });
 
-          // Log when order transitions to ready or served via item status changes
-          const newOrderStatus = updatedOrder.status;
-          if (
-            prevOrder &&
-            newOrderStatus !== prevOrderStatus &&
-            (newOrderStatus === 'ready' || newOrderStatus === 'served')
-          ) {
-            activityLogService.logEvent({
-              timestamp: new Date().toISOString(),
-              eventType: newOrderStatus,
-              orderId,
-              orderNumber: updatedOrder.orderNumber,
-              tableName: updatedOrder.tableName,
-              description: `Order ${updatedOrder.orderNumber} marked as ${newOrderStatus}`,
-            }).catch(() => { /* silent */ });
+        // 3. Direct API call for server orders — server is SSOT when online
+        const isServerId = /^\d+$/.test(orderId);
+        if (isServerId) {
+          try {
+            await apiClient.patch(
+              `/api/orders/${orderId}/items/${itemId}/status`,
+              { status },
+              { silent: true } as any
+            );
+            // Server updated — mark as synced
+            await unifiedOrderStorageService.updateOrder(orderId, {
+              pendingSync: false,
+              syncedAt: new Date().toISOString(),
+            });
+          } catch {
+            // Offline or API error — fall back to sync queue
+            syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updatedOrder))
+              .catch(() => {});
           }
+        } else {
+          // Local UUID — use sync queue
+          syncQueueService.enqueueUpdate('order', orderId, buildOrderSyncPayload(updatedOrder))
+            .catch(() => {});
+        }
+
+        // Log when order transitions to ready or served via item status changes
+        const newOrderStatus = updatedOrder.status;
+        if (
+          prevOrder &&
+          newOrderStatus !== prevOrderStatus &&
+          (newOrderStatus === 'ready' || newOrderStatus === 'served')
+        ) {
+          activityLogService.logEvent({
+            timestamp: new Date().toISOString(),
+            eventType: newOrderStatus,
+            orderId,
+            orderNumber: updatedOrder.orderNumber,
+            tableName: updatedOrder.tableName,
+            description: `Order ${updatedOrder.orderNumber} marked as ${newOrderStatus}`,
+          }).catch(() => { /* silent */ });
         }
       } catch (error) {
         dispatch({ type: 'SET_ERROR', payload: String(error) });

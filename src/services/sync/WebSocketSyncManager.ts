@@ -6,12 +6,12 @@
 import {
   menuStorageService,
   tableStorageService,
-  kitchenStorageService,
 } from '@/services/storage';
 import { unifiedOrderStorageService } from '@/services/storage/UnifiedOrderStorageService';
 import { orderEventEmitter } from '@/services/events/OrderEventEmitter';
 import { menuEventEmitter } from '@/services/menu/MenuEventEmitter';
-import { mapServerOrderToUnified, mapServerTicketToKitchenTicket } from './mappers';
+import { mapServerOrderToUnified } from './mappers';
+import { tokenManager } from '@/utils/tokenManager';
 
 const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:5005';
 const MAX_RECONNECT = 5;
@@ -46,11 +46,13 @@ export class WebSocketSyncManager {
     this.createConnection();
   }
 
-  private createConnection(): void {
+  private async createConnection(): Promise<void> {
     if (!this.restaurantId) return;
 
     try {
-      this.connection = new WebSocket(`${WS_URL}/ws`);
+      const token = await tokenManager.getAccessToken();
+      const wsUrl = token ? `${WS_URL}/ws?token=${encodeURIComponent(token)}` : `${WS_URL}/ws`;
+      this.connection = new WebSocket(wsUrl);
 
       this.connection.onopen = () => {
         const wasReconnect = this.reconnectAttempts > 0;
@@ -129,7 +131,7 @@ export class WebSocketSyncManager {
       if (msg.event === 'deleted') {
         menuStorageService.deleteMenuItem(data.id as string).catch(() => {});
       } else {
-        menuStorageService.addMenuItem(data as Parameters<typeof menuStorageService.addMenuItem>[0]).catch(() => {});
+        menuStorageService.addMenuItem(data as unknown as Parameters<typeof menuStorageService.addMenuItem>[0]).catch(() => {});
       }
     }
 
@@ -157,31 +159,16 @@ export class WebSocketSyncManager {
     const eventType = msg.event === 'created' ? 'ORDER_CREATED'
       : msg.event === 'status_changed' ? 'ORDER_STATUS_CHANGED'
       : 'ORDER_SYNC_COMPLETE';
-    orderEventEmitter.emit(eventType, msg.data?.id || '', msg.data || {});
+    orderEventEmitter.emit(eventType, String(msg.data?.id ?? ''), (msg.data as import('@/services/events/OrderEventEmitter').OrderEventData) ?? {});
   }
 
   private handleKitchenUpdate(msg: WsMessage): void {
     const data = msg.data;
     if (!data?.id) return;
 
-    const mapped = mapServerTicketToKitchenTicket(data);
-
-    if (msg.event === 'status_changed') {
-      kitchenStorageService
-        .updateTicket(mapped.id, {
-          status: mapped.status,
-          completedItemCount: mapped.completedItemCount,
-          startedAt: mapped.startedAt,
-          completedAt: mapped.completedAt,
-          servedAt: mapped.servedAt,
-          actualPrepTime: mapped.actualPrepTime,
-          pendingSync: false,
-          syncedAt: new Date().toISOString(),
-        })
-        .catch(() => {});
-    } else {
-      kitchenStorageService.saveTicket(mapped).catch(() => {});
-    }
+    // Kitchen state is derived from unified orders — emit ORDER_SYNC_COMPLETE
+    // so the UnifiedOrderContext reloads, which propagates to kitchen views.
+    orderEventEmitter.emit('ORDER_SYNC_COMPLETE', String(data.id ?? ''), {});
   }
 
   private handleBillingUpdate(msg: WsMessage): void {

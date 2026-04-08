@@ -422,6 +422,7 @@ class UnifiedOrderStorageService {
     await (await this.ensureDb()).runAsync(
       `UPDATE orders SET
         status = ?,
+        pending_sync = 1,
         preparing_at = COALESCE(preparing_at, ?),
         ready_at = COALESCE(ready_at, ?),
         served_at = COALESCE(served_at, ?),
@@ -1018,6 +1019,7 @@ class UnifiedOrderStorageService {
           menuItemId: item.id,
           name: item.name,
           category: item.cat,
+          categoryId: '',
           basePrice: item.price,
           quantity: qty,
           modifierTotal: 0,
@@ -1026,7 +1028,9 @@ class UnifiedOrderStorageService {
           dietaryTags: [],
           allergens: [],
           hasAllergenWarning: false,
+          kitchenStation: 'hot_kitchen' as import('@/types/order-extended.types').KitchenStation,
           itemStatus: 'served',
+          isComboItem: false,
           addedAt: createdAt.toISOString(),
         } as UnifiedOrderItem);
       }
