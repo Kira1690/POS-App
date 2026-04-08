@@ -702,11 +702,20 @@ export const UnifiedOrderProvider: React.FC<UnifiedOrderProviderProps> = ({ chil
         const isServerId = /^\d+$/.test(orderId);
         if (isServerId) {
           try {
+            // Update item status on server
             await apiClient.patch(
               `/api/orders/${orderId}/items/${itemId}/status`,
               { status },
               { silent: true } as any
             );
+            // Also update order-level status (server doesn't auto-recalculate from items)
+            if (updatedOrder.status !== prevOrderStatus) {
+              await apiClient.patch(
+                `/api/orders/${orderId}/status`,
+                { status: updatedOrder.status },
+                { silent: true } as any
+              );
+            }
             // Server updated — mark as synced
             await unifiedOrderStorageService.updateOrder(orderId, {
               pendingSync: false,
