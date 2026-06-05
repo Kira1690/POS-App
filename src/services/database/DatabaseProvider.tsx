@@ -6,10 +6,13 @@
  */
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { type SQLiteDatabase } from 'expo-sqlite';
 import { databaseService } from './DatabaseService';
 import { migrateFromAsyncStorage } from './migrations';
+
+/** Timeout (ms) before we give up waiting for SQLite on web */
+const DB_INIT_TIMEOUT_MS = 15_000;
 
 interface DatabaseContextValue {
   db: SQLiteDatabase;
@@ -33,7 +36,19 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
 
   const initializeDatabase = useCallback(async () => {
     try {
-      const database = await databaseService.initialize();
+      // On web, wrap with a timeout — SQLite web worker may fail to load
+      const initPromise = databaseService.initialize();
+      let database: SQLiteDatabase;
+
+      if (Platform.OS === 'web') {
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('DB_TIMEOUT')), DB_INIT_TIMEOUT_MS)
+        );
+        database = await Promise.race([initPromise, timeoutPromise]);
+      } else {
+        database = await initPromise;
+      }
+
       await migrateFromAsyncStorage(database);
       setDb(database);
       setIsReady(true);
@@ -45,6 +60,18 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown database error';
+
+      // On web, if SQLite times out, skip DB and let the app load without persistence
+      if (Platform.OS === 'web' && message === 'DB_TIMEOUT') {
+        if (__DEV__) {
+          console.warn('[DatabaseProvider] SQLite timed out on web — running without persistence');
+        }
+        // Mark ready without a real DB so the welcome screen shows
+        setIsReady(true);
+        setError(null);
+        return;
+      }
+
       if (__DEV__) {
         console.error('[DatabaseProvider] Failed to initialize:', message);
       }
@@ -57,7 +84,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
         try {
           const { DevSettings } = require('react-native');
           DevSettings.reload();
-          return; // Don't show error state, reload is coming
+          return;
         } catch {
           // DevSettings not available, fall through to error state
         }

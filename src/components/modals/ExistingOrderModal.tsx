@@ -192,7 +192,7 @@ export const ExistingOrderModal: React.FC<ExistingOrderModalProps> = ({
   });
 
   const itemCount = existingOrder.items.length;
-  const total = existingOrder.total ?? 0;
+  const total = existingOrder.totalAmount ?? 0;
 
   return (
     <Modal

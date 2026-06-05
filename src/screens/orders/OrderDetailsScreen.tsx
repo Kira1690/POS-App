@@ -65,6 +65,7 @@ const OrderDetailsScreen: React.FC<OrderDetailsScreenProps> = ({ navigation, rou
       }, 2000);
       return () => clearTimeout(timeout);
     }
+    return undefined;
   }, [order, navigation, isFocused]);
 
   // Navigation handlers

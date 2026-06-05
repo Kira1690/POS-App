@@ -639,10 +639,10 @@ class MenuStorageService {
         is_active: true, sort_order: 1,
         created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z',
         options: [
-          { id: 'opt_1a', modifier_group_id: 'mod_1', name: 'Mild', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1 },
-          { id: 'opt_1b', modifier_group_id: 'mod_1', name: 'Medium', price_adjustment: 0, is_default: false, is_available: true, sort_order: 2 },
-          { id: 'opt_1c', modifier_group_id: 'mod_1', name: 'Hot', price_adjustment: 0, is_default: false, is_available: true, sort_order: 3 },
-          { id: 'opt_1d', modifier_group_id: 'mod_1', name: 'Extra Hot', price_adjustment: 0.50, is_default: false, is_available: true, sort_order: 4 },
+          { id: 'opt_1a', modifier_group_id: 'mod_1', name: 'Mild', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_1b', modifier_group_id: 'mod_1', name: 'Medium', price_adjustment: 0, is_default: false, is_available: true, sort_order: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_1c', modifier_group_id: 'mod_1', name: 'Hot', price_adjustment: 0, is_default: false, is_available: true, sort_order: 3, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_1d', modifier_group_id: 'mod_1', name: 'Extra Hot', price_adjustment: 0.50, is_default: false, is_available: true, sort_order: 4, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
         ],
       },
       {
@@ -652,10 +652,10 @@ class MenuStorageService {
         is_active: true, sort_order: 2,
         created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z',
         options: [
-          { id: 'opt_2a', modifier_group_id: 'mod_2', name: 'Extra Cheese', price_adjustment: 1.50, is_default: false, is_available: true, sort_order: 1 },
-          { id: 'opt_2b', modifier_group_id: 'mod_2', name: 'Extra Sauce', price_adjustment: 0.75, is_default: false, is_available: true, sort_order: 2 },
-          { id: 'opt_2c', modifier_group_id: 'mod_2', name: 'Extra Butter', price_adjustment: 0.50, is_default: false, is_available: true, sort_order: 3 },
-          { id: 'opt_2d', modifier_group_id: 'mod_2', name: 'Raita', price_adjustment: 2.00, is_default: false, is_available: true, sort_order: 4 },
+          { id: 'opt_2a', modifier_group_id: 'mod_2', name: 'Extra Cheese', price_adjustment: 1.50, is_default: false, is_available: true, sort_order: 1, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_2b', modifier_group_id: 'mod_2', name: 'Extra Sauce', price_adjustment: 0.75, is_default: false, is_available: true, sort_order: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_2c', modifier_group_id: 'mod_2', name: 'Extra Butter', price_adjustment: 0.50, is_default: false, is_available: true, sort_order: 3, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_2d', modifier_group_id: 'mod_2', name: 'Raita', price_adjustment: 2.00, is_default: false, is_available: true, sort_order: 4, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
         ],
       },
       {
@@ -665,9 +665,9 @@ class MenuStorageService {
         is_active: true, sort_order: 3,
         created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z',
         options: [
-          { id: 'opt_3a', modifier_group_id: 'mod_3', name: 'Small', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1 },
-          { id: 'opt_3b', modifier_group_id: 'mod_3', name: 'Medium', price_adjustment: 1.00, is_default: false, is_available: true, sort_order: 2 },
-          { id: 'opt_3c', modifier_group_id: 'mod_3', name: 'Large', price_adjustment: 2.00, is_default: false, is_available: true, sort_order: 3 },
+          { id: 'opt_3a', modifier_group_id: 'mod_3', name: 'Small', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_3b', modifier_group_id: 'mod_3', name: 'Medium', price_adjustment: 1.00, is_default: false, is_available: true, sort_order: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_3c', modifier_group_id: 'mod_3', name: 'Large', price_adjustment: 2.00, is_default: false, is_available: true, sort_order: 3, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
         ],
       },
       {
@@ -677,9 +677,9 @@ class MenuStorageService {
         is_active: true, sort_order: 4,
         created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z',
         options: [
-          { id: 'opt_4a', modifier_group_id: 'mod_4', name: 'Grilled', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1 },
-          { id: 'opt_4b', modifier_group_id: 'mod_4', name: 'Deep Fried', price_adjustment: 1.00, is_default: false, is_available: true, sort_order: 2 },
-          { id: 'opt_4c', modifier_group_id: 'mod_4', name: 'Steamed', price_adjustment: 0, is_default: false, is_available: true, sort_order: 3 },
+          { id: 'opt_4a', modifier_group_id: 'mod_4', name: 'Grilled', price_adjustment: 0, is_default: true, is_available: true, sort_order: 1, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_4b', modifier_group_id: 'mod_4', name: 'Deep Fried', price_adjustment: 1.00, is_default: false, is_available: true, sort_order: 2, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
+          { id: 'opt_4c', modifier_group_id: 'mod_4', name: 'Steamed', price_adjustment: 0, is_default: false, is_available: true, sort_order: 3, created_at: '2025-07-20T00:00:00Z', updated_at: '2025-07-20T00:00:00Z' },
         ],
       },
     ];

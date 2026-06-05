@@ -21,6 +21,15 @@ const fmt = (d: Date) => d.toISOString().split('T')[0];
 const today = () => fmt(new Date());
 const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return fmt(d); };
 
+function formatHourLabel(raw: string): string {
+  const h = parseInt(raw, 10);
+  if (isNaN(h)) return raw;
+  if (h === 0) return '12 AM';
+  if (h < 12) return `${h} AM`;
+  if (h === 12) return '12 PM';
+  return `${h - 12} PM`;
+}
+
 function buildOfflineData(orders: UnifiedOrder[], period: Period) {
   const paid = orders.filter((o) => o.status === 'paid');
   const grouped: Record<string, number> = {};
@@ -104,10 +113,16 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
         ]);
         setTrends(tr); setHourly(hr); setTopItems(it); setPayments(pay);
       }
+      setIsOffline(false);
     } catch {
-      setIsOffline(true);
-      const { trends: t, hourly: h, topItems: i } = buildOfflineData(offlineOrdersRef.current, period);
-      setTrends(t); setHourly(h); setTopItems(i); setPayments([]);
+      if (!isOnline) {
+        setIsOffline(true);
+        const { trends: t, hourly: h, topItems: i } = buildOfflineData(offlineOrdersRef.current, period);
+        setTrends(t); setHourly(h); setTopItems(i); setPayments([]);
+      } else {
+        setIsOffline(false);
+        setTrends([]); setHourly([]); setTopItems([]); setPayments([]);
+      }
     } finally {
       setChartLoading(false);
     }
@@ -115,8 +130,17 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Re-fetch chart data when sync engine completes a sync cycle
+  const prevSyncStatus = useRef(syncStatus);
+  useEffect(() => {
+    if (prevSyncStatus.current === 'syncing' && syncStatus === 'idle') {
+      loadData();
+    }
+    prevSyncStatus.current = syncStatus;
+  }, [syncStatus, loadData]);
+
   const trendData = useMemo((): ChartDataPoint[] =>
-    trends.map((t) => ({ date: t.date, value: t.revenue, label: period === 'today' ? t.date : t.date.slice(5) })),
+    trends.map((t) => ({ date: t.date, value: t.revenue, label: period === 'today' ? formatHourLabel(t.date.replace('h', '')) : t.date.slice(5) })),
   [trends, period]);
 
   const topData = useMemo((): ChartDataPoint[] =>
@@ -180,33 +204,36 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
 
       <View style={styles.grid}>
         <View style={styles.cell}>
-          <SimpleChart data={trendData} title={period === 'today' ? 'Hourly Revenue' : 'Revenue Trend'} color={theme.colors.primary} height={chartHeight} />
+          <SimpleChart
+            data={trendData}
+            title={period === 'today' ? 'Hourly Revenue' : 'Revenue Trend'}
+            color={theme.colors.primary}
+            height={chartHeight}
+            yAxisLabel="Revenue ($)"
+          />
         </View>
 
         {period === 'today' && (
           <View style={styles.cell}>
-            <View style={styles.hourlyCard}>
-              <Text style={styles.hourlyTitle}>Hourly Performance</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.barsRow}>
-                  {hourly.map((h) => (
-                    <View key={h.hour} style={[styles.bar, {
-                      height: Math.max((h.revenue / maxHourly) * (isPhone ? 70 : 90), 2),
-                      backgroundColor: h.revenue > maxHourly * 0.7 ? theme.colors.success
-                        : h.revenue > maxHourly * 0.4 ? theme.colors.warning : theme.colors.outlineLight,
-                    }]} />
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
+            <SimpleChart
+              data={hourly.map((h) => ({ date: String(h.hour), value: h.revenue, label: formatHourLabel(String(h.hour)) }))}
+              title="Hourly Performance"
+              color={theme.colors.secondary}
+              height={chartHeight}
+              yAxisLabel="Revenue ($)"
+            />
           </View>
         )}
 
-        {topData.length > 0 && (
-          <View style={styles.cell}>
-            <SimpleChart data={topData} title="Top Items (qty)" color={theme.colors.tertiary} height={chartHeight} />
-          </View>
-        )}
+        <View style={styles.cell}>
+          <SimpleChart
+            data={topData}
+            title="Top Items (qty)"
+            color={theme.colors.tertiary}
+            height={chartHeight}
+            yAxisLabel="Qty"
+          />
+        </View>
 
         {payData.length > 0 && (
           <View style={styles.cell}>

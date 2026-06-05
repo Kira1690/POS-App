@@ -91,13 +91,13 @@ export class KitchenTicketRouter {
         ticketIds,
         totalEstimatedTime,
       };
-    } catch {
+    } catch (err) {
       return {
         success: false,
         tickets: [],
         ticketIds: [],
         totalEstimatedTime: 0,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: err instanceof Error ? err.message : 'Unknown error',
       };
     }
   }

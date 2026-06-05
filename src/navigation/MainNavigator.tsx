@@ -25,7 +25,8 @@ import { DashboardProvider } from '@/context/dashboard/DashboardContext';
 import { FloorPlanProvider } from '@/context/floorPlan';
 
 // --- Lazy loading wrapper for React Navigation compatibility ---
-function LazyScreen(importFn: () => Promise<{ default: ComponentType<unknown> }>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function LazyScreen(importFn: () => Promise<{ default: ComponentType<any> }>) {
   const Component = lazy(importFn);
   return function LazyWrapper(props: Record<string, unknown>) {
     return (
@@ -44,7 +45,7 @@ function LazyScreen(importFn: () => Promise<{ default: ComponentType<unknown> }>
 
 // --- Eager imports (initial screens users see immediately) ---
 import OrderManagementScreen from '@/screens/orders/OrderManagementScreen';
-import KitchenDisplayScreen from '@/screens/kitchen/KitchenStaffDashboard';
+import KitchenDisplayScreen from '@/screens/orders/KitchenDisplayScreen';
 
 // --- Lazy imports (loaded on first navigation) ---
 const POSOrderScreen = LazyScreen(() => import('@/screens/orders/POSOrderScreen'));

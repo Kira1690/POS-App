@@ -87,13 +87,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
         }
       } else if (orderId && payment?.id) {
         // Full payment: mark entire order paid and release table
-        await processPayment(orderId, payment.method, payment.transactionId || payment.id, {
-          amount: payment.amount,
-          cardBrand: payment.cardType,
-          cardLastFour: payment.cardLast4,
-          authorizationCode: payment.authorizationCode,
-          processingFee: payment.processingFee,
-        });
+        await processPayment(orderId, payment.method, payment.transactionId || payment.id);
       }
     };
     markPaid();
@@ -219,7 +213,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             Order Number
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {order?.orderNumber ?? (orderId?.slice(-6) ? `#${orderId.slice(-6)}` : 'N/A')}
+            {order?.order_number ?? (orderId?.slice(-6) ? `#${orderId.slice(-6)}` : 'N/A')}
           </Text>
         </View>
         
@@ -228,7 +222,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
             Table
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {order?.tableId ? `Table ${order.tableId}` : 'Takeaway'}
+            {order?.table_id ? `Table ${order.table_id}` : 'Takeaway'}
           </Text>
         </View>
         

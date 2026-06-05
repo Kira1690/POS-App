@@ -15,7 +15,7 @@ import { AppleSidebarCollapsible, AppleSidebarItem } from '@/components/apple/la
 // Import the new dashboard screens
 import OrdersDashboard from '@/screens/orders/OrdersDashboard';
 import TablesDashboard from '@/screens/tables/TablesDashboard';
-import KitchenStaffDashboard from '@/screens/kitchen/KitchenStaffDashboard';
+import KitchenDisplayScreen from '@/screens/orders/KitchenDisplayScreen';
 import ReportsScreen from '@/screens/reports/ReportsScreen';
 import DashboardScreen from '@/screens/dashboard/DashboardScreen';
 
@@ -94,7 +94,7 @@ const DashboardWithSidebar: React.FC = () => {
       case 'TablesDashboard':
         return <TablesDashboard />;
       case 'KitchenDashboard':
-        return <KitchenStaffDashboard />;
+        return <KitchenDisplayScreen />;
       case 'ReportsDashboard':
         return <ReportsScreen />;
       default:

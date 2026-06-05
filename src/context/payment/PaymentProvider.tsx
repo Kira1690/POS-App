@@ -21,7 +21,7 @@ import {
 } from '@/types/payment.types';
 import { showToast } from '@/utils/toast';
 import { useUnifiedOrder } from '@/context/unified-order';
-import { ProfessionalPaymentMethod } from '@/types/payment-extended.types';
+import { ProfessionalPaymentMethod } from '@/types/payment.types';
 
 interface PaymentProviderProps {
   children: ReactNode;

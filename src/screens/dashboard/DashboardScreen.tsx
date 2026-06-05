@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -79,6 +79,16 @@ export const DashboardScreen: React.FC = () => {
     fetchApiKpis();
   }, [fetchApiKpis]);
 
+  // Re-fetch KPIs when sync engine transitions from 'syncing' to 'idle'
+  const prevSyncStatus = useRef(syncStatus);
+  useEffect(() => {
+    if (prevSyncStatus.current === 'syncing' && syncStatus === 'idle') {
+      fetchApiKpis();
+      refreshOrders();
+    }
+    prevSyncStatus.current = syncStatus;
+  }, [syncStatus, fetchApiKpis, refreshOrders]);
+
   // Refresh on screen focus — refresh both orders and API KPIs
   useFocusEffect(
     useCallback(() => {
@@ -140,8 +150,8 @@ export const DashboardScreen: React.FC = () => {
     const paidOrders = todaysOrders.filter((o) => o.status === 'paid');
     const todaysSales = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
     const avgOrderValue =
-      todaysOrders.length > 0
-        ? todaysOrders.reduce((sum, o) => sum + o.totalAmount, 0) / todaysOrders.length
+      paidOrders.length > 0
+        ? paidOrders.reduce((sum, o) => sum + o.totalAmount, 0) / paidOrders.length
         : 0;
     return {
       sales: {

@@ -50,6 +50,9 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
   const [showAddFloorModal, setShowAddFloorModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
+  // Properties panel visibility — collapsed by default, opens when something is selected
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+
   // Pending position for new items
   const [pendingTablePosition, setPendingTablePosition] = useState<{ x: number; y: number } | null>(null);
   const [pendingZonePosition, setPendingZonePosition] = useState<{ x: number; y: number } | null>(null);
@@ -197,7 +200,9 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
 
   const handleTableSelect = useCallback((tableId: string) => {
     if (state.activeTool === 'select') {
-      setSelectedTable(tableId === state.selectedTableId ? null : tableId);
+      const isDeselecting = tableId === state.selectedTableId;
+      setSelectedTable(isDeselecting ? null : tableId);
+      setIsPanelOpen(!isDeselecting);
     } else if (state.activeTool === 'delete') {
       Alert.alert(
         'Delete Table',
@@ -232,7 +237,9 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
 
   const handleZoneSelect = useCallback((zoneId: string) => {
     if (state.activeTool === 'select') {
-      selectZone(zoneId === state.selectedZoneId ? null : zoneId);
+      const isDeselecting = zoneId === state.selectedZoneId;
+      selectZone(isDeselecting ? null : zoneId);
+      setIsPanelOpen(!isDeselecting);
     }
   }, [state.activeTool, state.selectedZoneId, selectZone]);
 
@@ -248,6 +255,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
 
   const handleCloseZoneSelection = useCallback(() => {
     selectZone(null);
+    setIsPanelOpen(false);
   }, [selectZone]);
 
   const handleDuplicate = useCallback(() => {
@@ -278,6 +286,7 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
 
   const handleCloseSelection = useCallback(() => {
     setSelectedTable(null);
+    setIsPanelOpen(false);
   }, [setSelectedTable]);
 
   const handleAddFloor = useCallback(() => {
@@ -606,23 +615,25 @@ const FloorPlanSettings: React.FC<FloorPlanSettingsProps> = ({ onChangesDetected
           </ScrollView>
         </View>
 
-        {/* Properties Panel - Always visible (shows stats when nothing selected) */}
-        <View style={styles.propertiesColumn}>
-          <PropertiesPanel
-            selectedTable={selectedTable}
-            selectedTablePosition={selectedTablePosition}
-            selectedZone={selectedZone}
-            floor={currentFloor}
-            tables={mockTables}
-            zones={currentZones}
-            tablePositions={currentTablePositions}
-            onCloseSelection={selectedZone ? handleCloseZoneSelection : handleCloseSelection}
-            onDuplicateTable={handleDuplicate}
-            onDeleteTable={handleDelete}
-            onRotateTable={handleRotate}
-            onEditTable={handleEdit}
-          />
-        </View>
+        {/* Properties Panel - Only visible when a table or zone is selected */}
+        {isPanelOpen && (
+          <View style={styles.propertiesColumn}>
+            <PropertiesPanel
+              selectedTable={selectedTable}
+              selectedTablePosition={selectedTablePosition}
+              selectedZone={selectedZone}
+              floor={currentFloor}
+              tables={mockTables}
+              zones={currentZones}
+              tablePositions={currentTablePositions}
+              onCloseSelection={selectedZone ? handleCloseZoneSelection : handleCloseSelection}
+              onDuplicateTable={handleDuplicate}
+              onDeleteTable={handleDelete}
+              onRotateTable={handleRotate}
+              onEditTable={handleEdit}
+            />
+          </View>
+        )}
       </View>
 
       {/* Modals */}

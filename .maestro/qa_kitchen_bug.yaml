@@ -1,0 +1,116 @@
+appId: com.ajinkya123.POSReactNativeApp
+name: "BUG: Kitchen Display should show created order"
+tags:
+  - qa
+  - kitchen
+  - bug
+---
+
+# Reproduce: Create order → Send to Kitchen → Kitchen tab should show the order
+
+- runFlow: helpers/ensure_dashboard.yaml
+
+# ── Clear kitchen + cancel B-1 orders ─────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+- runFlow: helpers/clear_all_kitchen_tickets.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 10000
+- runFlow: helpers/cancel_b1_active_order.yaml
+
+- tapOn:
+    id: "tab-nav-orders"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 8000
+
+# ── Create B-1 order with Fish Fry ───────────────────
+- tapOn:
+    id: "btn-new-order"
+- extendedWaitUntil:
+    visible:
+      id: "btn-table-select-B-1"
+    timeout: 10000
+- tapOn:
+    id: "btn-table-select-B-1"
+- waitForAnimationToEnd
+
+# Handle GuestCountModal
+- runFlow:
+    when:
+      visible:
+        id: "btn-guest-confirm"
+    commands:
+      - tapOn:
+          id: "btn-guest-confirm"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 8000
+- tapOn:
+    text: "Fish Fry"
+- waitForAnimationToEnd
+
+# Handle modifier modal
+- runFlow:
+    when:
+      visible:
+        id: "btn-modifier-confirm"
+    commands:
+      - tapOn:
+          id: "btn-modifier-confirm"
+      - waitForAnimationToEnd
+
+# Send to kitchen
+- extendedWaitUntil:
+    visible:
+      id: "btn-cart-send-to-kitchen"
+    timeout: 8000
+
+- takeScreenshot: "bug_01_before_send"
+
+- tapOn:
+    id: "btn-cart-send-to-kitchen"
+- waitForAnimationToEnd
+
+# Wait for Order Management
+- extendedWaitUntil:
+    visible:
+      id: "btn-new-order"
+    timeout: 15000
+
+- takeScreenshot: "bug_02_order_created"
+
+# ── Verify order exists in Order Management ──────────
+- tapOn:
+    id: "tab-status-confirmed"
+    optional: true
+- waitForAnimationToEnd
+
+- takeScreenshot: "bug_03_order_in_management"
+
+# ── Now go to Kitchen tab ────────────────────────────
+- tapOn:
+    id: "tab-nav-kitchen"
+- waitForAnimationToEnd
+
+- takeScreenshot: "bug_04_kitchen_display"
+
+# Assert: Kitchen should show the order (Fish Fry visible)
+- extendedWaitUntil:
+    visible:
+      text: "Fish Fry"
+    timeout: 10000
+
+- takeScreenshot: "bug_05_PASS_kitchen_has_order"

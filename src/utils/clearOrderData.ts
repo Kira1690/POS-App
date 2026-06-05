@@ -13,7 +13,6 @@ import {
   unifiedOrderStorageService,
   tableStorageService,
 } from '@/services/storage';
-import { tableApiClient } from '@/services/api/table';
 import { orderEventEmitter } from '@/context/unified-order';
 import { databaseService } from '@/services/database/DatabaseService';
 
@@ -38,10 +37,7 @@ export const clearAllOrderAndTicketData = async (): Promise<void> => {
     // STEP 3: Reset all table statuses to AVAILABLE
     await tableStorageService.resetAllTableStatuses();
 
-    // STEP 4: Reset table API client cache
-    tableApiClient.resetCache();
-
-    // STEP 5: Emit SYSTEM_RESET event to notify all contexts
+    // STEP 4: Emit SYSTEM_RESET event to notify all contexts
     orderEventEmitter.emit('SYSTEM_RESET', '', {});
 
     return;

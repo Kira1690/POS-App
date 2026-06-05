@@ -503,15 +503,13 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{getHeaderTitle()}</Text>
-        {mode !== 'stats' && (
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={onCloseSelection}
-            accessibilityLabel="Close properties"
-          >
-            <Icon name="close" size={20} color={theme.colors.onSurfaceVariant} accessibilityLabel="Close" />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={onCloseSelection}
+          accessibilityLabel="Close properties"
+        >
+          <Icon name="close" size={20} color={theme.colors.onSurfaceVariant} accessibilityLabel="Close" />
+        </TouchableOpacity>
       </View>
 
       {/* Content based on mode */}

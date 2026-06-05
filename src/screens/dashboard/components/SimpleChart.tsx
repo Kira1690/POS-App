@@ -26,6 +26,8 @@ export const SimpleChart: React.FC<ChartProps & { barColor?: string | string[] }
   color,
   height = 200,
   barColor,
+  yAxisLabel,
+  xAxisLabel,
 }) => {
   const { theme } = useTheme();
   const { isPhone, isSmallTablet, captionSize } = useResponsive();
@@ -143,14 +145,42 @@ export const SimpleChart: React.FC<ChartProps & { barColor?: string | string[] }
       fontSize: isPhone ? 11 : 13,
       color: theme.colors.onSurfaceVariant,
     },
+    axisHeaderLabel: {
+      fontSize: captionSize - 1,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 2,
+      marginLeft: 40,
+    },
+    xAxisLabel: {
+      fontSize: captionSize - 1,
+      color: theme.colors.onSurfaceVariant,
+      textAlign: 'center',
+      marginTop: 2,
+    },
   });
 
   if (!data || data.length === 0) {
+    const zeroLabels = [0, 1, 2, 3];
     return (
       <View style={styles.card}>
         <Text style={styles.title}>{title}</Text>
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>No data available</Text>
+        <View style={styles.chartWrap}>
+          {/* Y-axis with zero labels */}
+          <View style={styles.yAxis}>
+            {zeroLabels.map((_, i) => (
+              <Text key={i} style={styles.yLabel}>0</Text>
+            ))}
+          </View>
+          {/* Chart area with grid lines and centered "No data yet" label */}
+          <View style={[styles.barsArea, { justifyContent: 'center', alignItems: 'center' }]}>
+            {zeroLabels.map(i => (
+              <View
+                key={i}
+                style={[styles.gridLine, { top: `${Math.round((i / 3) * 100)}%` }]}
+              />
+            ))}
+            <Text style={[styles.emptyText, { position: 'absolute' }]}>No data yet</Text>
+          </View>
         </View>
       </View>
     );
@@ -159,6 +189,7 @@ export const SimpleChart: React.FC<ChartProps & { barColor?: string | string[] }
   return (
     <View style={styles.card} onLayout={onLayout}>
       <Text style={styles.title}>{title}</Text>
+      {yAxisLabel ? <Text style={styles.axisHeaderLabel}>{yAxisLabel}</Text> : null}
       <View style={styles.chartWrap}>
         {/* Y-axis */}
         <View style={styles.yAxis}>
@@ -216,6 +247,7 @@ export const SimpleChart: React.FC<ChartProps & { barColor?: string | string[] }
           </View>
         </View>
       </View>
+      {xAxisLabel ? <Text style={styles.xAxisLabel}>{xAxisLabel}</Text> : null}
     </View>
   );
 };

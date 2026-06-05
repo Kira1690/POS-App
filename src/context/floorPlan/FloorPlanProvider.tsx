@@ -323,8 +323,8 @@ export const FloorPlanProvider: React.FC<FloorPlanProviderProps> = ({
           return {
             table_id: table.id,
             floor_id: floorId,
-            x: table.position_x > 0 ? table.position_x : 100 + col * 150,
-            y: table.position_y > 0 ? table.position_y : 150 + row * 150,
+            x: (table.position_x ?? 0) > 0 ? (table.position_x as number) : 100 + col * 150,
+            y: (table.position_y ?? 0) > 0 ? (table.position_y as number) : 150 + row * 150,
             rotation: 0,
           };
         });

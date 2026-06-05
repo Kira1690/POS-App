@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, borderRadius } from '@/design-system/theme/spacing';
 import { typography } from '@/design-system/theme/typography';
@@ -222,66 +222,68 @@ const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Tool buttons - icon only */}
-      <View style={styles.toolGroup}>
-        {TOOLS.map(tool => {
-          const isActive = activeTool === tool.id;
-          return (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexShrink: 1 }} contentContainerStyle={{ flexDirection: 'row', alignItems: 'center' }}>
+        {/* Tool buttons - icon only */}
+        <View style={styles.toolGroup}>
+          {TOOLS.map(tool => {
+            const isActive = activeTool === tool.id;
+            return (
+              <TouchableOpacity
+                key={tool.id}
+                style={[
+                  styles.toolButton,
+                  isActive ? styles.toolButtonActive : styles.toolButtonInactive,
+                ]}
+                onPress={() => onToolChange(tool.id)}
+                accessibilityLabel={tool.label}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
+              >
+                <Icon
+                  name={tool.icon}
+                  size={20}
+                  color={isActive ? theme.colors.onPrimary : theme.colors.onSurface}
+                  accessibilityLabel={tool.label}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* Toggle options - compact chips */}
+        <View style={styles.toggleGroup}>
+          {toggles.map(toggle => (
             <TouchableOpacity
-              key={tool.id}
+              key={toggle.label}
               style={[
-                styles.toolButton,
-                isActive ? styles.toolButtonActive : styles.toolButtonInactive,
+                styles.toggleChip,
+                toggle.active ? styles.toggleChipActive : styles.toggleChipInactive,
               ]}
-              onPress={() => onToolChange(tool.id)}
-              accessibilityLabel={tool.label}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
+              onPress={toggle.onPress}
+              accessibilityLabel={`${toggle.label}: ${toggle.active ? 'ON' : 'OFF'}`}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: toggle.active }}
             >
               <Icon
-                name={tool.icon}
-                size={20}
-                color={isActive ? theme.colors.onPrimary : theme.colors.onSurface}
-                accessibilityLabel={tool.label}
+                name={toggle.icon}
+                size={14}
+                color={toggle.active ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                accessibilityLabel={toggle.label}
               />
+              <Text
+                style={[
+                  styles.toggleLabel,
+                  { color: toggle.active ? theme.colors.primary : theme.colors.onSurfaceVariant },
+                ]}
+              >
+                {toggle.label}
+              </Text>
             </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      <View style={styles.divider} />
-
-      {/* Toggle options - compact chips */}
-      <View style={styles.toggleGroup}>
-        {toggles.map(toggle => (
-          <TouchableOpacity
-            key={toggle.label}
-            style={[
-              styles.toggleChip,
-              toggle.active ? styles.toggleChipActive : styles.toggleChipInactive,
-            ]}
-            onPress={toggle.onPress}
-            accessibilityLabel={`${toggle.label}: ${toggle.active ? 'ON' : 'OFF'}`}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: toggle.active }}
-          >
-            <Icon
-              name={toggle.icon}
-              size={14}
-              color={toggle.active ? theme.colors.primary : theme.colors.onSurfaceVariant}
-              accessibilityLabel={toggle.label}
-            />
-            <Text
-              style={[
-                styles.toggleLabel,
-                { color: toggle.active ? theme.colors.primary : theme.colors.onSurfaceVariant },
-              ]}
-            >
-              {toggle.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          ))}
+        </View>
+      </ScrollView>
 
       <View style={styles.divider} />
 

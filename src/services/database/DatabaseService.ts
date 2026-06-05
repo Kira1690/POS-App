@@ -563,22 +563,6 @@ CREATE TABLE IF NOT EXISTS order_items (
   added_at TEXT NOT NULL, modified_at TEXT
 );
 
-CREATE TABLE IF NOT EXISTS kitchen_tickets (
-  id TEXT PRIMARY KEY, order_id TEXT NOT NULL, order_number TEXT NOT NULL,
-  table_id TEXT NOT NULL, table_name TEXT NOT NULL,
-  station TEXT NOT NULL, items TEXT NOT NULL,
-  item_count INTEGER DEFAULT 0, completed_item_count INTEGER DEFAULT 0,
-  status TEXT NOT NULL DEFAULT 'pending', priority TEXT DEFAULT 'normal',
-  has_allergens INTEGER DEFAULT 0, allergen_items TEXT,
-  is_rush INTEGER DEFAULT 0, is_overdue INTEGER DEFAULT 0, overdue_by INTEGER,
-  special_instructions TEXT, delay_reason TEXT,
-  assigned_to TEXT, assigned_to_name TEXT,
-  estimated_prep_time INTEGER DEFAULT 15, actual_prep_time INTEGER,
-  started_at TEXT, completed_at TEXT, served_at TEXT,
-  pending_sync INTEGER DEFAULT 1, synced_at TEXT,
-  created_at TEXT NOT NULL, updated_at TEXT
-);
-
 CREATE TABLE IF NOT EXISTS payment_records (
   id TEXT PRIMARY KEY, order_id TEXT NOT NULL, order_number TEXT NOT NULL,
   restaurant_id TEXT NOT NULL, table_id TEXT NOT NULL, table_name TEXT NOT NULL,
@@ -719,10 +703,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
 CREATE INDEX IF NOT EXISTS idx_orders_pending_sync ON orders(pending_sync);
 CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON orders(payment_status);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
-CREATE INDEX IF NOT EXISTS idx_kitchen_tickets_order ON kitchen_tickets(order_id);
-CREATE INDEX IF NOT EXISTS idx_kitchen_tickets_station ON kitchen_tickets(station);
-CREATE INDEX IF NOT EXISTS idx_kitchen_tickets_status ON kitchen_tickets(status);
-CREATE INDEX IF NOT EXISTS idx_kitchen_tickets_pending_sync ON kitchen_tickets(pending_sync);
+
 CREATE INDEX IF NOT EXISTS idx_payment_records_order ON payment_records(order_id);
 CREATE INDEX IF NOT EXISTS idx_payment_records_status ON payment_records(status);
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_record ON payment_transactions(payment_record_id);

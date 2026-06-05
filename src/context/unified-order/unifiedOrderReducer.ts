@@ -308,9 +308,30 @@ export function unifiedOrderReducer(
     // ============== CART OPERATIONS ==============
 
     case 'ADD_TO_CART': {
-      const newCart = [...state.cart, action.payload];
-      const totals = calculateCartTotals(newCart, state.cartTaxRate, state.cartDiscountAmount);
+      const incoming = action.payload;
+      const existingIdx = (incoming.selectedModifiers?.length ?? 0) === 0
+        ? state.cart.findIndex(
+            (i) => i.menuItemId === incoming.menuItemId &&
+                   (i.selectedModifiers?.length ?? 0) === 0
+          )
+        : -1;
 
+      let newCart: UnifiedOrderItem[];
+      if (existingIdx >= 0) {
+        newCart = state.cart.map((item, idx) => {
+          if (idx !== existingIdx) return item;
+          const newQty = item.quantity + 1;
+          return {
+            ...item,
+            quantity: newQty,
+            itemTotal: (item.basePrice + item.modifierTotal) * newQty,
+          };
+        });
+      } else {
+        newCart = [...state.cart, incoming];
+      }
+
+      const totals = calculateCartTotals(newCart, state.cartTaxRate, state.cartDiscountAmount);
       return {
         ...state,
         cart: newCart,

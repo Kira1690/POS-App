@@ -100,6 +100,8 @@ export interface ChartProps {
   height?: number;
   showGrid?: boolean;
   animated?: boolean;
+  yAxisLabel?: string;
+  xAxisLabel?: string;
 }
 
 export interface KPICardProps {

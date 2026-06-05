@@ -138,7 +138,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
 
     const subtotal = order.subtotal || 0;
     const discountAmount = (order as any).discountAmount || 0;
-    const tax = order.taxAmount || 0;
+    const tax = order.tax_amount || 0;
     const tip = tipAmount;
     const total = subtotal - discountAmount + tax + tip;
 
@@ -314,7 +314,7 @@ const PaymentProcessingScreen: React.FC<PaymentProcessingScreenProps> = ({
         <Text style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
           {splitPayment
             ? `${splitPayment.guestName} — ${formatCurrency(splitPayment.amount)}`
-            : `${order?.tableId ? `Table ${order.tableId}` : 'Takeaway'} - Order #${order?.orderNumber ?? order?.id?.slice(-6) ?? 'N/A'}`}
+            : `${order?.table_id ? `Table ${order.table_id}` : 'Takeaway'} - Order #${order?.order_number ?? order?.id?.slice(-6) ?? 'N/A'}`}
         </Text>
       </View>
     </View>

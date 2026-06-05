@@ -27,6 +27,7 @@ import { DashboardFloorPlanViewer } from './components';
 import { useFloorPlan } from '@/context/floorPlan';
 import { MOCK_TABLES } from '@/data/tables';
 import { TableStatus } from '@/types/settings/table-management.types';
+import { useTableStats } from '@/hooks/context/useTableSelectors';
 
 /**
  * Map string status to TableStatus enum for floor plan
@@ -267,6 +268,9 @@ const TablesDashboard: React.FC = () => {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Live table status counts — driven by TableContext (auto-updates on TABLE_SYNC_COMPLETE)
+  const liveStats = useTableStats();
+
   // Build status map from mock data for floor plan coloring
   const tableStatusMap = useMemo(() => {
     const statusMap: Record<string, TableStatus> = {};
@@ -412,7 +416,7 @@ const TablesDashboard: React.FC = () => {
     <View style={{ flexDirection: 'row', gap: 12 }}>
       <AppleStatusPill
         status="success"
-        text={`${data.summary.occupancyRate.toFixed(1)}% Full`}
+        text={`${liveStats.occupancyRate.toFixed(1)}% Full`}
         size="small"
       />
       <AppleButton
@@ -429,7 +433,7 @@ const TablesDashboard: React.FC = () => {
     <View style={styles.container}>
       <AppleDashboardPanel
         title="Tables Dashboard"
-        subtitle={`${data.summary.occupied}/${data.summary.total} Tables Occupied`}
+        subtitle={`${liveStats.occupied}/${liveStats.total} Tables Occupied`}
         headerActions={headerActions}
       >
         {/* Table Status Summary */}
@@ -440,19 +444,19 @@ const TablesDashboard: React.FC = () => {
           </View>
           <View style={styles.summaryContainer}>
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryValue}>{data.summary.occupied}</Text>
+              <Text style={styles.summaryValue}>{liveStats.occupied}</Text>
               <Text style={styles.summaryLabel}>Occupied</Text>
             </View>
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryValue}>{data.summary.available}</Text>
+              <Text style={styles.summaryValue}>{liveStats.available}</Text>
               <Text style={styles.summaryLabel}>Available</Text>
             </View>
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryValue}>{data.summary.cleaning}</Text>
+              <Text style={styles.summaryValue}>{liveStats.cleaning}</Text>
               <Text style={styles.summaryLabel}>Cleaning</Text>
             </View>
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryValue}>{data.summary.reserved}</Text>
+              <Text style={styles.summaryValue}>{liveStats.reserved}</Text>
               <Text style={styles.summaryLabel}>Reserved</Text>
             </View>
           </View>

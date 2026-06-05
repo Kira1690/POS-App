@@ -46,7 +46,7 @@ const createInitialCanvasState = (): CanvasState => ({
   selectedTableId: null,
   selectedZoneId: null,
   activeTool: 'select',
-  zoom: 1.0,
+  zoom: 0.5,
   pan: { x: 0, y: 0 },
   gridEnabled: true,
   snapToGrid: true,
@@ -84,7 +84,7 @@ const canvasReducer = (state: CanvasState, action: CanvasAction): CanvasState =>
     case 'SET_ZOOM':
       return {
         ...state,
-        zoom: Math.min(Math.max(action.payload, 0.5), 2.0),
+        zoom: Math.min(Math.max(action.payload, 0.3), 2.0),
       };
 
     case 'SET_PAN':
@@ -596,7 +596,7 @@ export const useFloorPlanState = (options: UseFloorPlanStateOptions = {}) => {
   }, [canvas.zoom, setZoom]);
 
   const zoomOut = useCallback(() => {
-    setZoom(Math.max(canvas.zoom - 0.1, 0.5));
+    setZoom(Math.max(canvas.zoom - 0.1, 0.3));
   }, [canvas.zoom, setZoom]);
 
   // ==================== EXPOSED STATE ====================

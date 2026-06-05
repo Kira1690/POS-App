@@ -222,6 +222,14 @@ export interface UnifiedOrder {
   paymentMethod?: string;
   splitPayments?: UnifiedSplitPayment[];
 
+  // Card / terminal payment details
+  processingFee?: number;
+  cardBrand?: string;
+  cardLastFour?: string;
+  authorizationCode?: string;
+  terminalId?: string;
+  referenceNumber?: string;
+
   // Sync tracking
   syncedAt?: string;
   pendingSync: boolean;

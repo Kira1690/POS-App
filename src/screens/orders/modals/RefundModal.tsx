@@ -64,7 +64,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
   const { theme } = useTheme();
 
   // Support both snake_case (Order type) and camelCase (UnifiedOrder type)
-  const orderTotal = Number((order as Record<string, unknown>).totalAmount ?? order.total_amount) || 0;
+  const orderTotal = Number((order as unknown as Record<string, unknown>).totalAmount ?? order.total_amount) || 0;
   const maxRefundAmount = remainingAmount !== undefined ? remainingAmount : orderTotal;
   const [refundState, setRefundState] = useState<RefundState>(RefundState.FORM);
   const [isPartialRefund, setIsPartialRefund] = useState(false);
@@ -208,7 +208,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
     try {
       // Look up the server transaction ID for this order
       // The order.id is the order ID, not the transaction ID
-      let transactionId = Number(order.payment_id || (order as Record<string, unknown>).paymentId || (order as Record<string, unknown>).transactionId);
+      let transactionId = Number(order.payment_id || (order as unknown as Record<string, unknown>).paymentId || (order as unknown as Record<string, unknown>).transactionId);
 
       // If no valid transaction ID, try to fetch it from the billing API
       if (!transactionId || isNaN(transactionId)) {

@@ -37,7 +37,7 @@ export const NetworkStatusBar: React.FC = () => {
         Animated.delay(1500),
         Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]).start(() => setBarState('hidden'));
-    } else if (syncStatus !== 'offline' && syncStatus !== 'error') {
+    } else {
       Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => setBarState('hidden'));
     }
   }, [syncStatus, opacity]);

@@ -63,7 +63,7 @@ interface FloorPlanCanvasProps {
 }
 
 // Constants for zoom limits
-const MIN_ZOOM = 0.5;
+const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2.0;
 
 const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({

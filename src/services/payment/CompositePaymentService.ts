@@ -22,19 +22,35 @@ import { cardPaymentService, ICardPaymentService } from './card/CardPaymentServi
 import { cashPaymentService, ICashPaymentService } from './cash/CashPaymentService';
 import { vp3350DeviceService, IVP3350DeviceService } from './vp3350/VP3350DeviceService';
 import { splitPaymentService, ISplitPaymentService, SplitPaymentRequest } from './split/SplitPaymentService';
-import { receiptService, IReceiptService } from '../receipt/ReceiptService';
+import type { IReceiptService } from '../receipt/ReceiptService';
 import { paymentAnalyticsService, IPaymentAnalyticsService } from './analytics/PaymentAnalyticsService';
 import { Order } from '@/types/order.types';
 
 export class CompositePaymentService implements PaymentServiceInterface {
+  private cardService: ICardPaymentService;
+  private cashService: ICashPaymentService;
+  private vp3350Service: IVP3350DeviceService;
+  private splitService: ISplitPaymentService;
+  private receiptService: IReceiptService;
+  private analyticsService: IPaymentAnalyticsService;
+
   constructor(
-    private cardService: ICardPaymentService = cardPaymentService,
-    private cashService: ICashPaymentService = cashPaymentService,
-    private vp3350Service: IVP3350DeviceService = vp3350DeviceService,
-    private splitService: ISplitPaymentService = splitPaymentService,
-    private receiptService: IReceiptService = receiptService,
-    private analyticsService: IPaymentAnalyticsService = paymentAnalyticsService
-  ) {}
+    cardService?: ICardPaymentService,
+    cashService?: ICashPaymentService,
+    vp3350Service?: IVP3350DeviceService,
+    splitService?: ISplitPaymentService,
+    receiptServiceArg?: IReceiptService,
+    analyticsService?: IPaymentAnalyticsService,
+  ) {
+    this.cardService = cardService ?? cardPaymentService;
+    this.cashService = cashService ?? cashPaymentService;
+    this.vp3350Service = vp3350Service ?? vp3350DeviceService;
+    this.splitService = splitService ?? splitPaymentService;
+    // Lazy: import receiptService inside constructor to avoid circular TDZ at module load
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    this.receiptService = receiptServiceArg ?? require('../receipt/ReceiptService').receiptService;
+    this.analyticsService = analyticsService ?? paymentAnalyticsService;
+  }
 
   /**
    * Process Card Payment

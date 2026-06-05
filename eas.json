@@ -17,13 +17,18 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.1.9:8080",
-        "EXPO_PUBLIC_WS_URL": "ws://192.168.1.9:5005"
+        "EXPO_PUBLIC_API_URL": "https://payment.gsmnyc.com",
+        "EXPO_PUBLIC_WS_URL": "wss://payment.gsmnyc.com"
       }
     },
     "production": {
+      "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://payment.gsmnyc.com",
+        "EXPO_PUBLIC_WS_URL": "wss://payment.gsmnyc.com"
       }
     }
   },

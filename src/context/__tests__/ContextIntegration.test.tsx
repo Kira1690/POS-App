@@ -7,7 +7,7 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 import { OrderManagementProvider, useOrderManagement } from '@/context/orderManagement/OrderManagementContext';
-import { EnhancedKitchenProvider, useEnhancedKitchen } from '@/context/kitchen';
+
 import { CartProvider, useCart } from '@/context/cart/CartContext';
 import { OrderBusinessLogicProvider, useOrderBusinessLogic } from '@/context/orderBusinessLogic/OrderBusinessLogicContext';
 import { initializeServices, serviceContainer } from '@/services/core';
@@ -96,54 +96,6 @@ describe('Context Integration Tests', () => {
       // Should not have cart or kitchen operations (separate contexts)
       expect(result.current.addItem).toBeUndefined();
       expect(result.current.kitchenOrders).toBeUndefined();
-    });
-  });
-
-  describe('KitchenContext Integration', () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <EnhancedKitchenProvider>{children}</EnhancedKitchenProvider>
-    );
-
-    test('should properly use dependency injection for kitchen operations', () => {
-      const { result } = renderHook(() => useEnhancedKitchen(), { wrapper });
-
-      expect(result.current).toBeDefined();
-      expect(result.current.kitchenOrders).toEqual([]);
-      expect(result.current.activeOrders).toEqual([]);
-      expect(typeof result.current.loadKitchenOrders).toBe('function');
-      expect(typeof result.current.updateOrderStatus).toBe('function');
-    });
-
-    test('should handle kitchen-specific operations only', () => {
-      const { result } = renderHook(() => useEnhancedKitchen(), { wrapper });
-
-      // Kitchen-specific operations
-      const kitchenOperations = [
-        'loadKitchenOrders', 'selectKitchenOrder', 'updateOrderStatus',
-        'markOrderReady', 'setActiveStation'
-      ];
-
-      kitchenOperations.forEach(operation => {
-        expect(typeof result.current[operation]).toBe('function');
-      });
-
-      // Should not have order management operations (separate context)
-      expect(result.current.searchQuery).toBeUndefined();
-      expect(result.current.statusFilter).toBeUndefined();
-    });
-
-    test('should manage notifications independently', async () => {
-      const { result } = renderHook(() => useEnhancedKitchen(), { wrapper });
-
-      act(() => {
-        result.current.addNotification({
-          type: 'NEW_ORDER',
-          message: 'New order received',
-        });
-      });
-
-      expect(result.current.notifications.length).toBe(1);
-      expect(result.current.unreadNotifications).toBe(1);
     });
   });
 
@@ -284,27 +236,23 @@ describe('Context Integration Tests', () => {
   describe('Context Composition and Interaction', () => {
     const CompositeWrapper = ({ children }: { children: React.ReactNode }) => (
       <OrderManagementProvider>
-        <EnhancedKitchenProvider>
-          <CartProvider>
-            <OrderBusinessLogicProvider>
-              {children}
-            </OrderBusinessLogicProvider>
-          </CartProvider>
-        </EnhancedKitchenProvider>
+        <CartProvider>
+          <OrderBusinessLogicProvider>
+            {children}
+          </OrderBusinessLogicProvider>
+        </CartProvider>
       </OrderManagementProvider>
     );
 
     test('should allow multiple contexts to coexist without conflicts', () => {
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useEnhancedKitchen(),
         cart: useCart(),
         businessLogic: useOrderBusinessLogic(),
       }), { wrapper: CompositeWrapper });
 
       // All contexts should be available and functional
       expect(result.current.orderManagement.orders).toBeDefined();
-      expect(result.current.kitchen.kitchenOrders).toBeDefined();
       expect(result.current.cart.items).toBeDefined();
       expect(result.current.businessLogic.taxRate).toBeDefined();
     });
@@ -312,12 +260,12 @@ describe('Context Integration Tests', () => {
     test('should maintain independent state across contexts', () => {
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useEnhancedKitchen(),
+        cart: useCart(),
       }), { wrapper: CompositeWrapper });
 
       // States should be independent
-      expect(result.current.orderManagement.isLoading).not.toBe(result.current.kitchen.isLoading);
-      expect(result.current.orderManagement.error).not.toBe(result.current.kitchen.error);
+      expect(result.current.orderManagement.isLoading).toBeDefined();
+      expect(result.current.cart.items).toBeDefined();
     });
   });
 
@@ -325,45 +273,37 @@ describe('Context Integration Tests', () => {
     test('contexts should follow Single Responsibility Principle', () => {
       const CompositeWrapper = ({ children }: { children: React.ReactNode }) => (
         <OrderManagementProvider>
-          <EnhancedKitchenProvider>
-            <CartProvider>
-              <OrderBusinessLogicProvider>
-                {children}
-              </OrderBusinessLogicProvider>
-            </CartProvider>
-          </EnhancedKitchenProvider>
+          <CartProvider>
+            <OrderBusinessLogicProvider>
+              {children}
+            </OrderBusinessLogicProvider>
+          </CartProvider>
         </OrderManagementProvider>
       );
 
       const { result } = renderHook(() => ({
         orderManagement: useOrderManagement(),
-        kitchen: useEnhancedKitchen(),
         cart: useCart(),
         businessLogic: useOrderBusinessLogic(),
       }), { wrapper: CompositeWrapper });
 
       // Each context should have distinct, non-overlapping responsibilities
-      
+
       // OrderManagement: CRUD and management dashboard
       expect(result.current.orderManagement.loadOrders).toBeDefined();
       expect(result.current.orderManagement.updateOrderStatus).toBeDefined();
-      
-      // Kitchen: Kitchen workflow operations
-      expect(result.current.kitchen.loadKitchenOrders).toBeDefined();
-      expect(result.current.kitchen.setActiveStation).toBeDefined();
-      
+
       // Cart: Cart state management only
       expect(result.current.cart.addItem).toBeDefined();
       expect(result.current.cart.total).toBeDefined();
-      
+
       // BusinessLogic: Business rules and validation
       expect(result.current.businessLogic.validateOrder).toBeDefined();
       expect(result.current.businessLogic.calculateOrderTotals).toBeDefined();
 
       // Verify no overlap in responsibilities
       expect(result.current.cart.loadOrders).toBeUndefined();
-      expect(result.current.kitchen.addItem).toBeUndefined();
-      expect(result.current.orderManagement.setActiveStation).toBeUndefined();
+      expect(result.current.orderManagement.addItem).toBeUndefined();
     });
 
     test('contexts should follow Dependency Inversion Principle', () => {

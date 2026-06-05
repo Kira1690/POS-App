@@ -29,7 +29,7 @@ import { borderRadius } from '@/design-system/theme/spacing';
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2.5;
 const ZOOM_STEP = 0.2;
-const DEFAULT_ZOOM = 0.5;
+const DEFAULT_ZOOM = 0.3;
 
 interface FloorPlanViewerCanvasProps {
   floor: Floor;

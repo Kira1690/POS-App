@@ -474,7 +474,7 @@ export const BillScreen: React.FC = () => {
     );
   }
 
-  const subtotal = order.items.reduce((sum, item) => sum + item.itemTotal, 0);
+  const subtotal = order.items.reduce((sum: number, item: UnifiedOrderItem) => sum + item.itemTotal, 0);
   const discountAmount = order.discountAmount ?? 0;
   const tipAmount = subtotal * (tipPercentage / 100);
   const taxAmount = order.taxAmount ?? subtotal * 0.1;
@@ -507,7 +507,7 @@ export const BillScreen: React.FC = () => {
           <View style={styles.orderInfo}>
             <Text style={styles.orderLabel}>Items</Text>
             <Text style={styles.orderValue}>
-              {order.items.reduce((sum, item) => sum + item.quantity, 0)}
+              {order.items.reduce((sum: number, item: UnifiedOrderItem) => sum + item.quantity, 0)}
             </Text>
           </View>
         </View>
@@ -515,7 +515,7 @@ export const BillScreen: React.FC = () => {
         {/* Items List */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Items</Text>
-          {order.items.map((item) => (
+          {order.items.map((item: UnifiedOrderItem) => (
             <BillItemRow key={item.id} item={item} formatPrice={formatPrice} />
           ))}
         </View>
